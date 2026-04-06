@@ -108,6 +108,9 @@
 
   footer { background: var(--white); border-top: 1px solid var(--border); padding: 32px 40px; text-align: center; font-size: 13px; color: var(--muted); }
   footer a { color: var(--accent); text-decoration: none; }
+  footer .footer-links { margin-top: 8px; display: flex; justify-content: center; align-items: center; gap: 16px; flex-wrap: wrap; }
+  footer .footer-links a { color: var(--muted); font-size: 12px; }
+  footer .footer-links a:hover { color: var(--accent); }
 
   @media (max-width: 768px) {
     nav, .lang-bar { padding: 12px 20px; }
@@ -317,7 +320,12 @@
 </main>
 
 <footer>
-  <p>© 2025 Easymoat. All rights reserved. &nbsp;|&nbsp; <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a></p>
+  <p>© 2025 Easymoat. All rights reserved.</p>
+  <div class="footer-links">
+    <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a>
+    <span style="color:var(--border)">|</span>
+    <a href="tokutei.html" data-en="Specified Commercial Transactions Act" data-ja="特定商取引法に基づく表記">特定商取引法に基づく表記</a>
+  </div>
 </footer>
 
 <script>

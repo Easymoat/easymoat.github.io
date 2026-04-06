@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MarketWatch for Garmin | Easymoat</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080C12;
+    --surface: #0E1420;
+    --border: #1A2236;
+    --accent: #00C8FF;
+    --accent2: #FF2244;
+    --accent3: #C8D400;
+    --text: #E8EEF8;
+    --muted: #556080;
+    --green: #00FF88;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,200,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,200,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .orb-1 { width: 600px; height: 600px; background: rgba(0,200,255,0.06); top: -200px; right: -200px; }
+  .orb-2 { width: 400px; height: 400px; background: rgba(255,34,68,0.05); bottom: 200px; left: -100px; }
+
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: rgba(8,12,18,0.85);
+    backdrop-filter: blur(20px);
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: 0.1em;
+    color: var(--accent3);
+  }
+  .logo span { color: var(--muted); font-weight: 400; }
+
+  .nav-tag {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 120px 40px 80px;
+  }
+
+  .hero { margin-bottom: 80px; }
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid rgba(0,200,255,0.3);
+    padding: 6px 14px;
+    border-radius: 2px;
+    margin-bottom: 32px;
+  }
+
+  .hero-tag::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(48px, 8vw, 88px);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+  }
+  h1 .line1 { display: block; color: var(--text); }
+  h1 .line2 { display: block; color: var(--accent); }
+
+  .hero-desc {
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--muted);
+    max-width: 520px;
+    margin-bottom: 40px;
+  }
+
+  .watch-display {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .watch-display::before {
+    content: '// LIVE PREVIEW';
+    position: absolute;
+    top: 14px; right: 20px;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+  }
+
+  .watch-screen {
+    background: #000;
+    border-radius: 50%;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #222;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .watch-time {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .watch-row {
+    display: flex;
+    justify-content: space-between;
+    width: 140px;
+    font-size: 9px;
+    padding: 3px 0;
+    border-bottom: 1px solid #1a1a1a;
+  }
+  .watch-name { color: #888; }
+  .watch-price { color: var(--accent2); font-weight: 500; }
+  .watch-change { color: #ff6688; font-size: 8px; }
+
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2px;
+    margin-bottom: 80px;
+  }
+
+  .feature {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 28px;
+    transition: border-color 0.2s;
+  }
+  .feature:hover { border-color: var(--accent); }
+
+  .feature-icon { font-size: 24px; margin-bottom: 16px; }
+
+  .feature h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .feature p {
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+
+  .data-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 2px;
+    margin-bottom: 80px;
+  }
+
+  .data-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px 20px;
+    font-size: 12px;
+  }
+  .data-type {
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .data-example { color: var(--accent3); font-size: 13px; }
+  .data-note {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    line-height: 1.7;
+  }
+
+  .free-tier {
+    border: 1px solid var(--border);
+    padding: 24px 32px;
+    margin-bottom: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .free-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--green);
+  }
+  .free-desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .free-badge {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--green);
+    border: 1px solid rgba(0,255,136,0.3);
+    padding: 6px 14px;
+    white-space: nowrap;
+  }
+
+  .pricing {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 48px;
+    margin-bottom: 80px;
+    position: relative;
+    overflow: hidden;
+  }
+  .pricing::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .pricing-header {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .price {
+    font-family: 'Syne', sans-serif;
+    font-size: 64px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+  }
+  .price-note { font-size: 12px; color: var(--muted); padding-bottom: 8px; }
+
+  .pricing-features {
+    list-style: none;
+    margin-bottom: 40px;
+  }
+  .pricing-features li {
+    font-size: 13px;
+    color: var(--muted);
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .pricing-features li::before { content: '→'; color: var(--accent); flex-shrink: 0; }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--accent);
+    color: #000;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 16px 32px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover { background: #fff; transform: translateY(-1px); }
+  .btn-note { font-size: 11px; color: var(--muted); margin-top: 16px; }
+
+  .activation {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 40px;
+    margin-bottom: 80px;
+  }
+  .activation h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 24px;
+  }
+
+  .steps { display: flex; flex-direction: column; gap: 16px; }
+  .step { display: flex; gap: 20px; align-items: flex-start; }
+  .step-num {
+    width: 28px; height: 28px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-text { font-size: 13px; color: var(--muted); line-height: 1.6; padding-top: 4px; }
+  .step-text strong { color: var(--text); }
+
+  .privacy {
+    border-top: 1px solid var(--border);
+    padding-top: 40px;
+    margin-bottom: 80px;
+  }
+  .privacy h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .privacy p { font-size: 12px; color: var(--muted); line-height: 1.8; margin-bottom: 12px; }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    nav { padding: 16px 20px; }
+    main { padding: 100px 20px 60px; }
+    .pricing { padding: 32px 24px; }
+    .free-tier { flex-direction: column; align-items: flex-start; }
+    footer { flex-direction: column; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<nav>
+  <div class="logo">EASYMOAT<span>.io</span></div>
+  <div class="nav-tag">Garmin App Developer</div>
+</nav>
+
+<main>
+
+  <div class="hero">
+    <div class="hero-tag">Now Available on Garmin Connect IQ</div>
+    <h1>
+      <span class="line1">MARKET</span>
+      <span class="line2">WATCH</span>
+    </h1>
+    <p class="hero-desc">
+      Real-time stock prices, crypto, forex and indices — directly on your Garmin watch.
+      Designed for serious investors who need instant market data without reaching for their phone.
+    </p>
+  </div>
+
+  <div class="watch-display">
+    <div class="watch-screen">
+      <div class="watch-time">14:32</div>
+      <div class="watch-row">
+        <span class="watch-name">FRONTEO</span>
+        <div><div class="watch-price">833</div><div class="watch-change">+1.8%</div></div>
+      </div>
+      <div class="watch-row">
+        <span class="watch-name">JDSC</span>
+        <div><div class="watch-price">812</div><div class="watch-change">+1.5%</div></div>
+      </div>
+      <div class="watch-row">
+        <span class="watch-name">NVDA</span>
+        <div><div class="watch-price">177.3</div><div class="watch-change">+0.9%</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">Features</div>
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon">📈</div>
+      <h3>Real-time Prices</h3>
+      <p>Auto-refreshing quotes for stocks, crypto, forex & indices. Configurable 30sec–30min intervals.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📊</div>
+      <h3>Intraday Charts</h3>
+      <p>5-minute charts with H/L/Open/Close and volume data. Tap any symbol to open instantly.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🎯</div>
+      <h3>Price Alert</h3>
+      <p>Set a target price in the memo field. Get alerted on-screen when the price is reached.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📝</div>
+      <h3>Memo</h3>
+      <p>Attach personal notes to each symbol. View them with a quick swipe from the detail screen.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🎯</div>
+      <h3>20 Custom Symbols</h3>
+      <p>Fully configurable via the Garmin Connect IQ app. Mix and match any market.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">⌚</div>
+      <h3>Garmin Native</h3>
+      <p>Built for Forerunner 965. High-visibility display optimized for quick glances.</p>
+    </div>
+  </div>
+
+  <div class="section-label">Supported Data</div>
+  <p class="data-note">All 20 symbols are fully customizable. Enter any ticker in the Garmin Connect IQ app settings.</p>
+  <div class="data-grid">
+    <div class="data-item">
+      <div class="data-type">Japanese Stocks</div>
+      <div class="data-example">e.g. 7203.T</div>
+    </div>
+    <div class="data-item">
+      <div class="data-type">US Stocks</div>
+      <div class="data-example">e.g. AAPL</div>
+    </div>
+    <div class="data-item">
+      <div class="data-type">Cryptocurrency</div>
+      <div class="data-example">e.g. BTC</div>
+    </div>
+    <div class="data-item">
+      <div class="data-type">Forex</div>
+      <div class="data-example">e.g. USDJPY=X</div>
+    </div>
+    <div class="data-item">
+      <div class="data-type">Indices</div>
+      <div class="data-example">e.g. ^NDX</div>
+    </div>
+  </div>
+
+  <div class="free-tier">
+    <div>
+      <div class="free-label">Free Version Available</div>
+      <div class="free-desc">Download for free — first 3 symbols and charts included at no cost.</div>
+    </div>
+    <div class="free-badge">Free on Connect IQ</div>
+  </div>
+
+  <div class="section-label">Full Version</div>
+  <div class="pricing">
+    <div class="pricing-header">
+      <div class="price">$7.99</div>
+      <div class="price-note">one-time purchase<br>lifetime license</div>
+    </div>
+    <ul class="pricing-features">
+      <li>All 20 symbols unlocked</li>
+      <li>Intraday charts for all symbols</li>
+      <li>Price Alert — on-screen alert when target price is reached</li>
+      <li>Per-symbol memo notes</li>
+      <li>Lifetime license — no subscription</li>
+    </ul>
+    <a href="YOUR_STRIPE_LINK_HERE" class="btn-primary">
+      Purchase Full Version →
+    </a>
+    <div class="btn-note">Secure payment via Stripe. You will receive your activation key by email within 24 hours.</div>
+  </div>
+
+  <div class="section-label">How to Activate</div>
+  <div class="activation">
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">Complete your purchase via Stripe. <strong>Include your email address</strong> in the payment notes.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">You will receive an <strong>activation key</strong> (format: XXXXX-XXXXX-XXXXX-XXXXX) by email within 24 hours.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">Open the <strong>Garmin Connect IQ app</strong> on your smartphone → MarketWatch → Settings → enter the key in the <strong>License Key</strong> field.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text">Save settings and <strong>restart the app</strong> on your Garmin device. Full version is now active.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="privacy">
+    <h2>Privacy Policy</h2>
+    <p>MarketWatch for Garmin does not collect, store, or transmit any personal information. All settings (ticker symbols, names, license key, memos) are stored locally on your device via the Garmin Connect IQ platform.</p>
+    <p>Stock price data is fetched from Yahoo Finance and Binance public APIs. No user data is sent to these services beyond the ticker symbols you configure.</p>
+    <p>Payment processing is handled by Stripe. Please refer to Stripe's privacy policy for information about payment data handling.</p>
+    <p>For support or questions, contact: <a href="mailto:easymoat@gmail.com" style="color: var(--accent);">easymoat@gmail.com</a></p>
+  </div>
+
+  <footer>
+    <div>© 2025 Easymoat. All rights reserved.</div>
+    <div><a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a></div>
+  </footer>
+
+</main>
+</body>
+</html>

@@ -4,586 +4,332 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MarketWatch for Garmin | Easymoat</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #080C12;
-    --surface: #0E1420;
-    --border: #1A2236;
-    --accent: #00C8FF;
-    --accent2: #FF2244;
-    --accent3: #C8D400;
-    --text: #E8EEF8;
-    --muted: #556080;
-    --green: #00FF88;
+    --bg: #F8F9FC;
+    --white: #FFFFFF;
+    --border: #E2E6EF;
+    --accent: #0066FF;
+    --accent-light: #EEF4FF;
+    --accent2: #CC0022;
+    --accent3: #007A3D;
+    --text: #111827;
+    --text2: #374151;
+    --muted: #6B7280;
+    --muted2: #9CA3AF;
+    --yellow: #D97706;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
   }
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.6; overflow-x: hidden; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 40px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); position: sticky; top: 0; z-index: 200; }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; color: var(--muted); transition: all 0.15s; }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
 
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(0,200,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,200,255,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
+  nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 40px; display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: var(--accent); letter-spacing: -0.01em; }
+  .logo span { color: var(--muted2); font-weight: 700; }
+  .nav-badge { background: var(--accent-light); color: var(--accent); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; padding: 4px 10px; border-radius: 20px; }
 
-  .orb {
-    position: fixed;
-    border-radius: 50%;
-    filter: blur(120px);
-    pointer-events: none;
-    z-index: 0;
-  }
-  .orb-1 { width: 600px; height: 600px; background: rgba(0,200,255,0.06); top: -200px; right: -200px; }
-  .orb-2 { width: 400px; height: 400px; background: rgba(255,34,68,0.05); bottom: 200px; left: -100px; }
+  main { max-width: 960px; margin: 0 auto; padding: 0 40px 80px; }
 
-  nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 100;
-    padding: 20px 40px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--border);
-    background: rgba(8,12,18,0.85);
-    backdrop-filter: blur(20px);
-  }
+  .hero { padding: 64px 0 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+  .hero-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; padding: 5px 12px; border-radius: 20px; margin-bottom: 20px; }
+  .hero-tag::before { content: ''; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
+  h1 { font-family: 'Syne', sans-serif; font-size: clamp(36px, 5vw, 56px); font-weight: 800; line-height: 1.05; letter-spacing: -0.02em; color: var(--text); margin-bottom: 16px; }
+  h1 em { font-style: normal; color: var(--accent); }
+  .hero-desc { font-size: 16px; line-height: 1.7; color: var(--muted); margin-bottom: 32px; }
+  .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
 
-  .logo {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 18px;
-    letter-spacing: 0.1em;
-    color: var(--accent3);
-  }
-  .logo span { color: var(--muted); font-weight: 400; }
+  .btn-primary { display: inline-flex; align-items: center; gap: 8px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 8px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,102,255,0.3); }
+  .btn-primary:hover { background: #0052CC; transform: translateY(-1px); }
+  .btn-secondary { display: inline-flex; align-items: center; gap: 8px; background: var(--white); color: var(--text); font-size: 14px; font-weight: 500; text-decoration: none; padding: 12px 24px; border-radius: 8px; border: 1px solid var(--border); transition: all 0.2s; }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
 
-  .nav-tag {
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-  }
+  .screenshots { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .screenshot { border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid var(--border); }
+  .screenshot img { width: 100%; height: auto; display: block; }
+  .screenshot-label { background: var(--white); padding: 10px 14px; font-size: 12px; font-weight: 500; color: var(--muted); border-top: 1px solid var(--border); text-align: center; }
 
-  main {
-    position: relative;
-    z-index: 1;
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 120px 40px 80px;
-  }
+  .section { padding: 64px 0; border-top: 1px solid var(--border); }
+  .section-header { margin-bottom: 32px; }
+  .section-tag { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  h2 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.01em; color: var(--text); margin-bottom: 8px; }
+  .section-desc { font-size: 15px; color: var(--muted); max-width: 560px; }
 
-  .hero { margin-bottom: 80px; }
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .feature { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: box-shadow 0.2s, border-color 0.2s; }
+  .feature:hover { box-shadow: var(--shadow); border-color: #C7D9FF; }
+  .feature-icon { font-size: 28px; margin-bottom: 12px; }
+  .feature h3 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .feature p { font-size: 13px; line-height: 1.6; color: var(--muted); }
+  .feature-badge { display: inline-block; background: #FFF8E6; color: var(--yellow); font-size: 10px; font-weight: 700; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 4px; margin-top: 8px; }
 
-  .hero-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 11px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--accent);
-    border: 1px solid rgba(0,200,255,0.3);
-    padding: 6px 14px;
-    border-radius: 2px;
-    margin-bottom: 32px;
-  }
+  .data-note { font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+  .data-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .data-item { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
+  .data-type { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted2); margin-bottom: 6px; }
+  .data-example { font-size: 13px; font-weight: 600; color: var(--accent); }
 
-  .hero-tag::before {
-    content: '';
-    width: 6px; height: 6px;
-    background: var(--accent);
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-  }
+  .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .plan { background: var(--white); border: 2px solid var(--border); border-radius: 16px; padding: 32px; position: relative; }
+  .plan.featured { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(0,102,255,0.08); }
+  .plan-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; padding: 4px 16px; border-radius: 20px; white-space: nowrap; }
+  .plan-name { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .plan-price { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 800; color: var(--text); line-height: 1; margin-bottom: 4px; }
+  .plan-note { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+  .plan-features { list-style: none; margin-bottom: 28px; }
+  .plan-features li { font-size: 14px; color: var(--text2); padding: 7px 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .plan-features li.included::before { content: '✓'; color: var(--accent3); font-weight: 700; flex-shrink: 0; }
+  .plan-features li.excluded::before { content: '—'; color: var(--muted2); flex-shrink: 0; }
+  .plan-features li.excluded { color: var(--muted2); }
+  .btn-plan { display: block; text-align: center; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px; border-radius: 8px; transition: all 0.2s; }
+  .btn-plan-primary { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(0,102,255,0.3); }
+  .btn-plan-primary:hover { background: #0052CC; transform: translateY(-1px); }
+  .btn-plan-secondary { background: var(--bg); color: var(--text2); border: 1px solid var(--border); }
+  .btn-plan-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .plan-sub { font-size: 11px; color: var(--muted2); text-align: center; margin-top: 10px; }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.8); }
-  }
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .step { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .step-num { width: 32px; height: 32px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+  .step h4 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .step p { font-size: 12px; color: var(--muted); line-height: 1.6; }
 
-  h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: clamp(48px, 8vw, 88px);
-    font-weight: 800;
-    line-height: 0.95;
-    letter-spacing: -0.02em;
-    margin-bottom: 24px;
-  }
-  h1 .line1 { display: block; color: var(--text); }
-  h1 .line2 { display: block; color: var(--accent); }
+  .privacy-box { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; }
+  .privacy-box h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+  .privacy-box p { font-size: 13px; color: var(--muted); line-height: 1.8; margin-bottom: 10px; }
+  .privacy-box a { color: var(--accent); text-decoration: none; }
 
-  .hero-desc {
-    font-size: 16px;
-    line-height: 1.8;
-    color: var(--muted);
-    max-width: 520px;
-    margin-bottom: 40px;
-  }
+  footer { background: var(--white); border-top: 1px solid var(--border); padding: 32px 40px; text-align: center; font-size: 13px; color: var(--muted); }
+  footer a { color: var(--accent); text-decoration: none; }
 
-  .watch-display {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 80px;
-    position: relative;
-    overflow: hidden;
+  @media (max-width: 768px) {
+    nav, .lang-bar { padding: 12px 20px; }
+    main { padding: 0 20px 60px; }
+    .hero { grid-template-columns: 1fr; gap: 32px; padding: 40px 0 32px; }
+    .features { grid-template-columns: 1fr 1fr; }
+    .data-grid { grid-template-columns: repeat(3, 1fr); }
+    .pricing-grid { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr 1fr; }
   }
-
-  .watch-display::before {
-    content: '// LIVE PREVIEW';
-    position: absolute;
-    top: 14px; right: 20px;
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 0.15em;
-  }
-
-  .watch-screen {
-    background: #000;
-    border-radius: 50%;
-    width: 200px;
-    height: 200px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border: 3px solid #222;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .watch-time {
-    font-family: 'Syne', sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--accent);
-    margin-bottom: 8px;
-  }
-
-  .watch-row {
-    display: flex;
-    justify-content: space-between;
-    width: 140px;
-    font-size: 9px;
-    padding: 3px 0;
-    border-bottom: 1px solid #1a1a1a;
-  }
-  .watch-name { color: #888; }
-  .watch-price { color: var(--accent2); font-weight: 500; }
-  .watch-change { color: #ff6688; font-size: 8px; }
-
-  .section-label {
-    font-size: 11px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .section-label::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-
-  .features {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 2px;
-    margin-bottom: 80px;
-  }
-
-  .feature {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 28px;
-    transition: border-color 0.2s;
-  }
-  .feature:hover { border-color: var(--accent); }
-
-  .feature-icon { font-size: 24px; margin-bottom: 16px; }
-
-  .feature h3 {
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    margin-bottom: 8px;
-    color: var(--text);
-  }
-
-  .feature p {
-    font-size: 12px;
-    line-height: 1.7;
-    color: var(--muted);
-  }
-
-  .data-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 2px;
-    margin-bottom: 80px;
-  }
-
-  .data-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 16px 20px;
-    font-size: 12px;
-  }
-  .data-type {
-    color: var(--muted);
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-  .data-example { color: var(--accent3); font-size: 13px; }
-  .data-note {
-    font-size: 11px;
-    color: var(--muted);
-    margin-bottom: 16px;
-    line-height: 1.7;
-  }
-
-  .free-tier {
-    border: 1px solid var(--border);
-    padding: 24px 32px;
-    margin-bottom: 80px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-  }
-  .free-label {
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--green);
-  }
-  .free-desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
-  .free-badge {
-    font-size: 11px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--green);
-    border: 1px solid rgba(0,255,136,0.3);
-    padding: 6px 14px;
-    white-space: nowrap;
-  }
-
-  .pricing {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 48px;
-    margin-bottom: 80px;
-    position: relative;
-    overflow: hidden;
-  }
-  .pricing::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-  }
-
-  .pricing-header {
-    display: flex;
-    align-items: flex-end;
-    gap: 16px;
-    margin-bottom: 32px;
-  }
-  .price {
-    font-family: 'Syne', sans-serif;
-    font-size: 64px;
-    font-weight: 800;
-    color: var(--text);
-    line-height: 1;
-  }
-  .price-note { font-size: 12px; color: var(--muted); padding-bottom: 8px; }
-
-  .pricing-features {
-    list-style: none;
-    margin-bottom: 40px;
-  }
-  .pricing-features li {
-    font-size: 13px;
-    color: var(--muted);
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .pricing-features li::before { content: '→'; color: var(--accent); flex-shrink: 0; }
-
-  .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    background: var(--accent);
-    color: #000;
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    text-decoration: none;
-    padding: 16px 32px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .btn-primary:hover { background: #fff; transform: translateY(-1px); }
-  .btn-note { font-size: 11px; color: var(--muted); margin-top: 16px; }
-
-  .activation {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 40px;
-    margin-bottom: 80px;
-  }
-  .activation h2 {
-    font-family: 'Syne', sans-serif;
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 24px;
-  }
-
-  .steps { display: flex; flex-direction: column; gap: 16px; }
-  .step { display: flex; gap: 20px; align-items: flex-start; }
-  .step-num {
-    width: 28px; height: 28px;
-    border: 1px solid var(--accent);
-    color: var(--accent);
-    font-size: 12px;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-  .step-text { font-size: 13px; color: var(--muted); line-height: 1.6; padding-top: 4px; }
-  .step-text strong { color: var(--text); }
-
-  .privacy {
-    border-top: 1px solid var(--border);
-    padding-top: 40px;
-    margin-bottom: 80px;
-  }
-  .privacy h2 {
-    font-family: 'Syne', sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 16px;
-  }
-  .privacy p { font-size: 12px; color: var(--muted); line-height: 1.8; margin-bottom: 12px; }
-
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 32px 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 11px;
-    color: var(--muted);
-  }
-  footer a { color: var(--muted); text-decoration: none; }
-  footer a:hover { color: var(--accent); }
-
-  @media (max-width: 600px) {
-    nav { padding: 16px 20px; }
-    main { padding: 100px 20px 60px; }
-    .pricing { padding: 32px 24px; }
-    .free-tier { flex-direction: column; align-items: flex-start; }
-    footer { flex-direction: column; gap: 12px; }
+  @media (max-width: 480px) {
+    .features { grid-template-columns: 1fr; }
+    .data-grid { grid-template-columns: 1fr 1fr; }
+    .steps { grid-template-columns: 1fr; }
+    .screenshots { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
 
-<div class="orb orb-1"></div>
-<div class="orb orb-2"></div>
+<div class="lang-bar">
+  <span>🌐</span>
+  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+  <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+</div>
 
 <nav>
-  <div class="logo">EASYMOAT<span>.io</span></div>
-  <div class="nav-tag">Garmin App Developer</div>
+  <div class="logo">Easymoat<span>.io</span></div>
+  <div class="nav-badge" data-en="Garmin App Developer" data-ja="Garminアプリ開発">Garmin App Developer</div>
 </nav>
 
 <main>
 
   <div class="hero">
-    <div class="hero-tag">Now Available on Garmin Connect IQ</div>
-    <h1>
-      <span class="line1">MARKET</span>
-      <span class="line2">WATCH</span>
-    </h1>
-    <p class="hero-desc">
-      Real-time stock prices, crypto, forex and indices — directly on your Garmin watch.
-      Designed for serious investors who need instant market data without reaching for their phone.
-    </p>
-  </div>
-
-  <div class="watch-display">
-    <div class="watch-screen">
-      <div class="watch-time">14:32</div>
-      <div class="watch-row">
-        <span class="watch-name">FRONTEO</span>
-        <div><div class="watch-price">833</div><div class="watch-change">+1.8%</div></div>
-      </div>
-      <div class="watch-row">
-        <span class="watch-name">JDSC</span>
-        <div><div class="watch-price">812</div><div class="watch-change">+1.5%</div></div>
-      </div>
-      <div class="watch-row">
-        <span class="watch-name">NVDA</span>
-        <div><div class="watch-price">177.3</div><div class="watch-change">+0.9%</div></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="section-label">Features</div>
-  <div class="features">
-    <div class="feature">
-      <div class="feature-icon">📈</div>
-      <h3>Real-time Prices</h3>
-      <p>Auto-refreshing quotes for stocks, crypto, forex & indices. Configurable 30sec–30min intervals.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">📊</div>
-      <h3>Intraday Charts</h3>
-      <p>5-minute charts with H/L/Open/Close and volume data. Tap any symbol to open instantly.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">🎯</div>
-      <h3>Price Alert</h3>
-      <p>Set a target price in the memo field. Get alerted on-screen when the price is reached.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">📝</div>
-      <h3>Memo</h3>
-      <p>Attach personal notes to each symbol. View them with a quick swipe from the detail screen.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">🎯</div>
-      <h3>20 Custom Symbols</h3>
-      <p>Fully configurable via the Garmin Connect IQ app. Mix and match any market.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">⌚</div>
-      <h3>Garmin Native</h3>
-      <p>Built for Forerunner 965. High-visibility display optimized for quick glances.</p>
-    </div>
-  </div>
-
-  <div class="section-label">Supported Data</div>
-  <p class="data-note">All 20 symbols are fully customizable. Enter any ticker in the Garmin Connect IQ app settings.</p>
-  <div class="data-grid">
-    <div class="data-item">
-      <div class="data-type">Japanese Stocks</div>
-      <div class="data-example">e.g. 7203.T</div>
-    </div>
-    <div class="data-item">
-      <div class="data-type">US Stocks</div>
-      <div class="data-example">e.g. AAPL</div>
-    </div>
-    <div class="data-item">
-      <div class="data-type">Cryptocurrency</div>
-      <div class="data-example">e.g. BTC</div>
-    </div>
-    <div class="data-item">
-      <div class="data-type">Forex</div>
-      <div class="data-example">e.g. USDJPY=X</div>
-    </div>
-    <div class="data-item">
-      <div class="data-type">Indices</div>
-      <div class="data-example">e.g. ^NDX</div>
-    </div>
-  </div>
-
-  <div class="free-tier">
     <div>
-      <div class="free-label">Free Version Available</div>
-      <div class="free-desc">Download for free — first 3 symbols and charts included at no cost.</div>
+      <div class="hero-tag" data-en="Now on Garmin Connect IQ" data-ja="Garmin Connect IQで公開中">Now on Garmin Connect IQ</div>
+      <h1><em>Market</em><br>Watch</h1>
+      <p class="hero-desc" data-en="Real-time stock prices, crypto, forex and indices — directly on your Garmin watch. Designed for serious investors who need instant market data at a glance." data-ja="株価・暗号資産・為替・指数をGarminウォッチでリアルタイム表示。スマートフォンを取り出さずに、いつでも相場を確認できます。">Real-time stock prices, crypto, forex and indices — directly on your Garmin watch. Designed for serious investors who need instant market data at a glance.</p>
+      <div class="hero-cta">
+        <a href="YOUR_STRIPE_LINK_HERE" class="btn-primary" data-en="Buy Full Version — $7.99" data-ja="フルバージョン購入 — $7.99">Buy Full Version — $7.99</a>
+        <a href="https://apps.garmin.com/" class="btn-secondary" data-en="Free Download" data-ja="無料でダウンロード">Free Download</a>
+      </div>
     </div>
-    <div class="free-badge">Free on Connect IQ</div>
+    <div class="screenshots">
+      <div class="screenshot">
+        <img src="markets_list.jpg" alt="MarketWatch list view">
+        <div class="screenshot-label" data-en="Stock List" data-ja="銘柄リスト">Stock List</div>
+      </div>
+      <div class="screenshot">
+        <img src="markets_detail.png" alt="MarketWatch chart view">
+        <div class="screenshot-label" data-en="Intraday Chart" data-ja="日中チャート">Intraday Chart</div>
+      </div>
+    </div>
   </div>
 
-  <div class="section-label">Full Version</div>
-  <div class="pricing">
-    <div class="pricing-header">
-      <div class="price">$7.99</div>
-      <div class="price-note">one-time purchase<br>lifetime license</div>
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Features" data-ja="機能">Features</div>
+      <h2 data-en="Everything you need on your wrist" data-ja="必要な機能がすべて手首に">Everything you need on your wrist</h2>
+      <p class="section-desc" data-en="MarketWatch brings professional-grade market data to your Garmin with a clean, high-visibility display." data-ja="MarketWatchは、プロ仕様の市場データを視認性の高いデザインでGarminデバイスに届けます。">MarketWatch brings professional-grade market data to your Garmin with a clean, high-visibility display.</p>
     </div>
-    <ul class="pricing-features">
-      <li>All 20 symbols unlocked</li>
-      <li>Intraday charts for all symbols</li>
-      <li>Price Alert — on-screen alert when target price is reached</li>
-      <li>Per-symbol memo notes</li>
-      <li>Lifetime license — no subscription</li>
-    </ul>
-    <a href="YOUR_STRIPE_LINK_HERE" class="btn-primary">
-      Purchase Full Version →
-    </a>
-    <div class="btn-note">Secure payment via Stripe. You will receive your activation key by email within 24 hours.</div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">📈</div>
+        <h3 data-en="Real-time Prices" data-ja="リアルタイム価格">Real-time Prices</h3>
+        <p data-en="Auto-refreshing quotes for stocks, crypto, forex & indices. Configurable 30sec–30min intervals." data-ja="株価・暗号資産・為替・指数を自動更新。30秒〜30分で更新間隔を設定可能。">Auto-refreshing quotes for stocks, crypto, forex & indices. Configurable 30sec–30min intervals.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📊</div>
+        <h3 data-en="Intraday Charts" data-ja="日中チャート">Intraday Charts</h3>
+        <p data-en="5-minute charts with H/L/Open/Close and volume. Tap any symbol to open instantly." data-ja="H/L/始値/終値・出来高付きの5分足チャート。銘柄をタップしてすぐに表示。">5-minute charts with H/L/Open/Close and volume. Tap any symbol to open instantly.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🎯</div>
+        <h3 data-en="Price Alert" data-ja="プライスアラート">Price Alert</h3>
+        <p data-en="Set a target price in the memo field. Get alerted on-screen when the price is reached." data-ja="メモ欄に目標価格を入力。価格到達時に画面でアラートを表示します。">Set a target price in the memo field. Get alerted on-screen when the price is reached.</p>
+        <span class="feature-badge" data-en="Full Version" data-ja="フルバージョン">Full Version</span>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📝</div>
+        <h3 data-en="Memo Notes" data-ja="メモ機能">Memo Notes</h3>
+        <p data-en="Attach personal notes to each symbol. View with a quick swipe from the detail screen." data-ja="銘柄ごとにメモを記録。詳細画面からスワイプで素早く確認できます。">Attach personal notes to each symbol. View with a quick swipe from the detail screen.</p>
+        <span class="feature-badge" data-en="Full Version" data-ja="フルバージョン">Full Version</span>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">⚙️</div>
+        <h3 data-en="20 Custom Symbols" data-ja="20銘柄カスタマイズ">20 Custom Symbols</h3>
+        <p data-en="Fully configurable via the Connect IQ app. Mix stocks, crypto, forex, and indices freely." data-ja="Connect IQアプリで自由に設定。株式・暗号資産・為替・指数を自由に組み合わせ。">Fully configurable via the Connect IQ app. Mix stocks, crypto, forex, and indices freely.</p>
+        <span class="feature-badge" data-en="Full Version" data-ja="フルバージョン">Full Version</span>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">⌚</div>
+        <h3 data-en="Garmin Native" data-ja="Garmin専用設計">Garmin Native</h3>
+        <p data-en="Built for Forerunner 965. Red for up, green for down — Japanese market color convention." data-ja="Forerunner 965専用設計。上昇は赤、下落は緑の日本式カラーコーディング。">Built for Forerunner 965. Red for up, green for down — Japanese market color convention.</p>
+      </div>
+    </div>
   </div>
 
-  <div class="section-label">How to Activate</div>
-  <div class="activation">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Supported Data" data-ja="対応データ">Supported Data</div>
+      <h2 data-en="Any market, any symbol" data-ja="あらゆる市場・銘柄に対応">Any market, any symbol</h2>
+    </div>
+    <p class="data-note" data-en="All 20 symbols are fully customizable. Enter any ticker in the Garmin Connect IQ app settings." data-ja="20銘柄はすべて自由に設定できます。Garmin Connect IQアプリの設定画面でティッカーシンボルを入力してください。">All 20 symbols are fully customizable. Enter any ticker in the Garmin Connect IQ app settings.</p>
+    <div class="data-grid">
+      <div class="data-item">
+        <div class="data-type" data-en="Japanese Stocks" data-ja="日本株">Japanese Stocks</div>
+        <div class="data-example">e.g. 7203.T</div>
+      </div>
+      <div class="data-item">
+        <div class="data-type" data-en="US Stocks" data-ja="米国株">US Stocks</div>
+        <div class="data-example">e.g. AAPL</div>
+      </div>
+      <div class="data-item">
+        <div class="data-type" data-en="Crypto" data-ja="暗号資産">Crypto</div>
+        <div class="data-example">e.g. BTC</div>
+      </div>
+      <div class="data-item">
+        <div class="data-type" data-en="Forex" data-ja="為替">Forex</div>
+        <div class="data-example">e.g. USDJPY=X</div>
+      </div>
+      <div class="data-item">
+        <div class="data-type" data-en="Indices" data-ja="指数">Indices</div>
+        <div class="data-example">e.g. ^NDX</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Pricing" data-ja="料金">Pricing</div>
+      <h2 data-en="Simple, one-time pricing" data-ja="シンプルな買い切り価格">Simple, one-time pricing</h2>
+    </div>
+    <div class="pricing-grid">
+      <div class="plan">
+        <div class="plan-name" data-en="Free Version" data-ja="無料版">Free Version</div>
+        <div class="plan-price">$0</div>
+        <div class="plan-note" data-en="Available on Connect IQ Store" data-ja="Connect IQ Storeで公開中">Available on Connect IQ Store</div>
+        <ul class="plan-features">
+          <li class="included" data-en="3 symbols" data-ja="3銘柄まで">3 symbols</li>
+          <li class="included" data-en="Intraday charts (3 symbols)" data-ja="日中チャート（3銘柄）">Intraday charts (3 symbols)</li>
+          <li class="excluded" data-en="Price Alert" data-ja="プライスアラート">Price Alert</li>
+          <li class="excluded" data-en="Memo notes" data-ja="メモ機能">Memo notes</li>
+          <li class="excluded" data-en="Up to 20 symbols" data-ja="最大20銘柄">Up to 20 symbols</li>
+        </ul>
+        <a href="https://apps.garmin.com/" class="btn-plan btn-plan-secondary" data-en="Download Free" data-ja="無料でダウンロード">Download Free</a>
+      </div>
+      <div class="plan featured">
+        <div class="plan-badge" data-en="Recommended" data-ja="おすすめ">Recommended</div>
+        <div class="plan-name" data-en="Full Version" data-ja="フルバージョン">Full Version</div>
+        <div class="plan-price">$7.99</div>
+        <div class="plan-note" data-en="One-time purchase · Lifetime license" data-ja="買い切り · 生涯ライセンス">One-time purchase · Lifetime license</div>
+        <ul class="plan-features">
+          <li class="included" data-en="Up to 20 symbols" data-ja="最大20銘柄">Up to 20 symbols</li>
+          <li class="included" data-en="Intraday charts (all symbols)" data-ja="日中チャート（全銘柄）">Intraday charts (all symbols)</li>
+          <li class="included" data-en="Price Alert" data-ja="プライスアラート">Price Alert</li>
+          <li class="included" data-en="Memo notes" data-ja="メモ機能">Memo notes</li>
+          <li class="included" data-en="Lifetime license — no subscription" data-ja="生涯ライセンス・サブスクなし">Lifetime license — no subscription</li>
+        </ul>
+        <a href="YOUR_STRIPE_LINK_HERE" class="btn-plan btn-plan-primary" data-en="Purchase — $7.99" data-ja="購入する — $7.99">Purchase — $7.99</a>
+        <div class="plan-sub" data-en="Secure payment via Stripe. Activation key by email within 24 hours." data-ja="Stripeによる安全な決済。アクティベーションキーを24時間以内にメールでお届けします。">Secure payment via Stripe. Activation key by email within 24 hours.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Activation" data-ja="アクティベーション">Activation</div>
+      <h2 data-en="How to activate" data-ja="アクティベーション方法">How to activate</h2>
+    </div>
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
-        <div class="step-text">Complete your purchase via Stripe. <strong>Include your email address</strong> in the payment notes.</div>
+        <h4 data-en="Purchase" data-ja="購入">Purchase</h4>
+        <p data-en="Complete payment via Stripe. Include your email address in the payment notes." data-ja="Stripeで購入。支払いメモにメールアドレスを記入してください。">Complete payment via Stripe. Include your email address in the payment notes.</p>
       </div>
       <div class="step">
         <div class="step-num">2</div>
-        <div class="step-text">You will receive an <strong>activation key</strong> (format: XXXXX-XXXXX-XXXXX-XXXXX) by email within 24 hours.</div>
+        <h4 data-en="Receive Key" data-ja="キー受け取り">Receive Key</h4>
+        <p data-en="Receive an activation key (XXXXX-XXXXX-XXXXX-XXXXX) by email within 24 hours." data-ja="24時間以内にアクティベーションキーをメールでお届けします。">Receive an activation key by email within 24 hours.</p>
       </div>
       <div class="step">
         <div class="step-num">3</div>
-        <div class="step-text">Open the <strong>Garmin Connect IQ app</strong> on your smartphone → MarketWatch → Settings → enter the key in the <strong>License Key</strong> field.</div>
+        <h4 data-en="Enter Key" data-ja="キー入力">Enter Key</h4>
+        <p data-en="Garmin Connect IQ app → MarketWatch → Settings → enter the key in License Key field." data-ja="Connect IQアプリ → MarketWatch → 設定 →「License Key」欄にキーを入力。">Garmin Connect IQ → MarketWatch → Settings → enter the key in License Key field.</p>
       </div>
       <div class="step">
         <div class="step-num">4</div>
-        <div class="step-text">Save settings and <strong>restart the app</strong> on your Garmin device. Full version is now active.</div>
+        <h4 data-en="Enjoy" data-ja="完了">Enjoy</h4>
+        <p data-en="Save settings and restart the app. Full version is now active." data-ja="設定を保存してアプリを再起動。フルバージョンが有効になります。">Save settings and restart the app. Full version is now active.</p>
       </div>
     </div>
   </div>
 
-  <div class="privacy">
-    <h2>Privacy Policy</h2>
-    <p>MarketWatch for Garmin does not collect, store, or transmit any personal information. All settings (ticker symbols, names, license key, memos) are stored locally on your device via the Garmin Connect IQ platform.</p>
-    <p>Stock price data is fetched from Yahoo Finance and Binance public APIs. No user data is sent to these services beyond the ticker symbols you configure.</p>
-    <p>Payment processing is handled by Stripe. Please refer to Stripe's privacy policy for information about payment data handling.</p>
-    <p>For support or questions, contact: <a href="mailto:easymoat@gmail.com" style="color: var(--accent);">easymoat@gmail.com</a></p>
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Privacy" data-ja="プライバシー">Privacy</div>
+      <h2 data-en="Privacy Policy" data-ja="プライバシーポリシー">Privacy Policy</h2>
+    </div>
+    <div class="privacy-box">
+      <p data-en="MarketWatch for Garmin does not collect, store, or transmit any personal information. All settings (ticker symbols, names, license key, memos) are stored locally on your device via the Garmin Connect IQ platform." data-ja="MarketWatch for Garminは個人情報の収集・保存・送信を一切行いません。すべての設定（ティッカーシンボル、名前、ライセンスキー、メモ）はGarmin Connect IQプラットフォームを通じてデバイス上にローカル保存されます。">MarketWatch for Garmin does not collect, store, or transmit any personal information. All settings are stored locally on your device via the Garmin Connect IQ platform.</p>
+      <p data-en="Stock price data is fetched from Yahoo Finance and Binance public APIs. No user data is sent beyond the ticker symbols you configure." data-ja="株価データはYahoo FinanceおよびBinanceの公開APIから取得されます。設定したティッカーシンボル以外のユーザーデータは送信されません。">Stock price data is fetched from Yahoo Finance and Binance public APIs. No user data is sent beyond the ticker symbols you configure.</p>
+      <p data-en="Payment processing is handled by Stripe. For support: " data-ja="決済はStripeが処理します。サポート：">Payment processing is handled by Stripe. For support: <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a></p>
+    </div>
   </div>
 
-  <footer>
-    <div>© 2025 Easymoat. All rights reserved.</div>
-    <div><a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a></div>
-  </footer>
-
 </main>
+
+<footer>
+  <p>© 2025 Easymoat. All rights reserved. &nbsp;|&nbsp; <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a></p>
+</footer>
+
+<script>
+function setLang(lang) {
+  document.querySelectorAll('[data-en]').forEach(el => {
+    const text = el.getAttribute('data-' + lang);
+    if (text) el.textContent = text;
+  });
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+  document.documentElement.lang = lang;
+}
+</script>
 </body>
 </html>

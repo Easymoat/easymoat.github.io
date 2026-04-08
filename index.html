@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -133,8 +133,8 @@
 
 <div class="lang-bar">
   <span>🌐</span>
-  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
-  <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+  <button class="lang-btn" onclick="setLang('en')" id="btn-en">English</button>
+  <button class="lang-btn active" onclick="setLang('ja')" id="btn-ja">日本語</button>
 </div>
 
 <nav>
@@ -350,6 +350,18 @@
 
   <div class="section">
     <div class="section-header">
+      <div class="section-tag" data-en="Refund &amp; Cancellation" data-ja="返金・キャンセル">Refund &amp; Cancellation</div>
+      <h2 data-en="Refund &amp; Cancellation Policy" data-ja="返金・キャンセルポリシー">Refund &amp; Cancellation Policy</h2>
+    </div>
+    <div class="privacy-box">
+      <p data-en="Refund Policy: As MarketWatch is a digital product (license key), all sales are final and we are unable to offer refunds after purchase. If your license key does not function correctly, please contact us at easymoat@gmail.com and we will resolve the issue promptly." data-ja="返金ポリシー：MarketWatchはデジタル商品（ライセンスキー）のため、ご購入後の返金は原則お受けできません。ライセンスキーが正常に機能しない場合は、easymoat@gmail.com までご連絡ください。速やかに対応いたします。">Refund Policy: As MarketWatch is a digital product (license key), all sales are final and we are unable to offer refunds after purchase. If your license key does not function correctly, please contact us at easymoat@gmail.com and we will resolve the issue promptly.</p>
+      <p data-en="Cancellation Policy: MarketWatch is a one-time purchase with a lifetime license — there is no subscription or recurring charge. No cancellation is required." data-ja="キャンセルポリシー：MarketWatchは買い切り・生涯ライセンスです。定期課金・サブスクリプションはありません。キャンセル手続きは不要です。">Cancellation Policy: MarketWatch is a one-time purchase with a lifetime license — there is no subscription or recurring charge. No cancellation is required.</p>
+      <p data-en="For any questions or concerns, please contact: easymoat@gmail.com" data-ja="ご不明な点はこちらまで：easymoat@gmail.com">For any questions or concerns, please contact: easymoat@gmail.com</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
       <div class="section-tag" data-en="Privacy" data-ja="プライバシー">Privacy</div>
       <h2 data-en="Privacy Policy" data-ja="プライバシーポリシー">Privacy Policy</h2>
     </div>
@@ -382,6 +394,7 @@ function setLang(lang) {
   document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
   document.documentElement.lang = lang;
 }
+document.addEventListener('DOMContentLoaded', function() { setLang('ja'); });
 </script>
 </body>
 </html>

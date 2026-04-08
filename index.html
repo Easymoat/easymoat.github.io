@@ -148,7 +148,7 @@
     <div>
       <div class="hero-tag" data-en="Now on Garmin Connect IQ" data-ja="Garmin Connect IQで公開中">Now on Garmin Connect IQ</div>
       <h1><em>Market</em><br>Watch</h1>
-      <p class="hero-desc" data-en="Auto-refreshing stock prices, crypto, forex and indices — directly on your Garmin watch. Designed for serious investors who need market data at a glance." data-ja="株価・暗号資産・為替・指数をGarminウォッチで自動更新表示。スマートフォンを取り出さずに、いつでも相場を確認できます。">Real-time stock prices, crypto, forex and indices — directly on your Garmin watch. Designed for serious investors who need instant market data at a glance.</p>
+      <p class="hero-desc" data-en="Auto-refreshing stock prices, crypto, forex and indices — directly on your Garmin watch. Designed for serious investors who need market data at a glance." data-ja="株価・暗号資産・為替・指数をGarminウォッチで自動更新表示。スマートフォンを取り出さずに、いつでも相場を確認できます。">Auto-refreshing stock prices, crypto, forex and indices — directly on your Garmin watch. Designed for serious investors who need market data at a glance.</p>
       <div class="hero-cta">
         <a href="YOUR_STRIPE_LINK_HERE" class="btn-primary" data-en="Buy Full Version — $7.99" data-ja="フルバージョン購入 — $7.99">Buy Full Version — $7.99</a>
         <a href="https://apps.garmin.com/" class="btn-secondary" data-en="Free Download" data-ja="無料でダウンロード">Free Download</a>
@@ -170,13 +170,14 @@
     <div class="section-header">
       <div class="section-tag" data-en="Features" data-ja="機能">Features</div>
       <h2 data-en="Everything you need on your wrist" data-ja="必要な機能がすべて手首に">Everything you need on your wrist</h2>
-      <p class="section-desc" data-en="MarketWatch brings auto-refreshing market data to your Garmin with a clean, high-visibility display." data-ja="MarketWatchは、自動更新の市場データを視認性の高いデザインでGarminデバイスに届けます。">MarketWatch brings professional-grade market data to your Garmin with a clean, high-visibility display.</p>
+      <p class="section-desc" data-en="MarketWatch brings auto-refreshing market data to your Garmin with a clean, high-visibility display." data-ja="MarketWatchは、自動更新の市場データを視認性の高いデザインでGarminデバイスに届けます。">MarketWatch brings auto-refreshing market data to your Garmin with a clean, high-visibility display.</p>
     </div>
     <div class="features">
       <div class="feature">
         <div class="feature-icon">📈</div>
-        <h3 data-en="Real-time Prices" data-ja="リアルタイム価格">Real-time Prices</h3>
+        <h3 data-en="Auto-Refreshing Prices" data-ja="自動更新価格">Auto-Refreshing Prices</h3>
         <p data-en="Auto-refreshing quotes for stocks, crypto, forex & indices. Configurable 30sec–30min intervals." data-ja="株価・暗号資産・為替・指数を自動更新。30秒〜30分で更新間隔を設定可能。">Auto-refreshing quotes for stocks, crypto, forex & indices. Configurable 30sec–30min intervals.</p>
+        <p style="font-size:11px; color:var(--muted2); margin-top:6px;" data-en="※ Data from Yahoo Finance. May be delayed up to 15 min." data-ja="※ Yahoo Finance使用。最大15分の遅延あり。">※ Data from Yahoo Finance. May be delayed up to 15 min.</p>
       </div>
       <div class="feature">
         <div class="feature-icon">📊</div>
@@ -373,5 +374,14 @@
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 function setLang(lang) {
   document.querySelectorAll('[data-en]').forEach(el => {
+    if (el.children.length > 0) return;
     const text = el.getAttribute('data-' + lang);
-    if (text) el.textConten
+    if (text) el.textContent = text;
+  });
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+  document.documentElement.lang = lang;
+}
+</script>
+</body>
+</html>

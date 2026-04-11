@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MarketWatch for Garmin | Easymoat</title>
+<link rel="icon" type="image/png" href="favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -357,9 +358,9 @@
       <h2 data-en="Refund &amp; Cancellation Policy" data-ja="返金・キャンセルポリシー">Refund &amp; Cancellation Policy</h2>
     </div>
     <div class="privacy-box">
-      <p data-en="Refund Policy: As MarketWatch is a digital product (license key), all sales are final and we are unable to offer refunds after purchase. If your license key does not function correctly, please contact us at easymoat@gmail.com and we will resolve the issue promptly." data-ja="返金ポリシー：MarketWatchはデジタル商品（ライセンスキー）のため、ご購入後の返金は原則お受けできません。ライセンスキーが正常に機能しない場合は、easymoat@gmail.com までご連絡ください。速やかに対応いたします。">Refund Policy: As MarketWatch is a digital product (license key), all sales are final and we are unable to offer refunds after purchase. If your license key does not function correctly, please contact us at <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="fd989c8e8490929c89bd9a909c9491d39e9290">[email&#160;protected]</a> and we will resolve the issue promptly.</p>
+      <p>Refund Policy: As MarketWatch is a digital product (license key), all sales are final. If your license key does not function correctly, please contact us at <span class="em"></span> and we will resolve the issue promptly.<br><span style="color:var(--muted2);font-size:12px;">返金ポリシー：ライセンスキーが正常に機能しない場合は <span class="em"></span> までご連絡ください。</span></p>
       <p data-en="Cancellation Policy: MarketWatch is a one-time purchase with a lifetime license — there is no subscription or recurring charge. No cancellation is required." data-ja="キャンセルポリシー：MarketWatchは買い切り・生涯ライセンスです。定期課金・サブスクリプションはありません。キャンセル手続きは不要です。">Cancellation Policy: MarketWatch is a one-time purchase with a lifetime license — there is no subscription or recurring charge. No cancellation is required.</p>
-      <p>ご不明な点はこちらまで / For any questions: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="40252133392d2f213400272d21292c6e232f2d">[email&#160;protected]</a></p>
+      <p>ご不明な点はこちらまで / For any questions: <span class="em"></span></p>
     </div>
   </div>
 
@@ -371,7 +372,7 @@
     <div class="privacy-box">
       <p data-en="MarketWatch for Garmin does not collect, store, or transmit any personal information. All settings (ticker symbols, names, license key, memos) are stored locally on your device via the Garmin Connect IQ platform." data-ja="MarketWatch for Garminは個人情報の収集・保存・送信を一切行いません。すべての設定（ティッカーシンボル、名前、ライセンスキー、メモ）はGarmin Connect IQプラットフォームを通じてデバイス上にローカル保存されます。">MarketWatch for Garmin does not collect, store, or transmit any personal information. All settings are stored locally on your device via the Garmin Connect IQ platform.</p>
       <p data-en="Stock price data is fetched from Yahoo Finance and Binance public APIs. No user data is sent beyond the ticker symbols you configure." data-ja="株価データはYahoo FinanceおよびBinanceの公開APIから取得されます。設定したティッカーシンボル以外のユーザーデータは送信されません。">Stock price data is fetched from Yahoo Finance and Binance public APIs. No user data is sent beyond the ticker symbols you configure.</p>
-      <p>Payment processing is handled by Stripe. / 決済はStripeが処理します。 Support: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="bcd9ddcfc5d1d3ddc8fcdbd1ddd5d092dfd3d1">[email&#160;protected]</a></p>
+      <p>Payment processing is handled by Stripe. / 決済はStripeが処理します。 Support: <span class="em"></span></p>
     </div>
   </div>
 
@@ -380,10 +381,40 @@
 <footer>
   <p>© 2025 Easymoat. All rights reserved.</p>
   <div class="footer-links">
-    <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e48185979d898b8590a48389858d88ca878b89">[email&#160;protected]</a>
+    <span class="em-footer"></span>
     <span style="color:var(--border)">|</span>
     <a href="tokutei.html" data-en="Specified Commercial Transactions Act" data-ja="特定商取引法に基づく表記">特定商取引法に基づく表記</a>
   </div>
 </footer>
 
-<script data-cfasync="false" src="/cdn-cgi/s
+<script>
+var _e = 'easymoat' + '@' + 'gmail.com';
+
+function injectEmails() {
+  document.querySelectorAll('.em').forEach(function(el) {
+    el.innerHTML = '<a href="mailto:' + _e + '">' + _e + '</a>';
+  });
+  document.querySelectorAll('.em-footer').forEach(function(el) {
+    el.textContent = _e;
+  });
+}
+
+function setLang(lang) {
+  document.querySelectorAll('[data-en]').forEach(el => {
+    if (el.children.length > 0) return;
+    const text = el.getAttribute('data-' + lang);
+    if (text) el.textContent = text;
+  });
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+  document.documentElement.lang = lang;
+  injectEmails();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  setLang('en');
+  injectEmails();
+});
+</script>
+</body>
+</html>

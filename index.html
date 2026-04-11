@@ -32,7 +32,8 @@
   .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
 
   nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 40px; display: flex; align-items: center; justify-content: space-between; }
-  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: var(--accent); letter-spacing: -0.01em; }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: var(--accent); letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
+  .logo img { height: 36px; width: 36px; border-radius: 8px; object-fit: cover; }
   .logo span { color: var(--muted2); font-weight: 700; }
   .nav-badge { background: var(--accent-light); color: var(--accent); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; padding: 4px 10px; border-radius: 20px; }
 
@@ -139,7 +140,10 @@
 </div>
 
 <nav>
-  <div class="logo">Easymoat<span>.io</span></div>
+  <div class="logo">
+    <img src="easymoat_logo.png" alt="Easymoat">
+    Easymoat<span>.io</span>
+  </div>
   <div class="nav-badge" data-en="Garmin App Developer" data-ja="Garminアプリ開発">Garmin App Developer</div>
 </nav>
 
@@ -148,6 +152,9 @@
   <div class="hero">
     <div>
       <div class="hero-tag" data-en="Now on Garmin Connect IQ" data-ja="Garmin Connect IQで公開中">Now on Garmin Connect IQ</div>
+      <div style="margin-bottom:20px;">
+        <img src="easymoat_logo.png" alt="Easymoat Logo" style="height:80px; width:80px; border-radius:18px; object-fit:cover; box-shadow:0 4px 20px rgba(0,0,0,0.15);">
+      </div>
       <h1><em>Market</em><br>Watch</h1>
       <p class="hero-desc" data-en="Auto-refreshing stock prices, crypto, forex and indices — directly on your Garmin watch. Designed for serious investors who need market data at a glance." data-ja="株価・暗号資産・為替・指数をGarminウォッチで自動更新表示。スマートフォンを取り出さずに、いつでも相場を確認できます。">Auto-refreshing stock prices, crypto, forex and indices — directly on your Garmin watch. Designed for serious investors who need market data at a glance.</p>
       <div class="hero-cta">
@@ -384,7 +391,7 @@
   </div>
 </footer>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 function setLang(lang) {
   document.querySelectorAll('[data-en]').forEach(el => {
     if (el.children.length > 0) return;

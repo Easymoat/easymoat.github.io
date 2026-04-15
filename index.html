@@ -209,7 +209,7 @@
       <div class="feature">
         <div class="feature-icon">⌚</div>
         <h3 data-en="Garmin Native" data-ja="Garmin専用設計">Garmin Native</h3>
-        <p data-en="Compatible with Forerunner 965/970, fēnix 8, epix Pro Gen2 51mm, and more. Color mode switchable: Japanese style (Red=Up, Green=Down) or Standard (Green=Up, Red=Down)." data-ja="Forerunner 965/970、fēnix 8、epix Pro Gen2 51mmなど対応。カラーモード切替可能：日本式（赤=上昇、緑=下落）または標準（緑=上昇、赤=下落）。">Compatible with Forerunner 965/970, fēnix 8, epix Pro Gen2 51mm, and more. Color mode switchable: Japanese style (Red=Up, Green=Down) or Standard (Green=Up, Red=Down).</p>
+        <p data-en="Compatible with 19 devices including Forerunner 165–970, fēnix 8, Venu 3/4, Venu X1, and more. Color mode switchable: Japanese style (Red=Up, Green=Down) or Standard (Green=Up, Red=Down)." data-ja="Forerunner 165〜970、fēnix 8、Venu 3/4、Venu X1など19機種対応。カラーモード切替可能：日本式（赤=上昇、緑=下落）または標準（緑=上昇、赤=下落）。">Compatible with 19 devices including Forerunner 165–970, fēnix 8, Venu 3/4, Venu X1, and more. Color mode switchable: Japanese style (Red=Up, Green=Down) or Standard (Green=Up, Red=Down).</p>
       </div>
     </div>
   </div>
@@ -285,20 +285,32 @@
     <div class="section-header">
       <div class="section-tag" data-en="Compatible Devices" data-ja="対応デバイス">Compatible Devices</div>
       <h2 data-en="Supported Garmin devices" data-ja="対応Garminデバイス">Supported Garmin devices</h2>
-      <p class="section-desc" data-en="All compatible devices share a 454×454 AMOLED display for optimal visibility." data-ja="対応機種はすべて454×454 AMOLEDディスプレイを搭載しています。">All compatible devices share a 454×454 AMOLED display for optimal visibility.</p>
+      <p class="section-desc" data-en="Compatible with 19 Garmin devices across the Forerunner, fēnix, Venu, epix, Descent, Approach and D2 series." data-ja="Forerunner、fēnix、Venu、epix、Descent、Approach、D2シリーズなど19機種に対応しています。">Compatible with 19 Garmin devices across the Forerunner, fēnix, Venu, epix, Descent, Approach and D2 series.</p>
     </div>
     <div class="data-grid" style="grid-template-columns: repeat(4, 1fr);">
       <div class="data-item">
         <div class="data-type">Forerunner</div>
-        <div class="data-example" style="font-size:12px;">965 / 970</div>
+        <div class="data-example" style="font-size:12px;">165 / 265 / 570 / 965 / 970</div>
       </div>
       <div class="data-item">
         <div class="data-type">fēnix 8</div>
-        <div class="data-example" style="font-size:12px;">47mm / 51mm</div>
+        <div class="data-example" style="font-size:12px;">43mm / 47mm / Pro</div>
+      </div>
+      <div class="data-item">
+        <div class="data-type">fēnix E</div>
+        <div class="data-example" style="font-size:12px;">416×416</div>
       </div>
       <div class="data-item">
         <div class="data-type">epix Pro Gen2</div>
         <div class="data-example" style="font-size:12px;">51mm</div>
+      </div>
+      <div class="data-item">
+        <div class="data-type">Venu 3 / 4</div>
+        <div class="data-example" style="font-size:12px;">41mm / 45mm</div>
+      </div>
+      <div class="data-item">
+        <div class="data-type">Venu X1</div>
+        <div class="data-example" style="font-size:12px;">448×486</div>
       </div>
       <div class="data-item">
         <div class="data-type">Descent Mk3i</div>
@@ -313,12 +325,8 @@
         <div class="data-example" style="font-size:12px;">454×454</div>
       </div>
       <div class="data-item">
-        <div class="data-type">fēnix 8 Pro</div>
-        <div class="data-example" style="font-size:12px;">47mm / 51mm</div>
-      </div>
-      <div class="data-item">
         <div class="data-type" data-en="&amp; more" data-ja="その他">&amp; more</div>
-        <div class="data-example" style="font-size:12px;">454×454 AMOLED</div>
+        <div class="data-example" style="font-size:12px;">AMOLED</div>
       </div>
     </div>
   </div>
@@ -358,9 +366,9 @@
       <h2 data-en="Refund &amp; Cancellation Policy" data-ja="返金・キャンセルポリシー">Refund &amp; Cancellation Policy</h2>
     </div>
     <div class="privacy-box">
-      <p>Refund Policy: As MarketWatch is a digital product (license key), all sales are final. If your license key does not function correctly, please contact us at <span class="em"></span> and we will resolve the issue promptly.<br><span style="color:var(--muted2);font-size:12px;">返金ポリシー：ライセンスキーが正常に機能しない場合は <span class="em"></span> までご連絡ください。</span></p>
+      <p id="refund-policy">Refund Policy: As MarketWatch is a digital product (license key), all sales are final. If your license key does not function correctly, please contact us at <span class="em"></span> and we will resolve the issue promptly.</p>
       <p data-en="Cancellation Policy: MarketWatch is a one-time purchase with a lifetime license — there is no subscription or recurring charge. No cancellation is required." data-ja="キャンセルポリシー：MarketWatchは買い切り・生涯ライセンスです。定期課金・サブスクリプションはありません。キャンセル手続きは不要です。">Cancellation Policy: MarketWatch is a one-time purchase with a lifetime license — there is no subscription or recurring charge. No cancellation is required.</p>
-      <p>ご不明な点はこちらまで / For any questions: <span class="em"></span></p>
+      <p id="questions-line">For any questions: <span class="em"></span></p>
     </div>
   </div>
 
@@ -405,6 +413,27 @@ function setLang(lang) {
     const text = el.getAttribute('data-' + lang);
     if (text) el.textContent = text;
   });
+
+  // 返金ポリシー段落
+  var refund = document.getElementById('refund-policy');
+  if (refund) {
+    if (lang === 'ja') {
+      refund.innerHTML = '返金ポリシー：MarketWatchはデジタル商品（ライセンスキー）のため、ご購入後の返金は原則お受けできません。ライセンスキーが正常に機能しない場合は <span class="em"></span> までご連絡ください。速やかに対応いたします。';
+    } else {
+      refund.innerHTML = 'Refund Policy: As MarketWatch is a digital product (license key), all sales are final. If your license key does not function correctly, please contact us at <span class="em"></span> and we will resolve the issue promptly.';
+    }
+  }
+
+  // お問い合わせ行
+  var ql = document.getElementById('questions-line');
+  if (ql) {
+    if (lang === 'ja') {
+      ql.innerHTML = 'ご不明な点はこちらまで：<span class="em"></span>';
+    } else {
+      ql.innerHTML = 'For any questions: <span class="em"></span>';
+    }
+  }
+
   document.getElementById('btn-en').classList.toggle('active', lang === 'en');
   document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
   document.documentElement.lang = lang;

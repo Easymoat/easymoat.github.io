@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MLB Player ID Lookup - MLBWatch Samurai</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f0a;
+    --card: #141e14;
+    --field: #1a3a1a;
+    --accent: #4caf50;
+    --accent2: #ff5722;
+    --text: #e8e8e8;
+    --text-dim: #8a9a8a;
+    --border: #2a3a2a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .bg-pattern {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse at 50% 120%, rgba(76,175,80,0.08) 0%, transparent 60%),
+      radial-gradient(circle at 20% 50%, rgba(76,175,80,0.03) 0%, transparent 40%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .logo-mark {
+    display: inline-block;
+    width: 48px; height: 48px;
+    background: var(--accent);
+    border-radius: 50%;
+    margin-bottom: 16px;
+    position: relative;
+    box-shadow: 0 0 30px rgba(76,175,80,0.3);
+  }
+  .logo-mark::after {
+    content: '⚾';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+  }
+
+  h1 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 2rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    font-weight: 300;
+  }
+
+  .search-box {
+    position: relative;
+    margin-bottom: 12px;
+  }
+
+  .search-box input {
+    width: 100%;
+    padding: 16px 20px 16px 48px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-size: 1.1rem;
+    font-family: 'Source Sans 3', sans-serif;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .search-box input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(76,175,80,0.15);
+  }
+  .search-box input::placeholder {
+    color: var(--text-dim);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 16px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    color: var(--text-dim);
+  }
+
+  .hint {
+    color: var(--text-dim);
+    font-size: 0.82rem;
+    margin-bottom: 30px;
+    padding-left: 4px;
+  }
+
+  .status {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-dim);
+    font-size: 0.95rem;
+  }
+
+  .results {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .player-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: border-color 0.2s, transform 0.15s;
+    cursor: default;
+  }
+  .player-card:hover {
+    border-color: var(--accent);
+    transform: translateX(4px);
+  }
+
+  .player-info {
+    flex: 1;
+  }
+
+  .player-name {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 1.15rem;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .player-meta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .meta-tag {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    background: var(--field);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .meta-tag.pos {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .player-id-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .player-id {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+
+  .copy-btn {
+    background: var(--field);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-family: 'Source Sans 3', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .copy-btn:hover {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .copy-btn.copied {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+
+  .footer {
+    margin-top: 50px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    line-height: 1.8;
+  }
+  .footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .how-to {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 30px;
+  }
+  .how-to h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .how-to ol {
+    padding-left: 20px;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    line-height: 1.8;
+  }
+  .how-to ol li strong {
+    color: var(--text);
+  }
+
+  @media (max-width: 500px) {
+    .player-card {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .player-id-section {
+      width: 100%;
+      justify-content: space-between;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-pattern"></div>
+
+<div class="container">
+  <header>
+    <div class="logo-mark"></div>
+    <h1>Player ID Lookup</h1>
+    <p class="subtitle">Find any MLB player's ID for MLBWatch Samurai</p>
+  </header>
+
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search player name (e.g. Ohtani, Judge, Trout)" autofocus>
+  </div>
+  <p class="hint">Enter at least 2 characters. Results from MLB Stats API.</p>
+
+  <div class="how-to">
+    <h3>How to Use</h3>
+    <ol>
+      <li>Search for a player by name</li>
+      <li>Click <strong>Copy</strong> to copy the Player ID</li>
+      <li>Open <strong>Garmin Connect</strong> app → MLBWatch Samurai → Settings</li>
+      <li>Paste the ID into any Player slot</li>
+    </ol>
+  </div>
+
+  <div id="results" class="results"></div>
+  <div id="status" class="status"></div>
+
+  <footer class="footer">
+    <a href="/mlbwatch/">← Back to MLBWatch Samurai</a><br>
+    Data provided by MLB Stats API<br>
+    © 2026 Easymoat
+  </footer>
+</div>
+
+<script>
+const input = document.getElementById('searchInput');
+const resultsDiv = document.getElementById('results');
+const statusDiv = document.getElementById('status');
+let debounceTimer;
+
+input.addEventListener('input', () => {
+  clearTimeout(debounceTimer);
+  const q = input.value.trim();
+  if (q.length < 2) {
+    resultsDiv.innerHTML = '';
+    statusDiv.textContent = '';
+    return;
+  }
+  statusDiv.textContent = 'Searching...';
+  debounceTimer = setTimeout(() => searchPlayers(q), 400);
+});
+
+async function searchPlayers(query) {
+  try {
+    const url = `https://statsapi.mlb.com/api/v1/people/search?names=${encodeURIComponent(query)}&sportIds=1&active=true&hydrate=currentTeam`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const people = data.people || [];
+
+    if (people.length === 0) {
+      resultsDiv.innerHTML = '';
+      statusDiv.textContent = 'No players found. Try a different spelling.';
+      return;
+    }
+
+    statusDiv.textContent = `${people.length} player${people.length > 1 ? 's' : ''} found`;
+    resultsDiv.innerHTML = people.slice(0, 20).map(p => {
+      const team = p.currentTeam?.name || 'N/A';
+      const teamAbbr = p.currentTeam?.abbreviation || '';
+      const pos = p.primaryPosition?.abbreviation || '?';
+      const number = p.primaryNumber ? `#${p.primaryNumber}` : '';
+      return `
+        <div class="player-card">
+          <div class="player-info">
+            <div class="player-name">${p.fullName} ${number}</div>
+            <div class="player-meta">
+              <span class="meta-tag pos">${pos}</span>
+              <span class="meta-tag">${team}</span>
+            </div>
+          </div>
+          <div class="player-id-section">
+            <span class="player-id">${p.id}</span>
+            <button class="copy-btn" onclick="copyId(this, ${p.id})">Copy</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (e) {
+    statusDiv.textContent = 'Search error. Please try again.';
+    console.error(e);
+  }
+}
+
+function copyId(btn, id) {
+  navigator.clipboard.writeText(String(id)).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>

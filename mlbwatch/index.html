@@ -3,310 +3,482 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MLB Player ID Lookup - MLBWatch Samurai</title>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<title>MLBWatch 2026 for Garmin | Easymoat</title>
+<link rel="icon" type="image/png" href="../favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0f0a;
-    --card: #141e14;
-    --field: #1a3a1a;
-    --accent: #4caf50;
-    --accent2: #ff5722;
-    --text: #e8e8e8;
-    --text-dim: #8a9a8a;
-    --border: #2a3a2a;
+    --bg: #F8F9FC;
+    --white: #FFFFFF;
+    --border: #E2E6EF;
+    --accent: #007A3D;
+    --accent-light: #E5F5EC;
+    --accent2: #CC0022;
+    --accent3: #0066FF;
+    --text: #111827;
+    --text2: #374151;
+    --muted: #6B7280;
+    --muted2: #9CA3AF;
+    --yellow: #D97706;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
   }
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.6; overflow-x: hidden; }
 
-  body {
-    font-family: 'Source Sans 3', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 40px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); position: sticky; top: 0; z-index: 200; }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; color: var(--muted); transition: all 0.15s; }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
 
-  .bg-pattern {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background:
-      radial-gradient(ellipse at 50% 120%, rgba(76,175,80,0.08) 0%, transparent 60%),
-      radial-gradient(circle at 20% 50%, rgba(76,175,80,0.03) 0%, transparent 40%);
-    pointer-events: none;
-    z-index: 0;
-  }
+  nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 40px; display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: var(--accent); letter-spacing: -0.01em; }
+  .logo span { color: var(--muted2); font-weight: 700; }
+  .nav-badge { background: var(--accent-light); color: var(--accent); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; padding: 4px 10px; border-radius: 20px; }
 
-  .container {
-    position: relative;
-    z-index: 1;
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 40px 20px;
-  }
+  main { max-width: 960px; margin: 0 auto; padding: 0 40px 80px; }
 
-  header {
-    text-align: center;
-    margin-bottom: 40px;
-  }
+  .hero { padding: 64px 0 48px; }
+  .hero-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; padding: 5px 12px; border-radius: 20px; margin-bottom: 20px; }
+  .hero-tag::before { content: ''; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
+  h1 { font-family: 'Syne', sans-serif; font-size: clamp(36px, 5vw, 56px); font-weight: 800; line-height: 1.05; letter-spacing: -0.02em; color: var(--text); margin-bottom: 16px; }
+  h1 em { font-style: normal; color: var(--accent); }
+  .hero-desc { font-size: 16px; line-height: 1.7; color: var(--muted); margin-bottom: 32px; max-width: 680px; }
+  .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
 
-  .logo-mark {
-    display: inline-block;
-    width: 48px; height: 48px;
-    background: var(--accent);
-    border-radius: 50%;
-    margin-bottom: 16px;
-    position: relative;
-    box-shadow: 0 0 30px rgba(76,175,80,0.3);
-  }
-  .logo-mark::after {
-    content: '⚾';
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 24px;
-  }
+  .btn-primary { display: inline-flex; align-items: center; gap: 8px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 8px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,122,61,0.3); }
+  .btn-primary:hover { background: #006030; transform: translateY(-1px); }
+  .btn-secondary { display: inline-flex; align-items: center; gap: 8px; background: var(--white); color: var(--text); font-size: 14px; font-weight: 500; text-decoration: none; padding: 12px 24px; border-radius: 8px; border: 1px solid var(--border); transition: all 0.2s; }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-secondary.disabled { color: var(--muted2); cursor: not-allowed; pointer-events: none; }
 
-  h1 {
-    font-family: 'Oswald', sans-serif;
-    font-weight: 700;
-    font-size: 2rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--text);
-    margin-bottom: 6px;
-  }
+  .section { padding: 64px 0; border-top: 1px solid var(--border); }
+  .section-header { margin-bottom: 32px; }
+  .section-tag { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  h2 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.01em; color: var(--text); margin-bottom: 8px; }
+  .section-desc { font-size: 15px; color: var(--muted); max-width: 680px; }
 
-  .subtitle {
-    color: var(--text-dim);
-    font-size: 0.95rem;
-    font-weight: 300;
-  }
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .feature { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: box-shadow 0.2s, border-color 0.2s; }
+  .feature:hover { box-shadow: var(--shadow); border-color: #B7E0C7; }
+  .feature-icon { font-size: 28px; margin-bottom: 12px; }
+  .feature h3 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .feature p { font-size: 13px; line-height: 1.6; color: var(--muted); }
 
-  .search-box {
-    position: relative;
-    margin-bottom: 12px;
-  }
+  .events-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .event-item { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 8px; }
+  .event-item::before { content: '✓'; color: var(--accent); font-weight: 700; flex-shrink: 0; }
 
-  .search-box input {
-    width: 100%;
-    padding: 16px 20px 16px 48px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    color: var(--text);
-    font-size: 1.1rem;
-    font-family: 'Source Sans 3', sans-serif;
-    outline: none;
-    transition: border-color 0.3s, box-shadow 0.3s;
-  }
-  .search-box input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 20px rgba(76,175,80,0.15);
-  }
-  .search-box input::placeholder {
-    color: var(--text-dim);
-  }
+  .pricing-grid { display: grid; grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; }
+  .plan { background: var(--white); border: 2px solid var(--accent); border-radius: 16px; padding: 32px; position: relative; box-shadow: 0 0 0 4px rgba(0,122,61,0.08); }
+  .plan-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; padding: 4px 16px; border-radius: 20px; white-space: nowrap; }
+  .plan-name { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .plan-price { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 800; color: var(--text); line-height: 1; margin-bottom: 4px; }
+  .plan-price-unit { font-size: 18px; color: var(--muted); font-weight: 500; }
+  .plan-note { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+  .plan-features { list-style: none; margin-bottom: 28px; }
+  .plan-features li { font-size: 14px; color: var(--text2); padding: 7px 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .plan-features li.included::before { content: '✓'; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+  .btn-plan { display: block; text-align: center; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px; border-radius: 8px; transition: all 0.2s; background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(0,122,61,0.3); }
+  .btn-plan:hover { background: #006030; transform: translateY(-1px); }
+  .plan-sub { font-size: 11px; color: var(--muted2); text-align: center; margin-top: 10px; }
 
-  .search-icon {
-    position: absolute;
-    left: 16px; top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.2rem;
-    color: var(--text-dim);
-  }
+  .data-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .data-item { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
+  .data-type { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted2); margin-bottom: 6px; }
+  .data-example { font-size: 13px; font-weight: 600; color: var(--accent); }
 
-  .hint {
-    color: var(--text-dim);
-    font-size: 0.82rem;
-    margin-bottom: 30px;
-    padding-left: 4px;
-  }
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .step { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .step-num { width: 32px; height: 32px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+  .step h4 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .step p { font-size: 12px; color: var(--muted); line-height: 1.6; }
 
-  .status {
-    text-align: center;
-    padding: 20px;
-    color: var(--text-dim);
-    font-size: 0.95rem;
-  }
+  /* Player ID Lookup */
+  .lookup-box { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 32px; }
+  .search-box { position: relative; margin-bottom: 12px; }
+  .search-box input { width: 100%; padding: 14px 18px 14px 44px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 15px; font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.3s; }
+  .search-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,122,61,0.12); }
+  .search-box input::placeholder { color: var(--muted2); }
+  .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; color: var(--muted2); }
+  .lookup-hint { color: var(--muted); font-size: 12px; margin-bottom: 20px; }
+  .status { text-align: center; padding: 16px; color: var(--muted); font-size: 13px; }
+  .results { display: flex; flex-direction: column; gap: 8px; }
+  .player-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; transition: border-color 0.2s; }
+  .player-card:hover { border-color: var(--accent); }
+  .player-info { flex: 1; min-width: 0; }
+  .player-name { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .player-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+  .meta-tag { font-size: 11px; color: var(--muted); background: var(--white); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); }
+  .meta-tag.pos { color: var(--accent); font-weight: 600; border-color: var(--accent-light); background: var(--accent-light); }
+  .player-id-section { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .player-id { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent); }
+  .copy-btn { background: var(--white); border: 1px solid var(--border); color: var(--text2); padding: 6px 14px; border-radius: 6px; font-size: 12px; font-family: 'Inter', sans-serif; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+  .copy-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .copy-btn.copied { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-  .results {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
+  .privacy-box { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; }
+  .privacy-box h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+  .privacy-box p { font-size: 13px; color: var(--muted); line-height: 1.8; margin-bottom: 10px; }
+  .privacy-box a { color: var(--accent); text-decoration: none; }
 
-  .player-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    transition: border-color 0.2s, transform 0.15s;
-    cursor: default;
-  }
-  .player-card:hover {
-    border-color: var(--accent);
-    transform: translateX(4px);
-  }
+  footer { background: var(--white); border-top: 1px solid var(--border); padding: 32px 40px; text-align: center; font-size: 13px; color: var(--muted); }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer .footer-links { margin-top: 8px; display: flex; justify-content: center; align-items: center; gap: 16px; flex-wrap: wrap; }
+  footer .footer-links a { color: var(--muted); font-size: 12px; }
+  footer .footer-links a:hover { color: var(--accent); }
 
-  .player-info {
-    flex: 1;
+  @media (max-width: 768px) {
+    nav, .lang-bar { padding: 12px 20px; }
+    main { padding: 0 20px 60px; }
+    .features { grid-template-columns: 1fr 1fr; }
+    .events-grid { grid-template-columns: repeat(2, 1fr); }
+    .data-grid { grid-template-columns: repeat(2, 1fr); }
+    .steps { grid-template-columns: 1fr 1fr; }
+    .player-card { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .player-id-section { width: 100%; justify-content: space-between; }
   }
-
-  .player-name {
-    font-family: 'Oswald', sans-serif;
-    font-weight: 600;
-    font-size: 1.15rem;
-    letter-spacing: 0.5px;
-    margin-bottom: 4px;
-  }
-
-  .player-meta {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .meta-tag {
-    font-size: 0.8rem;
-    color: var(--text-dim);
-    background: var(--field);
-    padding: 2px 8px;
-    border-radius: 4px;
-  }
-  .meta-tag.pos {
-    color: var(--accent);
-    font-weight: 600;
-  }
-
-  .player-id-section {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
-  }
-
-  .player-id {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--accent);
-    letter-spacing: 1px;
-  }
-
-  .copy-btn {
-    background: var(--field);
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    padding: 6px 14px;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    font-family: 'Source Sans 3', sans-serif;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .copy-btn:hover {
-    background: var(--accent);
-    color: var(--bg);
-    border-color: var(--accent);
-  }
-  .copy-btn.copied {
-    background: var(--accent);
-    color: var(--bg);
-    border-color: var(--accent);
-  }
-
-  .footer {
-    margin-top: 50px;
-    text-align: center;
-    color: var(--text-dim);
-    font-size: 0.8rem;
-    line-height: 1.8;
-  }
-  .footer a {
-    color: var(--accent);
-    text-decoration: none;
-  }
-
-  .how-to {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px 24px;
-    margin-bottom: 30px;
-  }
-  .how-to h3 {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1rem;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 12px;
-  }
-  .how-to ol {
-    padding-left: 20px;
-    color: var(--text-dim);
-    font-size: 0.9rem;
-    line-height: 1.8;
-  }
-  .how-to ol li strong {
-    color: var(--text);
-  }
-
-  @media (max-width: 500px) {
-    .player-card {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 12px;
-    }
-    .player-id-section {
-      width: 100%;
-      justify-content: space-between;
-    }
+  @media (max-width: 480px) {
+    .features { grid-template-columns: 1fr; }
+    .events-grid { grid-template-columns: 1fr; }
+    .data-grid { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr; }
+    .lookup-box { padding: 20px; }
   }
 </style>
 </head>
 <body>
 
-<div class="bg-pattern"></div>
-
-<div class="container">
-  <header>
-    <div class="logo-mark"></div>
-    <h1>Player ID Lookup</h1>
-    <p class="subtitle">Find any MLB player's ID for MLBWatch Samurai</p>
-  </header>
-
-  <div class="search-box">
-    <span class="search-icon">🔍</span>
-    <input type="text" id="searchInput" placeholder="Search player name (e.g. Ohtani, Judge, Trout)" autofocus>
-  </div>
-  <p class="hint">Enter at least 2 characters. Results from MLB Stats API.</p>
-
-  <div class="how-to">
-    <h3>How to Use</h3>
-    <ol>
-      <li>Search for a player by name</li>
-      <li>Click <strong>Copy</strong> to copy the Player ID</li>
-      <li>Open <strong>Garmin Connect</strong> app → MLBWatch Samurai → Settings</li>
-      <li>Paste the ID into any Player slot</li>
-    </ol>
-  </div>
-
-  <div id="results" class="results"></div>
-  <div id="status" class="status"></div>
-
-  <footer class="footer">
-    <a href="/mlbwatch/">← Back to MLBWatch Samurai</a><br>
-    Data provided by MLB Stats API<br>
-    © 2026 Easymoat
-  </footer>
+<div class="lang-bar">
+  <span>🌐</span>
+  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+  <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
 </div>
 
+<nav>
+  <div class="logo" style="display:flex; align-items:center; gap:10px;">
+    <a href="../" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;">
+      <img src="../easymoat_logo.png" alt="Easymoat" style="height:36px; width:36px; border-radius:8px; object-fit:cover;">
+      <span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:800;">Easymoat</span><span>.io</span>
+    </a>
+  </div>
+  <div class="nav-badge" data-en="Garmin App Developer" data-ja="Garminアプリ開発">Garmin App Developer</div>
+</nav>
+
+<main>
+
+  <div class="hero">
+    <div class="hero-tag" data-en="Available Now" data-ja="利用可能">Available Now</div>
+    <h1><em>MLB</em>Watch <span style="color:var(--muted2); font-size:0.5em; vertical-align:0.4em;">2026</span></h1>
+    <p class="hero-desc" data-en="Live MLB game updates on your Garmin watch. Track up to 20 players of your choice — get real-time notifications for hits, home runs, strikeouts, pitching changes, and more. Stay in the game without picking up your phone." data-ja="MLBの試合状況をGarminウォッチでリアルタイムに。お気に入りの選手を最大20人登録、ヒット・ホームラン・三振・登板交代などを瞬時に通知。スマートフォンを取り出さずに試合を追えます。">Live MLB game updates on your Garmin watch. Track up to 20 players of your choice — get real-time notifications for hits, home runs, strikeouts, pitching changes, and more. Stay in the game without picking up your phone.</p>
+    <div class="hero-cta">
+      <a href="https://buy.stripe.com/5kQ7sE1Gx3Bi0q5gM89sk02" class="btn-primary" data-en="Subscribe — $1.49/month" data-ja="登録する — $1.49/月">Subscribe — $1.49/month</a>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Concept" data-ja="コンセプト">Concept</div>
+      <h2 data-en="Built around your favorite players" data-ja="お気に入りの選手が主役">Built around your favorite players</h2>
+      <p class="section-desc" data-en="Most apps are built around teams. MLBWatch is built around players. Follow the players you love — across teams, throughout the entire game lifecycle." data-ja="多くのアプリはチーム単位で情報を扱います。MLBWatchの主役はあなたが好きな選手。所属チームを問わず、試合の最初から最後まで選手を追えます。">Most apps are built around teams. MLBWatch is built around players. Follow the players you love — across teams, throughout the entire game lifecycle.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">⚾</div>
+        <h3 data-en="Player-Centric View" data-ja="選手中心の表示">Player-Centric View</h3>
+        <p data-en="Your watch screen is organized around your registered players, not teams. The players you care about appear front and center." data-ja="ウォッチの画面はチーム単位ではなく、登録した選手を中心に構成されます。あなたが応援する選手がいつも画面の中心に。">Your watch screen is organized around your registered players, not teams. The players you care about appear front and center.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🕐</div>
+        <h3 data-en="Full Game Lifecycle" data-ja="試合の全ライフサイクル">Full Game Lifecycle</h3>
+        <p data-en="Before the game (start time), during the game (live BSO and score), and after the game (final result). One screen, the entire day." data-ja="試合前（開始時刻表示）、試合中（ライブBSO・スコア）、試合後（最終結果）。1つの画面で1日を追えます。">Before the game (start time), during the game (live BSO and score), and after the game (final result). One screen, the entire day.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🌐</div>
+        <h3 data-en="Cross-Team Following" data-ja="チーム横断">Cross-Team Following</h3>
+        <p data-en="Track players from any team in any league. Mix Dodgers, Yankees, Padres, Cubs — your roster is yours alone." data-ja="リーグやチームを問わず登録可能。ドジャース、ヤンキース、パドレス、カブス…あなただけの選手リストを編成。">Track players from any team in any league. Mix Dodgers, Yankees, Padres, Cubs — your roster is yours alone.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📋</div>
+        <h3 data-en="Custom Roster Building" data-ja="ロスター編成">Custom Roster Building</h3>
+        <p data-en="Up to 20 player slots — enough for a starting lineup plus backups. Build your fantasy roster, your team's entire bench, or a personal all-star team." data-ja="最大20選手枠で、スタメン＋控えまで編成可能。ファンタジーロスター、応援チームのベンチ全員、または夢のオールスターチームを自由に。">Up to 20 player slots — enough for a starting lineup plus backups. Build your fantasy roster, your team's entire bench, or a personal all-star team.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Features" data-ja="機能">Features</div>
+      <h2 data-en="Real-time delivery, ready when you are" data-ja="リアルタイム配信、いつでも手元に">Real-time delivery, ready when you are</h2>
+      <p class="section-desc" data-en="Server-side polling, push notifications, and a clean live view designed for the small screen on your wrist." data-ja="サーバーポーリング、プッシュ通知、ウォッチ画面に最適化されたシンプルなライブビュー。">Server-side polling, push notifications, and a clean live view designed for the small screen on your wrist.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🔔</div>
+        <h3 data-en="Real-Time Event Notifications" data-ja="リアルタイムイベント通知">Real-Time Event Notifications</h3>
+        <p data-en="Hits, home runs, stolen bases, walks, RBIs, strikeouts, runs allowed and more — pushed the moment they happen." data-ja="ヒット、ホームラン、盗塁、四球、打点、奪三振、自責点など、発生した瞬間にプッシュ通知でお届けします。">Hits, home runs, stolen bases, walks, RBIs, strikeouts, runs allowed and more — pushed the moment they happen.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📣</div>
+        <h3 data-en="On-Field Appearance Alerts" data-ja="出番アラート">On-Field Appearance Alerts</h3>
+        <p data-en="Get notified when your player takes the field — pitcher start, relief appearance, exit, or batter at-bat. Never miss a moment." data-ja="登録選手の登場を通知。先発登板、リリーフ登板、降板、打席への登場 — 一瞬も見逃しません。">Get notified when your player takes the field — pitcher start, relief appearance, exit, or batter at-bat. Never miss a moment.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📊</div>
+        <h3 data-en="Live Game View" data-ja="ライブ試合表示">Live Game View</h3>
+        <p data-en="See live score, base-out-strike count, and current pitcher / batter at a glance on your watch." data-ja="ライブスコア、走者・アウト・カウント、現在の投手・打者をウォッチでひと目で確認。">See live score, base-out-strike count, and current pitcher / batter at a glance on your watch.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📈</div>
+        <h3 data-en="Season Stats" data-ja="シーズン成績">Season Stats</h3>
+        <p data-en="Up-to-date season totals — AVG, HR, RBI, OPS for batters; W/L, ERA, K, WHIP, SV for pitchers." data-ja="最新のシーズン成績。打者は打率・本塁打・打点・OPS、投手は勝敗・防御率・奪三振・WHIP・セーブなど。">Up-to-date season totals — AVG, HR, RBI, OPS for batters; W/L, ERA, K, WHIP, SV for pitchers.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">⏱️</div>
+        <h3 data-en="30-Second Polling" data-ja="30秒ポーリング">30-Second Polling</h3>
+        <p data-en="Our server checks the official MLB Stats API every 30 seconds and pushes new events to your watch via the Garmin Connect IQ pipeline." data-ja="サーバーが公式MLB Stats APIを30秒ごとに監視し、新しいイベントをGarmin Connect IQ経由でウォッチに配信します。">Our server checks the official MLB Stats API every 30 seconds and pushes new events to your watch via the Garmin Connect IQ pipeline.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🎌</div>
+        <h3 data-en="Default Player List" data-ja="デフォルト選手リスト">Default Player List</h3>
+        <p data-en="Comes preloaded with 15 Japanese MLB players to get you started. Replace any of them anytime with the Player ID Lookup below." data-ja="日本人MLB選手15名がプリセット済みで、すぐに始められます。下の選手ID検索ツールから、いつでも自由に入れ替え可能。">Comes preloaded with 15 Japanese MLB players to get you started. Replace any of them anytime with the Player ID Lookup below.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Pricing" data-ja="料金">Pricing</div>
+      <h2 data-en="One simple plan" data-ja="シンプルな料金体系">One simple plan</h2>
+      <p class="section-desc" data-en="Full access — cancel anytime. Just over the price of a coffee for a month of live MLB on your wrist." data-ja="フル機能、いつでも解約可能。コーヒー一杯分でひと月、MLBの試合をリアルタイムで追えます。">Full access — cancel anytime. Just over the price of a coffee for a month of live MLB on your wrist.</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="plan">
+        <div class="plan-badge" data-en="Subscription" data-ja="サブスクリプション">Subscription</div>
+        <div class="plan-name" data-en="Full Access" data-ja="フルアクセス">Full Access</div>
+        <div class="plan-price">$1.49<span class="plan-price-unit" data-en="/month" data-ja="/月">/month</span></div>
+        <div class="plan-note" data-en="Monthly subscription · Cancel anytime" data-ja="月額サブスク · いつでも解約可能">Monthly subscription · Cancel anytime</div>
+        <ul class="plan-features">
+          <li class="included" data-en="Up to 20 MLB players" data-ja="MLB選手最大20名">Up to 20 MLB players</li>
+          <li class="included" data-en="Real-time event notifications" data-ja="リアルタイムイベント通知">Real-time event notifications</li>
+          <li class="included" data-en="Live game view (BSO, score)" data-ja="ライブ試合表示（BSO・スコア）">Live game view (BSO, score)</li>
+          <li class="included" data-en="Season stats display" data-ja="シーズン成績表示">Season stats display</li>
+          <li class="included" data-en="Includes MarketWatch full access" data-ja="MarketWatch全機能アクセス含む">Includes MarketWatch full access</li>
+        </ul>
+        <a href="https://buy.stripe.com/5kQ7sE1Gx3Bi0q5gM89sk02" class="btn-plan" data-en="Subscribe — $1.49/month" data-ja="登録する — $1.49/月">Subscribe — $1.49/month</a>
+        <div class="plan-sub" data-en="Secure payment via Stripe. Activation key by email immediately after purchase." data-ja="Stripeによる安全な決済。購入後すぐにアクティベーションキーをメールでお届けします。">Secure payment via Stripe. Activation key by email immediately after purchase.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Compatible Devices" data-ja="対応デバイス">Compatible Devices</div>
+      <h2 data-en="Supported Garmin devices" data-ja="対応Garminデバイス">Supported Garmin devices</h2>
+      <p class="section-desc" data-en="Currently supports Garmin AMOLED devices with 454×454 displays. Support for 416×416 displays is coming soon." data-ja="現在は454×454解像度のGarmin AMOLEDデバイスに対応。416×416解像度は近日対応予定です。">Currently supports Garmin AMOLED devices with 454×454 displays. Support for 416×416 displays is coming soon.</p>
+    </div>
+    <div class="data-grid">
+      <div class="data-item">
+        <div class="data-type">454px AMOLED</div>
+        <div class="data-example" style="font-size:12px;" data-en="Forerunner 965/970, fēnix 8, epix Pro and more" data-ja="Forerunner 965/970, fēnix 8, epix Pro など">Forerunner 965/970, fēnix 8, epix Pro and more</div>
+      </div>
+      <div class="data-item">
+        <div class="data-type" style="color:var(--muted2);" data-en="416px AMOLED — Coming Soon" data-ja="416px AMOLED — 近日対応">416px AMOLED — Coming Soon</div>
+        <div class="data-example" style="font-size:12px; color:var(--muted2);" data-en="Forerunner 265, Venu 3, fēnix E and more" data-ja="Forerunner 265, Venu 3, fēnix E など">Forerunner 265, Venu 3, fēnix E and more</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Player ID Lookup" data-ja="選手ID検索">Player ID Lookup</div>
+      <h2 data-en="Find your favorite players" data-ja="お気に入りの選手を検索">Find your favorite players</h2>
+      <p class="section-desc" data-en="To register a player in MLBWatch, enter their MLB Player ID in the Garmin Connect IQ app. Use this tool to look up the ID by name." data-ja="MLBWatchに選手を登録するには、Garmin Connect IQアプリでMLB選手IDを入力します。名前から選手IDを検索できます。">To register a player in MLBWatch, enter their MLB Player ID in the Garmin Connect IQ app. Use this tool to look up the ID by name.</p>
+    </div>
+    <div class="lookup-box">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" data-en-placeholder="Search player name (e.g. Ohtani, Judge, Trout)" data-ja-placeholder="選手名を検索（例：Ohtani, Judge, Trout）" placeholder="Search player name (e.g. Ohtani, Judge, Trout)">
+      </div>
+      <p class="lookup-hint" data-en="Enter at least 2 characters. Results from MLB Stats API." data-ja="2文字以上入力してください。MLB Stats APIから結果を取得します。">Enter at least 2 characters. Results from MLB Stats API.</p>
+      <div id="results" class="results"></div>
+      <div id="status" class="status"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Activation" data-ja="アクティベーション">Activation</div>
+      <h2 data-en="How to activate" data-ja="アクティベーション方法">How to activate</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h4 data-en="Subscribe" data-ja="登録">Subscribe</h4>
+        <p data-en="Complete payment via Stripe. Enter your Garmin Device ID in the payment form." data-ja="Stripeで決済。決済画面でGarmin Device IDを入力してください。">Complete payment via Stripe. Enter your Garmin Device ID in the payment form.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h4 data-en="Receive Key" data-ja="キー受け取り">Receive Key</h4>
+        <p data-en="Receive an activation key (XXXXX-XXXXX-XXXXX-XXXXX) by email immediately." data-ja="アクティベーションキーをメールですぐにお届けします。">Receive an activation key by email immediately.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h4 data-en="Enter Key" data-ja="キー入力">Enter Key</h4>
+        <p data-en="Garmin Connect IQ → MLBWatch → Settings → enter the key in License Key field." data-ja="Garmin Connect IQ → MLBWatch → 設定 →「License Key」欄にキーを入力。">Garmin Connect IQ → MLBWatch → Settings → enter the key in License Key field.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h4 data-en="Enjoy" data-ja="完了">Enjoy</h4>
+        <p data-en="Save settings and restart the app on your Garmin device. You're all set." data-ja="設定を保存しGarminデバイスでアプリを再起動。これで準備完了です。">Save settings and restart the app on your Garmin device. You're all set.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Subscription &amp; Cancellation" data-ja="サブスク・解約">Subscription &amp; Cancellation</div>
+      <h2 data-en="Cancel anytime" data-ja="いつでも解約可能">Cancel anytime</h2>
+    </div>
+    <div class="privacy-box">
+      <p id="cancellation-policy">Cancellation Policy: MLBWatch is a monthly subscription that renews automatically. You can cancel anytime via the Stripe Customer Portal — link is included in your activation email and Stripe receipt. Your access continues until the end of the current billing period.</p>
+      <p id="seasonal-pause-note" style="background: var(--accent-light); padding: 16px; border-radius: 8px; color: var(--text2); border-left: 3px solid var(--accent);">Currently in development: automatic subscription pause at season end and automatic resume at opening day.</p>
+      <p id="refund-policy-mlb">Refund Policy: As MLBWatch is a digital service activated by license key, refunds are not provided once the activation key has been issued. If your license key does not function correctly, please contact us at <span class="em"></span> and we will resolve the issue promptly.</p>
+      <p id="questions-line-mlb">For any questions: <span class="em"></span></p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Secure Payment" data-ja="安全な決済">Secure Payment</div>
+      <h2 data-en="Powered by Stripe" data-ja="Stripeによる安全な決済">Powered by Stripe</h2>
+      <p class="section-desc" data-en="All payments are processed by Stripe — the same payment infrastructure trusted by the world's largest companies." data-ja="すべての決済は世界最大級の企業に採用されている決済インフラ Stripe が処理します。">All payments are processed by Stripe — the same payment infrastructure trusted by the world's largest companies.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🔒</div>
+        <h3 data-en="Card data never touches our servers" data-ja="カード情報は当社に届きません">Card data never touches our servers</h3>
+        <p data-en="Your card details are entered directly on Stripe's secure checkout. Easymoat never sees, stores, or transmits your card information." data-ja="カード情報はStripeのセキュアな決済画面に直接入力されます。Easymoatは一切カード情報を取得・保存・送信しません。">Your card details are entered directly on Stripe's secure checkout. Easymoat never sees, stores, or transmits your card information.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🏢</div>
+        <h3 data-en="Trusted at scale" data-ja="世界規模で信頼されるインフラ">Trusted at scale</h3>
+        <p data-en="Stripe powers payments for 62% of Fortune 500 companies, and 80% of the largest US software companies — including Amazon, Google, and Microsoft." data-ja="Fortune 500企業の62%、米国大手ソフトウェア企業の80%がStripeを採用（Amazon・Google・Microsoftを含む）。">Stripe powers payments for 62% of Fortune 500 companies, and 80% of the largest US software companies — including Amazon, Google, and Microsoft.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🛡️</div>
+        <h3 data-en="Real-time fraud protection" data-ja="リアルタイム不正対策">Real-time fraud protection</h3>
+        <p data-en="Stripe Radar — Stripe's machine learning fraud detection — blocked $2.3 billion in fraudulent transactions in 2025 alone." data-ja="StripeのAI不正検知システム「Stripe Radar」が2025年だけで $2.3B（約23億ドル）の不正取引をブロック。">Stripe Radar — Stripe's machine learning fraud detection — blocked $2.3 billion in fraudulent transactions in 2025 alone.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">↩️</div>
+        <h3 data-en="Cancel in seconds" data-ja="数秒で解約完了">Cancel in seconds</h3>
+        <p data-en="Stripe's Customer Portal lets you cancel your subscription in just a few clicks. No phone calls, no hidden steps, no friction." data-ja="StripeカスタマーポータルでサブスクをわずかなクリックでキャンセルOK。電話も、隠された手順も、面倒もありません。">Stripe's Customer Portal lets you cancel your subscription in just a few clicks. No phone calls, no hidden steps, no friction.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Privacy" data-ja="プライバシー">Privacy</div>
+      <h2 data-en="Privacy Policy" data-ja="プライバシーポリシー">Privacy Policy</h2>
+    </div>
+    <div class="privacy-box">
+      <p data-en="MLBWatch does not collect personal information beyond your Garmin Device ID and email address (used for activation and billing)." data-ja="MLBWatchはアクティベーションと課金に必要なGarmin Device IDおよびメールアドレス以外の個人情報を収集しません。">MLBWatch does not collect personal information beyond your Garmin Device ID and email address (used for activation and billing).</p>
+      <p data-en="Game data is fetched from the public MLB Stats API. Player IDs you register are stored on your device via the Garmin Connect IQ platform." data-ja="試合データは公式MLB Stats APIから取得します。登録選手IDはGarmin Connect IQプラットフォームを通じてデバイス上に保存されます。">Game data is fetched from the public MLB Stats API. Player IDs you register are stored on your device via the Garmin Connect IQ platform.</p>
+      <p>Payment processing is handled by Stripe. / 決済はStripeが処理します。 Support: <span class="em"></span></p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>© 2026 Easymoat. All rights reserved.</p>
+  <div class="footer-links">
+    <span class="em-footer"></span>
+    <span style="color:var(--border)">|</span>
+    <a href="../tokutei.html" data-en="Specified Commercial Transactions Act" data-ja="特定商取引法に基づく表記">特定商取引法に基づく表記</a>
+    <span style="color:var(--border)">|</span>
+    <a href="../" data-en="← Back to Easymoat" data-ja="← Easymoatに戻る">← Back to Easymoat</a>
+  </div>
+</footer>
+
 <script>
+var _e = 'easymoat' + '@' + 'gmail.com';
+
+function injectEmails() {
+  document.querySelectorAll('.em').forEach(function(el) {
+    el.innerHTML = '<a href="mailto:' + _e + '">' + _e + '</a>';
+  });
+  document.querySelectorAll('.em-footer').forEach(function(el) {
+    el.textContent = _e;
+  });
+}
+
+function setLang(lang) {
+  document.documentElement.lang = lang === 'ja' ? 'ja' : 'en';
+
+  document.querySelectorAll('[data-en]').forEach(el => {
+    if (el.children.length > 0) return;
+    const text = el.getAttribute('data-' + lang);
+    if (text) el.textContent = text;
+  });
+
+  // Placeholder for search input
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    const placeholder = searchInput.getAttribute('data-' + lang + '-placeholder');
+    if (placeholder) searchInput.placeholder = placeholder;
+  }
+
+  // Cancellation policy
+  var cancel = document.getElementById('cancellation-policy');
+  if (cancel) {
+    if (lang === 'ja') {
+      cancel.textContent = '解約ポリシー：MLBWatchは月額サブスクリプションで、自動更新されます。Stripeカスタマーポータルからいつでも解約できます（リンクはアクティベーションメールおよびStripe領収書メールに記載）。現在の請求期間終了まで利用可能です。';
+    } else {
+      cancel.textContent = 'Cancellation Policy: MLBWatch is a monthly subscription that renews automatically. You can cancel anytime via the Stripe Customer Portal — link is included in your activation email and Stripe receipt. Your access continues until the end of the current billing period.';
+    }
+  }
+
+  // Seasonal pause note
+  var seasonNote = document.getElementById('seasonal-pause-note');
+  if (seasonNote) {
+    if (lang === 'ja') {
+      seasonNote.textContent = '鋭意検討中：シーズン終了でサブスク自動休止、開幕で自動再開を実装予定です。';
+    } else {
+      seasonNote.textContent = 'Currently in development: automatic subscription pause at season end and automatic resume at opening day.';
+    }
+  }
+
+  // Refund policy
+  var refund = document.getElementById('refund-policy-mlb');
+  if (refund) {
+    if (lang === 'ja') {
+      refund.innerHTML = '返金ポリシー：MLBWatchはライセンスキーによってアクティベートされるデジタルサービスのため、アクティベーションキー発行後の返金はお受けできません。ライセンスキーが正常に機能しない場合は <span class="em"></span> までご連絡ください。速やかに対応いたします。';
+    } else {
+      refund.innerHTML = 'Refund Policy: As MLBWatch is a digital service activated by license key, refunds are not provided once the activation key has been issued. If your license key does not function correctly, please contact us at <span class="em"></span> and we will resolve the issue promptly.';
+    }
+  }
+
+  // Questions line
+  var qLine = document.getElementById('questions-line-mlb');
+  if (qLine) {
+    if (lang === 'ja') {
+      qLine.innerHTML = 'お問い合わせ：<span class="em"></span>';
+    } else {
+      qLine.innerHTML = 'For any questions: <span class="em"></span>';
+    }
+  }
+
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+
+  injectEmails();
+}
+
+// Player ID Lookup
 const input = document.getElementById('searchInput');
 const resultsDiv = document.getElementById('results');
 const statusDiv = document.getElementById('status');
@@ -320,7 +492,7 @@ input.addEventListener('input', () => {
     statusDiv.textContent = '';
     return;
   }
-  statusDiv.textContent = 'Searching...';
+  statusDiv.textContent = document.documentElement.lang === 'ja' ? '検索中...' : 'Searching...';
   debounceTimer = setTimeout(() => searchPlayers(q), 400);
 });
 
@@ -331,51 +503,67 @@ async function searchPlayers(query) {
     const data = await res.json();
     const people = data.people || [];
 
+    const isJa = document.documentElement.lang === 'ja';
+
     if (people.length === 0) {
       resultsDiv.innerHTML = '';
-      statusDiv.textContent = 'No players found. Try a different spelling.';
+      statusDiv.textContent = isJa ? '選手が見つかりません。別の綴りでお試しください。' : 'No players found. Try a different spelling.';
       return;
     }
 
-    statusDiv.textContent = `${people.length} player${people.length > 1 ? 's' : ''} found`;
+    statusDiv.textContent = isJa
+      ? `${people.length}名の選手が見つかりました`
+      : `${people.length} player${people.length > 1 ? 's' : ''} found`;
+
     resultsDiv.innerHTML = people.slice(0, 20).map(p => {
       const team = p.currentTeam?.name || 'N/A';
-      const teamAbbr = p.currentTeam?.abbreviation || '';
       const pos = p.primaryPosition?.abbreviation || '?';
       const number = p.primaryNumber ? `#${p.primaryNumber}` : '';
+      const copyLabel = isJa ? 'コピー' : 'Copy';
       return `
         <div class="player-card">
           <div class="player-info">
-            <div class="player-name">${p.fullName} ${number}</div>
+            <div class="player-name">${escapeHtml(p.fullName)} ${number}</div>
             <div class="player-meta">
-              <span class="meta-tag pos">${pos}</span>
-              <span class="meta-tag">${team}</span>
+              <span class="meta-tag pos">${escapeHtml(pos)}</span>
+              <span class="meta-tag">${escapeHtml(team)}</span>
             </div>
           </div>
           <div class="player-id-section">
             <span class="player-id">${p.id}</span>
-            <button class="copy-btn" onclick="copyId(this, ${p.id})">Copy</button>
+            <button class="copy-btn" onclick="copyId(this, ${p.id})">${copyLabel}</button>
           </div>
         </div>
       `;
     }).join('');
 
   } catch (e) {
-    statusDiv.textContent = 'Search error. Please try again.';
+    statusDiv.textContent = document.documentElement.lang === 'ja'
+      ? '検索エラー。再度お試しください。'
+      : 'Search error. Please try again.';
     console.error(e);
   }
 }
 
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, m => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  })[m]);
+}
+
 function copyId(btn, id) {
+  const isJa = document.documentElement.lang === 'ja';
   navigator.clipboard.writeText(String(id)).then(() => {
-    btn.textContent = 'Copied!';
+    btn.textContent = isJa ? 'コピー済み!' : 'Copied!';
     btn.classList.add('copied');
     setTimeout(() => {
-      btn.textContent = 'Copy';
+      btn.textContent = isJa ? 'コピー' : 'Copy';
       btn.classList.remove('copied');
     }, 2000);
   });
 }
+
+injectEmails();
 </script>
 </body>
 </html>

@@ -16,11 +16,13 @@
   .apps { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; max-width: 900px; margin: 0 auto; padding: 40px 20px 80px; }
   .app-card { background: #FFFFFF; border: 1px solid #E2E6EF; border-radius: 16px; padding: 32px; text-decoration: none; color: inherit; transition: border-color 0.2s, transform 0.2s; display: block; }
   .app-card:hover { border-color: #0066FF; transform: translateY(-2px); }
+  .app-card.mlb:hover { border-color: #007A3D; }
   .app-tag { font-size: 12px; font-weight: 600; letter-spacing: 0.1em; color: #0066FF; margin-bottom: 12px; }
+  .app-card.mlb .app-tag { color: #007A3D; }
   .app-name { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
   .app-desc { font-size: 14px; color: #6B7280; line-height: 1.6; margin-bottom: 20px; }
   .app-badge { display: inline-block; background: #EEF4FF; color: #0066FF; font-size: 12px; padding: 4px 10px; border-radius: 20px; }
-  .app-badge.coming { background: #F3F4F6; color: #9CA3AF; }
+  .app-badge.mlb { background: #E5F5EC; color: #007A3D; }
   footer { text-align: center; padding: 40px; color: #9CA3AF; font-size: 13px; border-top: 1px solid #E2E6EF; }
   footer a { color: #6B7280; text-decoration: none; }
 </style>
@@ -40,11 +42,11 @@
     <div class="app-desc">Real-time stocks, crypto, FX and indices on your Garmin wrist. Up to 20 symbols, intraday charts, price alerts and more.</div>
     <span class="app-badge">Available Now — $7.99</span>
   </a>
-  <a href="./mlbwatch/" class="app-card">
+  <a href="./mlbwatch/" class="app-card mlb">
     <div class="app-tag">GARMIN APP</div>
     <div class="app-name">MLBWatch 2026</div>
     <div class="app-desc">Track any MLB player live on your Garmin wrist. Real-time scores, BSO count, pitcher and batter stats, season stats, and more. Register up to 20 players of your choice.</div>
-    <span class="app-badge coming">Coming Soon</span>
+    <span class="app-badge mlb">Available Now — $1.49/month</span>
   </a>
 </div>
 <footer>

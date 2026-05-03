@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Easymoat — Garmin Apps</title>
+<link rel="icon" href="favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -11,20 +12,56 @@
   nav { padding: 20px 40px; display: flex; align-items: center; border-bottom: 1px solid #E2E6EF; background: #FFFFFF; }
   nav img { height: 32px; }
   .hero { text-align: center; padding: 80px 20px 60px; }
-  .hero h1 { font-size: 48px; font-weight: 700; margin-bottom: 16px; }
+  .hero h1 { font-size: 48px; font-weight: 700; margin-bottom: 16px; letter-spacing: -0.02em; }
   .hero p { font-size: 18px; color: #6B7280; max-width: 500px; margin: 0 auto; }
-  .apps { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; max-width: 900px; margin: 0 auto; padding: 40px 20px 80px; }
-  .app-card { background: #FFFFFF; border: 1px solid #E2E6EF; border-radius: 16px; padding: 32px; text-decoration: none; color: inherit; transition: border-color 0.2s, transform 0.2s; display: block; }
-  .app-card:hover { border-color: #0066FF; transform: translateY(-2px); }
-  .app-card.mlb:hover { border-color: #007A3D; }
-  .app-tag { font-size: 12px; font-weight: 600; letter-spacing: 0.1em; color: #0066FF; margin-bottom: 12px; }
-  .app-card.mlb .app-tag { color: #007A3D; }
-  .app-name { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
-  .app-desc { font-size: 14px; color: #6B7280; line-height: 1.6; margin-bottom: 20px; }
-  .app-badge { display: inline-block; background: #EEF4FF; color: #0066FF; font-size: 12px; padding: 4px 10px; border-radius: 20px; }
-  .app-badge.mlb { background: #E5F5EC; color: #007A3D; }
+  .apps { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; max-width: 900px; margin: 0 auto; padding: 40px 20px 80px; }
+  .app-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E6EF;
+    border-radius: 20px;
+    padding: 28px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    display: block;
+    position: relative;
+    overflow: hidden;
+  }
+  .app-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+  .app-card .icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: transform 0.2s;
+  }
+  .app-title { display: flex; flex-direction: column; min-width: 0; }
+  .app-card:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(0,0,0,0.06); }
+  .app-card:hover .icon { transform: scale(1.04); }
+
+  /* MarketWatch: 緑/赤 アイコンに合わせたカラー */
+  .app-card.market:hover { border-color: #117A3A; }
+  .app-card.market .app-tag { color: #117A3A; }
+  .app-card.market .app-badge { background: #E5F5EC; color: #117A3A; }
+
+  /* MLBWatch: 青/赤 アイコンに合わせたカラー */
+  .app-card.mlb:hover { border-color: #1E3A8A; }
+  .app-card.mlb .app-tag { color: #1E3A8A; }
+  .app-card.mlb .app-badge { background: #E5EBFA; color: #1E3A8A; }
+
+  .app-tag { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; margin-bottom: 4px; }
+  .app-name { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.1; }
+  .app-desc { font-size: 14px; color: #6B7280; line-height: 1.65; margin-bottom: 20px; }
+  .app-badge { display: inline-block; font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 20px; }
   footer { text-align: center; padding: 40px; color: #9CA3AF; font-size: 13px; border-top: 1px solid #E2E6EF; }
   footer a { color: #6B7280; text-decoration: none; }
+  footer a:hover { color: #111827; }
 </style>
 </head>
 <body>
@@ -36,17 +73,27 @@
   <p>Garmin apps for investors and sports fans</p>
 </div>
 <div class="apps">
-  <a href="./marketwatch/" class="app-card">
-    <div class="app-tag">GARMIN APP</div>
-    <div class="app-name">MarketWatch</div>
+  <a href="./marketwatch/" class="app-card market">
+    <div class="app-header">
+      <img class="icon" src="marketwatch_icon.png" alt="MarketWatch">
+      <div class="app-title">
+        <div class="app-tag">GARMIN APP</div>
+        <div class="app-name">MarketWatch</div>
+      </div>
+    </div>
     <div class="app-desc">Real-time stocks, crypto, FX and indices on your Garmin wrist. Up to 20 symbols, intraday charts, price alerts and more.</div>
     <span class="app-badge">Available Now — $7.99</span>
   </a>
   <a href="./mlbwatch/" class="app-card mlb">
-    <div class="app-tag">GARMIN APP</div>
-    <div class="app-name">MLBWatch 2026</div>
+    <div class="app-header">
+      <img class="icon" src="mlbwatch_icon.png" alt="MLBWatch 2026">
+      <div class="app-title">
+        <div class="app-tag">GARMIN APP</div>
+        <div class="app-name">MLBWatch 2026</div>
+      </div>
+    </div>
     <div class="app-desc">Track any MLB player live on your Garmin wrist. Real-time scores, BSO count, pitcher and batter stats, season stats, and more. Register up to 20 players of your choice.</div>
-    <span class="app-badge mlb">Available Now — $1.49/month</span>
+    <span class="app-badge">Available Now — $1.49/month</span>
   </a>
 </div>
 <footer>

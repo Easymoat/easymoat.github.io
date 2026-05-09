@@ -647,9 +647,13 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   function searchSymbols(query) {
-    var url = 'https://query1.finance.yahoo.com/v1/finance/search?q='
-            + encodeURIComponent(query)
-            + '&quotesCount=10&newsCount=0';
+    // Yahoo Finance の検索 API はブラウザから直接呼ぶと CORS でブロックされるため、
+    // 公開 CORS プロキシ (corsproxy.io) 経由でアクセス。proxy 自体が落ちた場合は
+    // catch で fallback リンクを表示する。
+    var yahooUrl = 'https://query1.finance.yahoo.com/v1/finance/search?q='
+                 + encodeURIComponent(query)
+                 + '&quotesCount=10&newsCount=0';
+    var url = 'https://corsproxy.io/?url=' + encodeURIComponent(yahooUrl);
     fetch(url, { mode: 'cors' })
       .then(function(r) {
         if (!r.ok) { throw new Error('HTTP ' + r.status); }
@@ -659,7 +663,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderResults(query, (data && data.quotes) || []);
       })
       .catch(function(err) {
-        // CORS / network 失敗 → fallback (1度限り、以降は debounce 内で即 fallback)
+        // proxy 失敗 / network エラー → fallback (1度限り、以降は debounce 内で即 fallback)
         corsBlocked = true;
         resBox.innerHTML = '';
         setStatus(isJa() ? 'Yahoo Finance で検索:' : 'Search on Yahoo Finance:');

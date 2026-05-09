@@ -77,6 +77,31 @@
   .data-type { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted2); margin-bottom: 6px; }
   .data-example { font-size: 13px; font-weight: 600; color: var(--accent); }
 
+  .lookup-box { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .search-box { position: relative; margin-bottom: 12px; }
+  .search-box input { width: 100%; padding: 14px 18px 14px 44px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 15px; font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.3s; }
+  .search-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,122,61,0.12); }
+  .search-box input::placeholder { color: var(--muted2); }
+  .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; color: var(--muted2); }
+  .lookup-hint { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .results { display: flex; flex-direction: column; gap: 8px; }
+  .symbol-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; }
+  .symbol-info { flex: 1; min-width: 0; }
+  .symbol-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; word-break: break-word; }
+  .symbol-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 11px; }
+  .meta-tag { padding: 2px 8px; border-radius: 4px; background: var(--white); border: 1px solid var(--border); color: var(--muted); font-weight: 500; }
+  .meta-tag.type { background: var(--accent-light); border-color: transparent; color: var(--accent); font-weight: 700; }
+  .symbol-id-section { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .symbol-ticker { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--accent); letter-spacing: -0.01em; }
+  .copy-btn { padding: 6px 12px; background: var(--white); color: var(--text2); border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.15s; }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.copied { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .status { font-size: 12px; color: var(--muted); margin-top: 12px; min-height: 16px; }
+  .status.error { color: var(--accent2); }
+  .lookup-fallback { margin-top: 16px; padding: 14px 18px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; font-size: 13px; color: var(--text2); line-height: 1.6; }
+  .lookup-fallback a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .lookup-fallback a:hover { text-decoration: underline; }
+
   .exchange-table { width: 100%; border-collapse: collapse; background: var(--white); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 24px; }
   .exchange-table thead { background: var(--bg); }
   .exchange-table th { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
@@ -203,14 +228,14 @@
       </div>
       <div class="feature">
         <div class="feature-icon">🎯</div>
-        <h3 data-en="Price Alert" data-ja="プライスアラート">Price Alert</h3>
-        <p data-en="Set a target price in the memo field. Get alerted on-screen when the price is reached." data-ja="メモ欄に目標価格を入力。価格到達時に画面でアラートを表示します。">Set a target price in the memo field. Get alerted on-screen when the price is reached.</p>
+        <h3 data-en="Price-Cross Alerts" data-ja="価格クロス通知">Price-Cross Alerts</h3>
+        <p data-en="Set up to 2 price-cross alerts per symbol. Get notified with vibration and sound when current price crosses your target." data-ja="銘柄あたり最大2件のクロス通知を設定可能。設定した価格を上抜け／下抜けした瞬間に振動と音で通知します。">Set up to 2 price-cross alerts per symbol. Get notified with vibration and sound when current price crosses your target.</p>
         <span class="feature-badge" data-en="Full Version" data-ja="フルバージョン">Full Version</span>
       </div>
       <div class="feature">
         <div class="feature-icon">📝</div>
-        <h3 data-en="Memo Notes" data-ja="メモ機能">Memo Notes</h3>
-        <p data-en="Attach personal notes to each symbol. View with a quick swipe from the detail screen." data-ja="銘柄ごとにメモを記録。詳細画面からスワイプで素早く確認できます。">Attach personal notes to each symbol. View with a quick swipe from the detail screen.</p>
+        <h3 data-en="Position Memo" data-ja="ポジションメモ">Position Memo</h3>
+        <p data-en="Track cost basis, holdings, evaluation amount, and P&amp;L (amount + %) per symbol. Long-press a row in the detail screen to edit each field on the watch." data-ja="銘柄ごとに取得単価・保有数・評価額・損益（金額＋%）を記録。詳細画面で項目を長押しすると時計上で各項目を編集できます。">Track cost basis, holdings, evaluation amount, and P&amp;L (amount + %) per symbol. Long-press a row in the detail screen to edit each field on the watch.</p>
         <span class="feature-badge" data-en="Full Version" data-ja="フルバージョン">Full Version</span>
       </div>
       <div class="feature">
@@ -316,6 +341,27 @@
       </tbody>
     </table>
     <p class="data-note" style="margin-top:14px; font-size:13px;" data-en="Coverage: developed markets + ASEAN + most BRICS. Symbols supported include not just stocks but FX, indices, commodity futures, ETFs, and US Treasury yields — see the categories above." data-ja="カバレッジ: 主要先進国 + ASEAN + BRICS の大半。株式に加え、為替・指数・商品先物・ETF・米国債利回りまで対応 — 上記カテゴリを参照。">Coverage: developed markets + ASEAN + most BRICS. Symbols supported include not just stocks but FX, indices, commodity futures, ETFs, and US Treasury yields — see the categories above.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Symbol Lookup" data-ja="銘柄検索">Symbol Lookup</div>
+      <h2 data-en="Find your Yahoo Finance ticker" data-ja="Yahoo Finance ティッカーを検索">Find your Yahoo Finance ticker</h2>
+      <p class="section-desc" data-en="Search by company name to find the exact Yahoo Finance ticker (with the correct exchange suffix). Copy and paste it into MarketWatch — on the watch via long-press, or in the Garmin Connect IQ app settings." data-ja="会社名で検索すると、取引所サフィックス込みの正確な Yahoo Finance ティッカーが取得できます。コピーして MarketWatch に貼り付け（時計上の長押し、または Garmin Connect IQ アプリ設定で）。">Search by company name to find the exact Yahoo Finance ticker (with the correct exchange suffix). Copy and paste it into MarketWatch — on the watch via long-press, or in the Garmin Connect IQ app settings.</p>
+    </div>
+    <div class="lookup-box">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="symbolSearchInput" data-en-placeholder="Search company name (e.g. Apple, Toyota, Tencent, Samsung, ASML)" data-ja-placeholder="会社名で検索（例：Apple, Toyota, Tencent, Samsung, ASML）" placeholder="Search company name (e.g. Apple, Toyota, Tencent, Samsung, ASML)">
+      </div>
+      <p class="lookup-hint" data-en="Enter at least 2 characters. Results from Yahoo Finance public search." data-ja="2文字以上入力してください。Yahoo Finance の公開検索結果を表示します。">Enter at least 2 characters. Results from Yahoo Finance public search.</p>
+      <div id="symbolResults" class="results"></div>
+      <div id="symbolStatus" class="status"></div>
+      <div id="symbolFallback" class="lookup-fallback" style="display:none;">
+        <span data-en="Direct search is unavailable from this browser. Please use Yahoo Finance directly:" data-ja="このブラウザからは直接検索できません。Yahoo Finance で検索してください:">Direct search is unavailable from this browser. Please use Yahoo Finance directly:</span>
+        <a id="symbolFallbackLink" href="https://finance.yahoo.com/lookup" target="_blank" rel="noopener">finance.yahoo.com/lookup ↗</a>
+      </div>
+    </div>
   </div>
 
   <div class="section">
@@ -523,6 +569,14 @@ function setLang(lang) {
   document.getElementById('btn-en').classList.toggle('active', lang === 'en');
   document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
   document.documentElement.lang = lang;
+
+  // 検索入力 placeholder の言語切替
+  var sInput = document.getElementById('symbolSearchInput');
+  if (sInput) {
+    var ph = sInput.getAttribute('data-' + lang + '-placeholder');
+    if (ph) sInput.placeholder = ph;
+  }
+
   injectEmails();
 }
 
@@ -530,6 +584,140 @@ document.addEventListener('DOMContentLoaded', function() {
   setLang('en');
   injectEmails();
 });
+
+// ─────────────────────────────────────────────────────────
+// Symbol Lookup: Yahoo Finance 直接検索 + CORS 失敗時 fallback
+// ─────────────────────────────────────────────────────────
+(function() {
+  var input    = document.getElementById('symbolSearchInput');
+  var resBox   = document.getElementById('symbolResults');
+  var statusEl = document.getElementById('symbolStatus');
+  var fallback = document.getElementById('symbolFallback');
+  var fbLink   = document.getElementById('symbolFallbackLink');
+  if (!input) { return; }
+
+  var debounceTimer;
+  var corsBlocked = false;
+
+  function isJa() { return document.documentElement.lang === 'ja'; }
+  function setStatus(msg, isError) {
+    statusEl.textContent = msg;
+    statusEl.classList.toggle('error', !!isError);
+  }
+  function showFallback(query) {
+    fallback.style.display = 'block';
+    fbLink.href = 'https://finance.yahoo.com/lookup?s=' + encodeURIComponent(query || '');
+  }
+  function hideFallback() { fallback.style.display = 'none'; }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function(m) {
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);
+    });
+  }
+
+  function typeLabel(quoteType) {
+    var t = (quoteType || '').toUpperCase();
+    if (t === 'EQUITY')         { return isJa() ? '株式' : 'Stock'; }
+    if (t === 'ETF')            { return 'ETF'; }
+    if (t === 'INDEX')          { return isJa() ? '指数' : 'Index'; }
+    if (t === 'CRYPTOCURRENCY') { return isJa() ? '暗号資産' : 'Crypto'; }
+    if (t === 'CURRENCY')       { return isJa() ? '為替' : 'FX'; }
+    if (t === 'FUTURE')         { return isJa() ? '先物' : 'Future'; }
+    if (t === 'MUTUALFUND')     { return isJa() ? '投信' : 'Fund'; }
+    return quoteType || '';
+  }
+
+  input.addEventListener('input', function() {
+    clearTimeout(debounceTimer);
+    var q = input.value.trim();
+    if (q.length < 2) {
+      resBox.innerHTML = '';
+      setStatus('');
+      return;
+    }
+    if (corsBlocked) {
+      // 既に CORS で blocked と判明していれば直接 fallback 表示
+      setStatus(isJa() ? 'Yahoo Finance で検索:' : 'Search on Yahoo Finance:');
+      showFallback(q);
+      return;
+    }
+    setStatus(isJa() ? '検索中...' : 'Searching...');
+    debounceTimer = setTimeout(function() { searchSymbols(q); }, 400);
+  });
+
+  function searchSymbols(query) {
+    var url = 'https://query1.finance.yahoo.com/v1/finance/search?q='
+            + encodeURIComponent(query)
+            + '&quotesCount=10&newsCount=0';
+    fetch(url, { mode: 'cors' })
+      .then(function(r) {
+        if (!r.ok) { throw new Error('HTTP ' + r.status); }
+        return r.json();
+      })
+      .then(function(data) {
+        renderResults(query, (data && data.quotes) || []);
+      })
+      .catch(function(err) {
+        // CORS / network 失敗 → fallback (1度限り、以降は debounce 内で即 fallback)
+        corsBlocked = true;
+        resBox.innerHTML = '';
+        setStatus(isJa() ? 'Yahoo Finance で検索:' : 'Search on Yahoo Finance:');
+        showFallback(query);
+      });
+  }
+
+  function renderResults(query, quotes) {
+    if (!quotes.length) {
+      resBox.innerHTML = '';
+      setStatus(isJa() ? '見つかりません。別の語でお試しください。' : 'No matches. Try a different query.');
+      hideFallback();
+      return;
+    }
+    setStatus(isJa() ? quotes.length + '件見つかりました' : quotes.length + ' result' + (quotes.length > 1 ? 's' : '') + ' found');
+    hideFallback();
+    resBox.innerHTML = quotes.slice(0, 10).map(function(q) {
+      var sym  = q.symbol  || '';
+      var name = q.shortname || q.longname || sym;
+      var exch = q.exchDisp || q.exchange || '';
+      var type = typeLabel(q.quoteType);
+      var copy = isJa() ? 'コピー' : 'Copy';
+      return ''
+        + '<div class="symbol-card">'
+        +   '<div class="symbol-info">'
+        +     '<div class="symbol-name">' + escapeHtml(name) + '</div>'
+        +     '<div class="symbol-meta">'
+        +       (type ? '<span class="meta-tag type">' + escapeHtml(type) + '</span>' : '')
+        +       (exch ? '<span class="meta-tag">' + escapeHtml(exch) + '</span>' : '')
+        +     '</div>'
+        +   '</div>'
+        +   '<div class="symbol-id-section">'
+        +     '<span class="symbol-ticker">' + escapeHtml(sym) + '</span>'
+        +     '<button class="copy-btn" data-sym="' + escapeHtml(sym) + '">' + copy + '</button>'
+        +   '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  // Copy button delegated handler
+  resBox.addEventListener('click', function(ev) {
+    var btn = ev.target.closest('.copy-btn');
+    if (!btn) { return; }
+    var sym = btn.getAttribute('data-sym');
+    if (!sym) { return; }
+    var ja = isJa();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(sym).then(function() {
+        btn.textContent = ja ? 'コピー済' : 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(function() {
+          btn.textContent = ja ? 'コピー' : 'Copy';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  });
+})();
 </script>
 </body>
 </html>

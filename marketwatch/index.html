@@ -72,10 +72,19 @@
   .feature-badge { display: inline-block; background: #FFF8E6; color: var(--yellow); font-size: 10px; font-weight: 700; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 4px; margin-top: 8px; }
 
   .data-note { font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
-  .data-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .data-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .data-item { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
   .data-type { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted2); margin-bottom: 6px; }
   .data-example { font-size: 13px; font-weight: 600; color: var(--accent); }
+
+  .exchange-table { width: 100%; border-collapse: collapse; background: var(--white); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 24px; }
+  .exchange-table thead { background: var(--bg); }
+  .exchange-table th { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+  .exchange-table td { font-size: 13px; color: var(--text2); padding: 10px 16px; border-bottom: 1px solid var(--border); }
+  .exchange-table tr:last-child td { border-bottom: none; }
+  .exchange-table tr.region-header td { background: var(--accent-light); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); padding: 8px 16px; }
+  .exchange-table td code { font-family: 'Inter', monospace; background: var(--bg); padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; color: var(--accent); border: 1px solid var(--border); }
+  .exchange-table td .ex-company { color: var(--muted); font-size: 12px; }
 
   .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .plan { background: var(--white); border: 2px solid var(--border); border-radius: 16px; padding: 32px; position: relative; }
@@ -118,13 +127,16 @@
     main { padding: 0 20px 60px; }
     .hero { grid-template-columns: 1fr; gap: 32px; padding: 40px 0 32px; }
     .features { grid-template-columns: 1fr 1fr; }
-    .data-grid { grid-template-columns: repeat(3, 1fr); }
+    .data-grid { grid-template-columns: repeat(2, 1fr); }
+    .exchange-table th, .exchange-table td { padding: 8px 10px; font-size: 12px; }
     .pricing-grid { grid-template-columns: 1fr; }
     .steps { grid-template-columns: 1fr 1fr; }
   }
   @media (max-width: 480px) {
     .features { grid-template-columns: 1fr; }
-    .data-grid { grid-template-columns: 1fr 1fr; }
+    .data-grid { grid-template-columns: 1fr; }
+    .exchange-table th, .exchange-table td { padding: 6px 8px; font-size: 11px; }
+    .exchange-table td .ex-company { display: none; }
     .steps { grid-template-columns: 1fr; }
     .screenshots { grid-template-columns: 1fr; }
   }
@@ -210,7 +222,7 @@
       <div class="feature">
         <div class="feature-icon">⌚</div>
         <h3 data-en="Garmin Native" data-ja="Garmin専用設計">Garmin Native</h3>
-        <p data-en="Compatible with Garmin AMOLED devices (390px, 415px, 454px displays and Venu X1). Color mode switchable: Japanese style (Red=Up, Green=Down) or Standard (Green=Up, Red=Down)." data-ja="GarminのAMOLEDディスプレイ搭載機種（390px・415px・454px・Venu X1）に対応。カラーモード切替可能：日本式（赤=上昇、緑=下落）または標準（緑=上昇、赤=下落）。">Compatible with Garmin AMOLED devices (390px, 415px, 454px displays and Venu X1). Color mode switchable: Japanese style (Red=Up, Green=Down) or Standard (Green=Up, Red=Down).</p>
+        <p data-en="Compatible with Garmin AMOLED devices (390px, 415px, 454px displays and Venu X1). Color mode switchable: Red Up / Green Down or Green Up / Red Down — match your local market convention." data-ja="GarminのAMOLEDディスプレイ搭載機種（390px・415px・454px・Venu X1）に対応。カラーモード切替可能：「赤=上 / 緑=下」または「緑=上 / 赤=下」— ご利用市場の慣習に合わせて選択。">Compatible with Garmin AMOLED devices (390px, 415px, 454px displays and Venu X1). Color mode switchable: Red Up / Green Down or Green Up / Red Down — match your local market convention.</p>
       </div>
     </div>
   </div>
@@ -218,32 +230,92 @@
   <div class="section">
     <div class="section-header">
       <div class="section-tag" data-en="Supported Data" data-ja="対応データ">Supported Data</div>
-      <h2 data-en="Any market, any symbol" data-ja="あらゆる市場・銘柄に対応">Any market, any symbol</h2>
+      <h2 data-en="Any market, any symbol — worldwide" data-ja="世界のあらゆる市場・銘柄に対応">Any market, any symbol — worldwide</h2>
     </div>
-    <p class="data-note" data-en="All 20 symbol slots are fully customizable. Enter any of the following formats in the Garmin Connect IQ app settings." data-ja="20銘柄スロットはすべて自由に設定できます。Garmin Connect IQアプリの設定画面で以下の形式を入力してください。">All 20 symbol slots are fully customizable. Enter any of the following formats in the Garmin Connect IQ app settings.</p>
+    <p class="data-note" data-en="All 20 symbol slots are fully customizable. Stocks from 30+ exchanges, plus FX, crypto, indices, commodities, and bond yields — all via Yahoo Finance." data-ja="20銘柄スロットはすべて自由にカスタマイズ可能。世界30以上の取引所の株式に加え、為替・暗号資産・指数・商品先物・米国債利回りまで Yahoo Finance 経由で取得します。">All 20 symbol slots are fully customizable. Stocks from 30+ exchanges, plus FX, crypto, indices, commodities, and bond yields — all via Yahoo Finance.</p>
     <div class="data-grid">
       <div class="data-item">
-        <div class="data-type" data-en="Japanese Stocks" data-ja="日本株">Japanese Stocks</div>
-        <div class="data-example" data-en="Code + .T (e.g. 7203.T, 6758.T, 9984.T)" data-ja="証券コード＋.T（例：7203.T、6758.T、9984.T）">Code + .T (e.g. 7203.T, 6758.T, 9984.T)</div>
-      </div>
-      <div class="data-item">
-        <div class="data-type" data-en="US Stocks" data-ja="米国株">US Stocks</div>
-        <div class="data-example" data-en="Ticker symbol (e.g. AAPL, NVDA, TSLA)" data-ja="ティッカー（例：AAPL、NVDA、TSLA）">Ticker symbol (e.g. AAPL, NVDA, TSLA)</div>
-      </div>
-      <div class="data-item">
-        <div class="data-type" data-en="Crypto" data-ja="暗号資産">Crypto</div>
-        <div class="data-example" data-en="Coin symbol via Binance (e.g. BTC, ETH, XRP, SOL)" data-ja="コインシンボル・Binance経由（例：BTC、ETH、XRP、SOL）">Coin symbol via Binance (e.g. BTC, ETH, XRP, SOL)</div>
-      </div>
-      <div class="data-item">
-        <div class="data-type" data-en="FX" data-ja="為替">FX</div>
-        <div class="data-example" data-en="Pair + =X (e.g. USDJPY=X, EURUSD=X, GBPJPY=X)" data-ja="通貨ペア＋=X（例：USDJPY=X、EURUSD=X、GBPJPY=X）">Pair + =X (e.g. USDJPY=X, EURUSD=X, GBPJPY=X)</div>
+        <div class="data-type" data-en="Stocks &amp; ETFs" data-ja="株式・ETF">Stocks &amp; ETFs</div>
+        <div class="data-example" data-en="Ticker + exchange suffix (e.g. AAPL, 7203.T, 0700.HK, SAP.DE)" data-ja="ティッカー＋取引所サフィックス（例：AAPL、7203.T、0700.HK、SAP.DE）">Ticker + exchange suffix (e.g. AAPL, 7203.T, 0700.HK, SAP.DE)</div>
       </div>
       <div class="data-item">
         <div class="data-type" data-en="Indices" data-ja="指数">Indices</div>
-        <div class="data-example" data-en="^ + code (e.g. ^N225, ^SPX, ^NDX, ^DJI)" data-ja="^＋コード（例：^N225、^SPX、^NDX、^DJI）">^ + code (e.g. ^N225, ^SPX, ^NDX, ^DJI)</div>
+        <div class="data-example" data-en="^ + code (e.g. ^GSPC, ^N225, ^FTSE, ^GDAXI, ^HSI, ^VIX)" data-ja="^＋コード（例：^GSPC、^N225、^FTSE、^GDAXI、^HSI、^VIX）">^ + code (e.g. ^GSPC, ^N225, ^FTSE, ^GDAXI, ^HSI, ^VIX)</div>
+      </div>
+      <div class="data-item">
+        <div class="data-type" data-en="FX" data-ja="為替">FX</div>
+        <div class="data-example" data-en="Pair + =X (e.g. USDJPY=X, EURUSD=X, GBPJPY=X, AUDUSD=X)" data-ja="通貨ペア＋=X（例：USDJPY=X、EURUSD=X、GBPJPY=X、AUDUSD=X）">Pair + =X (e.g. USDJPY=X, EURUSD=X, GBPJPY=X, AUDUSD=X)</div>
+      </div>
+      <div class="data-item">
+        <div class="data-type" data-en="Crypto" data-ja="暗号資産">Crypto</div>
+        <div class="data-example" data-en="Coin-USD format (e.g. BTC-USD, ETH-USD, SOL-USD, XRP-USD)" data-ja="COIN-USD形式（例：BTC-USD、ETH-USD、SOL-USD、XRP-USD）">Coin-USD format (e.g. BTC-USD, ETH-USD, SOL-USD, XRP-USD)</div>
+      </div>
+      <div class="data-item">
+        <div class="data-type" data-en="Commodities (futures)" data-ja="商品先物">Commodities (futures)</div>
+        <div class="data-example" data-en="Code + =F (e.g. GC=F gold, CL=F crude, NG=F gas, HG=F copper)" data-ja="コード＋=F（例：GC=F金、CL=F原油、NG=F天然ガス、HG=F銅）">Code + =F (e.g. GC=F gold, CL=F crude, NG=F gas, HG=F copper)</div>
+      </div>
+      <div class="data-item">
+        <div class="data-type" data-en="US Treasury yields" data-ja="米国債利回り">US Treasury yields</div>
+        <div class="data-example" data-en="^TNX (10Y), ^TYX (30Y), ^FVX (5Y), ^IRX (13W)" data-ja="^TNX (10年)、^TYX (30年)、^FVX (5年)、^IRX (13週)">^TNX (10Y), ^TYX (30Y), ^FVX (5Y), ^IRX (13W)</div>
       </div>
     </div>
-    <p class="data-note" style="margin-top:16px;" data-en="To look up symbols: Japanese stocks → Yahoo Finance Japan (add .T to 4-digit code) / US stocks &amp; indices → finance.yahoo.com / Crypto → binance.com" data-ja="ティッカーの調べ方：日本株 → Yahoo!ファイナンスで検索し証券コードに.Tを付ける ／ 米国株・指数 → finance.yahoo.com ／ 暗号資産 → binance.com">To look up symbols: Japanese stocks → Yahoo Finance Japan (add .T to 4-digit code) / US stocks &amp; indices → finance.yahoo.com / Crypto → binance.com</p>
+
+    <h3 style="font-family:'Syne',sans-serif; font-size:18px; font-weight:700; margin-top:32px; margin-bottom:6px;" data-en="Global stock exchanges (30+)" data-ja="世界の証券取引所（30以上）">Global stock exchanges (30+)</h3>
+    <p class="data-note" style="margin-bottom:0;" data-en="Append the exchange suffix to the local ticker code. Search any company name on finance.yahoo.com to get the correct ticker." data-ja="現地のティッカーコードに取引所サフィックスを付加。finance.yahoo.com で会社名を検索すると正しいティッカーが取得できます。">Append the exchange suffix to the local ticker code. Search any company name on finance.yahoo.com to get the correct ticker.</p>
+    <table class="exchange-table">
+      <thead>
+        <tr>
+          <th data-en="Region" data-ja="地域">Region</th>
+          <th data-en="Suffix" data-ja="サフィックス">Suffix</th>
+          <th data-en="Example" data-ja="例">Example</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="region-header"><td colspan="3" data-en="Americas" data-ja="アメリカ大陸">Americas</td></tr>
+        <tr><td data-en="USA" data-ja="米国">USA</td><td><code data-en="(none)" data-ja="(なし)">(none)</code></td><td>AAPL, MSFT, NVDA, GOOGL</td></tr>
+        <tr><td data-en="Canada (TSX)" data-ja="カナダ TSX">Canada (TSX)</td><td><code>.TO</code></td><td>RY.TO <span class="ex-company" data-en="(Royal Bank)" data-ja="(ロイヤル銀行)">(Royal Bank)</span></td></tr>
+        <tr><td data-en="Brazil" data-ja="ブラジル">Brazil</td><td><code>.SA</code></td><td>PETR4.SA <span class="ex-company" data-en="(Petrobras)" data-ja="(ペトロブラス)">(Petrobras)</span></td></tr>
+        <tr><td data-en="Mexico" data-ja="メキシコ">Mexico</td><td><code>.MX</code></td><td>WALMEX.MX</td></tr>
+
+        <tr class="region-header"><td colspan="3" data-en="Asia" data-ja="アジア">Asia</td></tr>
+        <tr><td data-en="Japan (Tokyo)" data-ja="日本 (東京)">Japan (Tokyo)</td><td><code>.T</code></td><td>7203.T <span class="ex-company" data-en="(Toyota)" data-ja="(トヨタ)">(Toyota)</span></td></tr>
+        <tr><td data-en="Hong Kong" data-ja="香港">Hong Kong</td><td><code>.HK</code></td><td>0700.HK <span class="ex-company" data-en="(Tencent)" data-ja="(テンセント)">(Tencent)</span></td></tr>
+        <tr><td data-en="China (Shanghai)" data-ja="中国 上海">China (Shanghai)</td><td><code>.SS</code></td><td>600519.SS <span class="ex-company" data-en="(Kweichow Moutai)" data-ja="(貴州茅台)">(Kweichow Moutai)</span></td></tr>
+        <tr><td data-en="China (Shenzhen)" data-ja="中国 深圳">China (Shenzhen)</td><td><code>.SZ</code></td><td>000001.SZ <span class="ex-company" data-en="(Ping An Bank)" data-ja="(平安銀行)">(Ping An Bank)</span></td></tr>
+        <tr><td data-en="Korea (KOSPI)" data-ja="韓国 KOSPI">Korea (KOSPI)</td><td><code>.KS</code></td><td>005930.KS <span class="ex-company" data-en="(Samsung)" data-ja="(サムスン)">(Samsung)</span></td></tr>
+        <tr><td data-en="Korea (KOSDAQ)" data-ja="韓国 KOSDAQ">Korea (KOSDAQ)</td><td><code>.KQ</code></td><td>—</td></tr>
+        <tr><td data-en="Taiwan" data-ja="台湾">Taiwan</td><td><code>.TW</code></td><td>2330.TW <span class="ex-company" data-en="(TSMC)" data-ja="(TSMC)">(TSMC)</span></td></tr>
+        <tr><td data-en="India (NSE)" data-ja="インド NSE">India (NSE)</td><td><code>.NS</code></td><td>RELIANCE.NS</td></tr>
+        <tr><td data-en="India (BSE)" data-ja="インド BSE">India (BSE)</td><td><code>.BO</code></td><td>—</td></tr>
+        <tr><td data-en="Singapore" data-ja="シンガポール">Singapore</td><td><code>.SI</code></td><td>D05.SI <span class="ex-company" data-en="(DBS)" data-ja="(DBS)">(DBS)</span></td></tr>
+        <tr><td data-en="Indonesia" data-ja="インドネシア">Indonesia</td><td><code>.JK</code></td><td>—</td></tr>
+        <tr><td data-en="Thailand" data-ja="タイ">Thailand</td><td><code>.BK</code></td><td>—</td></tr>
+        <tr><td data-en="Malaysia" data-ja="マレーシア">Malaysia</td><td><code>.KL</code></td><td>—</td></tr>
+        <tr><td data-en="Philippines" data-ja="フィリピン">Philippines</td><td><code>.PS</code></td><td>—</td></tr>
+
+        <tr class="region-header"><td colspan="3" data-en="Oceania" data-ja="オセアニア">Oceania</td></tr>
+        <tr><td data-en="Australia (ASX)" data-ja="豪州 (ASX)">Australia (ASX)</td><td><code>.AX</code></td><td>BHP.AX <span class="ex-company" data-en="(BHP)" data-ja="(BHP)">(BHP)</span></td></tr>
+        <tr><td data-en="New Zealand" data-ja="ニュージーランド">New Zealand</td><td><code>.NZ</code></td><td>—</td></tr>
+
+        <tr class="region-header"><td colspan="3" data-en="Europe" data-ja="欧州">Europe</td></tr>
+        <tr><td data-en="UK (London)" data-ja="英国 (ロンドン)">UK (London)</td><td><code>.L</code></td><td>HSBA.L <span class="ex-company" data-en="(HSBC)" data-ja="(HSBC)">(HSBC)</span></td></tr>
+        <tr><td data-en="Germany (XETRA)" data-ja="ドイツ (XETRA)">Germany (XETRA)</td><td><code>.DE</code></td><td>SAP.DE <span class="ex-company" data-en="(SAP)" data-ja="(SAP)">(SAP)</span></td></tr>
+        <tr><td data-en="France (Paris)" data-ja="フランス (パリ)">France (Paris)</td><td><code>.PA</code></td><td>BNP.PA <span class="ex-company" data-en="(BNP Paribas)" data-ja="(BNP パリバ)">(BNP Paribas)</span></td></tr>
+        <tr><td data-en="Netherlands" data-ja="オランダ">Netherlands</td><td><code>.AS</code></td><td>ASML.AS <span class="ex-company" data-en="(ASML)" data-ja="(ASML)">(ASML)</span></td></tr>
+        <tr><td data-en="Switzerland" data-ja="スイス">Switzerland</td><td><code>.SW</code></td><td>NESN.SW <span class="ex-company" data-en="(Nestlé)" data-ja="(ネスレ)">(Nestlé)</span></td></tr>
+        <tr><td data-en="Italy (Milan)" data-ja="イタリア (ミラノ)">Italy (Milan)</td><td><code>.MI</code></td><td>—</td></tr>
+        <tr><td data-en="Spain (Madrid)" data-ja="スペイン (マドリード)">Spain (Madrid)</td><td><code>.MC</code></td><td>—</td></tr>
+        <tr><td data-en="Sweden (Stockholm)" data-ja="スウェーデン">Sweden (Stockholm)</td><td><code>.ST</code></td><td>—</td></tr>
+        <tr><td data-en="Norway (Oslo)" data-ja="ノルウェー">Norway (Oslo)</td><td><code>.OL</code></td><td>—</td></tr>
+        <tr><td data-en="Denmark" data-ja="デンマーク">Denmark</td><td><code>.CO</code></td><td>—</td></tr>
+
+        <tr class="region-header"><td colspan="3" data-en="Middle East / Africa" data-ja="中東・アフリカ">Middle East / Africa</td></tr>
+        <tr><td data-en="Israel (Tel Aviv)" data-ja="イスラエル">Israel (Tel Aviv)</td><td><code>.TA</code></td><td>—</td></tr>
+        <tr><td data-en="Saudi Arabia" data-ja="サウジアラビア">Saudi Arabia</td><td><code>.SR</code></td><td>—</td></tr>
+        <tr><td data-en="South Africa" data-ja="南アフリカ">South Africa</td><td><code>.JO</code></td><td>—</td></tr>
+      </tbody>
+    </table>
+    <p class="data-note" style="margin-top:14px; font-size:13px;" data-en="Coverage: developed markets + ASEAN + most BRICS. Symbols supported include not just stocks but FX, indices, commodity futures, ETFs, and US Treasury yields — see the categories above." data-ja="カバレッジ: 主要先進国 + ASEAN + BRICS の大半。株式に加え、為替・指数・商品先物・ETF・米国債利回りまで対応 — 上記カテゴリを参照。">Coverage: developed markets + ASEAN + most BRICS. Symbols supported include not just stocks but FX, indices, commodity futures, ETFs, and US Treasury yields — see the categories above.</p>
   </div>
 
   <div class="section">
@@ -259,9 +331,12 @@
         <ul class="plan-features">
           <li class="included" data-en="3 symbols" data-ja="3銘柄まで">3 symbols</li>
           <li class="included" data-en="Intraday charts (3 symbols)" data-ja="日中チャート（3銘柄）">Intraday charts (3 symbols)</li>
-          <li class="excluded" data-en="Price Alert" data-ja="プライスアラート">Price Alert</li>
-          <li class="excluded" data-en="Memo notes" data-ja="メモ機能">Memo notes</li>
+          <li class="included" data-en="6 background colors + Red Up / Green Up modes" data-ja="背景色6種 + 「赤=上」/「緑=上」モード">6 background colors + Red Up / Green Up modes</li>
           <li class="excluded" data-en="Up to 20 symbols" data-ja="最大20銘柄">Up to 20 symbols</li>
+          <li class="excluded" data-en="Price-cross alerts (2 per symbol)" data-ja="価格クロス通知（銘柄あたり2件）">Price-cross alerts (2 per symbol)</li>
+          <li class="excluded" data-en="Position memo (cost / qty / P&amp;L)" data-ja="ポジションメモ（取得単価・保有数・損益）">Position memo (cost / qty / P&amp;L)</li>
+          <li class="excluded" data-en="On-watch ticker register / edit / delete" data-ja="時計上での銘柄登録・編集・削除">On-watch ticker register / edit / delete</li>
+          <li class="excluded" data-en="2 watchface complications" data-ja="ウォッチフェイス Complication 2 スロット">2 watchface complications</li>
         </ul>
         <a href="https://apps.garmin.com/" class="btn-plan btn-plan-secondary" data-en="Download Free" data-ja="無料でダウンロード">Download Free</a>
       </div>
@@ -271,10 +346,13 @@
         <div class="plan-price">$7.99</div>
         <div class="plan-note" data-en="One-time purchase · Lifetime license" data-ja="買い切り · 生涯ライセンス">One-time purchase · Lifetime license</div>
         <ul class="plan-features">
-          <li class="included" data-en="Up to 20 symbols" data-ja="最大20銘柄">Up to 20 symbols</li>
+          <li class="included" data-en="Up to 20 symbols (worldwide markets)" data-ja="最大20銘柄（世界の市場）">Up to 20 symbols (worldwide markets)</li>
           <li class="included" data-en="Intraday charts (all symbols)" data-ja="日中チャート（全銘柄）">Intraday charts (all symbols)</li>
-          <li class="included" data-en="Price Alert" data-ja="プライスアラート">Price Alert</li>
-          <li class="included" data-en="Memo notes" data-ja="メモ機能">Memo notes</li>
+          <li class="included" data-en="6 background colors + Red Up / Green Up modes" data-ja="背景色6種 + 「赤=上」/「緑=上」モード">6 background colors + Red Up / Green Up modes</li>
+          <li class="included" data-en="Price-cross alerts (2 per symbol, vibrate + sound)" data-ja="価格クロス通知（銘柄あたり2件・振動+音）">Price-cross alerts (2 per symbol, vibrate + sound)</li>
+          <li class="included" data-en="Position memo (cost / qty / value / P&amp;L)" data-ja="ポジションメモ（取得単価・保有数・評価額・損益）">Position memo (cost / qty / value / P&amp;L)</li>
+          <li class="included" data-en="On-watch ticker register / edit / delete" data-ja="時計上での銘柄登録・編集・削除">On-watch ticker register / edit / delete</li>
+          <li class="included" data-en="2 watchface complications" data-ja="ウォッチフェイス Complication 2 スロット">2 watchface complications</li>
           <li class="included" data-en="Lifetime license — no subscription" data-ja="生涯ライセンス・サブスクなし">Lifetime license — no subscription</li>
         </ul>
         <a href="https://buy.stripe.com/4gM4gs3OF1tafkZ3Zm9sk01" class="btn-plan btn-plan-primary" data-en="Purchase — $7.99" data-ja="購入する — $7.99">Purchase — $7.99</a>
@@ -347,6 +425,36 @@
       <p id="refund-policy">Refund Policy: As MarketWatch is a digital product (license key), all sales are final. If your license key does not function correctly, please contact us at <span class="em"></span> and we will resolve the issue promptly.</p>
       <p data-en="Cancellation Policy: MarketWatch is a one-time purchase with a lifetime license — there is no subscription or recurring charge. No cancellation is required." data-ja="キャンセルポリシー：MarketWatchは買い切り・生涯ライセンスです。定期課金・サブスクリプションはありません。キャンセル手続きは不要です。">Cancellation Policy: MarketWatch is a one-time purchase with a lifetime license — there is no subscription or recurring charge. No cancellation is required.</p>
       <p id="questions-line">For any questions: <span class="em"></span></p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Secure Payment" data-ja="安全な決済">Secure Payment</div>
+      <h2 data-en="Powered by Stripe" data-ja="Stripeによる安全な決済">Powered by Stripe</h2>
+      <p class="section-desc" data-en="All payments are processed by Stripe — the same payment infrastructure trusted by the world's largest companies." data-ja="すべての決済は世界最大級の企業に採用されている決済インフラ Stripe が処理します。">All payments are processed by Stripe — the same payment infrastructure trusted by the world's largest companies.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🔒</div>
+        <h3 data-en="Card data never touches our servers" data-ja="カード情報は当社に届きません">Card data never touches our servers</h3>
+        <p data-en="Your card details are entered directly on Stripe's secure checkout. Easymoat never sees, stores, or transmits your card information." data-ja="カード情報はStripeのセキュアな決済画面に直接入力されます。Easymoatは一切カード情報を取得・保存・送信しません。">Your card details are entered directly on Stripe's secure checkout. Easymoat never sees, stores, or transmits your card information.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🏢</div>
+        <h3 data-en="Trusted at scale" data-ja="世界規模で信頼されるインフラ">Trusted at scale</h3>
+        <p data-en="Stripe powers payments for 62% of Fortune 500 companies, and 80% of the largest US software companies — including Amazon, Google, and Microsoft." data-ja="Fortune 500企業の62%、米国大手ソフトウェア企業の80%がStripeを採用（Amazon・Google・Microsoftを含む）。">Stripe powers payments for 62% of Fortune 500 companies, and 80% of the largest US software companies — including Amazon, Google, and Microsoft.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🛡️</div>
+        <h3 data-en="Fraud protection by Stripe Radar" data-ja="Stripe Radarによる不正対策">Fraud protection by Stripe Radar</h3>
+        <p data-en="Stripe Radar — Stripe's machine learning fraud detection — blocked $2.3 billion in fraudulent transactions in 2025 alone." data-ja="StripeのAI不正検知システム「Stripe Radar」が2025年だけで $2.3B（約23億ドル）の不正取引をブロック。">Stripe Radar — Stripe's machine learning fraud detection — blocked $2.3 billion in fraudulent transactions in 2025 alone.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">♾️</div>
+        <h3 data-en="One-time purchase, lifetime use" data-ja="買い切り・生涯利用">One-time purchase, lifetime use</h3>
+        <p data-en="Pay once via Stripe checkout — no subscription, no recurring charges. Your activation key is delivered by email and works forever." data-ja="Stripeで一度決済するだけ。定期課金や月額料金は一切なし。アクティベーションキーはメールでお届けし、永続的にご利用いただけます。">Pay once via Stripe checkout — no subscription, no recurring charges. Your activation key is delivered by email and works forever.</p>
+      </div>
     </div>
   </div>
 

@@ -77,9 +77,15 @@
   .feature h3 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
   .feature p { font-size: 13px; line-height: 1.6; color: var(--muted); }
 
-  .pricing-grid { display: grid; grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; }
-  .plan { background: var(--white); border: 2px solid var(--accent); border-radius: 16px; padding: 32px; position: relative; box-shadow: 0 0 0 4px rgba(8,145,178,0.08); }
+  .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 880px; margin: 0 auto; }
+  @media (max-width: 720px) { .pricing-grid { grid-template-columns: 1fr; max-width: 480px; } }
+  .plan { background: var(--white); border: 2px solid var(--accent); border-radius: 16px; padding: 32px; position: relative; box-shadow: 0 0 0 4px rgba(8,145,178,0.08); display: flex; flex-direction: column; }
+  .plan.free { border-color: var(--border); box-shadow: none; }
+  .plan.free .plan-badge { background: var(--muted); }
+  .plan.free .plan-price { color: var(--accent); }
+  .plan.free .plan-features li.included::before { color: var(--accent); }
   .plan-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; padding: 4px 16px; border-radius: 20px; white-space: nowrap; }
+  .plan-trial-banner { display: inline-block; background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 6px; margin-bottom: 10px; letter-spacing: 0.02em; }
   .plan-name { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
   .plan-price { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 800; color: var(--text); line-height: 1; margin-bottom: 4px; }
   .plan-price-unit { font-size: 18px; color: var(--muted); font-weight: 500; }
@@ -152,11 +158,11 @@
 
   <div class="hero">
     <div>
-      <div class="hero-tag" data-en="Coming Soon" data-ja="近日公開">Coming Soon</div>
+      <div class="hero-tag" data-en="Coming Soon · 14-day free trial" data-ja="近日公開 · 14日間無料トライアル">Coming Soon · 14-day free trial</div>
       <h1><em>Pulse</em><br>Link</h1>
-      <p class="hero-desc" data-en="Share your heart rate, steps and distance live with your running crew on your Garmin wrist. Host-led rooms with invite codes, up to 20 template messages, and a real-time member view designed for groups of 2-8 people." data-ja="ランニング仲間と心拍数・歩数・距離をGarminウォッチでリアルタイム共有。ホスト主導の招待コード制ルーム、最大20の定型メッセージ、2〜8名のグループに最適化されたリアルタイム表示。">Share your heart rate, steps and distance live with your running crew on your Garmin wrist. Host-led rooms with invite codes, up to 20 template messages, and a real-time member view designed for groups of 2-8 people.</p>
+      <p class="hero-desc" data-en="Share your heart rate, steps and distance live with running friends or loved ones on your Garmin wrist. Host-led rooms with invite codes, up to 20 template messages, and a real-time member view designed for groups of 2-8 people. Guests join free — only the host subscribes." data-ja="ランニング仲間や大切な家族と、心拍数・歩数・距離をGarminウォッチでリアルタイム共有。ホスト主導の招待コード制ルーム、最大20の定型メッセージ、2〜8名のグループに最適化されたリアルタイム表示。ゲストは完全無料 — ホストだけがサブスクリプション登録します。">Share your heart rate, steps and distance live with running friends or loved ones on your Garmin wrist. Host-led rooms with invite codes, up to 20 template messages, and a real-time member view designed for groups of 2-8 people. Guests join free — only the host subscribes.</p>
       <div class="hero-cta">
-        <a href="#pricing" class="btn-primary" data-en="See Pricing" data-ja="料金を見る">See Pricing</a>
+        <a href="#pricing" class="btn-primary" data-en="See Plans" data-ja="プランを見る">See Plans</a>
       </div>
     </div>
     <div class="hero-visual">
@@ -206,6 +212,46 @@
 
   <div class="section">
     <div class="section-header">
+      <div class="section-tag" data-en="Use Cases" data-ja="使い方の例">Use Cases</div>
+      <h2 data-en="More than a running app — a way to watch over each other" data-ja="ランニングだけじゃない — 互いに見守るためのアプリ">More than a running app — a way to watch over each other</h2>
+      <p class="section-desc" data-en="PulseLink isn't about surveillance — it's about caring connection. Whether you're training with friends or quietly watching over a loved one, the room is private (invite-only) and every member controls what they share." data-ja="PulseLinkは「監視」ではなく「見守り」のためのツールです。仲間とのトレーニングでも、離れて暮らす家族の見守りでも、ルームはプライベート（招待制）、各メンバーが共有内容を自分で制御できます。">PulseLink isn't about surveillance — it's about caring connection. Whether you're training with friends or quietly watching over a loved one, the room is private (invite-only) and every member controls what they share.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🏃</div>
+        <h3 data-en="Running crew" data-ja="ランニング仲間">Running crew</h3>
+        <p data-en="Friends training apart on the same morning — share pace and effort in real time, cheer each other on with template messages. The classic use case." data-ja="同じ朝に別々に走る仲間同士で、ペースと負荷をリアルタイム共有。定型メッセージで応援し合う。最も典型的な使い方。">Friends training apart on the same morning — share pace and effort in real time, cheer each other on with template messages. The classic use case.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">👨‍👩‍👧</div>
+        <h3 data-en="Family mimamori (watching over)" data-ja="家族の見守り">Family mimamori (watching over)</h3>
+        <p data-en="An elderly parent on a daily walk, or a child on a school commute jog — family members can quietly confirm 'they're moving, heart rate looks normal' without a phone call. Especially useful when living apart." data-ja="高齢の親の日課のウォーキング、子供の通学ランニング — 電話せずとも「動いている、心拍も普通」と家族が確認できます。離れて暮らす家族の見守りに特に有効。">An elderly parent on a daily walk, or a child on a school commute jog — family members can quietly confirm "they're moving, heart rate looks normal" without a phone call. Especially useful when living apart.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">💑</div>
+        <h3 data-en="Couples training apart" data-ja="カップル・夫婦で別々にトレーニング">Couples training apart</h3>
+        <p data-en="One partner at the gym, one out for a run — share each other's effort and finish times, exchange short messages, feel like training together even when apart." data-ja="片方がジム、もう片方が屋外ラン — 互いの運動量とゴール時刻を共有、短いメッセージを交換、別々の場所でも「一緒に運動している」感覚に。">One partner at the gym, one out for a run — share each other's effort and finish times, exchange short messages, feel like training together even when apart.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🏆</div>
+        <h3 data-en="Race day support" data-ja="レース当日のサポート">Race day support</h3>
+        <p data-en="One person racing, friends cheering from home — non-racing members can join the room as observers, see live HR and pace, send encouragement messages mid-race." data-ja="本人がレース出場、仲間は自宅から応援 — 走らないメンバーもルームに入り、ライブ心拍とペースを見て、レース中の応援メッセージを送れます。">One person racing, friends cheering from home — non-racing members can join the room as observers, see live HR and pace, send encouragement messages mid-race.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🌱</div>
+        <h3 data-en="Health buddies" data-ja="健康習慣バディ">Health buddies</h3>
+        <p data-en="Two or three friends keeping each other accountable on daily walks or runs. Just opening the app and seeing 'they're out there too' is enough motivation." data-ja="日課のウォーキングやランで互いを意識し合う2〜3人のバディ。アプリを開いて「あの人も今走ってる」と分かるだけで継続のモチベーションに。">Two or three friends keeping each other accountable on daily walks or runs. Just opening the app and seeing "they're out there too" is enough motivation.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🛡️</div>
+        <h3 data-en="Privacy by design" data-ja="プライバシー重視の設計">Privacy by design</h3>
+        <p data-en="Invite-only rooms (host approval needed for new members), per-user HR sharing toggle, Pause anytime, ban/kick tools. You stay in control of who sees what." data-ja="招待制ルーム（新規参加はホスト承認制）、心拍共有ON/OFFはユーザー個別、いつでもPause可、Ban/Kick機能あり。「誰に何を見せるか」を自分でコントロール。">Invite-only rooms (host approval needed for new members), per-user HR sharing toggle, Pause anytime, ban/kick tools. You stay in control of who sees what.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
       <div class="section-tag" data-en="How it works" data-ja="使い方">How it works</div>
       <h2 data-en="One host, up to 7 guests" data-ja="1人のホスト、最大7人のゲスト">One host, up to 7 guests</h2>
       <p class="section-desc" data-en="Designed for small running crews. Host creates the room, guests join with a code, everyone sees everyone in real time." data-ja="少人数のランニンググループに最適化。ホストが部屋を作り、ゲストはコードで参加、全員がリアルタイムで互いを見られます。">Designed for small running crews. Host creates the room, guests join with a code, everyone sees everyone in real time.</p>
@@ -236,27 +282,47 @@
 
   <div class="section" id="pricing">
     <div class="section-header">
-      <div class="section-tag" data-en="Pricing" data-ja="料金">Pricing</div>
-      <h2 data-en="One simple plan, only the host pays" data-ja="シンプルな料金、ホストだけ課金">One simple plan, only the host pays</h2>
-      <p class="section-desc" data-en="The host subscribes, the whole room runs together. Guests use PulseLink free — just sign up and enter the host's invite code." data-ja="ホストだけがサブスク登録、部屋全員で楽しめます。ゲストは無料 — アカウント登録と招待コード入力だけでOK。">The host subscribes, the whole room runs together. Guests use PulseLink free — just sign up and enter the host's invite code.</p>
+      <div class="section-tag" data-en="Plans" data-ja="プラン">Plans</div>
+      <h2 data-en="Only the host subscribes — guests are 100% free" data-ja="ホストだけがサブスク、ゲストは完全無料">Only the host subscribes — guests are 100% free</h2>
+      <p class="section-desc" data-en="If you just want to join a friend's or family member's room and share your data with them, pick Guest — it's completely free. If you want to create and run your own room, pick Host." data-ja="友人や家族のルームに参加してデータを共有したいだけなら、Guestを選んでください — 完全無料です。自分のルームを作成・運営したい場合のみ Host を選択。">If you just want to join a friend's or family member's room and share your data with them, pick Guest — it's completely free. If you want to create and run your own room, pick Host.</p>
     </div>
     <div class="pricing-grid">
+
+      <div class="plan free">
+        <div class="plan-badge" data-en="Free" data-ja="無料">Free</div>
+        <div class="plan-name" data-en="Guest" data-ja="ゲスト">Guest</div>
+        <div class="plan-price">$0<span class="plan-price-unit" data-en="/forever" data-ja="/ずっと無料">/forever</span></div>
+        <div class="plan-note" data-en="No subscription · No credit card" data-ja="サブスク不要 · クレジットカード不要">No subscription · No credit card</div>
+        <ul class="plan-features">
+          <li class="included" data-en="Join any host's room with invite code" data-ja="招待コードでホストのルームに参加">Join any host's room with invite code</li>
+          <li class="included" data-en="Share your HR / steps / distance live" data-ja="心拍・歩数・距離のリアルタイム共有">Share your HR / steps / distance live</li>
+          <li class="included" data-en="See all members in the same room" data-ja="同じルームのメンバー全員を表示">See all members in the same room</li>
+          <li class="included" data-en="Send template messages to anyone" data-ja="定型メッセージを送信">Send template messages to anyone</li>
+          <li class="included" data-en="Privacy controls (Pause / Manual / HR off)" data-ja="プライバシー制御（Pause / Manual / 心拍OFF）">Privacy controls (Pause / Manual / HR off)</li>
+          <li data-en="Cannot create or manage rooms" data-ja="ルームの作成・運営は不可" style="color: var(--muted2);">Cannot create or manage rooms</li>
+        </ul>
+        <a href="#" class="btn-plan disabled" data-en="Coming Soon — Free signup" data-ja="近日公開 — 無料登録">Coming Soon — Free signup</a>
+        <div class="plan-sub" data-en="Just an account is required for invite-only rooms and ban/kick to work." data-ja="招待制ルームとBan/Kick機能のためアカウント登録のみ必要。">Just an account is required for invite-only rooms and ban/kick to work.</div>
+      </div>
+
       <div class="plan">
         <div class="plan-badge" data-en="Subscription" data-ja="サブスクリプション">Subscription</div>
-        <div class="plan-name" data-en="Host — Annual" data-ja="ホスト — 年額プラン">Host — Annual</div>
+        <div class="plan-name" data-en="Host" data-ja="ホスト">Host</div>
+        <div class="plan-trial-banner" data-en="🎁 14-day free trial — no card required" data-ja="🎁 14日間無料トライアル — カード登録不要">🎁 14-day free trial — no card required</div>
         <div class="plan-price">$9.99<span class="plan-price-unit" data-en="/year" data-ja="/年">/year</span></div>
-        <div class="plan-note" data-en="14-day free trial · Cancel anytime" data-ja="14日間無料トライアル · いつでも解約可能">14-day free trial · Cancel anytime</div>
+        <div class="plan-note" data-en="Trial starts on your first room creation · Cancel anytime" data-ja="トライアルは初回ルーム作成時に開始 · いつでも解約可能">Trial starts on your first room creation · Cancel anytime</div>
         <ul class="plan-features">
-          <li class="included" data-en="Create one private room (host)" data-ja="プライベートルーム1部屋を作成（ホスト）">Create one private room (host)</li>
-          <li class="included" data-en="Up to 7 guests per room (free for guests)" data-ja="ゲストは最大7名（ゲストは無料）">Up to 7 guests per room (free for guests)</li>
-          <li class="included" data-en="Real-time HR / steps / distance sharing" data-ja="心拍・歩数・距離のリアルタイム共有">Real-time HR / steps / distance sharing</li>
-          <li class="included" data-en="20 customizable template messages" data-ja="20スロットの定型メッセージカスタマイズ">20 customizable template messages</li>
-          <li class="included" data-en="Approval / kick / ban tools" data-ja="承認 / Kick / Ban 管理機能">Approval / kick / ban tools</li>
-          <li class="included" data-en="14-day trial starts on first room creation" data-ja="14日無料トライアルは初回ルーム作成時に開始">14-day trial starts on first room creation</li>
+          <li class="included" data-en="Everything in Guest, plus:" data-ja="Guestの全機能に加えて：">Everything in Guest, plus:</li>
+          <li class="included" data-en="Create your own private room" data-ja="自分のプライベートルームを作成">Create your own private room</li>
+          <li class="included" data-en="Up to 7 guests per room (guests free)" data-ja="ゲストは最大7名（ゲストは完全無料）">Up to 7 guests per room (guests free)</li>
+          <li class="included" data-en="Choose update interval (10s ~ 5min / Manual)" data-ja="更新間隔を選択（10秒〜5分 / 手動）">Choose update interval (10s ~ 5min / Manual)</li>
+          <li class="included" data-en="Approve / kick / ban members" data-ja="メンバーの承認 / Kick / Ban">Approve / kick / ban members</li>
+          <li class="included" data-en="Reset invite code anytime" data-ja="招待コードはいつでも再生成可能">Reset invite code anytime</li>
         </ul>
-        <a href="#" class="btn-plan disabled" data-en="Coming Soon" data-ja="近日公開">Coming Soon</a>
-        <div class="plan-sub" data-en="Secure payment via Stripe. Activation email sent immediately after purchase." data-ja="Stripeによる安全な決済。購入後すぐにアクティベーションメールをお届けします。">Secure payment via Stripe. Activation email sent immediately after purchase.</div>
+        <a href="#" class="btn-plan disabled" data-en="Coming Soon — Start free trial" data-ja="近日公開 — 無料トライアル開始">Coming Soon — Start free trial</a>
+        <div class="plan-sub" data-en="Secure payment via Stripe. 14-day trial requires no payment info upfront." data-ja="Stripeによる安全な決済。14日トライアルはカード登録不要で開始できます。">Secure payment via Stripe. 14-day trial requires no payment info upfront.</div>
       </div>
+
     </div>
   </div>
 

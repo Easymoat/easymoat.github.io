@@ -117,14 +117,15 @@ form.addEventListener('submit', async (e) => {
     if (res.ok) {
       form.style.display = 'none';
       showAlert('success',
-        '<strong>Account created!</strong><br>' +
-        'Next steps to use PulseLink on your watch:' +
+        '<strong>Account created!</strong> A welcome email with full setup steps has been sent to ' +
+        '<code>' + escapeHtml(email) + '</code>.' +
+        '<br><br>Quick steps to use PulseLink on your watch:' +
         '<ol>' +
           '<li>Open <b>Garmin Connect IQ Mobile</b> on your phone</li>' +
           '<li>Go to <b>PulseLink → Settings</b></li>' +
-          '<li>Enter your email: <code>' + escapeHtml(email) + '</code></li>' +
-          '<li>Enter your password (same one you just set)</li>' +
-          '<li>Save settings, launch PulseLink on your Garmin watch</li>' +
+          '<li>Enter your email and the password you just set</li>' +
+          '<li>Save settings, then launch PulseLink on your Garmin watch</li>' +
+          '<li>Tap the splash screen, confirm nickname, pick Host or Guest</li>' +
         '</ol>'
       );
     } else if (res.status === 409) {

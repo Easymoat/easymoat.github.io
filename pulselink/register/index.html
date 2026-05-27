@@ -129,7 +129,11 @@ form.addEventListener('submit', async (e) => {
         '</ol>'
       );
     } else if (res.status === 409) {
-      showAlert('error', 'That email is already registered. Try <a href="../forgot/">forgot password</a> if it\'s yours.');
+      showAlert('error',
+        'That email is already registered. Sign in on your watch with this email and password ' +
+        '(no re-registration needed). If you forgot the password, ' +
+        '<a href="../forgot/">reset it here</a>.'
+      );
     } else if (data.error === 'password_too_short') {
       showAlert('error', 'Password too short.');
     } else if (data.error === 'missing_parameters') {

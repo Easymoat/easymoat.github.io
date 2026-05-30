@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms of Service — PulseLink | Easymoat</title>
+<link rel="icon" type="image/png" href="../../favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FC; --white: #FFFFFF; --border: #E2E6EF;
+    --accent: #0891B2; --accent-light: #CFFAFE; --accent-dark: #0E7490;
+    --text: #111827; --text2: #374151; --muted: #6B7280; --muted2: #9CA3AF;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.75; }
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 40px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); position: sticky; top: 0; z-index: 200; }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; color: var(--muted); transition: all 0.15s; }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+  nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 40px; display: flex; align-items: center; }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+  h1 { font-family: 'Syne', sans-serif; font-size: clamp(26px, 5vw, 34px); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .updated { font-size: 13px; color: var(--muted2); margin-bottom: 32px; }
+  h2 { font-family: 'Syne', sans-serif; font-size: 19px; font-weight: 800; margin: 36px 0 10px; color: var(--text); }
+  p { font-size: 15px; color: var(--text2); margin-bottom: 12px; }
+  ul { margin: 0 0 12px 22px; }
+  li { font-size: 15px; color: var(--text2); margin-bottom: 7px; }
+  .callout { background: #FEF3C7; border-left: 3px solid #D97706; border-radius: 8px; padding: 14px 18px; margin: 14px 0; font-size: 14px; color: var(--text2); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: var(--text); font-weight: 600; }
+  .lang-block.hidden { display: none; }
+  footer { border-top: 1px solid var(--border); padding: 28px 24px; text-align: center; font-size: 13px; color: var(--muted2); }
+  footer a { color: var(--accent); margin: 0 8px; }
+</style>
+</head>
+<body>
+<div class="lang-bar">
+  <span>🌐</span>
+  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+  <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+</div>
+<nav>
+  <a href="../" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;">
+    <img src="../../easymoat_logo.png" alt="Easymoat" style="height:32px; width:32px; border-radius:6px; object-fit:cover;">
+    <span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:800; font-size:20px;">PulseLink</span>
+  </a>
+</nav>
+
+<main>
+  <!-- ===================== ENGLISH ===================== -->
+  <div class="lang-block" id="content-en">
+    <h1>Terms of Service</h1>
+    <p class="updated">Last updated: May 30, 2026</p>
+
+    <p>These Terms govern your use of PulseLink, a Garmin Connect IQ app operated by <strong>Easymoat</strong> (sole proprietor: Yoshicchi). By creating an account or using PulseLink, you agree to these Terms. If you do not agree, please do not use the service.</p>
+
+    <div class="callout">
+      <strong>Not a medical device.</strong> PulseLink displays heart rate, steps and distance from your Garmin sensors for informational and social purposes only. These readings may be inaccurate and are <strong>not</strong> intended for medical use. Do not rely on PulseLink for any medical decision. In an emergency, contact local emergency services.
+    </div>
+
+    <h2>1. Eligibility &amp; account</h2>
+    <p>You need a Garmin device and a Garmin account, and you must meet your Garmin account's eligibility and age requirements. You are responsible for keeping your email and password confidential and for all activity under your account.</p>
+
+    <h2>2. Roles: Host and Guest</h2>
+    <ul>
+      <li><strong>Guest</strong> — free. Join a host's room with an invite code, share your metrics, and send messages. Guests cannot create or manage rooms.</li>
+      <li><strong>Host</strong> — paid subscription. Create and manage one private room, set the update interval, approve / remove / ban members, and regenerate the invite code.</li>
+    </ul>
+
+    <h2>3. Subscription, trial &amp; payment</h2>
+    <ul>
+      <li>The Host plan is an <strong>annual subscription of US$9.99/year</strong> with a <strong>14-day free trial</strong>. The trial begins the first time you create a room as a host.</li>
+      <li>Payment is processed by <strong>Stripe</strong>. We never receive or store your card details.</li>
+      <li>The subscription <strong>renews automatically</strong> each year unless cancelled.</li>
+      <li>You can cancel at any time via the Stripe Customer Portal (link included in your activation email and Stripe receipts).</li>
+    </ul>
+
+    <h2>4. Refunds</h2>
+    <p>Because PulseLink is a digital service activated immediately, <strong>refunds are not provided</strong> once your account has been activated. If activation does not work correctly, contact <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a> and we will resolve it. This does not affect any non-waivable rights you may have under applicable law.</p>
+
+    <h2>5. What happens when a subscription ends</h2>
+    <p>When you cancel, or when a trial expires without payment, your account is <strong>downgraded to a free Guest account</strong>. Your account, settings, and guest memberships remain, but any room you own is <strong>deleted</strong>. You can re-subscribe at any time to host again; a new room (with a new invite code) will be created.</p>
+
+    <h2>6. Acceptable use</h2>
+    <p>You agree not to:</p>
+    <ul>
+      <li>Impersonate another person or misrepresent your identity. (Nicknames cannot be changed while you are in a room, to prevent impersonation.)</li>
+      <li>Harass, threaten, or abuse other members through messages or otherwise.</li>
+      <li>Share, resell, or expose invite codes to people the host has not approved.</li>
+      <li>Attempt to access accounts, rooms, or data that are not yours, or interfere with the service.</li>
+    </ul>
+    <p>Hosts can approve, remove, and permanently ban members at their discretion. We may suspend or terminate accounts that violate these Terms.</p>
+
+    <h2>7. Your content</h2>
+    <p>You are responsible for the nickname and messages you submit. Do not submit content that is unlawful, infringing, or harmful. You retain ownership of your content; you grant us the limited right to store and transmit it as needed to operate the service.</p>
+
+    <h2>8. Data &amp; privacy</h2>
+    <p>Your use of PulseLink is also governed by our <a href="../privacy/">Privacy Policy</a>, which explains how we handle your data, including heart-rate (health) data. By sharing metrics in a room, you understand that other members of that room can see them while you are active.</p>
+
+    <h2>9. Service availability</h2>
+    <p>PulseLink is provided “as is” and “as available”. We do not guarantee uninterrupted or error-free operation. Weather, altitude, pressure and other on-device indicators are provided by the Garmin platform and may be unavailable or inaccurate. Real-time sharing depends on Garmin's Connect IQ platform and your connectivity, and may be limited or paused while you are recording an activity.</p>
+
+    <h2>10. Limitation of liability</h2>
+    <p>To the maximum extent permitted by law, Easymoat is not liable for any indirect, incidental, or consequential damages, or for any loss arising from inaccurate metrics, missed data, service interruption, or the actions of other room members. Nothing in these Terms limits liability that cannot be limited under applicable law.</p>
+
+    <h2>11. Account deletion &amp; termination</h2>
+    <p>You may delete your account at any time via the <a href="../delete/">Delete account</a> page; this permanently erases your account, owned room, memberships, and messages. Deleting your account does not cancel a Stripe subscription — cancel that separately in the Stripe portal. We may terminate or suspend access for violations of these Terms.</p>
+
+    <h2>12. Changes to these Terms</h2>
+    <p>We may update these Terms. Material changes are reflected by the “Last updated” date. Continued use after a change means you accept the updated Terms.</p>
+
+    <h2>13. Governing law</h2>
+    <p>These Terms are governed by the laws of Japan, and disputes are subject to the jurisdiction of the courts of Japan, without prejudice to mandatory consumer protections in your country of residence.</p>
+
+    <h2>14. Contact</h2>
+    <p><a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a> &nbsp;·&nbsp; <a href="../../tokutei.html">Specified Commercial Transactions Act disclosure</a></p>
+  </div>
+
+  <!-- ===================== 日本語 ===================== -->
+  <div class="lang-block hidden" id="content-ja">
+    <h1>利用規約</h1>
+    <p class="updated">最終更新日: 2026年5月30日</p>
+
+    <p>本規約は、<strong>Easymoat</strong>（個人事業主: Yoshicchi）が運営する Garmin Connect IQ アプリ「PulseLink」のご利用条件を定めるものです。アカウントを作成または PulseLink をご利用いただくことで、本規約に同意したものとみなされます。同意いただけない場合は、ご利用をお控えください。</p>
+
+    <div class="callout">
+      <strong>医療機器ではありません。</strong> PulseLink は Garmin センサーから取得した心拍数・歩数・距離を、情報提供および交流の目的でのみ表示します。これらの数値は不正確な場合があり、医療目的を意図したものでは<strong>ありません</strong>。いかなる医療判断にも PulseLink を利用しないでください。緊急時は地域の救急サービスにご連絡ください。
+    </div>
+
+    <h2>1. 利用要件・アカウント</h2>
+    <p>Garmin デバイスおよび Garmin アカウントが必要で、Garmin アカウントの利用要件（年齢を含む）を満たす必要があります。メールアドレスとパスワードの管理、およびアカウントでの全活動についてはお客様の責任となります。</p>
+
+    <h2>2. 役割: ホストとゲスト</h2>
+    <ul>
+      <li><strong>ゲスト</strong> — 無料。招待コードでホストのルームに参加し、指標を共有し、メッセージを送信できます。ルームの作成・管理はできません。</li>
+      <li><strong>ホスト</strong> — 有料サブスクリプション。プライベートルームを1つ作成・管理し、更新間隔の設定、メンバーの承認／削除／Ban、招待コードの再生成ができます。</li>
+    </ul>
+
+    <h2>3. サブスクリプション・トライアル・決済</h2>
+    <ul>
+      <li>ホストプランは<strong>年額 9.99 米ドル</strong>のサブスクリプションで、<strong>14日間の無料トライアル</strong>が付きます。トライアルは初めてホストとしてルームを作成した時点で開始します。</li>
+      <li>決済は <strong>Stripe</strong> が処理します。当社はカード情報を受領・保存しません。</li>
+      <li>サブスクリプションは解約しない限り<strong>毎年自動更新</strong>されます。</li>
+      <li>Stripe カスタマーポータル（アクティベーションメールおよび Stripe 領収書に記載のリンク）からいつでも解約できます。</li>
+    </ul>
+
+    <h2>4. 返金</h2>
+    <p>PulseLink は即時に有効化されるデジタルサービスであるため、アカウント有効化後の<strong>返金はお受けできません</strong>。有効化が正常に機能しない場合は <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a> までご連絡ください。対応いたします。本条は、適用法上放棄できないお客様の権利に影響しません。</p>
+
+    <h2>5. サブスクリプション終了時の扱い</h2>
+    <p>解約した場合、またはトライアルが決済なく満了した場合、アカウントは<strong>無料のゲストアカウントにダウングレード</strong>されます。アカウント・設定・ゲストとしてのメンバーシップは残りますが、所有するルームは<strong>削除</strong>されます。再度サブスクリプションに登録すればいつでもホストに復帰でき、その際は新しいルーム（新しい招待コード付き）が作成されます。</p>
+
+    <h2>6. 禁止事項</h2>
+    <p>お客様は以下を行わないことに同意します:</p>
+    <ul>
+      <li>他者へのなりすまし、または身元の偽装。（なりすまし防止のため、ルームに参加している間はニックネームを変更できません。）</li>
+      <li>メッセージその他の手段による他メンバーへの嫌がらせ・脅迫・迷惑行為。</li>
+      <li>ホストが承認していない者への招待コードの共有・転売・開示。</li>
+      <li>自身のものでないアカウント・ルーム・データへのアクセス試行、またはサービスへの妨害。</li>
+    </ul>
+    <p>ホストは裁量でメンバーの承認・削除・恒久的な Ban を行えます。当社は本規約に違反するアカウントを停止または終了することがあります。</p>
+
+    <h2>7. お客様のコンテンツ</h2>
+    <p>送信するニックネームおよびメッセージについてはお客様が責任を負います。違法・権利侵害・有害なコンテンツを送信しないでください。コンテンツの所有権はお客様に帰属します。お客様は、サービス運営に必要な範囲でこれを保存・送信する限定的な権利を当社に許諾するものとします。</p>
+
+    <h2>8. データとプライバシー</h2>
+    <p>PulseLink の利用は<a href="../privacy/">プライバシーポリシー</a>にも従います。同ポリシーは、心拍数（健康）データを含むデータの取り扱いを説明しています。ルームで指標を共有することにより、アクティブな間は当該ルームの他メンバーがそれを閲覧できることをご理解いただきます。</p>
+
+    <h2>9. サービスの提供</h2>
+    <p>PulseLink は「現状有姿」かつ「提供可能な範囲」で提供されます。中断やエラーのない動作を保証するものではありません。天気・高度・気圧その他の端末側指標は Garmin プラットフォームにより提供され、利用できない場合や不正確な場合があります。リアルタイム共有は Garmin Connect IQ プラットフォームと通信環境に依存し、アクティビティ記録中は制限または一時停止されることがあります。</p>
+
+    <h2>10. 責任の制限</h2>
+    <p>適用法が認める最大限の範囲で、Easymoat は、間接的・付随的・結果的損害、または不正確な指標・データ欠落・サービス中断・他メンバーの行為に起因するいかなる損失についても責任を負いません。本規約のいかなる条項も、適用法上制限できない責任を制限するものではありません。</p>
+
+    <h2>11. アカウント削除・終了</h2>
+    <p><a href="../delete/">アカウント削除</a>ページからいつでも削除できます。これによりアカウント・所有ルーム・メンバーシップ・メッセージが恒久的に消去されます。アカウント削除は Stripe サブスクリプションの解約にはなりません — Stripe ポータルから別途解約してください。当社は本規約違反に対しアクセスを終了または停止することがあります。</p>
+
+    <h2>12. 規約の変更</h2>
+    <p>本規約は更新されることがあります。重要な変更は「最終更新日」に反映されます。変更後の継続利用は、更新後の規約への同意を意味します。</p>
+
+    <h2>13. 準拠法</h2>
+    <p>本規約は日本法に準拠し、紛争は日本の裁判所の管轄に服します。ただし、お客様の居住国における強行的な消費者保護を妨げません。</p>
+
+    <h2>14. お問い合わせ</h2>
+    <p><a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a> &nbsp;·&nbsp; <a href="../../tokutei.html">特定商取引法に基づく表記</a></p>
+  </div>
+</main>
+
+<footer>
+  © 2026 Easymoat &nbsp;|&nbsp;
+  <a href="../privacy/" id="lnk-privacy">Privacy Policy</a> &nbsp;|&nbsp;
+  <a href="../" id="lnk-home">← PulseLink home</a>
+</footer>
+
+<script>
+function setLang(lang) {
+  var en = document.getElementById('content-en');
+  var ja = document.getElementById('content-ja');
+  if (lang === 'ja') {
+    en.classList.add('hidden'); ja.classList.remove('hidden');
+    document.documentElement.lang = 'ja';
+    document.getElementById('lnk-privacy').textContent = 'プライバシーポリシー';
+    document.getElementById('lnk-home').textContent = '← PulseLink ホーム';
+  } else {
+    ja.classList.add('hidden'); en.classList.remove('hidden');
+    document.documentElement.lang = 'en';
+    document.getElementById('lnk-privacy').textContent = 'Privacy Policy';
+    document.getElementById('lnk-home').textContent = '← PulseLink home';
+  }
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+}
+</script>
+</body>
+</html>

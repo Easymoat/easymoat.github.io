@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — PulseLink | Easymoat</title>
+<link rel="icon" type="image/png" href="../../favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FC; --white: #FFFFFF; --border: #E2E6EF;
+    --accent: #0891B2; --accent-light: #CFFAFE; --accent-dark: #0E7490;
+    --text: #111827; --text2: #374151; --muted: #6B7280; --muted2: #9CA3AF;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.75; }
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 40px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); position: sticky; top: 0; z-index: 200; }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; color: var(--muted); transition: all 0.15s; }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+  nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 40px; display: flex; align-items: center; }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+  h1 { font-family: 'Syne', sans-serif; font-size: clamp(26px, 5vw, 34px); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .updated { font-size: 13px; color: var(--muted2); margin-bottom: 32px; }
+  h2 { font-family: 'Syne', sans-serif; font-size: 19px; font-weight: 800; margin: 36px 0 10px; color: var(--text); }
+  p { font-size: 15px; color: var(--text2); margin-bottom: 12px; }
+  ul { margin: 0 0 12px 22px; }
+  li { font-size: 15px; color: var(--text2); margin-bottom: 7px; }
+  .callout { background: var(--accent-light); border-left: 3px solid var(--accent); border-radius: 8px; padding: 14px 18px; margin: 14px 0; font-size: 14px; color: var(--text2); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: var(--text); font-weight: 600; }
+  .lang-block.hidden { display: none; }
+  footer { border-top: 1px solid var(--border); padding: 28px 24px; text-align: center; font-size: 13px; color: var(--muted2); }
+  footer a { color: var(--accent); margin: 0 8px; }
+</style>
+</head>
+<body>
+<div class="lang-bar">
+  <span>🌐</span>
+  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+  <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+</div>
+<nav>
+  <a href="../" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;">
+    <img src="../../easymoat_logo.png" alt="Easymoat" style="height:32px; width:32px; border-radius:6px; object-fit:cover;">
+    <span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:800; font-size:20px;">PulseLink</span>
+  </a>
+</nav>
+
+<main>
+  <!-- ===================== ENGLISH ===================== -->
+  <div class="lang-block" id="content-en">
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: May 30, 2026</p>
+
+    <p>PulseLink is a Garmin Connect IQ app operated by <strong>Easymoat</strong> (sole proprietor: Yoshicchi). This Privacy Policy explains what data PulseLink processes, why, and the choices you have. By using PulseLink you agree to this policy.</p>
+
+    <div class="callout">
+      <strong>Health data notice.</strong> PulseLink processes heart-rate data, which is a <strong>special category of personal data</strong> under the EU General Data Protection Regulation (GDPR). We process it only with your explicit consent and only to provide the sharing features you choose to use.
+    </div>
+
+    <h2>1. Who we are</h2>
+    <p>Easymoat (sole proprietor: Yoshicchi), Japan. Contact: <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a>. We are the data controller for the information described below.</p>
+
+    <h2>2. What we collect</h2>
+    <ul>
+      <li><strong>Account data</strong> — your email address, a password (stored only as a salted hash, never in plain text), and a nickname you choose.</li>
+      <li><strong>Activity &amp; health data</strong> — heart rate, step count, and distance, read from your Garmin device. These are shared in real time with the other members of the room you join.</li>
+      <li><strong>Room data</strong> — which room you belong to, invite codes for rooms you host, join/approval status, and the template messages you send.</li>
+      <li><strong>Payment data</strong> — handled entirely by Stripe. We never see, receive, or store your card number. We only receive a subscription status (active / expired) from Stripe.</li>
+    </ul>
+    <p>We do <strong>not</strong> collect your name, address, precise location track, contacts, or any advertising identifiers. PulseLink contains no third-party advertising or analytics SDKs.</p>
+
+    <h2>3. How we use your data</h2>
+    <ul>
+      <li>To authenticate you and keep you signed in (email + password → token).</li>
+      <li>To run the room you create or join, and to show your live heart rate, steps and distance to the other members of that room.</li>
+      <li>To deliver template messages between members.</li>
+      <li>To manage host subscriptions via Stripe.</li>
+    </ul>
+    <p><strong>Legal bases (GDPR):</strong> your <em>explicit consent</em> for heart-rate (health) data; <em>performance of a contract</em> for account and room features; and our <em>legitimate interest</em> in keeping the service secure.</p>
+
+    <h2>4. Who can see your data</h2>
+    <ul>
+      <li><strong>Other room members.</strong> When you join a room, the members of that room can see your nickname and the metrics you choose to share (heart rate, steps, distance) while you are active. You control what you share at any time (see Section 6).</li>
+      <li><strong>Stripe</strong> — our payment processor, for host subscriptions only.</li>
+      <li><strong>Garmin</strong> — your data travels over the Garmin Connect IQ platform between your watch and your phone.</li>
+    </ul>
+    <p>We never sell your data, and we never share it with advertisers or data brokers.</p>
+
+    <h2>5. How long we keep it</h2>
+    <p>This reflects how PulseLink is actually built:</p>
+    <ul>
+      <li><strong>Heart rate, steps, distance</strong> — held only in server memory as the latest value, not written to permanent storage. It is overwritten by your next update (typically within seconds to minutes) and lost entirely if the server restarts.</li>
+      <li><strong>Messages</strong> — stored per room and automatically pruned after a retention period.</li>
+      <li><strong>Account data (email, password hash, nickname)</strong> — kept while your account exists.</li>
+      <li><strong>On account deletion</strong> — your account, any room you own, your memberships, and your messages are <strong>permanently and immediately erased</strong>.</li>
+    </ul>
+
+    <h2>6. Your privacy controls</h2>
+    <p>PulseLink gives you three independent in-app controls:</p>
+    <ul>
+      <li><strong>Pause sharing</strong> — stops sending any data; you appear offline.</li>
+      <li><strong>Manual interval</strong> — disables automatic sending; data is sent only when you choose.</li>
+      <li><strong>Heart-rate off</strong> — keeps steps/distance active but stops sharing heart rate specifically.</li>
+    </ul>
+
+    <h2>7. Your rights</h2>
+    <p>Depending on your location (including under the GDPR for EU/UK users), you have the right to:</p>
+    <ul>
+      <li><strong>Access</strong> the personal data we hold about you.</li>
+      <li><strong>Delete</strong> your account and all associated data — at any time, yourself, via the <a href="../delete/">Delete account</a> page.</li>
+      <li><strong>Rectify</strong> your data — change your nickname in-app, or reset your password via the <a href="../forgot/">Forgot password</a> page.</li>
+      <li><strong>Withdraw consent</strong> for health-data processing — use the in-app privacy controls above, or delete your account.</li>
+      <li><strong>Data portability</strong> and <strong>object</strong> to processing — contact us at <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a>.</li>
+    </ul>
+    <p>EU/UK users also have the right to lodge a complaint with their local data protection authority.</p>
+
+    <h2>8. Eligibility</h2>
+    <p>PulseLink requires a Garmin device and a Garmin account. You must meet the eligibility and age requirements of your Garmin account to use PulseLink.</p>
+
+    <h2>9. Security</h2>
+    <p>Passwords are stored only as salted SHA-256 hashes. Authentication uses signed tokens. All communication with our server is over HTTPS. No method of transmission or storage is perfectly secure, but we apply measures appropriate to the sensitivity of the data.</p>
+
+    <h2>10. International transfers</h2>
+    <p>Our server is hosted on Render. Depending on region, your data may be processed on servers located outside your country. We rely on appropriate safeguards for such transfers.</p>
+
+    <h2>11. Children</h2>
+    <p>PulseLink is not directed at children below the age permitted by your Garmin account terms. We do not knowingly collect data from anyone who does not meet those requirements.</p>
+
+    <h2>12. Changes</h2>
+    <p>We may update this policy. Material changes will be reflected by the “Last updated” date above. Continued use after a change means you accept the updated policy.</p>
+
+    <h2>13. Contact</h2>
+    <p>Questions or requests: <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a>.</p>
+  </div>
+
+  <!-- ===================== 日本語 ===================== -->
+  <div class="lang-block hidden" id="content-ja">
+    <h1>プライバシーポリシー</h1>
+    <p class="updated">最終更新日: 2026年5月30日</p>
+
+    <p>PulseLink は <strong>Easymoat</strong>（個人事業主: Yoshicchi）が運営する Garmin Connect IQ アプリです。本ポリシーは、PulseLink が取り扱うデータの内容・目的・お客様の選択肢を説明します。PulseLink をご利用いただくことで、本ポリシーに同意したものとみなされます。</p>
+
+    <div class="callout">
+      <strong>健康データに関するご案内。</strong> PulseLink は心拍数データを取り扱います。これは EU 一般データ保護規則（GDPR）における<strong>特別カテゴリの個人データ</strong>に該当します。当社はお客様の明示的な同意に基づき、お客様が選択した共有機能を提供する目的に限り、これを処理します。
+    </div>
+
+    <h2>1. 事業者</h2>
+    <p>Easymoat（個人事業主: Yoshicchi）、日本。連絡先: <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a>。当社は以下に記載する情報の管理者（データコントローラー）です。</p>
+
+    <h2>2. 取得する情報</h2>
+    <ul>
+      <li><strong>アカウント情報</strong> — メールアドレス、パスワード（ソルト付きハッシュとしてのみ保存し、平文では保存しません）、お客様が設定するニックネーム。</li>
+      <li><strong>アクティビティ・健康データ</strong> — Garmin デバイスから読み取る心拍数・歩数・距離。参加中のルームの他メンバーとリアルタイムで共有されます。</li>
+      <li><strong>ルーム情報</strong> — 所属ルーム、ホストする場合の招待コード、参加・承認状況、送信した定型メッセージ。</li>
+      <li><strong>決済情報</strong> — すべて Stripe が処理します。当社はカード番号を一切閲覧・受領・保存しません。Stripe からはサブスクリプションの状態（有効／失効）のみを受け取ります。</li>
+    </ul>
+    <p>当社は氏名・住所・詳細な位置情報の軌跡・連絡先・広告 ID を<strong>取得しません</strong>。PulseLink には第三者の広告・分析 SDK は含まれていません。</p>
+
+    <h2>3. 利用目的</h2>
+    <ul>
+      <li>お客様の認証とログイン状態の維持（メール＋パスワード → トークン）。</li>
+      <li>作成または参加したルームの運営、および当該ルームの他メンバーへのリアルタイムの心拍数・歩数・距離の表示。</li>
+      <li>メンバー間の定型メッセージの送受信。</li>
+      <li>Stripe を通じたホストサブスクリプションの管理。</li>
+    </ul>
+    <p><strong>法的根拠（GDPR）:</strong> 心拍数（健康）データについては<em>明示的な同意</em>、アカウント・ルーム機能については<em>契約の履行</em>、サービスの安全維持については<em>正当な利益</em>。</p>
+
+    <h2>4. 情報を閲覧できる者</h2>
+    <ul>
+      <li><strong>同じルームのメンバー</strong>。ルームに参加すると、アクティブな間、ニックネームと共有を選択した指標（心拍数・歩数・距離）が当該ルームのメンバーに表示されます。共有内容はいつでもお客様が制御できます（第6項参照）。</li>
+      <li><strong>Stripe</strong> — 決済代行（ホストサブスクリプションのみ）。</li>
+      <li><strong>Garmin</strong> — データはウォッチとスマートフォン間で Garmin Connect IQ プラットフォームを経由します。</li>
+    </ul>
+    <p>当社はデータを販売せず、広告事業者やデータブローカーに共有することもありません。</p>
+
+    <h2>5. 保持期間</h2>
+    <p>これは PulseLink の実際の設計を反映したものです:</p>
+    <ul>
+      <li><strong>心拍数・歩数・距離</strong> — 最新値としてサーバーのメモリ上にのみ保持し、永続ストレージには書き込みません。次回の更新（通常は数秒〜数分以内）で上書きされ、サーバー再起動時には完全に失われます。</li>
+      <li><strong>メッセージ</strong> — ルームごとに保存され、一定の保持期間後に自動削除されます。</li>
+      <li><strong>アカウント情報（メール・パスワードハッシュ・ニックネーム）</strong> — アカウントが存在する間、保持します。</li>
+      <li><strong>アカウント削除時</strong> — アカウント、所有するルーム、メンバーシップ、メッセージを<strong>恒久的かつ即時に消去</strong>します。</li>
+    </ul>
+
+    <h2>6. プライバシー制御</h2>
+    <p>PulseLink はアプリ内に3つの独立した制御を備えています:</p>
+    <ul>
+      <li><strong>共有の一時停止（Pause）</strong> — すべてのデータ送信を停止し、オフライン表示になります。</li>
+      <li><strong>手動インターバル（Manual）</strong> — 自動送信を無効化し、お客様が選んだ時のみ送信します。</li>
+      <li><strong>心拍オフ</strong> — 歩数・距離は有効のまま、心拍数の共有のみを停止します。</li>
+    </ul>
+
+    <h2>7. お客様の権利</h2>
+    <p>お客様の所在地（EU/UK ユーザーの GDPR を含む）に応じて、以下の権利があります:</p>
+    <ul>
+      <li>当社が保持する個人データへの<strong>アクセス</strong>。</li>
+      <li>アカウントと全関連データの<strong>削除</strong> — いつでもご自身で <a href="../delete/">アカウント削除</a>ページから実行できます。</li>
+      <li>データの<strong>訂正</strong> — アプリ内でニックネームを変更、または <a href="../forgot/">パスワード再発行</a>ページからリセットできます。</li>
+      <li>健康データ処理への<strong>同意の撤回</strong> — 上記アプリ内プライバシー制御の利用、またはアカウント削除によります。</li>
+      <li><strong>データポータビリティ</strong>および処理への<strong>異議申立</strong> — <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a> までご連絡ください。</li>
+    </ul>
+    <p>EU/UK ユーザーは、所在地のデータ保護監督機関へ苦情を申し立てる権利も有します。</p>
+
+    <h2>8. 利用要件</h2>
+    <p>PulseLink のご利用には Garmin デバイスおよび Garmin アカウントが必要です。Garmin アカウントの利用要件（年齢を含む）を満たす方が対象です。</p>
+
+    <h2>9. セキュリティ</h2>
+    <p>パスワードはソルト付き SHA-256 ハッシュとしてのみ保存します。認証には署名付きトークンを使用します。サーバーとの通信はすべて HTTPS です。完全に安全な送信・保存方法は存在しませんが、データの機微性に見合った措置を講じています。</p>
+
+    <h2>10. 国際的なデータ移転</h2>
+    <p>当社のサーバーは Render 上でホストされています。地域によっては、お客様の国外に所在するサーバーでデータが処理される場合があります。当社はそのような移転に適切な保護措置を講じます。</p>
+
+    <h2>11. 子どもについて</h2>
+    <p>PulseLink は、Garmin アカウント規約が許可する年齢未満の子どもを対象としていません。当社は当該要件を満たさない方から意図的にデータを取得することはありません。</p>
+
+    <h2>12. 変更</h2>
+    <p>本ポリシーは更新されることがあります。重要な変更は上部の「最終更新日」に反映されます。変更後の継続利用は、更新後のポリシーへの同意を意味します。</p>
+
+    <h2>13. お問い合わせ</h2>
+    <p>ご質問・ご請求は <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a> まで。</p>
+  </div>
+</main>
+
+<footer>
+  © 2026 Easymoat &nbsp;|&nbsp;
+  <a href="../terms/" id="lnk-terms">Terms of Service</a> &nbsp;|&nbsp;
+  <a href="../" id="lnk-home">← PulseLink home</a>
+</footer>
+
+<script>
+function setLang(lang) {
+  var en = document.getElementById('content-en');
+  var ja = document.getElementById('content-ja');
+  if (lang === 'ja') {
+    en.classList.add('hidden'); ja.classList.remove('hidden');
+    document.documentElement.lang = 'ja';
+    document.getElementById('lnk-terms').textContent = '利用規約';
+    document.getElementById('lnk-home').textContent = '← PulseLink ホーム';
+  } else {
+    ja.classList.add('hidden'); en.classList.remove('hidden');
+    document.documentElement.lang = 'en';
+    document.getElementById('lnk-terms').textContent = 'Terms of Service';
+    document.getElementById('lnk-home').textContent = '← PulseLink home';
+  }
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+}
+</script>
+</body>
+</html>

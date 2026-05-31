@@ -74,7 +74,7 @@
 
     <h2>3. How we use your data</h2>
     <ul>
-      <li>To authenticate you and keep you signed in (email + password → token).</li>
+      <li>To authenticate you and keep you signed in (email address + password → token).</li>
       <li>To run the room you create or join, and to show your live heart rate, steps and distance to the other members of that room.</li>
       <li>To deliver template messages between members.</li>
       <li>To manage host subscriptions via Stripe.</li>
@@ -94,7 +94,7 @@
     <ul>
       <li><strong>Heart rate, steps, distance</strong> — held only in server memory as the latest value, not written to permanent storage. It is overwritten by your next update (typically within seconds to minutes) and lost entirely if the server restarts.</li>
       <li><strong>Messages</strong> — stored per room and automatically pruned after a retention period.</li>
-      <li><strong>Account data (email, password hash, nickname)</strong> — kept while your account exists.</li>
+      <li><strong>Account data (email address, password hash, nickname)</strong> — kept while your account exists.</li>
       <li><strong>On account deletion</strong> — your account, any room you own, your memberships, and your messages are <strong>permanently and immediately erased</strong>.</li>
     </ul>
 
@@ -161,7 +161,7 @@
 
     <h2>3. 利用目的</h2>
     <ul>
-      <li>お客様の認証とログイン状態の維持（メール＋パスワード → トークン）。</li>
+      <li>お客様の認証とログイン状態の維持（メールアドレス＋パスワード → トークン）。</li>
       <li>作成または参加したルームの運営、および当該ルームの他メンバーへのリアルタイムの心拍数・歩数・距離の表示。</li>
       <li>メンバー間の定型メッセージの送受信。</li>
       <li>Stripe を通じたホストサブスクリプションの管理。</li>
@@ -181,7 +181,7 @@
     <ul>
       <li><strong>心拍数・歩数・距離</strong> — 最新値としてサーバーのメモリ上にのみ保持し、永続ストレージには書き込みません。次回の更新（通常は数秒〜数分以内）で上書きされ、サーバー再起動時には完全に失われます。</li>
       <li><strong>メッセージ</strong> — ルームごとに保存され、一定の保持期間後に自動削除されます。</li>
-      <li><strong>アカウント情報（メール・パスワードハッシュ・ニックネーム）</strong> — アカウントが存在する間、保持します。</li>
+      <li><strong>アカウント情報（メールアドレス・パスワードハッシュ・ニックネーム）</strong> — アカウントが存在する間、保持します。</li>
       <li><strong>アカウント削除時</strong> — アカウント、所有するルーム、メンバーシップ、メッセージを<strong>恒久的かつ即時に消去</strong>します。</li>
     </ul>
 

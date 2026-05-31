@@ -247,7 +247,15 @@ function setLang(lang) {
   }
   document.getElementById('btn-en').classList.toggle('active', lang === 'en');
   document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+  try { localStorage.setItem('pl_lang', lang); } catch (e) {}
 }
+
+// サイト全体で共有された言語設定があれば初期適用 (ランディングで日本語にしていたら日本語で開く)
+(function () {
+  var saved = 'en';
+  try { saved = localStorage.getItem('pl_lang') || 'en'; } catch (e) {}
+  if (saved === 'ja') { setLang('ja'); }
+})();
 </script>
 </body>
 </html>

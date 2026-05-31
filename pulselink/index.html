@@ -545,8 +545,18 @@ function setLang(lang) {
   document.getElementById('btn-en').classList.toggle('active', lang === 'en');
   document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
 
+  // 言語選択をサイト全体で共有 (Privacy/Terms 等の遷移先でも維持)
+  try { localStorage.setItem('pl_lang', lang); } catch (e) {}
+
   injectEmails();
 }
+
+// 保存済みの言語設定があれば初期適用 (他ページで日本語にしていたら日本語で開く)
+(function () {
+  var saved = 'en';
+  try { saved = localStorage.getItem('pl_lang') || 'en'; } catch (e) {}
+  if (saved === 'ja') { setLang('ja'); }
+})();
 
 injectEmails();
 </script>

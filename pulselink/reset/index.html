@@ -15,6 +15,10 @@
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 40px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; color: var(--muted); transition: all 0.15s; }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
   nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 40px; display: flex; align-items: center; }
   main { flex: 1; max-width: 460px; margin: 0 auto; padding: 48px 24px; width: 100%; }
   .card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 32px; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
@@ -40,6 +44,11 @@
 </style>
 </head>
 <body>
+<div class="lang-bar">
+  <span>🌐</span>
+  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+  <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+</div>
 <nav>
   <a href="../" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;">
     <img src="../../easymoat_logo.png" alt="Easymoat" style="height:32px; width:32px; border-radius:6px; object-fit:cover;">
@@ -48,33 +57,102 @@
 </nav>
 <main>
   <div class="card" id="card">
-    <h1>Set a new password</h1>
-    <p class="subtitle" id="subtitle">Checking your reset link…</p>
+    <h1 data-en="Set a new password" data-ja="新しいパスワードを設定">Set a new password</h1>
+    <p class="subtitle" id="subtitle"></p>
 
     <div id="alert" style="display:none;"></div>
 
     <form id="reset-form" style="display:none;">
       <div class="field">
-        <label for="password">New password</label>
-        <input id="password" name="password" type="text" required minlength="8" placeholder="At least 8 characters">
-        <div class="hint">Stored on your phone (Connect IQ Mobile). You can view it any time, so use a long but memorable phrase.</div>
+        <label for="password" data-en="New password" data-ja="新しいパスワード">New password</label>
+        <input id="password" name="password" type="text" required minlength="8" data-en-ph="At least 8 characters" data-ja-ph="8文字以上" placeholder="At least 8 characters">
+        <div class="hint" data-en="Stored on your phone (Connect IQ Mobile). You can view it any time, so use a long but memorable phrase." data-ja="スマホ（Connect IQ Mobile）に保存され、いつでも確認できます。長くて覚えやすいフレーズを推奨します。">Stored on your phone (Connect IQ Mobile). You can view it any time, so use a long but memorable phrase.</div>
       </div>
-      <button class="btn" type="submit" id="submit-btn">Update password</button>
+      <button class="btn" type="submit" id="submit-btn" data-en="Update password" data-ja="パスワードを更新">Update password</button>
     </form>
 
     <div class="footer-links">
-      <a href="../forgot/">Request a new link</a> · <a href="../">← PulseLink home</a>
+      <a href="../forgot/" data-en="Request a new link" data-ja="新しいリンクを要求">Request a new link</a> · <a href="../" data-en="← PulseLink home" data-ja="← PulseLink ホーム">← PulseLink home</a>
     </div>
   </div>
 </main>
-<footer>© 2026 Easymoat. <a href="../" style="color:var(--accent); text-decoration:none;">PulseLink home</a></footer>
+<footer>© 2026 Easymoat. <a href="../" style="color:var(--accent); text-decoration:none;" data-en="PulseLink home" data-ja="PulseLink ホーム">PulseLink home</a></footer>
 
 <script>
 const API = 'https://mlbwatch-server.onrender.com/api/pulselink';
+var LANG = 'en';
+function T(en, ja) { return LANG === 'ja' ? ja : en; }
+
 const subtitle = document.getElementById('subtitle');
 const form = document.getElementById('reset-form');
 const alertEl = document.getElementById('alert');
 const submitBtn = document.getElementById('submit-btn');
+
+// 動的な subtitle / success の状態を保持し、言語切替時に再描画する
+var subState = 'checking'; // checking | valid | expired | missing | verr
+var subEmail = '';
+var successShown = false;
+
+function renderSubtitle() {
+  if (subState === 'checking') {
+    subtitle.textContent = T('Checking your reset link…', 'リセットリンクを確認中…');
+  } else if (subState === 'valid') {
+    subtitle.innerHTML = T('Resetting password for ', '次のアカウントのパスワードを再設定: ') +
+      '<code>' + escapeHtml(subEmail || T('your account', 'お客様のアカウント')) + '</code>' + T('.', '');
+  } else if (subState === 'expired') {
+    subtitle.textContent = T('This reset link has expired or is invalid.', 'このリセットリンクは失効しているか無効です。');
+  } else if (subState === 'missing') {
+    subtitle.textContent = T('Missing reset token in the link.', 'リンクにリセットトークンがありません。');
+  } else if (subState === 'verr') {
+    subtitle.textContent = T('Could not verify the link.', 'リンクを確認できませんでした。');
+  }
+}
+
+function renderSuccess() {
+  if (!successShown) return;
+  if (LANG === 'ja') {
+    showAlert('success',
+      '<strong>パスワードを更新しました！</strong><br>' +
+      '次にウォッチ側でも更新してください:' +
+      '<ol>' +
+        '<li>スマホで <b>Garmin Connect IQ Mobile</b> を開く</li>' +
+        '<li><b>PulseLink → 設定</b> を開く</li>' +
+        '<li>パスワード欄を新しいパスワードに置き換える</li>' +
+        '<li>設定を保存し、Garmin ウォッチで PulseLink を起動</li>' +
+      '</ol>'
+    );
+  } else {
+    showAlert('success',
+      '<strong>Password updated!</strong><br>' +
+      'Now update it on your watch:' +
+      '<ol>' +
+        '<li>Open <b>Garmin Connect IQ Mobile</b> on your phone</li>' +
+        '<li>Go to <b>PulseLink → Settings</b></li>' +
+        '<li>Replace the Password field with your new password</li>' +
+        '<li>Save settings, launch PulseLink on your Garmin watch</li>' +
+      '</ol>'
+    );
+  }
+}
+
+function setLang(lang) {
+  LANG = (lang === 'ja') ? 'ja' : 'en';
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-en]').forEach(function (el) {
+    if (el.children.length > 0) return;
+    var t = el.getAttribute('data-' + LANG);
+    if (t != null) el.textContent = t;
+  });
+  document.querySelectorAll('[data-en-ph]').forEach(function (el) {
+    var t = el.getAttribute('data-' + LANG + '-ph');
+    if (t != null) el.placeholder = t;
+  });
+  document.getElementById('btn-en').classList.toggle('active', LANG === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', LANG === 'ja');
+  try { localStorage.setItem('pl_lang', LANG); } catch (e) {}
+  renderSubtitle();
+  renderSuccess();
+}
 
 function showAlert(kind, html) {
   alertEl.className = 'alert ' + kind;
@@ -86,28 +164,29 @@ function getToken() {
   const params = new URLSearchParams(window.location.search);
   return params.get('token') || '';
 }
-
 const TOKEN = getToken();
 
 (async function init() {
   if (!TOKEN) {
-    subtitle.textContent = 'Missing reset token in the link.';
-    showAlert('error', 'This URL is incomplete. Please use the link from the email exactly as sent.');
+    subState = 'missing'; renderSubtitle();
+    showAlert('error', T('This URL is incomplete. Please use the link from the email exactly as sent.',
+                         'URL が不完全です。メールのリンクをそのままお使いください。'));
     return;
   }
   try {
     const res = await fetch(API + '/auth/reset-info?token=' + encodeURIComponent(TOKEN));
     if (res.ok) {
       const info = await res.json();
-      subtitle.innerHTML = 'Resetting password for <code>' + escapeHtml(info.email || 'your account') + '</code>.';
+      subState = 'valid'; subEmail = info.email || '';
+      renderSubtitle();
       form.style.display = 'block';
     } else {
-      subtitle.textContent = 'This reset link has expired or is invalid.';
-      showAlert('error', 'Request a new link below.');
+      subState = 'expired'; renderSubtitle();
+      showAlert('error', T('Request a new link below.', '下のリンクから新しいリンクを要求してください。'));
     }
   } catch (e) {
-    subtitle.textContent = 'Could not verify the link.';
-    showAlert('error', 'Network error. Please try again later.');
+    subState = 'verr'; renderSubtitle();
+    showAlert('error', T('Network error. Please try again later.', '通信エラー。後ほどお試しください。'));
   }
 })();
 
@@ -116,11 +195,11 @@ form.addEventListener('submit', async (e) => {
   alertEl.style.display = 'none';
   const password = document.getElementById('password').value;
   if (password.length < 8) {
-    showAlert('error', 'Password must be at least 8 characters.');
+    showAlert('error', T('Password must be at least 8 characters.', 'パスワードは8文字以上にしてください。'));
     return;
   }
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Updating…';
+  submitBtn.textContent = T('Updating…', '更新中…');
   try {
     const res = await fetch(API + '/auth/reset-password', {
       method: 'POST',
@@ -131,34 +210,34 @@ form.addEventListener('submit', async (e) => {
     if (res.ok) {
       form.style.display = 'none';
       subtitle.style.display = 'none';
-      showAlert('success',
-        '<strong>Password updated!</strong><br>' +
-        'Now update it on your watch:' +
-        '<ol>' +
-          '<li>Open <b>Garmin Connect IQ Mobile</b> on your phone</li>' +
-          '<li>Go to <b>PulseLink → Settings</b></li>' +
-          '<li>Replace the Password field with your new password</li>' +
-          '<li>Save settings, launch PulseLink on your Garmin watch</li>' +
-        '</ol>'
-      );
+      successShown = true;
+      renderSuccess();
     } else if (data.error === 'invalid_or_expired') {
-      showAlert('error', 'This link has expired. Please request a new one.');
+      showAlert('error', T('This link has expired. Please request a new one.',
+                           'このリンクは失効しています。新しいリンクを要求してください。'));
     } else if (data.error === 'password_too_short') {
-      showAlert('error', 'Password too short.');
+      showAlert('error', T('Password too short.', 'パスワードが短すぎます。'));
     } else {
-      showAlert('error', 'Reset failed (' + (data.error || res.status) + '). Please try again.');
+      showAlert('error', T('Reset failed (' + (data.error || res.status) + '). Please try again.',
+                           'リセットに失敗しました（' + (data.error || res.status) + '）。もう一度お試しください。'));
     }
   } catch (e) {
-    showAlert('error', 'Network error. Please check your connection.');
+    showAlert('error', T('Network error. Please check your connection.', '通信エラー。接続を確認してください。'));
   } finally {
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Update password';
+    submitBtn.textContent = T('Update password', 'パスワードを更新');
   }
 });
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);
 }
+
+(function () {
+  var saved = 'en';
+  try { saved = localStorage.getItem('pl_lang') || 'en'; } catch (e) {}
+  setLang(saved);
+})();
 </script>
 </body>
 </html>

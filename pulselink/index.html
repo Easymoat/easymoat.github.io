@@ -50,6 +50,11 @@
     padding: 24px;
     object-fit: contain;
   }
+  .screenshots { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .screenshots { grid-template-columns: 1fr 1fr; max-width: 420px; margin: 0 auto; } }
+  .screenshot { border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid var(--border); background: var(--white); }
+  .screenshot img { width: 100%; height: auto; display: block; }
+  .screenshot-label { background: var(--white); padding: 10px 14px; font-size: 12px; font-weight: 500; color: var(--muted); border-top: 1px solid var(--border); text-align: center; }
   .hero-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; padding: 5px 12px; border-radius: 20px; margin-bottom: 20px; }
   .hero-tag::before { content: ''; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
@@ -167,11 +172,20 @@
       <h1><em>Pulse</em><br>Link</h1>
       <p class="hero-desc" data-en="Share your heart rate, steps and distance live with running friends or loved ones on your Garmin wrist. Host-led rooms with invite codes, up to 20 template messages, and a real-time member view designed for groups of 2-8 people. Guests join free — only the host subscribes." data-ja="ランニング仲間や大切な家族と、心拍数・歩数・距離をGarminウォッチでリアルタイム共有。ホスト主導の招待コード制ルーム、最大20の定型メッセージ、2〜8名のグループに最適化されたリアルタイム表示。ゲストは完全無料 — ホストだけがサブスクリプション登録します。">Share your heart rate, steps and distance live with running friends or loved ones on your Garmin wrist. Host-led rooms with invite codes, up to 20 template messages, and a real-time member view designed for groups of 2-8 people. Guests join free — only the host subscribes.</p>
       <div class="hero-cta">
-        <a href="#pricing" class="btn-primary" data-en="See Plans" data-ja="プランを見る">See Plans</a>
+        <a href="https://apps.garmin.com/" class="btn-primary" data-en="Start 14-Day Free Trial" data-ja="14日間の無料トライアルを開始">Start 14-Day Free Trial</a>
+        <a href="https://buy.stripe.com/3cI14g4SJ0p65KpeE09sk03" class="btn-secondary" data-en="Subscribe — $9.99/year" data-ja="登録 — $9.99/年">Subscribe — $9.99/year</a>
       </div>
+      <p style="font-size:13px; color:var(--muted); margin-top:10px;" data-en="Guests join free. Host: 14-day free trial, then $9.99/year — no payment to start." data-ja="ゲストは無料で参加。ホストは14日間の無料トライアル後 $9.99/年 — 開始時の支払いは不要。">Guests join free. Host: 14-day free trial, then $9.99/year — no payment to start.</p>
     </div>
-    <div class="hero-visual">
-      <img class="hero-logo" src="pulselink_logo.png" alt="PulseLink">
+    <div class="screenshots">
+      <div class="screenshot">
+        <img src="screenshot_room.png" alt="PulseLink live room view with weather sharing">
+        <div class="screenshot-label" data-en="Live Room + Weather" data-ja="ルーム表示＋気象">Live Room + Weather</div>
+      </div>
+      <div class="screenshot">
+        <img src="screenshot_members.png" alt="PulseLink member list with live heart rate">
+        <div class="screenshot-label" data-en="Member List" data-ja="メンバー一覧">Member List</div>
+      </div>
     </div>
   </div>
 

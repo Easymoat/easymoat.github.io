@@ -111,9 +111,8 @@
   .exchange-table td code { font-family: 'Inter', monospace; background: var(--bg); padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; color: var(--accent); border: 1px solid var(--border); }
   .exchange-table td .ex-company { color: var(--muted); font-size: 12px; }
 
-  .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .plan { background: var(--white); border: 2px solid var(--border); border-radius: 16px; padding: 32px; position: relative; }
-  .plan.featured { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(0,102,255,0.08); }
+  .pricing-grid { display: grid; grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; }
+  .plan { background: var(--white); border: 2px solid var(--accent); border-radius: 16px; padding: 32px; position: relative; box-shadow: 0 0 0 4px rgba(0,102,255,0.08); }
   .plan-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; padding: 4px 16px; border-radius: 20px; white-space: nowrap; }
   .plan-name { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
   .plan-price { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 800; color: var(--text); line-height: 1; margin-bottom: 4px; }
@@ -154,7 +153,6 @@
     .features { grid-template-columns: 1fr 1fr; }
     .data-grid { grid-template-columns: repeat(2, 1fr); }
     .exchange-table th, .exchange-table td { padding: 8px 10px; font-size: 12px; }
-    .pricing-grid { grid-template-columns: 1fr; }
     .steps { grid-template-columns: 1fr 1fr; }
   }
   @media (max-width: 480px) {
@@ -243,7 +241,7 @@
       <div class="feature">
         <div class="feature-icon">⌚</div>
         <h3 data-en="Garmin Native" data-ja="Garmin専用設計">Garmin Native</h3>
-        <p data-en="Compatible with Garmin AMOLED devices (390px, 415px, 454px displays and Venu X1). Color mode switchable: Red Up / Green Down or Green Up / Red Down — match your local market convention." data-ja="GarminのAMOLEDディスプレイ搭載機種（390px・415px・454px・Venu X1）に対応。カラーモード切替可能：「赤=上 / 緑=下」または「緑=上 / 赤=下」— ご利用市場の慣習に合わせて選択。">Compatible with Garmin AMOLED devices (390px, 415px, 454px displays and Venu X1). Color mode switchable: Red Up / Green Down or Green Up / Red Down — match your local market convention.</p>
+        <p data-en="Compatible with Garmin AMOLED devices (360px, 390px, 415px, 454px displays and Venu X1). Color mode switchable: Red Up / Green Down or Green Up / Red Down — match your local market convention." data-ja="GarminのAMOLEDディスプレイ搭載機種（360px・390px・415px・454px・Venu X1）に対応。カラーモード切替可能：「赤=上 / 緑=下」または「緑=上 / 赤=下」— ご利用市場の慣習に合わせて選択。">Compatible with Garmin AMOLED devices (360px, 390px, 415px, 454px displays and Venu X1). Color mode switchable: Red Up / Green Down or Green Up / Red Down — match your local market convention.</p>
       </div>
       <div class="feature">
         <div class="feature-icon">⛅</div>
@@ -387,29 +385,10 @@
     </div>
     <div class="pricing-grid">
       <div class="plan">
-        <div class="plan-name" data-en="14-Day Free Trial" data-ja="14日間無料トライアル">14-Day Free Trial</div>
-        <div class="plan-price">$0</div>
-        <div class="plan-note" data-en="All features, free for 14 days" data-ja="全機能を14日間無料で">All features, free for 14 days</div>
-        <ul class="plan-features">
-          <li class="included" data-en="Up to 20 symbols (worldwide markets)" data-ja="最大20銘柄（世界の市場）">Up to 20 symbols (worldwide markets)</li>
-          <li class="included" data-en="Intraday charts (all symbols)" data-ja="日中チャート（全銘柄）">Intraday charts (all symbols)</li>
-          <li class="included" data-en="Price-cross alerts (2 per symbol, vibrate + sound)" data-ja="価格クロス通知（銘柄あたり2件・振動+音）">Price-cross alerts (2 per symbol, vibrate + sound)</li>
-          <li class="included" data-en="Position memo (cost / qty / value / P&amp;L)" data-ja="ポジションメモ（取得単価・保有数・評価額・損益）">Position memo (cost / qty / value / P&amp;L)</li>
-          <li class="included" data-en="Weather &amp; Physical info bars" data-ja="天気バー・フィジカルバー">Weather &amp; Physical info bars</li>
-          <li class="included" data-en="Left &amp; right rim meters (Body Battery / Stress / Battery)" data-ja="左右リムメーター（Body Battery・ストレス・バッテリー）">Left &amp; right rim meters (Body Battery / Stress / Battery)</li>
-          <li class="included" data-en="Push notifications (earnings &amp; dividends)" data-ja="プッシュ通知（決算・配当）">Push notifications (earnings &amp; dividends)</li>
-          <li class="included" data-en="6 background colors + Red Up / Green Up modes" data-ja="背景色6種 + 「赤=上」/「緑=上」モード">6 background colors + Red Up / Green Up modes</li>
-          <li class="included" data-en="On-watch ticker register / edit / delete" data-ja="時計上での銘柄登録・編集・削除">On-watch ticker register / edit / delete</li>
-          <li class="included" data-en="2 watchface complications" data-ja="ウォッチフェイス Complication 2 スロット">2 watchface complications</li>
-          <li class="included" data-en="No payment required to start" data-ja="開始時の支払い不要">No payment required to start</li>
-        </ul>
-        <a href="https://apps.garmin.com/" class="btn-plan btn-plan-secondary" data-en="Start free trial" data-ja="無料トライアルを開始">Start free trial</a>
-      </div>
-      <div class="plan featured">
-        <div class="plan-badge" data-en="Recommended" data-ja="おすすめ">Recommended</div>
+        <div class="plan-badge" data-en="14-day free trial, then one-time purchase" data-ja="14日間無料トライアル → 買い切り">14-day free trial, then one-time purchase</div>
         <div class="plan-name" data-en="Full Version" data-ja="フルバージョン">Full Version</div>
         <div class="plan-price">$7.99</div>
-        <div class="plan-note" data-en="After your trial · one-time · lifetime license" data-ja="トライアル後 · 買い切り · 生涯ライセンス">After your trial · one-time · lifetime license</div>
+        <div class="plan-note" data-en="14 days free first · then one-time · lifetime license" data-ja="まず14日間無料 · その後買い切り · 生涯ライセンス">14 days free first · then one-time · lifetime license</div>
         <ul class="plan-features">
           <li class="included" data-en="Up to 20 symbols (worldwide markets)" data-ja="最大20銘柄（世界の市場）">Up to 20 symbols (worldwide markets)</li>
           <li class="included" data-en="Intraday charts (all symbols)" data-ja="日中チャート（全銘柄）">Intraday charts (all symbols)</li>
@@ -424,7 +403,7 @@
           <li class="included" data-en="Lifetime license — no subscription" data-ja="生涯ライセンス・サブスクなし">Lifetime license — no subscription</li>
         </ul>
         <a href="https://buy.stripe.com/4gM4gs3OF1tafkZ3Zm9sk01" class="btn-plan btn-plan-primary" data-en="Purchase — $7.99" data-ja="購入する — $7.99">Purchase — $7.99</a>
-        <div class="plan-sub" data-en="Secure payment via Stripe. Activation key emailed immediately after purchase." data-ja="Stripeによる安全な決済。購入後すぐにアクティベーションキーをメールでお届けします。">Secure payment via Stripe. Activation key emailed immediately after purchase.</div>
+        <div class="plan-sub" data-en="The trial needs no payment. After it ends, pay once via Stripe to keep full access. Activation key emailed immediately." data-ja="トライアルに支払いは不要です。終了後、フル機能を継続するには Stripe で買い切り決済。購入後すぐにアクティベーションキーをメールでお届けします。">The trial needs no payment. After it ends, pay once via Stripe to keep full access. Activation key emailed immediately.</div>
       </div>
     </div>
   </div>
@@ -433,9 +412,13 @@
     <div class="section-header">
       <div class="section-tag" data-en="Compatible Devices" data-ja="対応デバイス">Compatible Devices</div>
       <h2 data-en="Supported Garmin devices" data-ja="対応Garminデバイス">Supported Garmin devices</h2>
-      <p class="section-desc" data-en="Compatible with all Garmin AMOLED display devices. Supports 390px, 415px, 454px resolutions and Venu X1." data-ja="GarminのAMOLEDディスプレイ搭載機種すべてに対応。390px・415px・454px解像度およびVenu X1をサポートします。">Compatible with all Garmin AMOLED display devices. Supports 390px, 415px, 454px resolutions and Venu X1.</p>
+      <p class="section-desc" data-en="Compatible with all Garmin AMOLED display devices. Supports 360px, 390px, 415px, 454px resolutions and Venu X1." data-ja="GarminのAMOLEDディスプレイ搭載機種すべてに対応。360px・390px・415px・454px解像度およびVenu X1をサポートします。">Compatible with all Garmin AMOLED display devices. Supports 360px, 390px, 415px, 454px resolutions and Venu X1.</p>
     </div>
-    <div class="data-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="data-grid" style="grid-template-columns: repeat(5, 1fr);">
+      <div class="data-item">
+        <div class="data-type">360px AMOLED</div>
+        <div class="data-example" style="font-size:12px;">Venu 2S, Forerunner 265S</div>
+      </div>
       <div class="data-item">
         <div class="data-type">390px AMOLED</div>
         <div class="data-example" style="font-size:12px;">Forerunner 165/265, Venu 3S/4S など</div>

@@ -208,28 +208,26 @@
 
       <figure class="annotated">
         <div class="stage">
-          <img src="screens/main.png?v=1" alt="Main screen">
+          <img src="screens/main.png?v=2" alt="Main screen">
           <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
             <!-- Room name -->
-            <rect class="box" x="130" y="100" width="240" height="35"/>
-            <line x1="130" y1="115" x2="-30" y2="60"/>
-            <text x="-60" y="50" data-en="Room name" data-ja="部屋名">Room name</text>
-            <!-- Status sub-row: Obs. / Upd. 60s -->
-            <rect class="box" x="100" y="140" width="300" height="22"/>
-            <line x1="100" y1="151" x2="-30" y2="160"/>
-            <text x="-60" y="155" data-en="Host mode + interval" data-ja="ホストモード + 更新間隔">Host mode + interval</text>
+            <rect class="box" x="160" y="75" width="195" height="30"/>
+            <line x1="150" y1="87" x2="30" y2="37"/>
+            <text x="-13" y="26" data-en="Room name" data-ja="部屋名">Room name</text>
+            <!-- Status sub-row: Obs. / Upd. 60s (arrow + label only) -->
+            <line x1="170" y1="118" x2="31" y2="91"/>
+            <text x="-44" y="80" data-en="Host mode + interval" data-ja="ホストモード + 更新間隔">Host mode + interval</text>
             <!-- Member rows -->
-            <rect class="box" x="60" y="170" width="380" height="120"/>
-            <line x1="440" y1="230" x2="540" y2="220"/>
-            <text x="545" y="225" data-en="Members (HR / dist / steps)" data-ja="メンバー（心拍 / 距離 / 歩数）">Members (HR / dist / steps)</text>
+            <rect class="box" x="121" y="131" width="260" height="153"/>
+            <line x1="393" y1="168" x2="457" y2="58"/>
+            <text x="374" y="45" data-en="Members (HR / dist / steps)" data-ja="メンバー（心拍 / 距離 / 歩数）">Members (HR / dist / steps)</text>
             <!-- Weather bar -->
-            <rect class="box" x="50" y="305" width="400" height="65"/>
-            <line x1="440" y1="335" x2="540" y2="345"/>
-            <text x="545" y="350" data-en="Weather bar (your own)" data-ja="気象バー（自分の）">Weather bar (your own)</text>
-            <!-- Date with unread alert color -->
-            <rect class="box" x="190" y="395" width="120" height="25"/>
-            <line x1="310" y1="405" x2="540" y2="425"/>
-            <text x="545" y="430" data-en="Date — red = unread msg" data-ja="日付 — 赤=未読メッセージ">Date — red = unread msg</text>
+            <rect class="box" x="130" y="285" width="236" height="53"/>
+            <line x1="378" y1="318" x2="430" y2="368"/>
+            <text x="393" y="384" data-en="Weather bar (your own)" data-ja="気象バー（自分の）">Weather bar (your own)</text>
+            <!-- Date (unread = red) — arrow + label only -->
+            <line x1="126" y1="387" x2="174" y2="360"/>
+            <text x="-40" y="392" data-en="Date — red = unread msg" data-ja="日付 — 赤=未読メッセージ">Date — red = unread msg</text>
           </svg>
         </div>
         <figcaption data-en="Main room view — host with Observing mode, 60-second update interval, 3 guests sharing live data." data-ja="メインルーム表示 — Observe モードのホスト、60秒更新間隔、3名のゲストがライブ共有中。">Main room view — host with Observing mode, 60-second update interval, 3 guests sharing live data.</figcaption>

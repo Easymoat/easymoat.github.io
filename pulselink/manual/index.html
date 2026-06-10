@@ -56,16 +56,16 @@
   section.chapter code { background: var(--accent-light); color: var(--accent-dark); padding: 1px 6px; border-radius: 3px; font-size: 13px; font-family: 'SF Mono', monospace; }
 
   /* ─── Annotated figure (SVG overlay) ─── */
+  /* stage は画像表示エリア (max-width 480px、padding-hack で正方形)。
+     SVG オーバーレイは stage の外 (figure 内の余白) まで広がり、ラベルや
+     引き出し線を画像の左右外側に置ける (overflow: visible)。
+     SVG の viewBox は 0 0 500 500 のままで画像と座標一致、余白は負値/500超
+     範囲 (例: x=-50 や x=540) で配置できる。 */
   figure.annotated {
     background: var(--white); border: 1px solid var(--border); border-radius: 12px;
-    padding: 16px; margin: 16px 0 24px; box-shadow: var(--shadow);
+    padding: 24px 80px; margin: 16px 0 24px; box-shadow: var(--shadow);
   }
-  /* stage は padding-hack で確実に正方形を作る (aspect-ratio が効かない環境の保険)。
-     img と SVG はどちらも position:absolute で stage 全体にフィットする
-     → 完全に同じ矩形を共有 → 座標ズレ無し。
-     画像はウォッチ画面の黒い円ぴったりにクロップした正方形 PNG。border-radius: 50%
-     で円形マスク → ベゼル残りが見えなくなる。SVG オーバーレイは同サイズ正方形の
-     viewBox を持たせ、円の外(四隅)に引き出し線・ラベルを配置できる。 */
+  @media (max-width: 700px) { figure.annotated { padding: 16px 32px; } }
   figure.annotated .stage {
     position: relative; max-width: 480px; margin: 0 auto;
   }
@@ -82,7 +82,13 @@
     background: #111; color: #555; font-size: 13px;
   }
   figure.annotated .stage svg.overlay {
-    position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;
+    position: absolute;
+    top: -24px; bottom: -24px; left: -80px; right: -80px;
+    width: auto; height: auto;
+    overflow: visible; pointer-events: none;
+  }
+  @media (max-width: 700px) {
+    figure.annotated .stage svg.overlay { top: -16px; bottom: -16px; left: -32px; right: -32px; }
   }
   figure.annotated .stage svg.overlay line { stroke: var(--accent); stroke-width: 1.5; }
   figure.annotated .stage svg.overlay circle.dot { fill: var(--accent); }
@@ -368,13 +374,11 @@ try {
   document.body.classList.add('pl-edit-mode');
   document.body.style.cssText += ';padding-bottom:200px;';
 
-  // 編集モードでは figure を画面いっぱいまで広げる (両端まで)
+  // 編集モード固有のスタイル: リサイズハンドルのみ
+  // (stage 自体のサイズは通常モードのまま、SVG オーバーレイは CSS で
+  //  既に余白まで広がっているので、ラベル/線を画像の外まで動かせる)
   var editCss = document.createElement('style');
   editCss.textContent = [
-    '.pl-edit-mode .wrap { grid-template-columns: 1fr !important; max-width: none; padding-left: 16px; padding-right: 16px; }',
-    '.pl-edit-mode aside { display: none; }',
-    '.pl-edit-mode figure.annotated { padding: 8px; }',
-    '.pl-edit-mode figure.annotated .stage { max-width: none; }',
     '.pl-edit-mode .resize-handle { fill: #DB2777; stroke: #fff; stroke-width: 2; cursor: nwse-resize; }'
   ].join('\n');
   document.head.appendChild(editCss);

@@ -374,12 +374,11 @@ try {
   document.body.classList.add('pl-edit-mode');
   document.body.style.cssText += ';padding-bottom:200px;';
 
-  // 編集モード固有のスタイル: リサイズハンドルのみ
-  // (stage 自体のサイズは通常モードのまま、SVG オーバーレイは CSS で
-  //  既に余白まで広がっているので、ラベル/線を画像の外まで動かせる)
+  // 編集モード固有のスタイル: 矩形リサイズハンドル + 線の端点ハンドル
   var editCss = document.createElement('style');
   editCss.textContent = [
-    '.pl-edit-mode .resize-handle { fill: #DB2777; stroke: #fff; stroke-width: 2; cursor: nwse-resize; }'
+    '.pl-edit-mode .resize-handle { fill: #DB2777; stroke: #fff; stroke-width: 2; cursor: nwse-resize; }',
+    '.pl-edit-mode .endpoint-handle { fill: #0891B2; stroke: #fff; stroke-width: 2; cursor: grab; }'
   ].join('\n');
   document.head.appendChild(editCss);
 
@@ -401,9 +400,9 @@ try {
   var selectedSvg = null;
   function renderSrc() {
     if (!selectedSvg) { preEl.textContent = '(click a figure to select it)'; return; }
-    // リサイズハンドル (編集モード専用) はコピー対象から除外
+    // 編集モード専用ハンドル (rect リサイズ + line 端点) はコピー対象から除外
     var clone = selectedSvg.cloneNode(true);
-    clone.querySelectorAll('.resize-handle').forEach(function(h){ h.remove(); });
+    clone.querySelectorAll('.resize-handle, .endpoint-handle').forEach(function(h){ h.remove(); });
     preEl.textContent = clone.outerHTML.replace(/></g, '>\n<');
   }
   renderSrc();
@@ -475,11 +474,37 @@ try {
         });
     });
 
-    // Lines: drag whole line (both endpoints by same delta) when dragging on the line itself
+    // Lines: 線本体を引きずると平行移動。端点ハンドル (両端の青い○) を引きずると
+    // その端点だけを移動 = 長さ・角度を変更。
     svg.querySelectorAll('line').forEach(function(ln) {
       ln.style.strokeWidth = '6'; // easier to grab
       ln.addEventListener('mouseenter', function(){ this.style.stroke = '#FF00FF'; });
       ln.addEventListener('mouseleave', function(){ this.style.stroke = ''; });
+
+      // 両端の端点ハンドル
+      function makeEndpointHandle(attrX, attrY) {
+        var h = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        h.setAttribute('class', 'endpoint-handle');
+        h.setAttribute('r', '6');
+        var sync = function() {
+          h.setAttribute('cx', +ln.getAttribute(attrX));
+          h.setAttribute('cy', +ln.getAttribute(attrY));
+        };
+        sync();
+        svg.appendChild(h);
+        makeDraggable(h,
+          function() { return { x: +ln.getAttribute(attrX), y: +ln.getAttribute(attrY) }; },
+          function(dx, dy, el, st) {
+            ln.setAttribute(attrX, Math.round(st.x + dx));
+            ln.setAttribute(attrY, Math.round(st.y + dy));
+            sync();
+          });
+        return sync;
+      }
+      var syncA = makeEndpointHandle('x1', 'y1');
+      var syncB = makeEndpointHandle('x2', 'y2');
+
+      // 線全体の平行移動: 端点ハンドルも追従させる
       makeDraggable(ln,
         function(el){ return { x1:+el.getAttribute('x1'), y1:+el.getAttribute('y1'), x2:+el.getAttribute('x2'), y2:+el.getAttribute('y2') }; },
         function(dx, dy, el, st) {
@@ -487,6 +512,7 @@ try {
           el.setAttribute('y1', Math.round(st.y1+dy));
           el.setAttribute('x2', Math.round(st.x2+dx));
           el.setAttribute('y2', Math.round(st.y2+dy));
+          syncA(); syncB();
         });
     });
 

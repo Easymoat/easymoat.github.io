@@ -208,12 +208,49 @@
 
       <figure class="annotated">
         <div class="stage">
-          <div class="placeholder" data-en="Screenshot: Main screen" data-ja="スクリーンショット: メイン画面">Screenshot: Main screen</div>
-          <svg class="overlay" viewBox="0 0 480 480"></svg>
+          <img src="screens/main.png?v=1" alt="Main screen">
+          <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+            <!-- Room name -->
+            <rect class="box" x="130" y="100" width="240" height="35"/>
+            <line x1="130" y1="115" x2="-30" y2="60"/>
+            <text x="-60" y="50" data-en="Room name" data-ja="部屋名">Room name</text>
+            <!-- Status sub-row: Obs. / Upd. 60s -->
+            <rect class="box" x="100" y="140" width="300" height="22"/>
+            <line x1="100" y1="151" x2="-30" y2="160"/>
+            <text x="-60" y="155" data-en="Host mode + interval" data-ja="ホストモード + 更新間隔">Host mode + interval</text>
+            <!-- Member rows -->
+            <rect class="box" x="60" y="170" width="380" height="120"/>
+            <line x1="440" y1="230" x2="540" y2="220"/>
+            <text x="545" y="225" data-en="Members (HR / dist / steps)" data-ja="メンバー（心拍 / 距離 / 歩数）">Members (HR / dist / steps)</text>
+            <!-- Weather bar -->
+            <rect class="box" x="50" y="305" width="400" height="65"/>
+            <line x1="440" y1="335" x2="540" y2="345"/>
+            <text x="545" y="350" data-en="Weather bar (your own)" data-ja="気象バー（自分の）">Weather bar (your own)</text>
+            <!-- Date with unread alert color -->
+            <rect class="box" x="190" y="395" width="120" height="25"/>
+            <line x1="310" y1="405" x2="540" y2="425"/>
+            <text x="545" y="430" data-en="Date — red = unread msg" data-ja="日付 — 赤=未読メッセージ">Date — red = unread msg</text>
+          </svg>
         </div>
-        <figcaption data-en="(Screenshot pending) Main room view." data-ja="（スクリーンショット未配置）メインルーム表示。">(Screenshot pending) Main room view.</figcaption>
+        <figcaption data-en="Main room view — host with Observing mode, 60-second update interval, 3 guests sharing live data." data-ja="メインルーム表示 — Observe モードのホスト、60秒更新間隔、3名のゲストがライブ共有中。">Main room view — host with Observing mode, 60-second update interval, 3 guests sharing live data.</figcaption>
       </figure>
-      <p style="color:var(--muted); font-size:13px;" data-en="Detailed annotations will be added once screenshots are placed." data-ja="スクリーンショット配置後、詳細な注釈を追加します。">Detailed annotations will be added once screenshots are placed.</p>
+
+      <h3 data-en="Interactions" data-ja="操作">Interactions</h3>
+      <ul>
+        <li><strong data-en="Tap weather bar (left)" data-ja="気象バー左半分タップ">Tap weather bar (left)</strong>: <span data-en="open a multi-page info loop — weather details, altitude / pressure graphs." data-ja="情報ループを開く — 気象詳細・高度／気圧グラフ。">open a multi-page info loop — weather details, altitude / pressure graphs.</span></li>
+        <li><strong data-en="Long-press weather bar (right)" data-ja="気象バー右半分長押し">Long-press weather bar (right)</strong>: <span data-en="open the compass." data-ja="コンパスを開く。">open the compass.</span></li>
+        <li><strong data-en="Tap a member row" data-ja="メンバー行タップ">Tap a member row</strong>: <span data-en="(no action — info only)." data-ja="（操作なし — 情報表示のみ）。">(no action — info only).</span></li>
+        <li><strong data-en="Long-press a member row" data-ja="メンバー行長押し">Long-press a member row</strong>: <span data-en="send a template message to that member (or switch to Everyone / host on the send screen)." data-ja="そのメンバーへ定型メッセージ送信（送信画面で Everyone やホストに切替も可）。">send a template message to that member (or switch to Everyone / host on the send screen).</span></li>
+        <li><strong data-en="Long-press your own row" data-ja="自分の行長押し">Long-press your own row</strong>: <span data-en="open the You menu (Heat stress, Alerts, Change password)." data-ja="You メニューを開く（Heat stress、Alerts、Change password）。">open the You menu (Heat stress, Alerts, Change password).</span></li>
+        <li><strong data-en="START button" data-ja="START ボタン">START button</strong>: <span data-en="open the main PulseLink menu (Sharing, Update interval, Share, Display, Room admin, Leave)." data-ja="PulseLink メイン メニュー（Sharing、Update interval、Share、Display、Room admin、Leave）を開く。">open the main PulseLink menu (Sharing, Update interval, Share, Display, Room admin, Leave).</span></li>
+      </ul>
+
+      <h3 data-en="Color coding" data-ja="色の意味">Color coding</h3>
+      <ul>
+        <li><strong data-en="Yellow nickname (with Z icon)" data-ja="黄色のニックネーム（Z アイコン付き）">Yellow nickname (with Z icon)</strong>: <span data-en="host is paused or away." data-ja="ホストが一時停止中／不在。">host is paused or away.</span></li>
+        <li><strong data-en="Red date" data-ja="赤い日付">Red date</strong>: <span data-en="unread messages in the feed — open Messages to clear." data-ja="フィードに未読メッセージあり — Messages を開くとクリア。">unread messages in the feed — open Messages to clear.</span></li>
+        <li><strong data-en="HR number color" data-ja="HR 数値の色">HR number color</strong>: <span data-en="white by default. With Heat stress monitor ON, your own HR is colored by heat tier (green → red)." data-ja="既定は白。Heat stress モニター ON 時、自分の HR が暑熱段階の色（緑 → 赤）になる。">white by default. With Heat stress monitor ON, your own HR is colored by heat tier (green → red).</span></li>
+      </ul>
     </section>
 
     <!-- ─── 4. Sharing & Privacy ─── -->

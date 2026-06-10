@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PulseLink — User Manual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FC; --white: #FFFFFF; --border: #E2E6EF;
+    --accent: #0891B2; --accent-light: #CFFAFE; --accent-dark: #0E7490;
+    --accent2: #DB2777;
+    --text: #111827; --text2: #374151; --muted: #6B7280; --muted2: #9CA3AF;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+    --warn-bg: #FEF3C7; --warn-border: #F59E0B; --warn-text: #92400E;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.7; }
+
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 24px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); position: sticky; top: 0; z-index: 200; }
+  .lang-bar a.home { color: var(--accent-dark); text-decoration: none; font-weight: 600; }
+  .lang-bar a.home:hover { text-decoration: underline; }
+  .lang-bar .toggle { display: flex; gap: 8px; }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: inherit; cursor: pointer; color: var(--muted); }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; display: grid; grid-template-columns: 240px 1fr; gap: 48px; }
+  @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; padding: 24px 16px 60px; gap: 24px; } }
+
+  /* ─── Sidebar ─── */
+  aside { position: sticky; top: 60px; align-self: start; max-height: calc(100vh - 80px); overflow-y: auto; }
+  aside h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 12px; }
+  aside ol { list-style: none; counter-reset: chnum; }
+  aside ol li { counter-increment: chnum; }
+  aside ol li a {
+    display: block; padding: 6px 0 6px 28px; color: var(--text2); text-decoration: none;
+    font-size: 14px; border-left: 2px solid transparent; position: relative;
+  }
+  aside ol li a::before { content: counter(chnum); position: absolute; left: 6px; color: var(--muted2); font-size: 12px; font-weight: 600; }
+  aside ol li a:hover { color: var(--accent-dark); border-left-color: var(--accent); }
+  @media (max-width: 900px) { aside { position: static; max-height: none; border: 1px solid var(--border); border-radius: 8px; padding: 16px; background: var(--white); } }
+
+  /* ─── Article ─── */
+  article > h1 { font-size: 36px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; }
+  article > .subtitle { color: var(--muted); margin-bottom: 40px; font-size: 16px; }
+
+  section.chapter { margin-bottom: 60px; scroll-margin-top: 60px; }
+  section.chapter > h2 { font-size: 24px; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-light); color: var(--accent-dark); }
+  section.chapter > h3 { font-size: 17px; font-weight: 600; margin: 28px 0 10px; color: var(--text); }
+  section.chapter > p { color: var(--text2); margin-bottom: 12px; }
+  section.chapter > ul, section.chapter > ol { margin: 8px 0 16px 24px; color: var(--text2); }
+  section.chapter > ul li, section.chapter > ol li { margin-bottom: 6px; }
+  section.chapter strong { color: var(--text); font-weight: 600; }
+  section.chapter code { background: var(--accent-light); color: var(--accent-dark); padding: 1px 6px; border-radius: 3px; font-size: 13px; font-family: 'SF Mono', monospace; }
+
+  /* ─── Annotated figure (SVG overlay) ─── */
+  figure.annotated {
+    background: var(--white); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px; margin: 16px 0 24px; box-shadow: var(--shadow);
+  }
+  figure.annotated .stage { position: relative; max-width: 480px; margin: 0 auto; }
+  figure.annotated .stage img,
+  figure.annotated .stage .placeholder {
+    display: block; width: 100%; aspect-ratio: 1 / 1; border-radius: 50%;
+    background: #111; object-fit: cover;
+  }
+  figure.annotated .stage .placeholder { display: flex; align-items: center; justify-content: center; color: #555; font-size: 13px; }
+  figure.annotated .stage svg.overlay {
+    position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;
+  }
+  figure.annotated .stage svg.overlay line { stroke: var(--accent); stroke-width: 1.5; }
+  figure.annotated .stage svg.overlay circle.dot { fill: var(--accent); }
+  figure.annotated .stage svg.overlay rect.box,
+  figure.annotated .stage svg.overlay circle.ring {
+    fill: none; stroke: var(--accent2); stroke-width: 2; stroke-dasharray: 4 3;
+  }
+  figure.annotated .stage svg.overlay text {
+    fill: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+    paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round;
+  }
+  figure.annotated figcaption { text-align: center; margin-top: 12px; color: var(--muted); font-size: 13px; }
+
+  /* ─── Callout boxes ─── */
+  .callout {
+    border-radius: 8px; padding: 12px 16px; margin: 12px 0; font-size: 14px;
+    background: var(--accent-light); border-left: 3px solid var(--accent); color: var(--accent-dark);
+  }
+  .callout.warn { background: var(--warn-bg); border-left-color: var(--warn-border); color: var(--warn-text); }
+  .callout strong { color: inherit; }
+
+  /* ─── Step list ─── */
+  ol.steps { counter-reset: step; list-style: none !important; margin-left: 0 !important; }
+  ol.steps li { counter-increment: step; position: relative; padding-left: 40px; margin-bottom: 14px !important; }
+  ol.steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 2px;
+    width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<div class="lang-bar">
+  <a href="../" class="home">← PulseLink</a>
+  <div class="toggle">
+    <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+    <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <aside>
+    <h3 data-en="Contents" data-ja="目次">Contents</h3>
+    <ol>
+      <li><a href="#getting-started" data-en="Getting Started" data-ja="はじめに">Getting Started</a></li>
+      <li><a href="#roles" data-en="Roles &amp; Trial" data-ja="ロールとトライアル">Roles &amp; Trial</a></li>
+      <li><a href="#main-screen" data-en="Main Screen" data-ja="メイン画面">Main Screen</a></li>
+      <li><a href="#sharing" data-en="Sharing &amp; Privacy" data-ja="共有とプライバシー">Sharing &amp; Privacy</a></li>
+      <li><a href="#display" data-en="Display" data-ja="表示設定">Display</a></li>
+      <li><a href="#messages" data-en="Messages" data-ja="メッセージ">Messages</a></li>
+      <li><a href="#room-admin" data-en="Room Admin (Host)" data-ja="ルーム管理（ホスト）">Room Admin (Host)</a></li>
+      <li><a href="#heat" data-en="Heat Stress" data-ja="熱中症ガイド">Heat Stress</a></li>
+      <li><a href="#compass" data-en="Compass" data-ja="コンパス">Compass</a></li>
+      <li><a href="#weather" data-en="Weather" data-ja="気象情報">Weather</a></li>
+      <li><a href="#account" data-en="Account" data-ja="アカウント">Account</a></li>
+      <li><a href="#troubleshooting" data-en="Troubleshooting" data-ja="トラブルシューティング">Troubleshooting</a></li>
+    </ol>
+  </aside>
+
+  <article>
+    <h1 data-en="PulseLink — User Manual" data-ja="PulseLink ユーザーマニュアル">PulseLink — User Manual</h1>
+    <p class="subtitle" data-en="A complete walkthrough of every screen, menu and setting." data-ja="すべての画面・メニュー・設定を網羅した完全ガイド。">A complete walkthrough of every screen, menu and setting.</p>
+
+    <!-- ─── 1. Getting Started ─── -->
+    <section class="chapter" id="getting-started">
+      <h2 data-en="1. Getting Started" data-ja="1. はじめに">1. Getting Started</h2>
+      <p data-en="Before you can use PulseLink on your watch, you need a free account. Sign up on the website, install the app via Connect IQ, and enter your credentials on your phone — your watch logs in automatically." data-ja="PulseLink を使う前に、無料アカウントの登録が必要です。Web で登録 → Connect IQ でアプリをインストール → スマホで認証情報を入力すると、ウォッチが自動でログインします。">Before you can use PulseLink on your watch, you need a free account. Sign up on the website, install the app via Connect IQ, and enter your credentials on your phone — your watch logs in automatically.</p>
+      <ol class="steps">
+        <li data-en="Sign up at easymoat.github.io/pulselink/register — you'll receive a welcome email." data-ja="easymoat.github.io/pulselink/register でアカウント登録 → ウェルカムメールが届きます。">Sign up at easymoat.github.io/pulselink/register — you'll receive a welcome email.</li>
+        <li data-en="Install PulseLink on your watch from the Connect IQ Store." data-ja="Connect IQ ストアからウォッチに PulseLink をインストール。">Install PulseLink on your watch from the Connect IQ Store.</li>
+        <li data-en="In Connect IQ Mobile on your phone: open PulseLink settings, enter your email and password." data-ja="スマホの Connect IQ Mobile で PulseLink の設定を開き、メールアドレスとパスワードを入力。">In Connect IQ Mobile on your phone: open PulseLink settings, enter your email and password.</li>
+        <li data-en="Open PulseLink on your watch — it logs in automatically and shows the Nickname / Role setup screens." data-ja="ウォッチで PulseLink を起動すると自動ログインし、ニックネーム / Role 選択画面が表示されます。">Open PulseLink on your watch — it logs in automatically and shows the Nickname / Role setup screens.</li>
+      </ol>
+    </section>
+
+    <!-- ─── 2. Roles & Trial ─── -->
+    <section class="chapter" id="roles">
+      <h2 data-en="2. Roles &amp; Trial" data-ja="2. ロールとトライアル">2. Roles &amp; Trial</h2>
+      <p data-en="Every time PulseLink starts, you choose a role: Host or Guest. Guests are free forever and join with an invite code. Hosts create rooms and need a subscription — but the first 14 days of hosting are free." data-ja="PulseLink 起動時に毎回ロールを選択します：Host か Guest。Guest は永続無料で、招待コードで参加します。Host はルームを作る役割で、サブスクが必要 — ただし最初のホスト 14日間は無料です。">Every time PulseLink starts, you choose a role: Host or Guest. Guests are free forever and join with an invite code. Hosts create rooms and need a subscription — but the first 14 days of hosting are free.</p>
+
+      <figure class="annotated">
+        <div class="stage">
+          <div class="placeholder" data-en="Screenshot: Role screen" data-ja="スクリーンショット: Role 画面">Screenshot: Role screen</div>
+          <svg class="overlay" viewBox="0 0 480 480">
+            <rect class="box" x="60" y="135" width="360" height="80"/>
+            <line x1="80" y1="135" x2="40" y2="80"/>
+            <text x="20" y="72" data-en="Host (status + days left)" data-ja="Host（状態 + 残日数）">Host (status + days left)</text>
+            <line x1="80" y1="195" x2="40" y2="240"/>
+            <text x="20" y="255" data-en="Device ID — needed for purchase" data-ja="Device ID — 購入時に必要">Device ID — needed for purchase</text>
+            <rect class="box" x="60" y="230" width="360" height="60"/>
+            <line x1="400" y1="260" x2="450" y2="310"/>
+            <text x="280" y="328" data-en="Guest (join with code)" data-ja="Guest（コードで参加）">Guest (join with code)</text>
+          </svg>
+        </div>
+        <figcaption data-en="Role select — appears at every launch." data-ja="Role 選択 — 起動時に毎回表示。">Role select — appears at every launch.</figcaption>
+      </figure>
+
+      <h3 data-en="Host states explained" data-ja="Host の状態表示">Host states explained</h3>
+      <ul>
+        <li><strong>14 days free</strong> — <span data-en="You haven't hosted yet. The trial starts when you create your first room." data-ja="まだホストしていない状態。トライアルは最初にルームを作った時に開始されます。">You haven't hosted yet. The trial starts when you create your first room.</span></li>
+        <li><strong>N days left</strong> — <span data-en="Trial in progress. Subscribe before it ends to keep hosting." data-ja="トライアル進行中。終了前に登録すればホストを継続できます。">Trial in progress. Subscribe before it ends to keep hosting.</span></li>
+        <li><strong>your own room</strong> — <span data-en="Subscribed. You can create and manage rooms freely." data-ja="サブスク登録済み。ルームの作成・管理が自由に行えます。">Subscribed. You can create and manage rooms freely.</span></li>
+        <li><strong>Trial expired</strong> — <span data-en="Trial ended without subscribing. Host is locked; Guest still works." data-ja="未登録のままトライアル終了。Host は選択不可、Guest は引き続き利用可能です。">Trial ended without subscribing. Host is locked; Guest still works.</span></li>
+      </ul>
+    </section>
+
+    <!-- ─── 3. Main Screen ─── -->
+    <section class="chapter" id="main-screen">
+      <h2 data-en="3. Main Screen" data-ja="3. メイン画面">3. Main Screen</h2>
+      <p data-en="The main screen shows every member of your room with their live heart rate, steps and distance. Tap or long-press different rows for different actions." data-ja="メイン画面にはルームの全メンバーが、心拍・歩数・距離付きで表示されます。タップや長押しで色々な操作ができます。">The main screen shows every member of your room with their live heart rate, steps and distance. Tap or long-press different rows for different actions.</p>
+
+      <figure class="annotated">
+        <div class="stage">
+          <div class="placeholder" data-en="Screenshot: Main screen" data-ja="スクリーンショット: メイン画面">Screenshot: Main screen</div>
+          <svg class="overlay" viewBox="0 0 480 480"></svg>
+        </div>
+        <figcaption data-en="(Screenshot pending) Main room view." data-ja="（スクリーンショット未配置）メインルーム表示。">(Screenshot pending) Main room view.</figcaption>
+      </figure>
+      <p style="color:var(--muted); font-size:13px;" data-en="Detailed annotations will be added once screenshots are placed." data-ja="スクリーンショット配置後、詳細な注釈を追加します。">Detailed annotations will be added once screenshots are placed.</p>
+    </section>
+
+    <!-- ─── 4. Sharing & Privacy ─── -->
+    <section class="chapter" id="sharing">
+      <h2 data-en="4. Sharing &amp; Privacy" data-ja="4. 共有とプライバシー">4. Sharing &amp; Privacy</h2>
+      <p data-en="PulseLink gives you three independent layers of control over what your watch sends to the room. None of these affect what others share — only your own broadcast." data-ja="自分のウォッチがルームに送るデータを、3層の独立した制御で管理できます。他人の共有には影響しません。">PulseLink gives you three independent layers of control over what your watch sends to the room. None of these affect what others share — only your own broadcast.</p>
+      <ul>
+        <li><strong>Sharing</strong> (<span data-en="master toggle" data-ja="マスタートグル">master toggle</span>) — <span data-en="OFF stops all transmission instantly. Other members see you as paused." data-ja="OFF にすると全送信が即停止。他メンバーには pause として表示されます。">OFF stops all transmission instantly. Other members see you as paused.</span></li>
+        <li><strong>Share → Heart rate / Weather</strong> — <span data-en="Toggle individual data types. HR off means others see your steps in the HR position." data-ja="データ種別ごとに切替。HR OFF にすると他メンバーには HR 位置に歩数が表示されます。">Toggle individual data types. HR off means others see your steps in the HR position.</span></li>
+        <li><strong>Update interval</strong> — <span data-en="How often you broadcast. Host sets it for the whole room (10s ~ 10min, or Manual). Guest can follow host or override locally to Manual." data-ja="送信頻度。Host は部屋全体に対して設定（10秒〜10分、Manual）、Guest は Host に追従するかローカルで Manual に上書き。">How often you broadcast. Host sets it for the whole room (10s ~ 10min, or Manual). Guest can follow host or override locally to Manual.</span></li>
+      </ul>
+      <div class="callout">
+        <strong data-en="Battery tip:" data-ja="バッテリーのヒント:">Battery tip:</strong>
+        <span data-en="Longer Update interval = less data, less battery. 5 min is fine for casual runs; 10 sec for race day." data-ja="Update interval を長くすれば送信が減り省電力。普段使いは 5分、レース日は 10秒が目安。">Longer Update interval = less data, less battery. 5 min is fine for casual runs; 10 sec for race day.</span>
+      </div>
+    </section>
+
+    <!-- ─── 5. Display ─── -->
+    <section class="chapter" id="display">
+      <h2 data-en="5. Display" data-ja="5. 表示設定">5. Display</h2>
+      <p data-en="The Display menu controls what appears on your screen — your own weather bar, other members' weather, background color and clock color." data-ja="Display メニューでは、自分の画面に何を表示するかを設定します — 自分の気象バー、他メンバーの気象、背景色、時計色。">The Display menu controls what appears on your screen — your own weather bar, other members' weather, background color and clock color.</p>
+      <ul>
+        <li><strong>My weather</strong> — <span data-en="Show / hide the bottom weather bar (your own conditions)." data-ja="画面下部の自分の気象バーを表示／非表示。">Show / hide the bottom weather bar (your own conditions).</span></li>
+        <li><strong>Member weather</strong> — <span data-en="Show / hide other members' weather in their rows." data-ja="他メンバーの行に気象を表示／非表示。">Show / hide other members' weather in their rows.</span></li>
+        <li><strong>My wx color / Background / Clock color</strong> — <span data-en="Personalize the look — 6 backgrounds, 12 clock colors, 6 weather bar colors." data-ja="見た目をカスタマイズ — 背景 6色、時計 12色、気象バー 6色。">Personalize the look — 6 backgrounds, 12 clock colors, 6 weather bar colors.</span></li>
+      </ul>
+    </section>
+
+    <!-- ─── 6. Messages ─── -->
+    <section class="chapter" id="messages">
+      <h2 data-en="6. Messages" data-ja="6. メッセージ">6. Messages</h2>
+      <p data-en="PulseLink uses template messages — short fixed phrases you compose ahead of time. You get 20 slots, with 5 pre-filled defaults. Edit them in the Connect IQ Mobile app." data-ja="PulseLink は定型メッセージ方式です — 短い固定フレーズを事前に登録。20枠用意され、初期5枠に既定文言が入っています。文言の編集はスマホの Connect IQ Mobile アプリから。">PulseLink uses template messages — short fixed phrases you compose ahead of time. You get 20 slots, with 5 pre-filled defaults. Edit them in the Connect IQ Mobile app.</p>
+      <h3 data-en="How to send" data-ja="送信方法">How to send</h3>
+      <ol class="steps">
+        <li data-en="Long-press a member row on the main screen." data-ja="メイン画面でメンバーの行を長押し。">Long-press a member row on the main screen.</li>
+        <li data-en="Pick a template from the list." data-ja="一覧からテンプレを選択。">Pick a template from the list.</li>
+        <li data-en="Recipient defaults to that member. Tap the To: row to switch to Everyone or the host." data-ja="宛先は長押ししたメンバーが既定。To: 行をタップで Everyone やホストに切替可。">Recipient defaults to that member. Tap the To: row to switch to Everyone or the host.</li>
+      </ol>
+      <h3 data-en="Reading messages" data-ja="メッセージの確認">Reading messages</h3>
+      <p data-en="Unread count shows on the room name row (N new in red). Long-press the menu button (UP long-press) to jump straight to the feed from anywhere." data-ja="未読数は部屋名の行に表示（赤の N new）。UP ボタン長押しでどこからでもフィードに直行できます。">Unread count shows on the room name row (N new in red). Long-press the menu button (UP long-press) to jump straight to the feed from anywhere.</p>
+    </section>
+
+    <!-- ─── 7. Room Admin ─── -->
+    <section class="chapter" id="room-admin">
+      <h2 data-en="7. Room Admin (Host)" data-ja="7. ルーム管理（ホスト）">7. Room Admin (Host)</h2>
+      <p data-en="Hosts have a Room admin submenu with full control over the room — who can join, who gets banned, the room name and invite code." data-ja="Host には Room admin サブメニューがあり、ルームを完全にコントロールできます — 参加承認、Ban、ルーム名、招待コード。">Hosts have a Room admin submenu with full control over the room — who can join, who gets banned, the room name and invite code.</p>
+      <ul>
+        <li><strong data-en="Join requests" data-ja="参加リクエスト">Join requests</strong> — <span data-en="Approve or reject pending guests. Number appears in the submenu badge." data-ja="参加待ちのゲストを承認／拒否。数はサブメニューのバッジに表示。">Approve or reject pending guests. Number appears in the submenu badge.</span></li>
+        <li><strong>Members</strong> — <span data-en="Tap any member to kick (temporary) or ban (permanent)." data-ja="メンバーをタップして Kick（一時）または Ban（永久）。">Tap any member to kick (temporary) or ban (permanent).</span></li>
+        <li><strong data-en="Banned users" data-ja="Banned リスト">Banned users</strong> — <span data-en="Review and unban." data-ja="Ban したユーザーを一覧表示・Unban 可能。">Review and unban.</span></li>
+        <li><strong data-en="Host mode" data-ja="Host mode">Host mode</strong> — <span data-en="Participate (broadcast your data) or Observe (hidden, no broadcast)." data-ja="Participate（自分も送信）と Observe（非表示・送信なし）を切替。">Participate (broadcast your data) or Observe (hidden, no broadcast).</span></li>
+        <li><strong data-en="Rename room / Invite code reset" data-ja="ルーム名変更 / 招待コードリセット">Rename room / Invite code reset</strong> — <span data-en="Tap to update. Invite code resets immediately — the old code stops working." data-ja="タップで変更。招待コードは即時切替 — 旧コードは無効化されます。">Tap to update. Invite code resets immediately — the old code stops working.</span></li>
+      </ul>
+    </section>
+
+    <!-- ─── 8. Heat Stress ─── -->
+    <section class="chapter" id="heat">
+      <h2 data-en="8. Heat Stress Guide" data-ja="8. 熱中症ガイド">8. Heat Stress Guide</h2>
+      <p data-en="A personal heat-strain indicator that combines current temperature, humidity, your heart rate and Body Battery into a single 5-level rating. Information only — not medical advice." data-ja="気温・湿度・心拍・Body Battery を総合して暑熱ストレスを5段階で示す個人向け指標です。情報提供のみで医療アドバイスではありません。">A personal heat-strain indicator that combines current temperature, humidity, your heart rate and Body Battery into a single 5-level rating. Information only — not medical advice.</p>
+      <h3 data-en="Opening &amp; toggling" data-ja="開き方と ON/OFF">Opening &amp; toggling</h3>
+      <ol class="steps">
+        <li data-en="Long-press your own row on the main screen → You menu → Heat stress." data-ja="メイン画面で自分の行を長押し → You メニュー → Heat stress。">Long-press your own row on the main screen → You menu → Heat stress.</li>
+        <li data-en="Tap the Monitor button at the top of the screen, or press START, to toggle ON / OFF. Default is OFF (seasonal opt-in)." data-ja="画面上部の Monitor ボタンをタップ、または START を押して ON / OFF を切替。既定は OFF（季節 opt-in）。">Tap the Monitor button at the top of the screen, or press START, to toggle ON / OFF. Default is OFF (seasonal opt-in).</li>
+      </ol>
+      <h3 data-en="What you see" data-ja="表示される情報">What you see</h3>
+      <ul>
+        <li data-en="A 5-level tier (Safe → Danger) with color." data-ja="5段階の段階表示（安全 → 危険）と色。">A 5-level tier (Safe → Danger) with color.</li>
+        <li data-en="Estimated WBGT, Feels like, Humidity." data-ja="推定 WBGT、体感温度、湿度。">Estimated WBGT, Feels like, Humidity.</li>
+        <li data-en="Your current HR and %HRR (with a note if your HR is high for the current heat)." data-ja="現在の心拍と %HRR（暑さに対し HR が高い時は注記）。">Your current HR and %HRR (with a note if your HR is high for the current heat).</li>
+        <li data-en="A short advisory line that scrolls if long." data-ja="一言のアドバイス（長い時はスクロール表示）。">A short advisory line that scrolls if long.</li>
+      </ul>
+      <h3 data-en="On the main screen" data-ja="メイン画面での連動">On the main screen</h3>
+      <p data-en="When Monitor is ON, your own HR number on the main screen is colored by the current heat tier (green → red). Other members stay white. The check runs every 60 seconds locally — no data leaves the watch." data-ja="Monitor が ON の時、メイン画面の自分の HR 数値が暑熱段階の色で表示されます（緑 → 赤）。他メンバーは白のまま。判定は 60秒ごとにウォッチ内ローカルで実行 — データは外に出ません。">When Monitor is ON, your own HR number on the main screen is colored by the current heat tier (green → red). Other members stay white. The check runs every 60 seconds locally — no data leaves the watch.</p>
+    </section>
+
+    <!-- ─── 9. Compass ─── -->
+    <section class="chapter" id="compass">
+      <h2 data-en="9. Compass" data-ja="9. コンパス">9. Compass</h2>
+      <p data-en="A simple rotating compass for trail runners and hikers, behind the weather bar." data-ja="気象バーの裏にあるシンプルな回転コンパス。トレラン・ハイク向け。">A simple rotating compass for trail runners and hikers, behind the weather bar.</p>
+      <h3 data-en="How to open" data-ja="開き方">How to open</h3>
+      <p data-en="Long-press the right half of your weather bar on the main screen." data-ja="メイン画面の気象バーの右半分を長押し。">Long-press the right half of your weather bar on the main screen.</p>
+
+      <div class="callout warn">
+        <strong data-en="Known behavior — compass may freeze:" data-ja="既知の挙動 — コンパスが固まることがあります：">Known behavior — compass may freeze:</strong>
+        <span data-en="Due to Garmin's CPU budget for widget-type apps, if the compass updates rapidly for an extended period (e.g. while moving your arm continuously), the system may suspend its drawing thread. The screen will freeze on the last frame. This is normal Garmin power management behavior, not a crash." data-ja="Garmin の widget アプリには CPU 使用バジェットの制限があり、コンパスが長時間（例：腕を動かし続けた時など）高頻度で更新されると、システムが描画スレッドを一時停止することがあります。画面が最後の状態で固まったように見えますが、これは Garmin の正常な省電力動作で、クラッシュではありません。">Due to Garmin's CPU budget for widget-type apps, if the compass updates rapidly for an extended period (e.g. while moving your arm continuously), the system may suspend its drawing thread. The screen will freeze on the last frame. This is normal Garmin power management behavior, not a crash.</span>
+        <br><br>
+        <strong data-en="To recover:" data-ja="復帰方法：">To recover:</strong>
+        <span data-en="Press BACK to leave the compass, then restart PulseLink (close and reopen). The compass works again." data-ja="BACK でコンパスを閉じ、PulseLink を一度終了して再起動してください。再びコンパスが使えるようになります。">Press BACK to leave the compass, then restart PulseLink (close and reopen). The compass works again.</span>
+      </div>
+    </section>
+
+    <!-- ─── 10. Weather ─── -->
+    <section class="chapter" id="weather">
+      <h2 data-en="10. Weather" data-ja="10. 気象情報">10. Weather</h2>
+      <p data-en="The bottom weather bar shows current conditions synced from your phone — temperature, humidity, wind direction &amp; speed, pressure, altitude, and an icon for the weather state." data-ja="画面下部の気象バーは、スマホ経由で同期された現在の天気を表示します — 気温・湿度・風向と風速・気圧・高度・天気アイコン。">The bottom weather bar shows current conditions synced from your phone — temperature, humidity, wind direction &amp; speed, pressure, altitude, and an icon for the weather state.</p>
+      <h3 data-en="Wind direction icon" data-ja="風向アイコン">Wind direction icon</h3>
+      <p data-en="A kite shape (chevron) — the pointed end shows where the wind is heading, the notched end shows where it's coming from. This is the standard meteorological convention." data-ja="凧形の図形 — 尖った先が風の向かう先、えぐられた側が風が吹いてくる方向。気象予報の標準的な表記です。">A kite shape (chevron) — the pointed end shows where the wind is heading, the notched end shows where it's coming from. This is the standard meteorological convention.</p>
+    </section>
+
+    <!-- ─── 11. Account ─── -->
+    <section class="chapter" id="account">
+      <h2 data-en="11. Account" data-ja="11. アカウント">11. Account</h2>
+      <p data-en="Most account tasks are done on the website, not the watch." data-ja="アカウント操作の大半は Web で行います（ウォッチ内ではありません）。">Most account tasks are done on the website, not the watch.</p>
+      <ul>
+        <li><strong data-en="Register" data-ja="登録">Register</strong>: <a href="../register/">easymoat.github.io/pulselink/register</a></li>
+        <li><strong data-en="Forgot password" data-ja="パスワード再発行">Forgot password</strong>: <a href="../forgot/">easymoat.github.io/pulselink/forgot</a></li>
+        <li><strong data-en="Delete account" data-ja="アカウント削除">Delete account</strong>: <a href="../delete/">easymoat.github.io/pulselink/delete</a></li>
+        <li><strong data-en="Change password (on watch)" data-ja="パスワード変更（ウォッチ）">Change password (on watch)</strong>: <span data-en="Long-press your own row → You menu → Change password." data-ja="自分の行を長押し → You メニュー → Change password。">Long-press your own row → You menu → Change password.</span></li>
+        <li><strong data-en="Cancel subscription" data-ja="サブスク解約">Cancel subscription</strong>: <span data-en="Use the Stripe Customer Portal link in your activation email." data-ja="アクティベーションメール記載の Stripe Customer Portal リンクから。">Use the Stripe Customer Portal link in your activation email.</span></li>
+      </ul>
+    </section>
+
+    <!-- ─── 12. Troubleshooting ─── -->
+    <section class="chapter" id="troubleshooting">
+      <h2 data-en="12. Troubleshooting" data-ja="12. トラブルシューティング">12. Troubleshooting</h2>
+
+      <h3 data-en="Compass froze on the last frame" data-ja="コンパスが最後の状態で固まる">Compass froze on the last frame</h3>
+      <p data-en="See chapter 9 — this is Garmin's CPU budget protection. Press BACK and restart PulseLink." data-ja="第9章を参照。これは Garmin の CPU バジェット保護動作です。BACK を押し、PulseLink を再起動してください。">See chapter 9 — this is Garmin's CPU budget protection. Press BACK and restart PulseLink.</p>
+
+      <h3 data-en="Stuck on &quot;Connecting...&quot;" data-ja="「Connecting...」のまま進まない">Stuck on "Connecting..."</h3>
+      <ul>
+        <li data-en="Check that your watch can reach your phone (Bluetooth connected, Connect IQ Mobile running)." data-ja="ウォッチとスマホが繋がっているか確認（Bluetooth、Connect IQ Mobile が起動中）。">Check that your watch can reach your phone (Bluetooth connected, Connect IQ Mobile running).</li>
+        <li data-en="Confirm your email and password in Connect IQ Mobile → PulseLink settings — even one wrong character blocks login." data-ja="Connect IQ Mobile → PulseLink 設定で email と password を確認 — 1文字違いでもログインできません。">Confirm your email and password in Connect IQ Mobile → PulseLink settings — even one wrong character blocks login.</li>
+      </ul>
+
+      <h3 data-en="&quot;No weather data&quot;" data-ja="「No weather data」表示">"No weather data"</h3>
+      <p data-en="Your phone hasn't synced weather to the watch recently. Open the Garmin Connect app on your phone with internet access, then re-open PulseLink." data-ja="スマホからウォッチへの気象同期が更新されていない状態。インターネット接続のあるスマホで Garmin Connect を開いてから PulseLink を再起動してください。">Your phone hasn't synced weather to the watch recently. Open the Garmin Connect app on your phone with internet access, then re-open PulseLink.</p>
+
+      <h3 data-en="Trial expired but I want to keep hosting" data-ja="トライアル切れだがホストを続けたい">Trial expired but I want to keep hosting</h3>
+      <p data-en="Find your Device ID on the Role select screen (under Host), then subscribe at easymoat.github.io/pulselink — you'll receive an activation key by email." data-ja="Role 選択画面の Host の下に表示される Device ID を確認し、easymoat.github.io/pulselink で登録 → アクティベーションキーがメールで届きます。">Find your Device ID on the Role select screen (under Host), then subscribe at easymoat.github.io/pulselink — you'll receive an activation key by email.</p>
+    </section>
+
+  </article>
+</div>
+
+<script>
+function setLang(lang) {
+  document.documentElement.lang = lang === 'ja' ? 'ja' : 'en';
+  document.querySelectorAll('[data-en]').forEach(el => {
+    if (el.children.length > 0) return;
+    const text = el.getAttribute('data-' + lang);
+    if (text) el.textContent = text;
+  });
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+  try { localStorage.setItem('pl_lang', lang); } catch(e) {}
+}
+try {
+  var saved = localStorage.getItem('pl_lang');
+  if (saved === 'ja') { setLang('ja'); }
+} catch(e) {}
+</script>
+
+</body>
+</html>

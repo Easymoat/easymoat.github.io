@@ -60,14 +60,18 @@
     background: var(--white); border: 1px solid var(--border); border-radius: 12px;
     padding: 16px; margin: 16px 0 24px; box-shadow: var(--shadow);
   }
-  figure.annotated .stage { position: relative; max-width: 480px; margin: 0 auto; }
-  /* スクリーンショットはウォッチ画面のコンテンツ(黒い円)だけを正方形にクロップ
-     した PNG を使う。border-radius: 50% で円形マスク → ベゼルの残りが見えなくなる。
+  /* stage 自体に正方形を強制 → img と SVG が確実に同じ矩形を共有 → 座標ズレ無し。
+     スクリーンショットはウォッチ画面の黒い円ぴったりにクロップした正方形 PNG を使う。
+     border-radius: 50% で円形マスク → ベゼル残りが見えなくなる。
      SVG オーバーレイは同サイズ正方形の viewBox を持たせ、円の外(四隅)に引き出し
      線・ラベルを配置できる(SVG は stage 全体を覆い、マスクされない)。 */
+  figure.annotated .stage {
+    position: relative; max-width: 480px; margin: 0 auto;
+    aspect-ratio: 1 / 1;
+  }
   figure.annotated .stage img {
-    display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover;
-    border-radius: 50%; background: #111;
+    display: block; width: 100%; height: 100%;
+    object-fit: cover; border-radius: 50%; background: #111;
   }
   figure.annotated .stage .placeholder {
     display: flex; align-items: center; justify-content: center;

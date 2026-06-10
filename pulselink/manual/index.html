@@ -61,10 +61,13 @@
     padding: 16px; margin: 16px 0 24px; box-shadow: var(--shadow);
   }
   figure.annotated .stage { position: relative; max-width: 480px; margin: 0 auto; }
-  /* 画像ごとにアスペクト比が違うので、img はその自然比のまま、SVG オーバーレイは
-     画像と同じ viewBox を持たせて引き出し線・ラベルを画像ピクセル座標で書く。 */
+  /* スクリーンショットはウォッチ画面のコンテンツ(黒い円)だけを正方形にクロップ
+     した PNG を使う。border-radius: 50% で円形マスク → ベゼルの残りが見えなくなる。
+     SVG オーバーレイは同サイズ正方形の viewBox を持たせ、円の外(四隅)に引き出し
+     線・ラベルを配置できる(SVG は stage 全体を覆い、マスクされない)。 */
   figure.annotated .stage img {
-    display: block; width: 100%; height: auto; border-radius: 12px;
+    display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover;
+    border-radius: 50%; background: #111;
   }
   figure.annotated .stage .placeholder {
     display: flex; align-items: center; justify-content: center;
@@ -158,19 +161,19 @@
       <figure class="annotated">
         <div class="stage">
           <img src="screens/role.png" alt="Role select screen">
-          <svg class="overlay" viewBox="0 0 680 909">
-            <!-- Host 行 (状態テキスト "your own room") -->
-            <rect class="box" x="280" y="232" width="220" height="36"/>
-            <line x1="500" y1="250" x2="640" y2="170"/>
-            <text x="430" y="160" data-en="Host state" data-ja="Host の状態">Host state</text>
-            <!-- Device ID -->
-            <rect class="box" x="170" y="278" width="340" height="40"/>
-            <line x1="170" y1="298" x2="40" y2="380"/>
-            <text x="20" y="400" data-en="Device ID — needed to purchase" data-ja="Device ID — 購入時に必要">Device ID — needed to purchase</text>
+          <svg class="overlay" viewBox="0 0 480 480">
+            <!-- Host 状態テキスト "your own room" -->
+            <rect class="box" x="225" y="165" width="170" height="35"/>
+            <line x1="395" y1="182" x2="455" y2="105"/>
+            <text x="305" y="95" data-en="Host state" data-ja="Host の状態">Host state</text>
+            <!-- Device ID 行 -->
+            <rect class="box" x="95" y="210" width="295" height="32"/>
+            <line x1="95" y1="226" x2="35" y2="305"/>
+            <text x="8" y="325" data-en="Device ID — needed to purchase" data-ja="Device ID — 購入時に必要">Device ID — needed to purchase</text>
             <!-- Guest 行 -->
-            <rect class="box" x="170" y="370" width="340" height="80"/>
-            <line x1="510" y1="410" x2="640" y2="480"/>
-            <text x="430" y="500" data-en="Guest joins free" data-ja="Guest は無料参加">Guest joins free</text>
+            <rect class="box" x="95" y="285" width="295" height="80"/>
+            <line x1="390" y1="325" x2="455" y2="395"/>
+            <text x="328" y="420" data-en="Guest joins free" data-ja="Guest は無料参加">Guest joins free</text>
           </svg>
         </div>
         <figcaption data-en="Role select — appears at every launch." data-ja="Role 選択 — 起動時に毎回表示。">Role select — appears at every launch.</figcaption>

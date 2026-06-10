@@ -359,6 +359,107 @@ try {
   var saved = localStorage.getItem('pl_lang');
   if (saved === 'ja') { setLang('ja'); }
 } catch(e) {}
+
+/* ─── SVG Overlay Edit Mode (?edit=1) ────────────────────────────
+   Drag rect/line/text on figures to reposition. A panel shows the
+   live SVG source; copy it into the HTML to persist. */
+(function() {
+  if (!new URLSearchParams(location.search).has('edit')) return;
+  document.body.style.cssText += ';padding-bottom:200px;';
+
+  // Floating panel
+  var panel = document.createElement('div');
+  panel.id = 'edit-panel';
+  panel.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#111;color:#fff;padding:8px 12px;font-family:monospace;font-size:11px;max-height:180px;overflow:auto;z-index:9999;border-top:2px solid #0891B2;';
+  panel.innerHTML = '<div style="color:#CFFAFE;margin-bottom:4px;">EDIT MODE — drag rect/line endpoints/text. Selected SVG source ↓ <button id="copy-svg" style="margin-left:8px;padding:2px 8px;background:#0891B2;color:#fff;border:0;border-radius:3px;cursor:pointer;">Copy</button> <button id="hide-panel" style="margin-left:4px;padding:2px 8px;background:#444;color:#fff;border:0;border-radius:3px;cursor:pointer;">−</button></div><pre id="svg-src" style="white-space:pre-wrap;color:#fff;"></pre>';
+  document.body.appendChild(panel);
+  var preEl = document.getElementById('svg-src');
+  document.getElementById('copy-svg').onclick = function(){
+    navigator.clipboard.writeText(preEl.textContent).then(()=>{this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500);});
+  };
+  document.getElementById('hide-panel').onclick = function(){
+    var p = panel.querySelector('pre'); var hid = p.style.display==='none';
+    p.style.display = hid?'block':'none'; this.textContent = hid?'−':'+';
+  };
+
+  var selectedSvg = null;
+  function renderSrc() {
+    if (!selectedSvg) { preEl.textContent = '(click a figure to select it)'; return; }
+    preEl.textContent = selectedSvg.outerHTML.replace(/></g, '>\n<');
+  }
+  renderSrc();
+
+  document.querySelectorAll('figure.annotated svg.overlay').forEach(function(svg) {
+    svg.style.pointerEvents = 'auto';
+    svg.style.cursor = 'crosshair';
+    svg.addEventListener('mousedown', function(e) { selectedSvg = svg; });
+
+    // Map screen → SVG coords using viewBox
+    function toSvgPt(evt) {
+      var pt = svg.createSVGPoint();
+      pt.x = evt.clientX; pt.y = evt.clientY;
+      return pt.matrixTransform(svg.getScreenCTM().inverse());
+    }
+
+    // Helper: install drag on an element. updateFn(dx,dy,el,start) writes back.
+    function makeDraggable(el, getStart, updateFn) {
+      el.style.cursor = 'move';
+      el.addEventListener('mousedown', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        selectedSvg = svg;
+        var start = getStart(el);
+        var p0 = toSvgPt(e);
+        function mm(ev) {
+          var p = toSvgPt(ev);
+          updateFn(p.x - p0.x, p.y - p0.y, el, start);
+          renderSrc();
+        }
+        function mu() {
+          window.removeEventListener('mousemove', mm);
+          window.removeEventListener('mouseup', mu);
+        }
+        window.addEventListener('mousemove', mm);
+        window.addEventListener('mouseup', mu);
+      });
+    }
+
+    svg.querySelectorAll('rect').forEach(function(r) {
+      makeDraggable(r,
+        function(el) { return {x: +el.getAttribute('x'), y: +el.getAttribute('y')}; },
+        function(dx, dy, el, st) {
+          el.setAttribute('x', Math.round(st.x + dx));
+          el.setAttribute('y', Math.round(st.y + dy));
+        });
+    });
+
+    // Lines: drag whole line (both endpoints by same delta) when dragging on the line itself
+    svg.querySelectorAll('line').forEach(function(ln) {
+      ln.style.strokeWidth = '6'; // easier to grab
+      ln.addEventListener('mouseenter', function(){ this.style.stroke = '#FF00FF'; });
+      ln.addEventListener('mouseleave', function(){ this.style.stroke = ''; });
+      makeDraggable(ln,
+        function(el){ return { x1:+el.getAttribute('x1'), y1:+el.getAttribute('y1'), x2:+el.getAttribute('x2'), y2:+el.getAttribute('y2') }; },
+        function(dx, dy, el, st) {
+          el.setAttribute('x1', Math.round(st.x1+dx));
+          el.setAttribute('y1', Math.round(st.y1+dy));
+          el.setAttribute('x2', Math.round(st.x2+dx));
+          el.setAttribute('y2', Math.round(st.y2+dy));
+        });
+    });
+
+    svg.querySelectorAll('text').forEach(function(t) {
+      makeDraggable(t,
+        function(el){ return { x:+el.getAttribute('x'), y:+el.getAttribute('y') }; },
+        function(dx, dy, el, st) {
+          el.setAttribute('x', Math.round(st.x+dx));
+          el.setAttribute('y', Math.round(st.y+dy));
+        });
+    });
+  });
+  // Auto-select first svg
+  var first = document.querySelector('figure.annotated svg.overlay');
+  if (first) { selectedSvg = first; renderSrc(); }
+})();
 </script>
 
 </body>

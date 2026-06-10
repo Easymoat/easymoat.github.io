@@ -365,7 +365,19 @@ try {
    live SVG source; copy it into the HTML to persist. */
 (function() {
   if (!new URLSearchParams(location.search).has('edit')) return;
+  document.body.classList.add('pl-edit-mode');
   document.body.style.cssText += ';padding-bottom:200px;';
+
+  // 編集モードでは figure を画面いっぱいまで広げる (両端まで)
+  var editCss = document.createElement('style');
+  editCss.textContent = [
+    '.pl-edit-mode .wrap { grid-template-columns: 1fr !important; max-width: none; padding-left: 16px; padding-right: 16px; }',
+    '.pl-edit-mode aside { display: none; }',
+    '.pl-edit-mode figure.annotated { padding: 8px; }',
+    '.pl-edit-mode figure.annotated .stage { max-width: none; }',
+    '.pl-edit-mode .resize-handle { fill: #DB2777; stroke: #fff; stroke-width: 2; cursor: nwse-resize; }'
+  ].join('\n');
+  document.head.appendChild(editCss);
 
   // Floating panel
   var panel = document.createElement('div');
@@ -385,7 +397,10 @@ try {
   var selectedSvg = null;
   function renderSrc() {
     if (!selectedSvg) { preEl.textContent = '(click a figure to select it)'; return; }
-    preEl.textContent = selectedSvg.outerHTML.replace(/></g, '>\n<');
+    // リサイズハンドル (編集モード専用) はコピー対象から除外
+    var clone = selectedSvg.cloneNode(true);
+    clone.querySelectorAll('.resize-handle').forEach(function(h){ h.remove(); });
+    preEl.textContent = clone.outerHTML.replace(/></g, '>\n<');
   }
   renderSrc();
 
@@ -424,11 +439,35 @@ try {
     }
 
     svg.querySelectorAll('rect').forEach(function(r) {
+      // 各 rect に右下リサイズハンドル (小さな円) を追加
+      var handle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      handle.setAttribute('class', 'resize-handle');
+      handle.setAttribute('r', '7');
+      var syncHandle = function() {
+        handle.setAttribute('cx', +r.getAttribute('x') + +r.getAttribute('width'));
+        handle.setAttribute('cy', +r.getAttribute('y') + +r.getAttribute('height'));
+      };
+      syncHandle();
+      svg.appendChild(handle);
+
+      // rect 本体: 移動
       makeDraggable(r,
         function(el) { return {x: +el.getAttribute('x'), y: +el.getAttribute('y')}; },
         function(dx, dy, el, st) {
           el.setAttribute('x', Math.round(st.x + dx));
           el.setAttribute('y', Math.round(st.y + dy));
+          syncHandle();
+        });
+
+      // ハンドル: リサイズ (右下を引っ張る = width/height 変更)
+      makeDraggable(handle,
+        function() { return { w: +r.getAttribute('width'), h: +r.getAttribute('height') }; },
+        function(dx, dy, el, st) {
+          var nw = Math.max(10, Math.round(st.w + dx));
+          var nh = Math.max(10, Math.round(st.h + dy));
+          r.setAttribute('width', nw);
+          r.setAttribute('height', nh);
+          syncHandle();
         });
     });
 

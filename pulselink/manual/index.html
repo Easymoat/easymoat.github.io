@@ -212,27 +212,27 @@
           <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
             <!-- Room name -->
             <rect class="box" x="160" y="75" width="195" height="30"/>
-            <line x1="150" y1="87" x2="30" y2="37"/>
-            <text x="-13" y="26" data-en="Room name" data-ja="部屋名">Room name</text>
+            <line x1="152" y1="72" x2="75" y2="26"/>
+            <text x="-9" y="28" data-en="Room name" data-ja="部屋名">Room name</text>
             <!-- Status sub-row: Obs. / Upd. 60s (arrow + label only) -->
-            <line x1="170" y1="118" x2="31" y2="91"/>
-            <text x="-44" y="80" data-en="Host mode + interval" data-ja="ホストモード + 更新間隔">Host mode + interval</text>
+            <line x1="170" y1="118" x2="112" y2="115"/>
+            <text x="-32" y="119" data-en="Host mode + interval" data-ja="ホストモード + 更新間隔">Host mode + interval</text>
             <!-- Member rows -->
             <rect class="box" x="121" y="131" width="260" height="153"/>
             <line x1="393" y1="135" x2="457" y2="58"/>
             <text x="374" y="45" data-en="Members (HR / dist / steps)" data-ja="メンバー（心拍 / 距離 / 歩数）">Members (HR / dist / steps)</text>
             <!-- Weather bar -->
             <rect class="box" x="130" y="285" width="236" height="53"/>
-            <line x1="377" y1="320" x2="417" y2="361"/>
-            <text x="350" y="379" data-en="Weather bar (your own)" data-ja="気象バー（自分の）">Weather bar (your own)</text>
+            <line x1="377" y1="320" x2="422" y2="366"/>
+            <text x="292" y="381" data-en="Weather bar (your own)" data-ja="気象バー（自分の）">Weather bar (your own)</text>
             <!-- Date (unread = red) — arrow + label only -->
-            <line x1="126" y1="387" x2="174" y2="360"/>
+            <line x1="126" y1="387" x2="174" y2="364"/>
             <text x="-40" y="392" data-en="Date — red = unread msg" data-ja="日付 — 赤=未読メッセージ">Date — red = unread msg</text>
             <!-- Left rim meter (battery) -->
             <line x1="82" y1="247" x2="31" y2="306"/>
-            <text x="-28" y="321" data-en="Left rim: battery" data-ja="左リム: バッテリー">Left rim: battery</text>
+            <text x="-28" y="326" data-en="Left rim: battery" data-ja="左リム: バッテリー">Left rim: battery</text>
             <!-- Right rim meter (Body Battery / Stress, ConnectIQ 設定で切替) -->
-            <line x1="530" y1="385" x2="431" y2="243"/>
+            <line x1="493" y1="382" x2="431" y2="243"/>
             <text x="344" y="400" data-en="Right rim: Body Battery / Stress" data-ja="右リム: Body Battery / ストレス">Right rim: Body Battery / Stress</text>
           </svg>
         </div>
@@ -321,6 +321,30 @@
         <li data-en="Long-press your own row on the main screen → You menu → Heat stress." data-ja="メイン画面で自分の行を長押し → You メニュー → Heat stress。">Long-press your own row on the main screen → You menu → Heat stress.</li>
         <li data-en="Tap the Monitor button at the top of the screen, or press START, to toggle ON / OFF. Default is OFF (seasonal opt-in)." data-ja="画面上部の Monitor ボタンをタップ、または START を押して ON / OFF を切替。既定は OFF（季節 opt-in）。">Tap the Monitor button at the top of the screen, or press START, to toggle ON / OFF. Default is OFF (seasonal opt-in).</li>
       </ol>
+
+      <figure class="annotated">
+        <div class="stage">
+          <img src="screens/heat.png?v=1" alt="Heat Stress guide screen">
+          <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+            <!-- Monitor トグル (上部、緑=ON) -->
+            <rect class="box" x="172" y="38" width="156" height="30"/>
+            <line x1="328" y1="52" x2="420" y2="22"/>
+            <text x="330" y="12" data-en="Monitor toggle (tap / START)" data-ja="Monitor 切替（タップ / START）">Monitor toggle (tap / START)</text>
+            <!-- 段階 (Safe) + 推定WBGT -->
+            <rect class="box" x="148" y="126" width="204" height="132"/>
+            <line x1="352" y1="190" x2="452" y2="160"/>
+            <text x="392" y="148" data-en="Heat tier + est. WBGT" data-ja="暑熱段階 + 推定WBGT">Heat tier + est. WBGT</text>
+            <!-- アドバイス行 -->
+            <line x1="168" y1="285" x2="45" y2="330"/>
+            <text x="-42" y="350" data-en="Advice (scrolls if long)" data-ja="アドバイス（長文はスクロール）">Advice (scrolls if long)</text>
+            <!-- HR / %HRR -->
+            <line x1="332" y1="368" x2="442" y2="415"/>
+            <text x="352" y="435" data-en="Your HR + %HRR" data-ja="自分の HR + %HRR">Your HR + %HRR</text>
+          </svg>
+        </div>
+        <figcaption data-en="Heat Stress guide — Monitor ON, Safe tier (blue) with estimated WBGT, conditions and HR strain." data-ja="Heat Stress ガイド — Monitor ON、Safe 段階（青）と推定 WBGT・気象条件・心拍負荷。">Heat Stress guide — Monitor ON, Safe tier (blue) with estimated WBGT, conditions and HR strain.</figcaption>
+      </figure>
+
       <h3 data-en="What you see" data-ja="表示される情報">What you see</h3>
       <ul>
         <li data-en="A 5-level tier with color: Safe = blue, Caution = green, Warning = yellow, Severe = orange, Danger = red." data-ja="5段階の段階表示と色: Safe＝青、Caution＝緑、Warning＝黄、Severe＝橙、Danger＝赤。">A 5-level tier with color: Safe = blue, Caution = green, Warning = yellow, Severe = orange, Danger = red.</li>

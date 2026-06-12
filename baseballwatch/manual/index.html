@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BaseballWatch — User Manual</title>
+<link rel="icon" type="image/png" href="../../favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FC; --white: #FFFFFF; --border: #E2E6EF;
+    --accent: #1E3A8A; --accent-light: #E5EBFA; --accent-dark: #16307C;
+    --accent2: #CC0022;
+    --text: #111827; --text2: #374151; --muted: #6B7280; --muted2: #9CA3AF;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+    --warn-bg: #FEF3C7; --warn-border: #F59E0B; --warn-text: #92400E;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.7; }
+
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 24px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); position: sticky; top: 0; z-index: 200; }
+  .lang-bar a.home { color: var(--accent-dark); text-decoration: none; font-weight: 600; }
+  .lang-bar a.home:hover { text-decoration: underline; }
+  .lang-bar .toggle { display: flex; gap: 8px; }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: inherit; cursor: pointer; color: var(--muted); }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; display: grid; grid-template-columns: 240px 1fr; gap: 48px; }
+  @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; padding: 24px 16px 60px; gap: 24px; } }
+
+  /* ─── Sidebar ─── */
+  aside { position: sticky; top: 60px; align-self: start; max-height: calc(100vh - 80px); overflow-y: auto; }
+  aside h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 12px; }
+  aside ol { list-style: none; counter-reset: chnum; }
+  aside ol li { counter-increment: chnum; }
+  aside ol li a {
+    display: block; padding: 6px 0 6px 28px; color: var(--text2); text-decoration: none;
+    font-size: 14px; border-left: 2px solid transparent; position: relative;
+  }
+  aside ol li a::before { content: counter(chnum); position: absolute; left: 6px; color: var(--muted2); font-size: 12px; font-weight: 600; }
+  aside ol li a:hover { color: var(--accent-dark); border-left-color: var(--accent); }
+  @media (max-width: 900px) { aside { position: static; max-height: none; border: 1px solid var(--border); border-radius: 8px; padding: 16px; background: var(--white); } }
+
+  /* ─── Article ─── */
+  article > h1 { font-size: 36px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; }
+  article > .subtitle { color: var(--muted); margin-bottom: 40px; font-size: 16px; }
+
+  section.chapter { margin-bottom: 60px; scroll-margin-top: 60px; }
+  section.chapter > h2 { font-size: 24px; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-light); color: var(--accent-dark); }
+  section.chapter > h3 { font-size: 17px; font-weight: 600; margin: 28px 0 10px; color: var(--text); }
+  section.chapter > p { color: var(--text2); margin-bottom: 12px; }
+  section.chapter > ul, section.chapter > ol { margin: 8px 0 16px 24px; color: var(--text2); }
+  section.chapter > ul li, section.chapter > ol li { margin-bottom: 6px; }
+  section.chapter strong { color: var(--text); font-weight: 600; }
+  section.chapter code { background: var(--accent-light); color: var(--accent-dark); padding: 1px 6px; border-radius: 3px; font-size: 13px; font-family: 'SF Mono', monospace; }
+
+  table.ops { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 14px; background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  table.ops th { background: var(--accent-light); color: var(--accent-dark); text-align: left; padding: 8px 12px; font-weight: 600; }
+  table.ops td { padding: 8px 12px; border-top: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+  table.ops td:first-child { white-space: nowrap; font-weight: 600; color: var(--text); }
+
+  /* ─── Annotated figure (SVG overlay) ─── */
+  figure.annotated {
+    background: var(--white); border: 1px solid var(--border); border-radius: 12px;
+    padding: 24px 80px; margin: 16px 0 24px; box-shadow: var(--shadow);
+  }
+  @media (max-width: 700px) { figure.annotated { padding: 16px 32px; } }
+  figure.annotated .stage {
+    position: relative; max-width: 480px; margin: 0 auto;
+  }
+  figure.annotated .stage::before {
+    content: ''; display: block; padding-bottom: 100%;
+  }
+  figure.annotated .stage img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; border-radius: 50%; background: #111;
+  }
+  figure.annotated .stage .placeholder {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; height: 100%; border-radius: 50%;
+    background: #111; color: #555; font-size: 13px;
+  }
+  figure.annotated .stage svg.overlay {
+    position: absolute;
+    top: -24px; bottom: -24px; left: -80px; right: -80px;
+    width: auto; height: auto;
+    overflow: visible; pointer-events: none;
+  }
+  @media (max-width: 700px) {
+    figure.annotated .stage svg.overlay { top: -16px; bottom: -16px; left: -32px; right: -32px; }
+  }
+  figure.annotated .stage svg.overlay line { stroke: var(--accent); stroke-width: 1.5; }
+  figure.annotated .stage svg.overlay circle.dot { fill: var(--accent); }
+  figure.annotated .stage svg.overlay rect.box,
+  figure.annotated .stage svg.overlay circle.ring {
+    fill: none; stroke: var(--accent2); stroke-width: 2; stroke-dasharray: 4 3;
+  }
+  figure.annotated .stage svg.overlay text {
+    fill: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+    paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round;
+  }
+  figure.annotated figcaption { text-align: center; margin-top: 12px; color: var(--muted); font-size: 13px; }
+
+  /* ─── Callout boxes ─── */
+  .callout {
+    border-radius: 8px; padding: 12px 16px; margin: 12px 0; font-size: 14px;
+    background: var(--accent-light); border-left: 3px solid var(--accent); color: var(--accent-dark);
+  }
+  .callout.warn { background: var(--warn-bg); border-left-color: var(--warn-border); color: var(--warn-text); }
+  .callout strong { color: inherit; }
+
+  /* ─── Step list ─── */
+  ol.steps { counter-reset: step; list-style: none !important; margin-left: 0 !important; }
+  ol.steps li { counter-increment: step; position: relative; padding-left: 40px; margin-bottom: 14px !important; }
+  ol.steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 2px;
+    width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<div class="lang-bar">
+  <a href="../" class="home">← BaseballWatch</a>
+  <div class="toggle">
+    <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+    <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <aside>
+    <h3 data-en="Contents" data-ja="目次">Contents</h3>
+    <ol>
+      <li><a href="#getting-started" data-en="Getting Started" data-ja="はじめに">Getting Started</a></li>
+      <li><a href="#modes" data-en="Two Modes" data-ja="2つのモード">Two Modes</a></li>
+      <li><a href="#players" data-en="Managing Players" data-ja="選手の管理">Managing Players</a></li>
+      <li><a href="#main-screen" data-en="Main Screen" data-ja="メイン画面">Main Screen</a></li>
+      <li><a href="#notifications" data-en="Notifications &amp; Effects" data-ja="通知とイベント演出">Notifications &amp; Effects</a></li>
+      <li><a href="#browse" data-en="Browse Mode" data-ja="閲覧モード">Browse Mode</a></li>
+      <li><a href="#select-frame" data-en="Select Frame" data-ja="選択枠モード">Select Frame</a></li>
+      <li><a href="#history" data-en="Inning History" data-ja="イニング履歴">Inning History</a></li>
+      <li><a href="#team-mode" data-en="Team Mode" data-ja="応援チームモード">Team Mode</a></li>
+      <li><a href="#detail" data-en="Detail Screen" data-ja="詳細画面">Detail Screen</a></li>
+      <li><a href="#settings" data-en="Settings" data-ja="設定">Settings</a></li>
+      <li><a href="#troubleshooting" data-en="Troubleshooting" data-ja="トラブルシューティング">Troubleshooting</a></li>
+    </ol>
+  </aside>
+
+  <article>
+    <h1 data-en="BaseballWatch — User Manual" data-ja="BaseballWatch ユーザーマニュアル">BaseballWatch — User Manual</h1>
+    <p class="subtitle" data-en="A complete walkthrough of every screen, gesture and setting." data-ja="すべての画面・操作・設定を網羅した完全ガイド。">A complete walkthrough of every screen, gesture and setting.</p>
+
+    <!-- ─── 1. Getting Started ─── -->
+    <section class="chapter" id="getting-started">
+      <h2 data-en="1. Getting Started" data-ja="1. はじめに">1. Getting Started</h2>
+      <p data-en="BaseballWatch brings live pro baseball to your wrist. Install it, register your favorite players (or pick a favorite team), and the watch keeps you in the game — live score, count, runners, and real-time event notifications. Every feature is free for the first 14 days." data-ja="BaseballWatch はプロ野球 (メジャー) のライブ情報を手元に届けます。インストールしてお気に入りの選手を登録 (または応援チームを設定) すれば、ライブスコア・カウント・走者・リアルタイムのイベント通知で試合を追えます。最初の 14 日間は全機能無料です。">BaseballWatch brings live pro baseball to your wrist. Install it, register your favorite players (or pick a favorite team), and the watch keeps you in the game — live score, count, runners, and real-time event notifications. Every feature is free for the first 14 days.</p>
+      <ol class="steps">
+        <li data-en="Install BaseballWatch on your watch from the Connect IQ Store." data-ja="Connect IQ ストアからウォッチに BaseballWatch をインストール。">Install BaseballWatch on your watch from the Connect IQ Store.</li>
+        <li data-en="Open the app — the 14-day full-feature trial starts automatically. No payment, no account." data-ja="アプリを起動すると 14 日間の全機能トライアルが自動で始まります。支払いもアカウントも不要。">Open the app — the 14-day full-feature trial starts automatically. No payment, no account.</li>
+        <li data-en="To keep using it after the trial: subscribe on the BaseballWatch homepage ($1.49/month via Stripe, cancel anytime). You'll receive an activation key by email." data-ja="トライアル後も使い続けるには、BaseballWatch ホームページでサブスク登録 (Stripe 経由 $1.49/月、いつでも解約可)。アクティベーションキーがメールで届きます。">To keep using it after the trial: subscribe on the BaseballWatch homepage ($1.49/month via Stripe, cancel anytime). You'll receive an activation key by email.</li>
+        <li data-en="Enter the key in Connect IQ Mobile → BaseballWatch → Settings → License Key, then restart the app." data-ja="スマホの Connect IQ Mobile → BaseballWatch → 設定 → License Key にキーを入力し、アプリを再起動。">Enter the key in Connect IQ Mobile → BaseballWatch → Settings → License Key, then restart the app.</li>
+      </ol>
+      <div class="callout" data-en="Game data comes from the public baseball stats API. Our server checks it every 30 seconds and your watch fetches updates through your phone — keep the watch paired with Garmin Connect Mobile and the phone online." data-ja="試合データは公式の野球統計 API から取得します。サーバーが 30 秒ごとに監視し、ウォッチはスマホ経由で更新を受け取ります。ウォッチを Garmin Connect Mobile とペアリングし、スマホをオンラインに保ってください。">Game data comes from the public baseball stats API. Our server checks it every 30 seconds and your watch fetches updates through your phone — keep the watch paired with Garmin Connect Mobile and the phone online.</div>
+    </section>
+
+    <!-- ─── 2. Two Modes ─── -->
+    <section class="chapter" id="modes">
+      <h2 data-en="2. Two Modes" data-ja="2. 2つのモード">2. Two Modes</h2>
+      <p data-en="BaseballWatch has two display modes. Switch anytime: tap the upper part of the main screen to open Settings, then choose Display Mode." data-ja="BaseballWatch には 2 つの表示モードがあります。切替はいつでも可能: メイン画面の上部をタップして設定を開き、Display Mode を選択してください。">BaseballWatch has two display modes. Switch anytime: tap the upper part of the main screen to open Settings, then choose Display Mode.</p>
+      <table class="ops">
+        <tr><th data-en="Mode" data-ja="モード">Mode</th><th data-en="What it shows" data-ja="表示内容">What it shows</th></tr>
+        <tr><td data-en="Player Mode" data-ja="Player Mode (選手)">Player Mode</td><td data-en="Up to 20 players of your choice, from any teams. UP/DOWN cycles through them; each screen is built around one player and their game today." data-ja="任意のチームから最大 20 名の選手を登録。UP/DOWN で切替でき、各画面は 1 選手とその日の試合を中心に構成されます。">Up to 20 players of your choice, from any teams. UP/DOWN cycles through them; each screen is built around one player and their game today.</td></tr>
+        <tr><td data-en="Team Mode" data-ja="Team Mode (応援チーム)">Team Mode</td><td data-en="Pick one favorite team. The 20 slots fill automatically with today's lineup and pitchers, and the screen auto-focuses the current batter or pitcher live (chapter 9)." data-ja="応援チームを 1 つ選択。20 枠に当日のスタメンと投手が自動で入り、ライブ中は現在の打者/投手へ自動フォーカスします (第 9 章)。">Pick one favorite team. The 20 slots fill automatically with today's lineup and pitchers, and the screen auto-focuses the current batter or pitcher live (chapter 9).</td></tr>
+      </table>
+      <div class="callout" data-en="Your registered players and your favorite team are stored separately — switching modes never erases the other mode's setup." data-ja="登録選手と応援チームは別々に保存されます。モードを切り替えても、もう一方の設定が消えることはありません。">Your registered players and your favorite team are stored separately — switching modes never erases the other mode's setup.</div>
+    </section>
+
+    <!-- ─── 3. Managing Players ─── -->
+    <section class="chapter" id="players">
+      <h2 data-en="3. Managing Players" data-ja="3. 選手の管理">3. Managing Players</h2>
+      <p data-en="Player Mode tracks players by their official Player ID. Find any player's ID with the lookup tool on the BaseballWatch homepage — search by name and copy the number." data-ja="Player Mode は公式の選手 ID で選手を登録します。ID は BaseballWatch ホームページの検索ツールで、名前から検索してコピーできます。">Player Mode tracks players by their official Player ID. Find any player's ID with the lookup tool on the BaseballWatch homepage — search by name and copy the number.</p>
+
+      <h3 data-en="On the watch (Member List)" data-ja="ウォッチ上で (Member List)">On the watch (Member List)</h3>
+      <ol class="steps">
+        <li data-en="Tap the upper part of the main screen → Member List. The 20 slots appear with each player's name." data-ja="メイン画面上部をタップ → Member List。20 枠が選手名つきで表示されます。">Tap the upper part of the main screen → Member List. The 20 slots appear with each player's name.</li>
+        <li data-en="Select a slot to open its menu: Select Player (jump to it on the main screen), Reorder, Edit ID, Enabled on/off, Add Player." data-ja="枠を選ぶとメニューが開きます: Select Player (メイン画面でその選手を表示) / Reorder (並べ替え) / Edit ID / Enabled (ON/OFF) / Add Player。">Select a slot to open its menu: Select Player (jump to it on the main screen), Reorder, Edit ID, Enabled on/off, Add Player.</li>
+        <li data-en="Edit ID opens a number pad — type the Player ID and confirm. Entering 0 clears the slot." data-ja="Edit ID は数字パッドを開きます。選手 ID を入力して確定。0 を入力すると枠を削除できます。">Edit ID opens a number pad — type the Player ID and confirm. Entering 0 clears the slot.</li>
+      </ol>
+
+      <h3 data-en="On the phone (Connect IQ settings)" data-ja="スマホで (Connect IQ 設定)">On the phone (Connect IQ settings)</h3>
+      <p data-en="The same 20 slots can be edited in Garmin Connect IQ Mobile → BaseballWatch → Settings (Player ID 1–20, each with an on/off switch). Handy for entering many IDs at once with the phone keyboard." data-ja="同じ 20 枠は Garmin Connect IQ Mobile → BaseballWatch → 設定 (Player ID 1〜20、各 ON/OFF スイッチ付き) でも編集できます。スマホのキーボードで多数の ID をまとめて入力する時に便利です。">The same 20 slots can be edited in Garmin Connect IQ Mobile → BaseballWatch → Settings (Player ID 1–20, each with an on/off switch). Handy for entering many IDs at once with the phone keyboard.</p>
+
+      <h3 data-en="Watched players (W)" data-ja="監視対象の選手 (W)">Watched players (W)</h3>
+      <p data-en="In Player Mode, notifications fire only for watched players — marked W in the Member List. Toggle it there, or long-press the upper part of the main screen to toggle the displayed player. In Team Mode every player of your team is watched automatically." data-ja="Player Mode では、通知は監視対象 (Member List で W マーク) の選手のみ発火します。Member List で切り替えるか、メイン画面上部を長押しすると表示中の選手を切り替えられます。Team Mode ではチームの全選手が自動で監視対象になります。">In Player Mode, notifications fire only for watched players — marked W in the Member List. Toggle it there, or long-press the upper part of the main screen to toggle the displayed player. In Team Mode every player of your team is watched automatically.</p>
+    </section>
+
+    <!-- ─── 4. Main Screen ─── -->
+    <section class="chapter" id="main-screen">
+      <h2 data-en="4. Main Screen" data-ja="4. メイン画面">4. Main Screen</h2>
+      <p data-en="One screen, the whole game. From top to bottom: clock, the displayed player's name, game status (start time / live inning / final result), the line-score scoreboard, the diamond with runners and the B-S-O count, and the live area — current pitcher (blue, left) and batter (red, right) with their live stats and order numbers." data-ja="1 画面に試合のすべて。上から: 時刻、表示中の選手名、試合ステータス (開始時刻 / ライブイニング / 最終結果)、スコアボード、走者と B-S-O カウント入りのダイヤモンド、そしてライブエリア — 現在の投手 (青・左) と打者 (赤・右) のライブ成績と打順/登板順です。">One screen, the whole game. From top to bottom: clock, the displayed player's name, game status (start time / live inning / final result), the line-score scoreboard, the diamond with runners and the B-S-O count, and the live area — current pitcher (blue, left) and batter (red, right) with their live stats and order numbers.</p>
+
+      <figure class="annotated">
+        <div class="stage">
+          <div class="placeholder" data-en="Screenshot coming soon" data-ja="スクリーンショット準備中">Screenshot coming soon</div>
+          <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <figcaption data-en="Main screen — player, scoreboard, diamond (runners + BSO) and live area." data-ja="メイン画面 — 選手・スコアボード・ダイヤモンド (走者 + BSO)・ライブエリア。">Main screen — player, scoreboard, diamond (runners + BSO) and live area.</figcaption>
+      </figure>
+
+      <table class="ops">
+        <tr><th data-en="Action" data-ja="操作">Action</th><th data-en="What it does" data-ja="動作">What it does</th></tr>
+        <tr><td data-en="UP / DOWN" data-ja="UP / DOWN">UP / DOWN</td><td data-en="Previous / next player (Player Mode). In Team Mode the screen follows the game automatically." data-ja="前/次の選手へ (Player Mode)。Team Mode では画面が試合に自動追従します。">Previous / next player (Player Mode). In Team Mode the screen follows the game automatically.</td></tr>
+        <tr><td>START</td><td data-en="Inning history — play-by-play of the whole game (chapter 8)" data-ja="イニング履歴 — 試合全体のプレイ・バイ・プレイ (第 8 章)">Inning history — play-by-play of the whole game (chapter 8)</td></tr>
+        <tr><td data-en="Long-press UP" data-ja="UP を長押し">Long-press UP</td><td data-en="Select frame mode — pick any on-field player with a frame (chapter 7)" data-ja="選択枠モード — 枠でグラウンド上の選手を選択 (第 7 章)">Select frame mode — pick any on-field player with a frame (chapter 7)</td></tr>
+        <tr><td>BACK</td><td data-en="Exit the app (or step back out of browse / select modes)" data-ja="アプリを終了 (閲覧/選択モード中は 1 つ戻る)">Exit the app (or step back out of browse / select modes)</td></tr>
+        <tr><td data-en="Tap the upper area" data-ja="画面上部をタップ">Tap the upper area</td><td data-en="Settings menu (chapter 11)" data-ja="設定メニュー (第 11 章)">Settings menu (chapter 11)</td></tr>
+        <tr><td data-en="Tap the scoreboard" data-ja="スコアボードをタップ">Tap the scoreboard</td><td data-en="Division standings (chapter 9). Tapping its right edge shifts the board to reveal the right-hand columns." data-ja="地区順位表 (第 9 章)。右端をタップするとボードが左にずれて右側の列が見やすくなります。">Division standings (chapter 9). Tapping its right edge shifts the board to reveal the right-hand columns.</td></tr>
+        <tr><td data-en="Tap a base" data-ja="塁をタップ">Tap a base</td><td data-en="Show the runner on that base (tap the same base again to return)" data-ja="その塁の走者を表示 (同じ塁を再タップで戻る)">Show the runner on that base (tap the same base again to return)</td></tr>
+        <tr><td data-en="Long-press batter name (right)" data-ja="打者名 (右) を長押し">Long-press batter name (right)</td><td data-en="Browse the batting order (chapter 6)" data-ja="打順の閲覧モード (第 6 章)">Browse the batting order (chapter 6)</td></tr>
+        <tr><td data-en="Long-press pitcher name (left)" data-ja="投手名 (左) を長押し">Long-press pitcher name (left)</td><td data-en="Browse the pitching order (chapter 6)" data-ja="登板順の閲覧モード (第 6 章)">Browse the pitching order (chapter 6)</td></tr>
+        <tr><td data-en="Long-press diamond center" data-ja="ダイヤモンド中央を長押し">Long-press diamond center</td><td data-en="Player detail screen (chapter 10)" data-ja="選手の詳細画面 (第 10 章)">Player detail screen (chapter 10)</td></tr>
+        <tr><td data-en="Long-press the upper area" data-ja="画面上部を長押し">Long-press the upper area</td><td data-en="Toggle watch (W) for the displayed player — Player Mode only" data-ja="表示中選手の監視 (W) を切替 — Player Mode のみ">Toggle watch (W) for the displayed player — Player Mode only</td></tr>
+      </table>
+      <div class="callout" data-en="Before the game the screen shows the start time; during the game it goes fully live; after the final out the result stays on screen. One screen covers the entire day." data-ja="試合前は開始時刻、試合中はフルライブ、試合後は最終結果が表示されたまま。1 つの画面で 1 日をカバーします。">Before the game the screen shows the start time; during the game it goes fully live; after the final out the result stays on screen. One screen covers the entire day.</div>
+    </section>
+
+    <!-- ─── 5. Notifications & Effects ─── -->
+    <section class="chapter" id="notifications">
+      <h2 data-en="5. Notifications &amp; Effects" data-ja="5. 通知とイベント演出">5. Notifications &amp; Effects</h2>
+      <h3 data-en="Real-time notifications" data-ja="リアルタイム通知">Real-time notifications</h3>
+      <p data-en="When a watched player steps to the plate or takes the mound, and when they produce a result — hit, home run, walk, strikeout and more — the watch vibrates, plays a tone, and switches the screen to that player. Home runs ring stronger than hits; appearances ring lighter." data-ja="監視対象の選手が打席に立つ・マウンドに上がる時、そしてヒット・ホームラン・四球・三振などの結果が出た瞬間に、振動と音でお知らせし、画面がその選手に切り替わります。ホームランはヒットより強く、出番通知は軽めに鳴り分けます。">When a watched player steps to the plate or takes the mound, and when they produce a result — hit, home run, walk, strikeout and more — the watch vibrates, plays a tone, and switches the screen to that player. Home runs ring stronger than hits; appearances ring lighter.</p>
+      <p data-en="How notifications behave is set in Settings → Notification:" data-ja="通知の挙動は 設定 → Notification で選べます:">How notifications behave is set in Settings → Notification:</p>
+      <table class="ops">
+        <tr><th data-en="Option" data-ja="選択肢">Option</th><th data-en="Behavior" data-ja="動作">Behavior</th></tr>
+        <tr><td>Sound + Vibe + Switch</td><td data-en="Tone, vibration, and auto-switch to the player (default)" data-ja="音 + 振動 + 選手への自動切替 (デフォルト)">Tone, vibration, and auto-switch to the player (default)</td></tr>
+        <tr><td>Sound + Switch</td><td data-en="Tone and auto-switch, no vibration" data-ja="音 + 自動切替 (振動なし)">Tone and auto-switch, no vibration</td></tr>
+        <tr><td>Vibe + Switch</td><td data-en="Vibration and auto-switch, no tone" data-ja="振動 + 自動切替 (音なし)">Vibration and auto-switch, no tone</td></tr>
+        <tr><td>Switch Only</td><td data-en="Silent — the screen just switches" data-ja="無音 — 画面の切替のみ">Silent — the screen just switches</td></tr>
+      </table>
+
+      <h3 data-en="Event animations" data-ja="イベントアニメーション">Event animations</h3>
+      <p data-en="Big moments get a celebration on top of the notification:" data-ja="大きなプレイには通知に加えて画面演出が入ります:">Big moments get a celebration on top of the notification:</p>
+      <ul>
+        <li><strong data-en="Single — bronze ball" data-ja="シングルヒット — 銅のボール">Single — bronze ball</strong><span data-en=", with confetti (about 5 seconds)" data-ja="、紙吹雪つき (約 5 秒)">, with confetti (about 5 seconds)</span></li>
+        <li><strong data-en="Double — silver ball" data-ja="ツーベース — 銀のボール">Double — silver ball</strong><span data-en=", with confetti" data-ja="、紙吹雪つき">, with confetti</span></li>
+        <li><strong data-en="Triple — gold ball" data-ja="スリーベース — 金のボール">Triple — gold ball</strong><span data-en=", with confetti" data-ja="、紙吹雪つき">, with confetti</span></li>
+        <li><strong data-en="Home run — diamond (gem) ball" data-ja="ホームラン — ダイヤモンドのボール">Home run — diamond (gem) ball</strong><span data-en=", with fireworks and confetti" data-ja="、花火と紙吹雪つき">, with fireworks and confetti</span></li>
+        <li><strong data-en="Strikeout — white ball with a red K" data-ja="奪三振 — 白いボールに赤い K">Strikeout — white ball with a red K</strong><span data-en=", swing-and-miss slashes, plus a snappy vibration (about 2.4 seconds). Fires when your pitcher records a strikeout." data-ja="、空振りスラッシュ演出、キレのある振動つき (約 2.4 秒)。応援している投手が三振を奪った時に発火します。">, swing-and-miss slashes, plus a snappy vibration (about 2.4 seconds). Fires when your pitcher records a strikeout.</span></li>
+      </ul>
+      <div class="callout" data-en="During an animation the screen stays on the player who made the play — name and stats — and updates resume when it ends. The live batter line also keeps showing the player who just batted until the next batter's first pitch, so you never miss who did it." data-ja="アニメーション中は、プレイした選手の名前と成績が画面に固定され、終了後に最新へ更新されます。ライブエリアの打者名も次打者の初球までは「打った選手」を表示し続けるので、誰のプレイか見逃しません。">During an animation the screen stays on the player who made the play — name and stats — and updates resume when it ends. The live batter line also keeps showing the player who just batted until the next batter's first pitch, so you never miss who did it.</div>
+    </section>
+
+    <!-- ─── 6. Browse Mode ─── -->
+    <section class="chapter" id="browse">
+      <h2 data-en="6. Browse Mode" data-ja="6. 閲覧モード">6. Browse Mode</h2>
+      <p data-en="Peek at any player in the current game without losing the live view — the score, count and runners keep updating while you browse." data-ja="ライブ表示を保ったまま、試合中の任意の選手をのぞき見できます。閲覧中もスコア・カウント・走者は更新され続けます。">Peek at any player in the current game without losing the live view — the score, count and runners keep updating while you browse.</p>
+      <table class="ops">
+        <tr><th data-en="Action" data-ja="操作">Action</th><th data-en="What it does" data-ja="動作">What it does</th></tr>
+        <tr><td data-en="Long-press batter name (right)" data-ja="打者名 (右) を長押し">Long-press batter name (right)</td><td data-en="Enter batting-order browse, starting from the current batter" data-ja="現在の打者を起点に打順の閲覧を開始">Enter batting-order browse, starting from the current batter</td></tr>
+        <tr><td data-en="Long-press pitcher name (left)" data-ja="投手名 (左) を長押し">Long-press pitcher name (left)</td><td data-en="Enter pitching-order browse (starter → current pitcher)" data-ja="登板順 (先発 → 現在の投手) の閲覧を開始">Enter pitching-order browse (starter → current pitcher)</td></tr>
+        <tr><td data-en="UP / DOWN" data-ja="UP / DOWN">UP / DOWN</td><td data-en="Step to the previous / next player in the order" data-ja="打順/登板順の前後の選手へ">Step to the previous / next player in the order</td></tr>
+        <tr><td data-en="Tap a base" data-ja="塁をタップ">Tap a base</td><td data-en="Show the runner on that base instantly; tap the same base again to return" data-ja="その塁の走者を即表示。同じ塁を再タップで戻る">Show the runner on that base instantly; tap the same base again to return</td></tr>
+        <tr><td data-en="BACK / long-press again" data-ja="BACK / 再度長押し">BACK / long-press again</td><td data-en="Exit browse and return to the live player" data-ja="閲覧を終了してライブ表示へ戻る">Exit browse and return to the live player</td></tr>
+      </table>
+      <p data-en="The browsed player's day — at-bat results so far, live stats — appears in the main area, so you can review the whole lineup between pitches." data-ja="閲覧中の選手のその日の内容 (これまでの打席結果・ライブ成績) がメイン表示に出るので、投球の合間に打線全体を見渡せます。">The browsed player's day — at-bat results so far, live stats — appears in the main area, so you can review the whole lineup between pitches.</p>
+    </section>
+
+    <!-- ─── 7. Select Frame ─── -->
+    <section class="chapter" id="select-frame">
+      <h2 data-en="7. Select Frame" data-ja="7. 選択枠モード">7. Select Frame</h2>
+      <p data-en="A button-friendly way to pick any player on the field: batter, pitcher, or any runner. Long-press UP and a selection frame appears." data-ja="グラウンド上の選手 (打者・投手・走者) をボタン操作で選ぶモードです。UP を長押しすると選択枠が表示されます。">A button-friendly way to pick any player on the field: batter, pitcher, or any runner. Long-press UP and a selection frame appears.</p>
+      <table class="ops">
+        <tr><th data-en="Action" data-ja="操作">Action</th><th data-en="What it does" data-ja="動作">What it does</th></tr>
+        <tr><td data-en="Long-press UP" data-ja="UP を長押し">Long-press UP</td><td data-en="Show the selection frame (starts on the batter)" data-ja="選択枠を表示 (最初は打者に枠)">Show the selection frame (starts on the batter)</td></tr>
+        <tr><td data-en="UP / DOWN" data-ja="UP / DOWN">UP / DOWN</td><td data-en="Move the frame: batter → pitcher → runners on base (cyclic). When the frame lands on a runner, that runner is displayed immediately." data-ja="枠を移動: 打者 → 投手 → 出塁中の走者 (循環)。枠が走者に乗ると、その走者が即メイン表示されます。">Move the frame: batter → pitcher → runners on base (cyclic). When the frame lands on a runner, that runner is displayed immediately.</td></tr>
+        <tr><td>START</td><td data-en="Confirm — batter or pitcher: open browse for that order (chapter 6); runner: keep viewing" data-ja="決定 — 打者/投手なら打順・登板順の閲覧へ (第 6 章)、走者なら表示を維持">Confirm — batter or pitcher: open browse for that order (chapter 6); runner: keep viewing</td></tr>
+        <tr><td data-en="Tap a base" data-ja="塁をタップ">Tap a base</td><td data-en="Move the frame to that runner (displayed immediately)" data-ja="枠をその走者へ移動 (即表示)">Move the frame to that runner (displayed immediately)</td></tr>
+        <tr><td data-en="Long-press a name / base" data-ja="選手名や塁を長押し">Long-press a name / base</td><td data-en="Move the frame there and select it in one action" data-ja="枠を移動して、そのまま選択まで一気に実行">Move the frame there and select it in one action</td></tr>
+        <tr><td>BACK</td><td data-en="From a selected view: back to the frame. From the frame: exit to the normal screen." data-ja="選択後の表示中なら枠へ戻る。枠の表示中なら解除して通常画面へ。">From a selected view: back to the frame. From the frame: exit to the normal screen.</td></tr>
+      </table>
+      <div class="callout" data-en="While the frame is shown, START is the picker (it does not open the inning history). Close the frame with BACK first, then START opens the history." data-ja="枠の表示中は START は選択ボタンになります (イニング履歴は開きません)。BACK で枠を閉じてから START を押すと履歴が開きます。">While the frame is shown, START is the picker (it does not open the inning history). Close the frame with BACK first, then START opens the history.</div>
+    </section>
+
+    <!-- ─── 8. Inning History ─── -->
+    <section class="chapter" id="history">
+      <h2 data-en="8. Inning History" data-ja="8. イニング履歴">8. Inning History</h2>
+      <p data-en="Press START on the main screen to replay the whole game, half-inning by half-inning — both teams included. In Team Mode it shows your team's game; in Player Mode, the displayed player's game." data-ja="メイン画面で START を押すと、試合全体を半イニングごとに振り返れます (両チーム収録)。Team Mode では応援チームの試合、Player Mode では表示中選手の試合が開きます。">Press START on the main screen to replay the whole game, half-inning by half-inning — both teams included. In Team Mode it shows your team's game; in Player Mode, the displayed player's game.</p>
+
+      <figure class="annotated">
+        <div class="stage">
+          <div class="placeholder" data-en="Screenshot coming soon" data-ja="スクリーンショット準備中">Screenshot coming soon</div>
+          <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <figcaption data-en="Inning history — order number, batter, result code, pitcher of the inning." data-ja="イニング履歴 — 打順・打者・結果コード・そのイニングの投手。">Inning history — order number, batter, result code, pitcher of the inning.</figcaption>
+      </figure>
+
+      <h3 data-en="Reading the screen" data-ja="画面の読み方">Reading the screen</h3>
+      <ul>
+        <li data-en="Header: the batting team's abbreviation + the half-inning — TOP n in cyan, BOT n in orange, so you always know which side is up." data-ja="ヘッダー: 攻撃側チームの略称 + 半イニング表示。TOP n はシアン、BOT n はオレンジで色分けされ、表裏が一目で分かります。">Header: the batting team's abbreviation + the half-inning — TOP n in cyan, BOT n in orange, so you always know which side is up.</li>
+        <li data-en="Each row: batting-order number, batter's name, and the result code. +1 / +2 after the code is the RBI count." data-ja="各行: 打順番号・打者名・結果コード。コードの後の +1 / +2 は打点です。">Each row: batting-order number, batter's name, and the result code. +1 / +2 after the code is the RBI count.</li>
+        <li data-en="Bottom: P: the pitcher who threw that half-inning. A mid-inning relief shows both, e.g. Cole&gt;Weaver. Below it, 3 OUTS marks a completed inning, or - in progress - for the current one." data-ja="下部: P: はその半イニングを投げた投手。イニング途中の交代は Cole&gt;Weaver のように両者を表示します。その下の 3 OUTS は完了イニング、- in progress - は進行中を示します。">Bottom: P: the pitcher who threw that half-inning. A mid-inning relief shows both, e.g. Cole&gt;Weaver. Below it, 3 OUTS marks a completed inning, or - in progress - for the current one.</li>
+      </ul>
+
+      <h3 data-en="Result codes" data-ja="結果コード">Result codes</h3>
+      <table class="ops">
+        <tr><th data-en="Code" data-ja="コード">Code</th><th data-en="Meaning" data-ja="意味">Meaning</th></tr>
+        <tr><td>1B / 2B / 3B / HR</td><td data-en="Single / double / triple / home run. A suffix shows the direction: -L left, -C center, -R right (HR-C = homer to center)." data-ja="シングル / ツーベース / スリーベース / ホームラン。サフィックスは打球方向: -L 左 / -C 中 / -R 右 (HR-C = センターへの本塁打)。">Single / double / triple / home run. A suffix shows the direction: -L left, -C center, -R right (HR-C = homer to center).</td></tr>
+        <tr><td>GO / FLY / LINE / POP</td><td data-en="Ground out / fly out / line out / pop out, with the fielder: GO-SS = grounder to short, FLY-L = fly to left." data-ja="ゴロ / フライ / ライナー / 小フライ。守備位置つき: GO-SS = 遊ゴロ、FLY-L = レフトフライ。">Ground out / fly out / line out / pop out, with the fielder: GO-SS = grounder to short, FLY-L = fly to left.</td></tr>
+        <tr><td>K / K-DP</td><td data-en="Strikeout / strikeout double play (shown in red)" data-ja="三振 / 三振ゲッツー (赤で表示)">Strikeout / strikeout double play (shown in red)</td></tr>
+        <tr><td>BB / IBB / HBP</td><td data-en="Walk / intentional walk / hit by pitch (light blue)" data-ja="四球 / 敬遠 / 死球 (水色)">Walk / intentional walk / hit by pitch (light blue)</td></tr>
+        <tr><td>GIDP / TP</td><td data-en="Grounded into double play / triple play (orange)" data-ja="併殺打 / 三重殺 (オレンジ)">Grounded into double play / triple play (orange)</td></tr>
+        <tr><td>SF / SAC / FC / E / FORCE</td><td data-en="Sacrifice fly / sacrifice bunt / fielder's choice / reached on error / force out" data-ja="犠飛 / 犠打 / 野選 / エラー出塁 / 封殺">Sacrifice fly / sacrifice bunt / fielder's choice / reached on error / force out</td></tr>
+      </table>
+      <p data-en="Hits glow green, home runs gold — scan an inning at a glance and spot where the damage happened." data-ja="ヒットは緑、ホームランは金色で表示されるので、イニングをひと目見るだけで試合が動いた場所が分かります。">Hits glow green, home runs gold — scan an inning at a glance and spot where the damage happened.</p>
+
+      <h3 data-en="Navigation" data-ja="操作">Navigation</h3>
+      <table class="ops">
+        <tr><th data-en="Action" data-ja="操作">Action</th><th data-en="What it does" data-ja="動作">What it does</th></tr>
+        <tr><td data-en="UP / DOWN" data-ja="UP / DOWN">UP / DOWN</td><td data-en="Previous / next half-inning. When an inning has 7+ batters it scrolls within the inning first — the arrows on the right edge light up when more rows exist." data-ja="前/次の半イニングへ。打者が 7 人以上のイニングはまずイニング内をスクロールします。右端の矢印が点灯している間はまだ行があります。">Previous / next half-inning. When an inning has 7+ batters it scrolls within the inning first — the arrows on the right edge light up when more rows exist.</td></tr>
+        <tr><td data-en="BACK / tap / START" data-ja="BACK / タップ / START">BACK / tap / START</td><td data-en="Close the history and return to the main screen" data-ja="履歴を閉じてメイン画面へ戻る">Close the history and return to the main screen</td></tr>
+      </table>
+      <div class="callout" data-en="The history opens on the current (most recent) half-inning, so a quick START press answers &quot;what just happened?&quot; — then UP rewinds the game." data-ja="履歴は現在 (最新) の半イニングから開きます。START を押すだけで「今なにが起きた?」が分かり、UP で過去へさかのぼれます。">The history opens on the current (most recent) half-inning, so a quick START press answers "what just happened?" — then UP rewinds the game.</div>
+    </section>
+
+    <!-- ─── 9. Team Mode ─── -->
+    <section class="chapter" id="team-mode">
+      <h2 data-en="9. Team Mode" data-ja="9. 応援チームモード">9. Team Mode</h2>
+      <p data-en="Follow a whole team instead of individual players. Set your team in Settings → Favorite Team, then switch Display Mode to Team." data-ja="選手単位ではなくチームをまるごと追うモードです。設定 → Favorite Team でチームを選び、Display Mode を Team に切り替えてください。">Follow a whole team instead of individual players. Set your team in Settings → Favorite Team, then switch Display Mode to Team.</p>
+      <ul>
+        <li data-en="The 20 slots fill automatically with today's lineup (batting order 1–9) and the pitchers — substitutions included as the game goes on." data-ja="20 枠に当日のスタメン (打順 1〜9) と投手陣が自動で入ります。途中出場・交代も試合の進行に合わせて反映されます。">The 20 slots fill automatically with today's lineup (batting order 1–9) and the pitchers — substitutions included as the game goes on.</li>
+        <li data-en="Live, the screen auto-focuses your team's current batter when batting and your pitcher when fielding — hands-free viewing." data-ja="ライブ中は、攻撃時は打席の選手、守備時は登板中の投手へ自動フォーカス。操作いらずで観戦できます。">Live, the screen auto-focuses your team's current batter when batting and your pitcher when fielding — hands-free viewing.</li>
+        <li data-en="Every player of your team is watched — all notifications and event animations (chapter 5) are active, including the strikeout K for your pitcher." data-ja="チームの全選手が監視対象になり、通知とイベント演出 (第 5 章) がすべて有効です。応援チーム投手の奪三振 K 演出もこのモードで活躍します。">Every player of your team is watched — all notifications and event animations (chapter 5) are active, including the strikeout K for your pitcher.</li>
+      </ul>
+      <h3 data-en="Division standings" data-ja="地区順位表">Division standings</h3>
+      <ol class="steps">
+        <li data-en="Tap the scoreboard on the main screen — the division standings open (wins, losses, games behind)." data-ja="メイン画面のスコアボードをタップすると地区順位表が開きます (勝敗・ゲーム差)。">Tap the scoreboard on the main screen — the division standings open (wins, losses, games behind).</li>
+        <li data-en="Long-press a team's row to peek at that team's game in Team Mode — your saved favorite team is untouched." data-ja="チームの行を長押しすると、そのチームの試合を一時的に Team Mode で表示できます。保存済みの応援チーム設定は変わりません。">Long-press a team's row to peek at that team's game in Team Mode — your saved favorite team is untouched.</li>
+        <li data-en="Tap (or press START / BACK) to close the standings." data-ja="タップ (または START / BACK) で順位表を閉じます。">Tap (or press START / BACK) to close the standings.</li>
+      </ol>
+    </section>
+
+    <!-- ─── 10. Detail Screen ─── -->
+    <section class="chapter" id="detail">
+      <h2 data-en="10. Detail Screen" data-ja="10. 詳細画面">10. Detail Screen</h2>
+      <p data-en="Long-press the center of the diamond to open the displayed player's detail screen — it also works while browsing another player." data-ja="ダイヤモンドの中央を長押しすると、表示中の選手の詳細画面が開きます。閲覧モードで別の選手を見ている時も、その選手の詳細が開きます。">Long-press the center of the diamond to open the displayed player's detail screen — it also works while browsing another player.</p>
+      <ul>
+        <li><strong>At Bats</strong> — <span data-en="every at-bat result of today's game (AB 1: Walk, AB 2: Flyout, ...)" data-ja="その日の全打席結果 (AB 1: Walk、AB 2: Flyout、…)">every at-bat result of today's game (AB 1: Walk, AB 2: Flyout, ...)</span></li>
+        <li><strong>Game Pitching</strong> — <span data-en="for pitchers: pitch count, strikes, strike %, decision, walks, HBP and home runs allowed" data-ja="投手の場合: 投球数・ストライク数・ストライク率・勝敗・与四球・与死球・被本塁打">for pitchers: pitch count, strikes, strike %, decision, walks, HBP and home runs allowed</span></li>
+        <li><strong>Season</strong> — <span data-en="season totals: AVG / HR / RBI / OPS for batters, W-L / ERA / IP / K / WHIP / SV for pitchers" data-ja="シーズン成績: 打者は AVG / HR / RBI / OPS、投手は 勝敗 / ERA / 投球回 / 奪三振 / WHIP / セーブ">season totals: AVG / HR / RBI / OPS for batters, W-L / ERA / IP / K / WHIP / SV for pitchers</span></li>
+      </ul>
+      <p data-en="UP / DOWN scrolls smoothly; long team names scroll across automatically. Press BACK to return." data-ja="UP / DOWN でスムーズにスクロールし、長いチーム名は自動で流れます。BACK で戻ります。">UP / DOWN scrolls smoothly; long team names scroll across automatically. Press BACK to return.</p>
+    </section>
+
+    <!-- ─── 11. Settings ─── -->
+    <section class="chapter" id="settings">
+      <h2 data-en="11. Settings" data-ja="11. 設定">11. Settings</h2>
+      <p data-en="Almost everything is set on the watch: tap the upper part of the main screen. Each entry shows its current value." data-ja="ほとんどの設定はウォッチ上で行えます: メイン画面の上部をタップしてください。各項目には現在値が表示されます。">Almost everything is set on the watch: tap the upper part of the main screen. Each entry shows its current value.</p>
+      <table class="ops">
+        <tr><th data-en="Watch (settings menu)" data-ja="ウォッチ (設定メニュー)">Watch (settings menu)</th><th data-en="Options" data-ja="内容">Options</th></tr>
+        <tr><td>Display Mode</td><td data-en="Player / Team (chapter 2)" data-ja="Player / Team (第 2 章)">Player / Team (chapter 2)</td></tr>
+        <tr><td>Member List</td><td data-en="Manage the 20 player slots — select, reorder, edit ID, enable, watch flag (chapter 3)" data-ja="20 選手枠の管理 — 選択・並べ替え・ID 編集・ON/OFF・監視フラグ (第 3 章)">Manage the 20 player slots — select, reorder, edit ID, enable, watch flag (chapter 3)</td></tr>
+        <tr><td>Favorite Team</td><td data-en="Pick your team for Team Mode (chapter 9)" data-ja="Team Mode の応援チームを選択 (第 9 章)">Pick your team for Team Mode (chapter 9)</td></tr>
+        <tr><td>Notification</td><td data-en="Sound + Vibe + Switch / Sound + Switch / Vibe + Switch / Switch Only (chapter 5)" data-ja="Sound + Vibe + Switch / Sound + Switch / Vibe + Switch / Switch Only (第 5 章)">Sound + Vibe + Switch / Sound + Switch / Vibe + Switch / Switch Only (chapter 5)</td></tr>
+        <tr><td>Color</td><td data-en="Clock Color and Team Color" data-ja="Clock Color (時計の色) と Team Color (チームカラー)">Clock Color and Team Color</td></tr>
+      </table>
+      <p data-en="A few items live in the phone's Connect IQ settings panel:" data-ja="以下の項目はスマホの Connect IQ 設定パネルにあります:">A few items live in the phone's Connect IQ settings panel:</p>
+      <table class="ops">
+        <tr><th data-en="Phone (Connect IQ panel)" data-ja="スマホ (Connect IQ パネル)">Phone (Connect IQ panel)</th><th data-en="Purpose" data-ja="用途">Purpose</th></tr>
+        <tr><td>License Key</td><td data-en="Activate your subscription after the trial" data-ja="トライアル後のアクティベーション">Activate your subscription after the trial</td></tr>
+        <tr><td>Player ID 1–20</td><td data-en="The 20 player slots with on/off switches — same data as the watch's Member List" data-ja="ON/OFF スイッチ付きの 20 選手枠 — ウォッチの Member List と同じデータ">The 20 player slots with on/off switches — same data as the watch's Member List</td></tr>
+      </table>
+    </section>
+
+    <!-- ─── 12. Troubleshooting ─── -->
+    <section class="chapter" id="troubleshooting">
+      <h2 data-en="12. Troubleshooting" data-ja="12. トラブルシューティング">12. Troubleshooting</h2>
+
+      <h3 data-en="The screen shows Waiting... / no game" data-ja="Waiting... のまま / 試合が出ない">The screen shows Waiting... / no game</h3>
+      <p data-en="The player's team simply has no game today, or the day's games haven't started. The screen shows the start time once a game is scheduled." data-ja="その選手のチームに当日試合がないか、まだ試合開始前です。試合が組まれると開始時刻が表示されます。">The player's team simply has no game today, or the day's games haven't started. The screen shows the start time once a game is scheduled.</p>
+
+      <h3 data-en="Data stops updating" data-ja="データが更新されない">Data stops updating</h3>
+      <p data-en="Check that the watch is connected to Garmin Connect Mobile and the phone has internet. Updates flow roughly every 30 seconds during a live game." data-ja="ウォッチが Garmin Connect Mobile と接続され、スマホがインターネットに繋がっているか確認してください。ライブ中はおよそ 30 秒間隔で更新されます。">Check that the watch is connected to Garmin Connect Mobile and the phone has internet. Updates flow roughly every 30 seconds during a live game.</p>
+
+      <h3 data-en="No notifications arrive" data-ja="通知が来ない">No notifications arrive</h3>
+      <p data-en="Check Settings → Notification isn't set lower than you expect, and — in Player Mode — that the player has the W (watch) flag in the Member List. In Team Mode all players notify automatically." data-ja="設定 → Notification が意図した設定になっているか、また Player Mode の場合は Member List でその選手に W (監視) フラグが付いているか確認してください。Team Mode では全選手が自動で通知対象です。">Check Settings → Notification isn't set lower than you expect, and — in Player Mode — that the player has the W (watch) flag in the Member List. In Team Mode all players notify automatically.</p>
+
+      <h3 data-en="A registered player never shows data" data-ja="登録した選手のデータが出ない">A registered player never shows data</h3>
+      <p data-en="The Player ID is probably wrong. Look the player up by name with the homepage lookup tool and re-enter the exact numeric ID (Member List → Edit ID, or the Connect IQ panel)." data-ja="選手 ID が間違っている可能性があります。ホームページの検索ツールで名前から ID を調べ、正確な数字を入力し直してください (Member List → Edit ID、または Connect IQ パネル)。">The Player ID is probably wrong. Look the player up by name with the homepage lookup tool and re-enter the exact numeric ID (Member List → Edit ID, or the Connect IQ panel).</p>
+
+      <h3 data-en="Inning history says No game today" data-ja="イニング履歴が No game today と表示される">Inning history says No game today</h3>
+      <p data-en="The team being looked up (your favorite team, or the displayed player's team) has no game today. During off days the history has nothing to show." data-ja="参照先のチーム (応援チーム、または表示中選手のチーム) に当日試合がありません。試合のない日は履歴も表示されません。">The team being looked up (your favorite team, or the displayed player's team) has no game today. During off days the history has nothing to show.</p>
+
+      <h3 data-en="An animation didn't play" data-ja="アニメーションが出ない">An animation didn't play</h3>
+      <p data-en="Effects play for watched batters' hits and homers, and for your pitcher's strikeouts, during live games. While you're browsing or the selection frame is open, effects hold back so they don't interrupt you — the vibration and tone still fire." data-ja="演出はライブ中、監視対象打者の安打/本塁打と、応援投手の奪三振で再生されます。閲覧モードや選択枠の表示中は操作を妨げないよう演出は控えられます (振動と音は鳴ります)。">Effects play for watched batters' hits and homers, and for your pitcher's strikeouts, during live games. While you're browsing or the selection frame is open, effects hold back so they don't interrupt you — the vibration and tone still fire.</p>
+
+      <h3 data-en="Trial expired" data-ja="トライアルが終了した">Trial expired</h3>
+      <p data-en="Subscribe on the homepage ($1.49/month), enter the emailed key in Connect IQ settings → License Key, and restart the app. Your players and settings are still on the watch and come back after activation." data-ja="ホームページでサブスク登録 ($1.49/月) し、メールで届いたキーを Connect IQ 設定の License Key に入力してアプリを再起動してください。選手と設定はウォッチ内に残っており、アクティベーション後に復元されます。">Subscribe on the homepage ($1.49/month), enter the emailed key in Connect IQ settings → License Key, and restart the app. Your players and settings are still on the watch and come back after activation.</p>
+
+      <h3 data-en="Managing / cancelling the subscription" data-ja="サブスクの管理・解約">Managing / cancelling the subscription</h3>
+      <p data-en="Use the Stripe Customer Portal — the link is in your activation email and every Stripe receipt. Cancelling keeps full access until the end of the paid period." data-ja="Stripe カスタマーポータルから行えます。リンクはアクティベーションメールと Stripe の領収書メールに記載されています。解約後も支払い済み期間の終了までは全機能を利用できます。">Use the Stripe Customer Portal — the link is in your activation email and every Stripe receipt. Cancelling keeps full access until the end of the paid period.</p>
+    </section>
+
+  </article>
+</div>
+
+<script>
+function setLang(lang) {
+  document.documentElement.lang = lang === 'ja' ? 'ja' : 'en';
+  document.querySelectorAll('[data-en]').forEach(el => {
+    if (el.children.length > 0) return;
+    const text = el.getAttribute('data-' + lang);
+    if (text) el.textContent = text;
+  });
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+  try { localStorage.setItem('bw_lang', lang); } catch(e) {}
+}
+try {
+  var saved = localStorage.getItem('bw_lang');
+  if (saved === 'ja') { setLang('ja'); }
+} catch(e) {}
+
+/* ─── SVG Overlay Edit Mode (?edit=1) ────────────────────────────
+   Drag rect/line/text on figures to reposition. A panel shows the
+   live SVG source; copy it into the HTML to persist. */
+(function() {
+  if (!new URLSearchParams(location.search).has('edit')) return;
+  document.body.classList.add('mw-edit-mode');
+  document.body.style.cssText += ';padding-bottom:200px;';
+
+  // 編集モード固有のスタイル: 矩形リサイズハンドル + 線の端点ハンドル
+  var editCss = document.createElement('style');
+  editCss.textContent = [
+    '.mw-edit-mode .resize-handle { fill: #CC0022; stroke: #fff; stroke-width: 2; cursor: nwse-resize; }',
+    '.mw-edit-mode .endpoint-handle { fill: #1E3A8A; stroke: #fff; stroke-width: 2; cursor: grab; }'
+  ].join('\n');
+  document.head.appendChild(editCss);
+
+  // Floating panel
+  var panel = document.createElement('div');
+  panel.id = 'edit-panel';
+  panel.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#111;color:#fff;padding:8px 12px;font-family:monospace;font-size:11px;max-height:180px;overflow:auto;z-index:9999;border-top:2px solid #1E3A8A;';
+  panel.innerHTML = '<div style="color:#E5EBFA;margin-bottom:4px;">EDIT MODE — drag to move, red ⬤ to resize, blue ⬤ to bend lines, <b>right-click to delete</b>. <button id="copy-svg" style="margin-left:8px;padding:2px 8px;background:#1E3A8A;color:#fff;border:0;border-radius:3px;cursor:pointer;">Copy</button> <button id="hide-panel" style="margin-left:4px;padding:2px 8px;background:#444;color:#fff;border:0;border-radius:3px;cursor:pointer;">−</button></div><pre id="svg-src" style="white-space:pre-wrap;color:#fff;"></pre>';
+  document.body.appendChild(panel);
+  var preEl = document.getElementById('svg-src');
+  document.getElementById('copy-svg').onclick = function(){
+    navigator.clipboard.writeText(preEl.textContent).then(()=>{this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500);});
+  };
+  document.getElementById('hide-panel').onclick = function(){
+    var p = panel.querySelector('pre'); var hid = p.style.display==='none';
+    p.style.display = hid?'block':'none'; this.textContent = hid?'−':'+';
+  };
+
+  var selectedSvg = null;
+  function renderSrc() {
+    if (!selectedSvg) { preEl.textContent = '(click a figure to select it)'; return; }
+    // 編集モード専用ハンドル (rect リサイズ + line 端点) はコピー対象から除外
+    var clone = selectedSvg.cloneNode(true);
+    clone.querySelectorAll('.resize-handle, .endpoint-handle').forEach(function(h){ h.remove(); });
+    preEl.textContent = clone.outerHTML.replace(/></g, '>\n<');
+  }
+  renderSrc();
+
+  document.querySelectorAll('figure.annotated svg.overlay').forEach(function(svg) {
+    svg.style.pointerEvents = 'auto';
+    svg.style.cursor = 'crosshair';
+    svg.addEventListener('mousedown', function(e) { selectedSvg = svg; });
+
+    // ダブルクリックで要素追加メニュー (box / line / text)
+    svg.addEventListener('dblclick', function(e) {
+      var pt = svg.createSVGPoint();
+      pt.x = e.clientX; pt.y = e.clientY;
+      var p = pt.matrixTransform(svg.getScreenCTM().inverse());
+      var kind = window.prompt('Add: box / line / text ?', 'box');
+      if (!kind) return;
+      var NS = 'http://www.w3.org/2000/svg';
+      if (kind === 'box') {
+        var r = document.createElementNS(NS, 'rect');
+        r.setAttribute('class', 'box');
+        r.setAttribute('x', Math.round(p.x)); r.setAttribute('y', Math.round(p.y));
+        r.setAttribute('width', 120); r.setAttribute('height', 40);
+        svg.appendChild(r);
+      } else if (kind === 'line') {
+        var l = document.createElementNS(NS, 'line');
+        l.setAttribute('x1', Math.round(p.x)); l.setAttribute('y1', Math.round(p.y));
+        l.setAttribute('x2', Math.round(p.x) + 80); l.setAttribute('y2', Math.round(p.y) - 50);
+        svg.appendChild(l);
+      } else if (kind === 'text') {
+        var t = document.createElementNS(NS, 'text');
+        t.setAttribute('x', Math.round(p.x)); t.setAttribute('y', Math.round(p.y));
+        var s = window.prompt('Label text:', 'Label');
+        t.textContent = s || 'Label';
+        t.setAttribute('data-en', t.textContent);
+        t.setAttribute('data-ja', t.textContent);
+        svg.appendChild(t);
+      }
+      renderSrc();
+      // 追加後は再選択でハンドルを付け直すのが確実 (再読み込みでも可)
+    });
+
+    // Map screen → SVG coords using viewBox
+    function toSvgPt(evt) {
+      var pt = svg.createSVGPoint();
+      pt.x = evt.clientX; pt.y = evt.clientY;
+      return pt.matrixTransform(svg.getScreenCTM().inverse());
+    }
+
+    // Helper: install drag on an element. updateFn(dx,dy,el,start) writes back.
+    function makeDraggable(el, getStart, updateFn) {
+      el.style.cursor = 'move';
+      el.addEventListener('mousedown', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        selectedSvg = svg;
+        var start = getStart(el);
+        var p0 = toSvgPt(e);
+        function mm(ev) {
+          var p = toSvgPt(ev);
+          updateFn(p.x - p0.x, p.y - p0.y, el, start);
+          renderSrc();
+        }
+        function mu() {
+          window.removeEventListener('mousemove', mm);
+          window.removeEventListener('mouseup', mu);
+        }
+        window.addEventListener('mousemove', mm);
+        window.addEventListener('mouseup', mu);
+      });
+    }
+
+    // 要素を右クリックで削除する共通ヘルパー
+    function makeRemovable(el, accomplices) {
+      el.addEventListener('contextmenu', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        el.remove();
+        if (accomplices) accomplices.forEach(function(a){ a && a.remove && a.remove(); });
+        renderSrc();
+      });
+    }
+
+    svg.querySelectorAll('rect').forEach(function(r) {
+      // 各 rect に右下リサイズハンドル (小さな円) を追加
+      var handle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      handle.setAttribute('class', 'resize-handle');
+      handle.setAttribute('r', '7');
+      var syncHandle = function() {
+        handle.setAttribute('cx', +r.getAttribute('x') + +r.getAttribute('width'));
+        handle.setAttribute('cy', +r.getAttribute('y') + +r.getAttribute('height'));
+      };
+      syncHandle();
+      svg.appendChild(handle);
+
+      // rect 本体: 移動 / 右クリックで削除 (ハンドルも一緒に消す)
+      makeDraggable(r,
+        function(el) { return {x: +el.getAttribute('x'), y: +el.getAttribute('y')}; },
+        function(dx, dy, el, st) {
+          el.setAttribute('x', Math.round(st.x + dx));
+          el.setAttribute('y', Math.round(st.y + dy));
+          syncHandle();
+        });
+      makeRemovable(r, [handle]);
+
+      // ハンドル: リサイズ (右下を引っ張る = width/height 変更)
+      makeDraggable(handle,
+        function() { return { w: +r.getAttribute('width'), h: +r.getAttribute('height') }; },
+        function(dx, dy, el, st) {
+          var nw = Math.max(10, Math.round(st.w + dx));
+          var nh = Math.max(10, Math.round(st.h + dy));
+          r.setAttribute('width', nw);
+          r.setAttribute('height', nh);
+          syncHandle();
+        });
+    });
+
+    // Lines: 線本体を引きずると平行移動。端点ハンドル (両端の○) を引きずると
+    // その端点だけを移動 = 長さ・角度を変更。
+    svg.querySelectorAll('line').forEach(function(ln) {
+      ln.style.strokeWidth = '6'; // easier to grab
+      ln.addEventListener('mouseenter', function(){ this.style.stroke = '#FF00FF'; });
+      ln.addEventListener('mouseleave', function(){ this.style.stroke = ''; });
+
+      // 両端の端点ハンドル
+      function makeEndpointHandle(attrX, attrY) {
+        var h = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        h.setAttribute('class', 'endpoint-handle');
+        h.setAttribute('r', '6');
+        var sync = function() {
+          h.setAttribute('cx', +ln.getAttribute(attrX));
+          h.setAttribute('cy', +ln.getAttribute(attrY));
+        };
+        sync();
+        svg.appendChild(h);
+        makeDraggable(h,
+          function() { return { x: +ln.getAttribute(attrX), y: +ln.getAttribute(attrY) }; },
+          function(dx, dy, el, st) {
+            ln.setAttribute(attrX, Math.round(st.x + dx));
+            ln.setAttribute(attrY, Math.round(st.y + dy));
+            sync();
+          });
+        return sync;
+      }
+      var syncA = makeEndpointHandle('x1', 'y1');
+      var syncB = makeEndpointHandle('x2', 'y2');
+      // 直前 2 要素 (端点ハンドル A, B) を捕捉
+      var hB = svg.lastElementChild;
+      var hA = hB && hB.previousElementSibling;
+
+      // 線全体の平行移動: 端点ハンドルも追従させる
+      makeDraggable(ln,
+        function(el){ return { x1:+el.getAttribute('x1'), y1:+el.getAttribute('y1'), x2:+el.getAttribute('x2'), y2:+el.getAttribute('y2') }; },
+        function(dx, dy, el, st) {
+          el.setAttribute('x1', Math.round(st.x1+dx));
+          el.setAttribute('y1', Math.round(st.y1+dy));
+          el.setAttribute('x2', Math.round(st.x2+dx));
+          el.setAttribute('y2', Math.round(st.y2+dy));
+          syncA(); syncB();
+        });
+
+      // 右クリックで線と両端ハンドルを一緒に削除
+      makeRemovable(ln, [hA, hB]);
+    });
+
+    svg.querySelectorAll('text').forEach(function(t) {
+      makeDraggable(t,
+        function(el){ return { x:+el.getAttribute('x'), y:+el.getAttribute('y') }; },
+        function(dx, dy, el, st) {
+          el.setAttribute('x', Math.round(st.x+dx));
+          el.setAttribute('y', Math.round(st.y+dy));
+        });
+      makeRemovable(t, null);
+    });
+  });
+  // Auto-select first svg
+  var first = document.querySelector('figure.annotated svg.overlay');
+  if (first) { selectedSvg = first; renderSrc(); }
+})();
+</script>
+
+</body>
+</html>

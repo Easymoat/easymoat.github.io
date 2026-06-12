@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MarketWatch — User Manual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FC; --white: #FFFFFF; --border: #E2E6EF;
+    --accent: #117A3A; --accent-light: #E5F5EC; --accent-dark: #0C5A2B;
+    --accent2: #CC0022;
+    --text: #111827; --text2: #374151; --muted: #6B7280; --muted2: #9CA3AF;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+    --warn-bg: #FEF3C7; --warn-border: #F59E0B; --warn-text: #92400E;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.7; }
+
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 24px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); position: sticky; top: 0; z-index: 200; }
+  .lang-bar a.home { color: var(--accent-dark); text-decoration: none; font-weight: 600; }
+  .lang-bar a.home:hover { text-decoration: underline; }
+  .lang-bar .toggle { display: flex; gap: 8px; }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: inherit; cursor: pointer; color: var(--muted); }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; display: grid; grid-template-columns: 240px 1fr; gap: 48px; }
+  @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; padding: 24px 16px 60px; gap: 24px; } }
+
+  /* ─── Sidebar ─── */
+  aside { position: sticky; top: 60px; align-self: start; max-height: calc(100vh - 80px); overflow-y: auto; }
+  aside h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 12px; }
+  aside ol { list-style: none; counter-reset: chnum; }
+  aside ol li { counter-increment: chnum; }
+  aside ol li a {
+    display: block; padding: 6px 0 6px 28px; color: var(--text2); text-decoration: none;
+    font-size: 14px; border-left: 2px solid transparent; position: relative;
+  }
+  aside ol li a::before { content: counter(chnum); position: absolute; left: 6px; color: var(--muted2); font-size: 12px; font-weight: 600; }
+  aside ol li a:hover { color: var(--accent-dark); border-left-color: var(--accent); }
+  @media (max-width: 900px) { aside { position: static; max-height: none; border: 1px solid var(--border); border-radius: 8px; padding: 16px; background: var(--white); } }
+
+  /* ─── Article ─── */
+  article > h1 { font-size: 36px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; }
+  article > .subtitle { color: var(--muted); margin-bottom: 40px; font-size: 16px; }
+
+  section.chapter { margin-bottom: 60px; scroll-margin-top: 60px; }
+  section.chapter > h2 { font-size: 24px; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-light); color: var(--accent-dark); }
+  section.chapter > h3 { font-size: 17px; font-weight: 600; margin: 28px 0 10px; color: var(--text); }
+  section.chapter > p { color: var(--text2); margin-bottom: 12px; }
+  section.chapter > ul, section.chapter > ol { margin: 8px 0 16px 24px; color: var(--text2); }
+  section.chapter > ul li, section.chapter > ol li { margin-bottom: 6px; }
+  section.chapter strong { color: var(--text); font-weight: 600; }
+  section.chapter code { background: var(--accent-light); color: var(--accent-dark); padding: 1px 6px; border-radius: 3px; font-size: 13px; font-family: 'SF Mono', monospace; }
+
+  table.ops { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 14px; background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  table.ops th { background: var(--accent-light); color: var(--accent-dark); text-align: left; padding: 8px 12px; font-weight: 600; }
+  table.ops td { padding: 8px 12px; border-top: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+  table.ops td:first-child { white-space: nowrap; font-weight: 600; color: var(--text); }
+
+  /* ─── Annotated figure (SVG overlay) ─── */
+  figure.annotated {
+    background: var(--white); border: 1px solid var(--border); border-radius: 12px;
+    padding: 24px 80px; margin: 16px 0 24px; box-shadow: var(--shadow);
+  }
+  @media (max-width: 700px) { figure.annotated { padding: 16px 32px; } }
+  figure.annotated .stage {
+    position: relative; max-width: 480px; margin: 0 auto;
+  }
+  figure.annotated .stage::before {
+    content: ''; display: block; padding-bottom: 100%;
+  }
+  figure.annotated .stage img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; border-radius: 50%; background: #111;
+  }
+  figure.annotated .stage .placeholder {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; height: 100%; border-radius: 50%;
+    background: #111; color: #555; font-size: 13px;
+  }
+  figure.annotated .stage svg.overlay {
+    position: absolute;
+    top: -24px; bottom: -24px; left: -80px; right: -80px;
+    width: auto; height: auto;
+    overflow: visible; pointer-events: none;
+  }
+  @media (max-width: 700px) {
+    figure.annotated .stage svg.overlay { top: -16px; bottom: -16px; left: -32px; right: -32px; }
+  }
+  figure.annotated .stage svg.overlay line { stroke: var(--accent); stroke-width: 1.5; }
+  figure.annotated .stage svg.overlay circle.dot { fill: var(--accent); }
+  figure.annotated .stage svg.overlay rect.box,
+  figure.annotated .stage svg.overlay circle.ring {
+    fill: none; stroke: var(--accent2); stroke-width: 2; stroke-dasharray: 4 3;
+  }
+  figure.annotated .stage svg.overlay text {
+    fill: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+    paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round;
+  }
+  figure.annotated figcaption { text-align: center; margin-top: 12px; color: var(--muted); font-size: 13px; }
+
+  /* ─── Callout boxes ─── */
+  .callout {
+    border-radius: 8px; padding: 12px 16px; margin: 12px 0; font-size: 14px;
+    background: var(--accent-light); border-left: 3px solid var(--accent); color: var(--accent-dark);
+  }
+  .callout.warn { background: var(--warn-bg); border-left-color: var(--warn-border); color: var(--warn-text); }
+  .callout strong { color: inherit; }
+
+  /* ─── Step list ─── */
+  ol.steps { counter-reset: step; list-style: none !important; margin-left: 0 !important; }
+  ol.steps li { counter-increment: step; position: relative; padding-left: 40px; margin-bottom: 14px !important; }
+  ol.steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 2px;
+    width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<div class="lang-bar">
+  <a href="../" class="home">← MarketWatch</a>
+  <div class="toggle">
+    <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+    <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <aside>
+    <h3 data-en="Contents" data-ja="目次">Contents</h3>
+    <ol>
+      <li><a href="#getting-started" data-en="Getting Started" data-ja="はじめに">Getting Started</a></li>
+      <li><a href="#list-screen" data-en="List Screen" data-ja="リスト画面">List Screen</a></li>
+      <li><a href="#symbols" data-en="Managing Symbols" data-ja="銘柄の管理">Managing Symbols</a></li>
+      <li><a href="#detail-screen" data-en="Detail Screen" data-ja="詳細画面">Detail Screen</a></li>
+      <li><a href="#charts" data-en="Charts &amp; Volume" data-ja="チャートと出来高">Charts &amp; Volume</a></li>
+      <li><a href="#memo" data-en="Position Memo &amp; Net" data-ja="ポジションメモと Net">Position Memo &amp; Net</a></li>
+      <li><a href="#alerts" data-en="Price Alerts" data-ja="価格クロス通知">Price Alerts</a></li>
+      <li><a href="#info-bars" data-en="Info Bars" data-ja="情報バー">Info Bars</a></li>
+      <li><a href="#rim-meters" data-en="Rim Meters" data-ja="リムメーター">Rim Meters</a></li>
+      <li><a href="#settings" data-en="Settings" data-ja="設定">Settings</a></li>
+      <li><a href="#complications" data-en="Complications &amp; Glance" data-ja="コンプリケーションと Glance">Complications &amp; Glance</a></li>
+      <li><a href="#troubleshooting" data-en="Troubleshooting" data-ja="トラブルシューティング">Troubleshooting</a></li>
+    </ol>
+  </aside>
+
+  <article>
+    <h1 data-en="MarketWatch — User Manual" data-ja="MarketWatch ユーザーマニュアル">MarketWatch — User Manual</h1>
+    <p class="subtitle" data-en="A complete walkthrough of every screen, gesture and setting. (v2.1.0)" data-ja="すべての画面・操作・設定を網羅した完全ガイド。(v2.1.0)">A complete walkthrough of every screen, gesture and setting. (v2.1.0)</p>
+
+    <!-- ─── 1. Getting Started ─── -->
+    <section class="chapter" id="getting-started">
+      <h2 data-en="1. Getting Started" data-ja="1. はじめに">1. Getting Started</h2>
+      <p data-en="MarketWatch works out of the box: install it, and an 18-symbol starter portfolio appears with auto-refreshing prices. Every feature is free for the first 14 days." data-ja="MarketWatch はインストールするだけで使えます。18 銘柄のスターターポートフォリオが表示され、価格が自動更新されます。最初の 14 日間は全機能無料です。">MarketWatch works out of the box: install it, and an 18-symbol starter portfolio appears with auto-refreshing prices. Every feature is free for the first 14 days.</p>
+      <ol class="steps">
+        <li data-en="Install MarketWatch on your watch from the Connect IQ Store." data-ja="Connect IQ ストアからウォッチに MarketWatch をインストール。">Install MarketWatch on your watch from the Connect IQ Store.</li>
+        <li data-en="Open the app — the 14-day full-feature trial starts automatically. No payment, no account." data-ja="アプリを起動すると 14 日間の全機能トライアルが自動で始まります。支払いもアカウントも不要。">Open the app — the 14-day full-feature trial starts automatically. No payment, no account.</li>
+        <li data-en="To keep using it after the trial: purchase a lifetime license ($7.99, one-time) on the MarketWatch homepage. You'll receive an activation key by email." data-ja="トライアル後も使い続けるには、MarketWatch ホームページで買い切りライセンス ($7.99) を購入。アクティベーションキーがメールで届きます。">To keep using it after the trial: purchase a lifetime license ($7.99, one-time) on the MarketWatch homepage. You'll receive an activation key by email.</li>
+        <li data-en="Enter the key in Connect IQ Mobile → MarketWatch → Settings → License Key, then restart the app." data-ja="スマホの Connect IQ Mobile → MarketWatch → 設定 → License Key にキーを入力し、アプリを再起動。">Enter the key in Connect IQ Mobile → MarketWatch → Settings → License Key, then restart the app.</li>
+      </ol>
+      <div class="callout" data-en="Prices come from Yahoo Finance and Binance public APIs via your phone's internet connection. Keep your watch paired with Garmin Connect Mobile." data-ja="価格は Yahoo Finance / Binance の公開 API から、スマホのネット接続経由で取得されます。ウォッチは Garmin Connect Mobile とペアリングしたままにしてください。">Prices come from Yahoo Finance and Binance public APIs via your phone's internet connection. Keep your watch paired with Garmin Connect Mobile.</div>
+    </section>
+
+    <!-- ─── 2. List Screen ─── -->
+    <section class="chapter" id="list-screen">
+      <h2 data-en="2. List Screen" data-ja="2. リスト画面">2. List Screen</h2>
+      <p data-en="The main screen. Time on top, date at the bottom, and your symbols in between — each row shows name, price, day change (amount and %). The list scrolls in a loop." data-ja="メイン画面です。上に時刻、下に日付、その間に銘柄リスト。各行は銘柄名・価格・前日比 (金額と %) を表示します。リストは循環スクロールします。">The main screen. Time on top, date at the bottom, and your symbols in between — each row shows name, price, day change (amount and %). The list scrolls in a loop.</p>
+
+      <figure class="annotated">
+        <div class="stage">
+          <div class="placeholder" data-en="Screenshot coming soon" data-ja="スクリーンショット準備中">Screenshot coming soon</div>
+          <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <figcaption data-en="List screen — symbols, info bars and rim meters in one view." data-ja="リスト画面 — 銘柄・情報バー・リムメーターを 1 画面に。">List screen — symbols, info bars and rim meters in one view.</figcaption>
+      </figure>
+
+      <table class="ops">
+        <tr><th data-en="Action" data-ja="操作">Action</th><th data-en="What it does" data-ja="動作">What it does</th></tr>
+        <tr><td data-en="UP / DOWN or swipe" data-ja="UP / DOWN・スワイプ">UP / DOWN or swipe</td><td data-en="Scroll the list (cyclic)" data-ja="リストをスクロール (循環)">Scroll the list (cyclic)</td></tr>
+        <tr><td data-en="Tap / START" data-ja="タップ / START">Tap / START</td><td data-en="Open the detail screen of the top symbol" data-ja="先頭銘柄の詳細画面を開く">Open the detail screen of the top symbol</td></tr>
+        <tr><td data-en="Long-press a symbol" data-ja="銘柄を長押し">Long-press a symbol</td><td data-en="Symbol menu — Open Detail / Move to / Edit Ticker / Edit Name / Delete" data-ja="銘柄メニュー — Open Detail / Move to / Edit Ticker / Edit Name / Delete">Symbol menu — Open Detail / Move to / Edit Ticker / Edit Name / Delete</td></tr>
+        <tr><td data-en="Long-press the date area" data-ja="日付エリアを長押し">Long-press the date area</td><td data-en="Settings menu — add symbols / info bars, and adjust app settings" data-ja="設定メニュー — 銘柄・情報バーの追加、アプリ設定の変更">Settings menu — add symbols / info bars, and adjust app settings</td></tr>
+        <tr><td data-en="Long-press an info bar" data-ja="情報バーを長押し">Long-press an info bar</td><td data-en="Bar menu — Move to / Color / Change Type / Delete" data-ja="バーメニュー — Move to / Color / Change Type / Delete">Bar menu — Move to / Color / Change Type / Delete</td></tr>
+        <tr><td>BACK</td><td data-en="Exit the app" data-ja="アプリを終了">Exit the app</td></tr>
+      </table>
+      <div class="callout" data-en="A Net row (portfolio total P&amp;L) appears at the top of the cycle once any symbol has Cost and Holdings set in its memo — see chapter 6." data-ja="いずれかの銘柄のメモに取得単価と保有数を設定すると、サイクル先頭に Net 行 (ポートフォリオ合計損益) が現れます — 第 6 章参照。">A Net row (portfolio total P&amp;L) appears at the top of the cycle once any symbol has Cost and Holdings set in its memo — see chapter 6.</div>
+    </section>
+
+    <!-- ─── 3. Managing Symbols ─── -->
+    <section class="chapter" id="symbols">
+      <h2 data-en="3. Managing Symbols" data-ja="3. 銘柄の管理">3. Managing Symbols</h2>
+      <p data-en="Up to 20 symbols, all managed directly on the watch. No phone needed." data-ja="最大 20 銘柄をすべてウォッチ上で管理できます。スマホは不要です。">Up to 20 symbols, all managed directly on the watch. No phone needed.</p>
+
+      <h3 data-en="Adding a symbol" data-ja="銘柄の追加">Adding a symbol</h3>
+      <ol class="steps">
+        <li data-en="Long-press the date area at the bottom of the list screen." data-ja="リスト画面下部の日付エリアを長押し。">Long-press the date area at the bottom of the list screen.</li>
+        <li data-en="Choose New Entry — the keyboard opens." data-ja="New Entry を選択 — キーボードが開きます。">Choose New Entry — the keyboard opens.</li>
+        <li data-en="Type the Yahoo Finance ticker (e.g. AAPL, 7203.T, BTC-USD) and confirm. The name fills in automatically." data-ja="Yahoo Finance のティッカー (例: AAPL、7203.T、BTC-USD) を入力して確定。銘柄名は自動入力されます。">Type the Yahoo Finance ticker (e.g. AAPL, 7203.T, BTC-USD) and confirm. The name fills in automatically.</li>
+      </ol>
+      <div class="callout" data-en="Not sure about the ticker? Use the lookup tool on the MarketWatch homepage — search by company name and copy the exact symbol with its exchange suffix." data-ja="ティッカーが分からない場合はホームページの検索ツールへ。会社名で検索すると取引所サフィックス込みの正確なシンボルが得られます。">Not sure about the ticker? Use the lookup tool on the MarketWatch homepage — search by company name and copy the exact symbol with its exchange suffix.</div>
+
+      <h3 data-en="The symbol menu (long-press a row)" data-ja="銘柄メニュー (行を長押し)">The symbol menu (long-press a row)</h3>
+      <table class="ops">
+        <tr><th data-en="Item" data-ja="項目">Item</th><th data-en="What it does" data-ja="動作">What it does</th></tr>
+        <tr><td>Open Detail</td><td data-en="Open the chart / detail screen for this symbol" data-ja="この銘柄の詳細チャート画面を開く">Open the chart / detail screen for this symbol</td></tr>
+        <tr><td>Move to...</td><td data-en="Reposition: pick Top or a destination slot — other symbols shift to make room" data-ja="位置変更: Top または移動先スロットを選択 — 他の銘柄はシフトします">Reposition: pick Top or a destination slot — other symbols shift to make room</td></tr>
+        <tr><td>Edit Ticker</td><td data-en="Replace the ticker (name re-fills automatically from Yahoo)" data-ja="ティッカーを変更 (銘柄名は Yahoo から自動再取得)">Replace the ticker (name re-fills automatically from Yahoo)</td></tr>
+        <tr><td>Edit Name</td><td data-en="Edit only the display name" data-ja="表示名のみ編集">Edit only the display name</td></tr>
+        <tr><td>Delete</td><td data-en="Remove the symbol from the list" data-ja="銘柄をリストから削除">Remove the symbol from the list</td></tr>
+      </table>
+
+      <h3 data-en="Supported instruments" data-ja="対応している銘柄">Supported instruments</h3>
+      <ul>
+        <li><span data-en="Stocks &amp; ETFs from 30+ exchanges:" data-ja="世界 30 以上の取引所の株式・ETF:">Stocks &amp; ETFs from 30+ exchanges:</span> <code>AAPL</code>, <code>7203.T</code>, <code>0700.HK</code>, <code>SAP.DE</code></li>
+        <li><span data-en="Indices:" data-ja="指数:">Indices:</span> <code>^GSPC</code>, <code>^N225</code>, <code>^VIX</code></li>
+        <li><span data-en="FX:" data-ja="為替:">FX:</span> <code>USDJPY=X</code>, <code>EURUSD=X</code></li>
+        <li><span data-en="Crypto:" data-ja="暗号資産:">Crypto:</span> <code>BTC-USD</code>, <code>ETH-USD</code> <span data-en="(USD) or" data-ja="(USD 建て) または">(USD) or</span> <code>BTC</code>, <code>ETH</code> <span data-en="(JPY)" data-ja="(JPY 建て)">(JPY)</span></li>
+        <li><span data-en="Commodity futures:" data-ja="商品先物:">Commodity futures:</span> <code>GC=F</code>, <code>CL=F</code></li>
+        <li><span data-en="US Treasury yields:" data-ja="米国債利回り:">US Treasury yields:</span> <code>^TNX</code>, <code>^TYX</code></li>
+      </ul>
+    </section>
+
+    <!-- ─── 4. Detail Screen ─── -->
+    <section class="chapter" id="detail-screen">
+      <h2 data-en="4. Detail Screen" data-ja="4. 詳細画面">4. Detail Screen</h2>
+      <p data-en="Tap a symbol (or choose Open Detail) to see its chart with key stats: high/low of the chart window, the chart's date range (S:/E:), today's volume (Vol:) and the current chart period (Per:)." data-ja="銘柄をタップ (または Open Detail) すると詳細画面へ。チャートと主要情報 — チャート窓の高値/安値、チャートの期間範囲 (S:/E:)、当日出来高 (Vol:)、現在のチャート期間 (Per:) — が表示されます。">Tap a symbol (or choose Open Detail) to see its chart with key stats: high/low of the chart window, the chart's date range (S:/E:), today's volume (Vol:) and the current chart period (Per:).</p>
+
+      <figure class="annotated">
+        <div class="stage">
+          <div class="placeholder" data-en="Screenshot coming soon" data-ja="スクリーンショット準備中">Screenshot coming soon</div>
+          <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <figcaption data-en="Detail screen — chart, H/L, S/E date range, Vol and Per." data-ja="詳細画面 — チャート、H/L、S/E (期間範囲)、Vol、Per。">Detail screen — chart, H/L, S/E date range, Vol and Per.</figcaption>
+      </figure>
+
+      <table class="ops">
+        <tr><th data-en="Action" data-ja="操作">Action</th><th data-en="What it does" data-ja="動作">What it does</th></tr>
+        <tr><td data-en="UP / DOWN or swipe" data-ja="UP / DOWN・スワイプ">UP / DOWN or swipe</td><td data-en="Previous / next symbol (info bars are skipped; Net opens its own detail)" data-ja="前/次の銘柄へ (情報バーはスキップ、Net は Net 詳細へ)">Previous / next symbol (info bars are skipped; Net opens its own detail)</td></tr>
+        <tr><td>START</td><td data-en="Refresh this symbol's price now" data-ja="この銘柄を即時更新">Refresh this symbol's price now</td></tr>
+        <tr><td data-en="Tap the chart" data-ja="チャートをタップ">Tap the chart</td><td data-en="Return to the list" data-ja="リストへ戻る">Return to the list</td></tr>
+        <tr><td data-en="Tap below the chart" data-ja="チャート下をタップ">Tap below the chart</td><td data-en="Open the position memo" data-ja="ポジションメモを開く">Open the position memo</td></tr>
+        <tr><td data-en="Long-press UP" data-ja="UP を長押し">Long-press UP</td><td data-en="Chart period select mode (chapter 5)" data-ja="チャート期間選択モード (第 5 章)">Chart period select mode (chapter 5)</td></tr>
+        <tr><td data-en="Long-press the chart" data-ja="チャートを長押し">Long-press the chart</td><td data-en="Toggle the volume bar graph (chapter 5)" data-ja="出来高バーグラフの切替 (第 5 章)">Toggle the volume bar graph (chapter 5)</td></tr>
+        <tr><td data-en="Long-press the date (bottom)" data-ja="下部の日付を長押し">Long-press the date (bottom)</td><td data-en="Chart period menu" data-ja="チャート期間メニュー">Chart period menu</td></tr>
+        <tr><td>BACK</td><td data-en="Return to the list" data-ja="リストへ戻る">Return to the list</td></tr>
+      </table>
+    </section>
+
+    <!-- ─── 5. Charts & Volume ─── -->
+    <section class="chapter" id="charts">
+      <h2 data-en="5. Charts &amp; Volume" data-ja="5. チャートと出来高">5. Charts &amp; Volume</h2>
+
+      <h3 data-en="Four chart periods" data-ja="4 つのチャート期間">Four chart periods</h3>
+      <table class="ops">
+        <tr><th data-en="Period" data-ja="期間">Period</th><th data-en="Bars × window" data-ja="足 × 表示範囲">Bars × window</th><th data-en="S:/E: format" data-ja="S:/E: の形式">S:/E: format</th></tr>
+        <tr><td>5 min</td><td data-en="5-minute bars × today" data-ja="5 分足 × 当日">5-minute bars × today</td><td data-en="time (09:00)" data-ja="時刻 (09:00)">time (09:00)</td></tr>
+        <tr><td>1 day</td><td data-en="daily bars × 3 months" data-ja="日足 × 3 ヶ月">daily bars × 3 months</td><td data-en="month/day (3/12)" data-ja="月/日 (3/12)">month/day (3/12)</td></tr>
+        <tr><td>1 week</td><td data-en="weekly bars × 1 year" data-ja="週足 × 1 年">weekly bars × 1 year</td><td data-en="year/month (25/6)" data-ja="年/月 (25/6)">year/month (25/6)</td></tr>
+        <tr><td>1 month</td><td data-en="monthly bars × 5 years" data-ja="月足 × 5 年">monthly bars × 5 years</td><td data-en="year/month (21/6)" data-ja="年/月 (21/6)">year/month (21/6)</td></tr>
+      </table>
+
+      <h3 data-en="Switching with buttons (period select mode)" data-ja="ボタンで切替 (期間選択モード)">Switching with buttons (period select mode)</h3>
+      <ol class="steps">
+        <li data-en="In the detail screen, long-press UP — a white frame appears around Per:." data-ja="詳細画面で UP を長押し — Per: 表示に白い枠が付きます。">In the detail screen, long-press UP — a white frame appears around Per:.</li>
+        <li data-en="Press UP / DOWN to cycle through the periods. The chart reloads immediately each time." data-ja="UP / DOWN で期間を順に切替。チャートはその都度すぐに再読込されます。">Press UP / DOWN to cycle through the periods. The chart reloads immediately each time.</li>
+        <li data-en="Press START (or BACK) to confirm and close the frame." data-ja="START (または BACK) で確定し、枠を閉じます。">Press START (or BACK) to confirm and close the frame.</li>
+      </ol>
+      <div class="callout" data-en="Touch alternative: long-press the date area at the bottom of the detail screen to open the period menu directly." data-ja="タッチ操作の場合: 詳細画面下部の日付エリアを長押しすると期間メニューが直接開きます。">Touch alternative: long-press the date area at the bottom of the detail screen to open the period menu directly.</div>
+      <p data-en="The period applies to all symbols and is remembered across restarts." data-ja="期間設定は全銘柄共通で、再起動後も保持されます。">The period applies to all symbols and is remembered across restarts.</p>
+
+      <h3 data-en="Volume bar graph" data-ja="出来高バーグラフ">Volume bar graph</h3>
+      <p data-en="Long-press the chart to swap the H/L/S/E rows for a volume bar graph drawn on the same time axis (one bar per chart point). Long-press again to switch back. The choice is remembered." data-ja="チャートを長押しすると、H/L/S/E の 2 行が出来高バーグラフに切り替わります。価格チャートと同じ時間軸 (チャートの 1 点 = バー 1 本) で描画され、再度長押しで戻ります。表示状態は保存されます。">Long-press the chart to swap the H/L/S/E rows for a volume bar graph drawn on the same time axis (one bar per chart point). Long-press again to switch back. The choice is remembered.</p>
+      <div class="callout warn" data-en="FX pairs and indices have no volume — the area shows &quot;No volume data&quot;. The Vol: figure is always today's volume, regardless of the chart period." data-ja="為替・指数には出来高が存在しないため「No volume data」と表示されます。また Vol: の数値は期間設定に関わらず常に当日の出来高です。">FX pairs and indices have no volume — the area shows "No volume data". The Vol: figure is always today's volume, regardless of the chart period.</div>
+    </section>
+
+    <!-- ─── 6. Position Memo & Net ─── -->
+    <section class="chapter" id="memo">
+      <h2 data-en="6. Position Memo &amp; Net" data-ja="6. ポジションメモと Net">6. Position Memo &amp; Net</h2>
+      <p data-en="Each symbol has a memo that turns MarketWatch into a portfolio tracker. Tap below the chart in the detail screen to open it." data-ja="各銘柄にはメモがあり、MarketWatch をポートフォリオ管理ツールとして使えます。詳細画面でチャートの下をタップすると開きます。">Each symbol has a memo that turns MarketWatch into a portfolio tracker. Tap below the chart in the detail screen to open it.</p>
+      <ul>
+        <li><strong data-en="Cost / Qty" data-ja="取得単価 / 保有数">Cost / Qty</strong> — <span data-en="long-press to enter your cost basis and holdings" data-ja="長押しして取得単価と保有数を入力">long-press to enter your cost basis and holdings</span></li>
+        <li><strong data-en="Value / P&amp;L / %" data-ja="評価額 / 損益 / %">Value / P&amp;L / %</strong> — <span data-en="calculated automatically from the current price" data-ja="現在価格から自動計算">calculated automatically from the current price</span></li>
+        <li><strong data-en="Alert 1 / Alert 2" data-ja="通知 1 / 通知 2">Alert 1 / Alert 2</strong> — <span data-en="long-press to set price-cross alert levels (chapter 7)" data-ja="長押しで価格クロス通知の水準を設定 (第 7 章)">long-press to set price-cross alert levels (chapter 7)</span></li>
+      </ul>
+      <p data-en="Tap the memo to close it. All memo data stays on the watch and survives app updates." data-ja="メモをタップすると閉じます。メモのデータはウォッチ内に保存され、アプリ更新後も保持されます。">Tap the memo to close it. All memo data stays on the watch and survives app updates.</p>
+
+      <h3 data-en="The Net row" data-ja="Net 行">The Net row</h3>
+      <p data-en="Once at least one symbol has Cost and Holdings, a Net row joins the list cycle: your whole portfolio's P&amp;L at a glance. Tap or long-press it for the Net detail screen with an aggregate P&amp;L chart." data-ja="1 つでも取得単価と保有数を設定すると、リストのサイクルに Net 行が加わり、ポートフォリオ全体の損益が一目で分かります。タップまたは長押しで Net 詳細画面 (合計損益チャート) が開きます。">Once at least one symbol has Cost and Holdings, a Net row joins the list cycle: your whole portfolio's P&amp;L at a glance. Tap or long-press it for the Net detail screen with an aggregate P&amp;L chart.</p>
+      <div class="callout warn" data-en="Net sums raw values and ignores currencies — mixing JPY and USD positions produces a nominal total only. For simulation, not investment advice." data-ja="Net は通貨を無視して数値をそのまま合算します。JPY と USD の建玉が混在する場合は名目上の合計になります。シミュレーション用であり投資助言ではありません。">Net sums raw values and ignores currencies — mixing JPY and USD positions produces a nominal total only. For simulation, not investment advice.</div>
+    </section>
+
+    <!-- ─── 7. Price Alerts ─── -->
+    <section class="chapter" id="alerts">
+      <h2 data-en="7. Price Alerts" data-ja="7. 価格クロス通知">7. Price Alerts</h2>
+      <p data-en="Set up to two alert prices per symbol in its memo. When the current price crosses a level — in either direction — the watch vibrates and plays a tone, and the symbol's name blinks yellow on the list." data-ja="各銘柄のメモに最大 2 件の通知価格を設定できます。現在価格が水準を上抜けまたは下抜けすると、振動と音で通知され、リスト上の銘柄名が黄色く点滅します。">Set up to two alert prices per symbol in its memo. When the current price crosses a level — in either direction — the watch vibrates and plays a tone, and the symbol's name blinks yellow on the list.</p>
+      <ul>
+        <li data-en="Press BACK to stop the blinking (the name stays yellow until the next refresh)." data-ja="BACK を押すと点滅が止まります (名前は次回更新まで黄色のまま)。">Press BACK to stop the blinking (the name stays yellow until the next refresh).</li>
+        <li data-en="Vibration and sound can be toggled independently: long-press the date area → Alert Vibration / Alert Sound." data-ja="振動と音は個別に ON/OFF できます: 日付エリア長押し → Alert Vibration / Alert Sound。">Vibration and sound can be toggled independently: long-press the date area → Alert Vibration / Alert Sound.</li>
+        <li data-en="Alert baselines reset when you change settings, so a level you already crossed won't re-fire immediately." data-ja="設定変更時に基準価格がリセットされるため、既に越えた水準が直後に再発火することはありません。">Alert baselines reset when you change settings, so a level you already crossed won't re-fire immediately.</li>
+      </ul>
+    </section>
+
+    <!-- ─── 8. Info Bars ─── -->
+    <section class="chapter" id="info-bars">
+      <h2 data-en="8. Info Bars" data-ja="8. 情報バー">8. Info Bars</h2>
+      <p data-en="Two optional bars can live inside your list, turning it into a glanceable dashboard — like a watch face with market data." data-ja="リストの中に 2 種類の情報バーを挿入できます。マーケット情報入りウォッチフェイスのような、一目で分かるダッシュボードになります。">Two optional bars can live inside your list, turning it into a glanceable dashboard — like a watch face with market data.</p>
+
+      <figure class="annotated">
+        <div class="stage">
+          <div class="placeholder" data-en="Screenshot coming soon" data-ja="スクリーンショット準備中">Screenshot coming soon</div>
+          <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <figcaption data-en="Weather Bar (top) and Physical Bar (bottom) between symbols." data-ja="銘柄の間に Weather Bar (上) と Physical Bar (下)。">Weather Bar (top) and Physical Bar (bottom) between symbols.</figcaption>
+      </figure>
+
+      <h3>Weather Bar</h3>
+      <ul>
+        <li data-en="Top row: condition icon + temperature / humidity / wind speed &amp; direction" data-ja="上段: 天気アイコン + 気温 / 湿度 / 風速・風向">Top row: condition icon + temperature / humidity / wind speed &amp; direction</li>
+        <li data-en="Bottom row: air pressure (hPa) / altitude (m)" data-ja="下段: 気圧 (hPa) / 高度 (m)">Bottom row: air pressure (hPa) / altitude (m)</li>
+        <li data-en="Wind speed unit (m/s, km/h, mph, knots) is set in the Connect IQ settings panel" data-ja="風速の単位 (m/s, km/h, mph, knots) は Connect IQ 設定パネルで変更できます">Wind speed unit (m/s, km/h, mph, knots) is set in the Connect IQ settings panel</li>
+      </ul>
+      <h3>Physical Bar</h3>
+      <ul>
+        <li data-en="Top row: heart rate / floors climbed / weight" data-ja="上段: 心拍数 / 上った階数 / 体重">Top row: heart rate / floors climbed / weight</li>
+        <li data-en="Bottom row: steps / calories" data-ja="下段: 歩数 / 消費カロリー">Bottom row: steps / calories</li>
+      </ul>
+
+      <h3 data-en="Adding and customizing" data-ja="追加とカスタマイズ">Adding and customizing</h3>
+      <ol class="steps">
+        <li data-en="Long-press the date area → choose Weather Bar or Physical Bar. The bar appears right after the top of the cycle." data-ja="日付エリアを長押し → Weather Bar または Physical Bar を選択。バーがサイクル先頭直後に追加されます。">Long-press the date area → choose Weather Bar or Physical Bar. The bar appears right after the top of the cycle.</li>
+        <li data-en="Long-press the bar itself to open its menu: Move to (position), Color (6 colors), Change Type (Weather ⇄ Physical), Delete." data-ja="バー自体を長押しするとメニューが開きます: Move to (位置)、Color (6 色)、Change Type (Weather ⇄ Physical)、Delete。">Long-press the bar itself to open its menu: Move to (position), Color (6 colors), Change Type (Weather ⇄ Physical), Delete.</li>
+      </ol>
+      <div class="callout" data-en="Bars don't consume symbol slots — you keep all 20 even with both bars shown. Values update from on-device APIs with no battery-relevant network traffic. Weather data follows Garmin's weather cache (roughly every 15–30 minutes)." data-ja="バーは銘柄スロットを消費しません — 両方表示しても 20 銘柄そのまま使えます。値は端末内 API から更新され、ネットワーク通信は発生しません。天気データは Garmin の天気キャッシュ (およそ 15〜30 分間隔) に従います。">Bars don't consume symbol slots — you keep all 20 even with both bars shown. Values update from on-device APIs with no battery-relevant network traffic. Weather data follows Garmin's weather cache (roughly every 15–30 minutes).</div>
+    </section>
+
+    <!-- ─── 9. Rim Meters ─── -->
+    <section class="chapter" id="rim-meters">
+      <h2 data-en="9. Rim Meters" data-ja="9. リムメーター">9. Rim Meters</h2>
+      <p data-en="Curved gauges along the left and right edges of the list screen. Assign a data source to each side independently: Body Battery, Stress, or the watch's Battery." data-ja="リスト画面の左右の縁に弧状のゲージを表示できます。左右それぞれに Body Battery / ストレス / 本体バッテリーを独立して割り当て可能です。">Curved gauges along the left and right edges of the list screen. Assign a data source to each side independently: Body Battery, Stress, or the watch's Battery.</p>
+      <ul>
+        <li><strong>Body Battery</strong> — <span data-en="orange; higher is better" data-ja="オレンジ。高いほど良好">orange; higher is better</span></li>
+        <li><strong data-en="Stress" data-ja="ストレス">Stress</strong> — <span data-en="red-orange; higher means more stress" data-ja="赤橙。高いほどストレス大">red-orange; higher means more stress</span></li>
+        <li><strong data-en="Battery" data-ja="バッテリー">Battery</strong> — <span data-en="follows your Clock Color setting" data-ja="Clock Color 設定に追従">follows your Clock Color setting</span></li>
+      </ul>
+      <p data-en="Set them via the date menu: Left Rim Meter / Right Rim Meter. Choose None to hide a side. Values refresh about once a minute." data-ja="設定は日付メニューの Left Rim Meter / Right Rim Meter から。None で非表示になります。値は約 1 分間隔で更新されます。">Set them via the date menu: Left Rim Meter / Right Rim Meter. Choose None to hide a side. Values refresh about once a minute.</p>
+    </section>
+
+    <!-- ─── 10. Settings ─── -->
+    <section class="chapter" id="settings">
+      <h2 data-en="10. Settings" data-ja="10. 設定">10. Settings</h2>
+      <p data-en="Most settings live on the watch: long-press the date area on the list screen. Each entry shows its current value." data-ja="ほとんどの設定はウォッチ上にあります: リスト画面の日付エリアを長押ししてください。各項目には現在値が表示されます。">Most settings live on the watch: long-press the date area on the list screen. Each entry shows its current value.</p>
+      <table class="ops">
+        <tr><th data-en="Watch (date menu)" data-ja="ウォッチ (日付メニュー)">Watch (date menu)</th><th data-en="Options" data-ja="選択肢">Options</th></tr>
+        <tr><td>New Entry</td><td data-en="Add a symbol (when a slot is free)" data-ja="銘柄を追加 (空きスロットがある時)">Add a symbol (when a slot is free)</td></tr>
+        <tr><td>Weather Bar / Physical Bar</td><td data-en="Add the info bar" data-ja="情報バーを追加">Add the info bar</td></tr>
+        <tr><td>Refresh Interval</td><td>30 sec / 1 min / 5 min / 15 min / 30 min</td></tr>
+        <tr><td>Clock Color</td><td data-en="12 colors" data-ja="12 色">12 colors</td></tr>
+        <tr><td>Background Color</td><td>Black / Charcoal / Gray / Navy / Dark Red / Dark Green</td></tr>
+        <tr><td>Left / Right Rim Meter</td><td>None / Body Battery / Stress / Battery</td></tr>
+        <tr><td>Alert Vibration / Alert Sound</td><td>On / Off</td></tr>
+      </table>
+      <p data-en="A few items remain in the phone's Connect IQ settings panel:" data-ja="以下の項目はスマホの Connect IQ 設定パネルにあります:">A few items remain in the phone's Connect IQ settings panel:</p>
+      <table class="ops">
+        <tr><th data-en="Phone (Connect IQ panel)" data-ja="スマホ (Connect IQ パネル)">Phone (Connect IQ panel)</th><th data-en="Purpose" data-ja="用途">Purpose</th></tr>
+        <tr><td>License Key</td><td data-en="Activate your purchase" data-ja="購入後のアクティベーション">Activate your purchase</td></tr>
+        <tr><td>Color Mode</td><td data-en="Red Up / Green Down — or Green Up / Red Down" data-ja="「赤=上 / 緑=下」または「緑=上 / 赤=下」">Red Up / Green Down — or Green Up / Red Down</td></tr>
+        <tr><td data-en="Wind speed unit" data-ja="風速の単位">Wind speed unit</td><td>m/s / km/h / mph / knots</td></tr>
+        <tr><td>Complication Slot 1 / 2</td><td data-en="Which symbols feed your watchface (chapter 11)" data-ja="ウォッチフェイスに出す銘柄 (第 11 章)">Which symbols feed your watchface (chapter 11)</td></tr>
+        <tr><td>Glance Display</td><td data-en="Net or a chosen symbol in the Glance widget" data-ja="Glance に表示する対象 (Net または任意の 1 銘柄)">Net or a chosen symbol in the Glance widget</td></tr>
+        <tr><td>Pushover (optional)</td><td data-en="Earnings / dividend push notifications to your phone (US stocks and some Japanese stocks)" data-ja="決算・配当のスマホ通知 (米国株と一部日本株のみ対応)">Earnings / dividend push notifications to your phone (US stocks and some Japanese stocks)</td></tr>
+      </table>
+    </section>
+
+    <!-- ─── 11. Complications & Glance ─── -->
+    <section class="chapter" id="complications">
+      <h2 data-en="11. Complications &amp; Glance" data-ja="11. コンプリケーションと Glance">11. Complications &amp; Glance</h2>
+      <h3 data-en="Watchface complications" data-ja="ウォッチフェイスのコンプリケーション">Watchface complications</h3>
+      <p data-en="MarketWatch publishes up to two symbols as complications. Assign them in the Connect IQ settings panel (Complication Slot 1 / 2), then pick MarketWatch as a data field in any compatible watchface. Tapping the complication jumps straight into that symbol's detail screen." data-ja="MarketWatch は最大 2 銘柄をコンプリケーションとして提供します。Connect IQ 設定パネルの Complication Slot 1 / 2 で銘柄を指定し、対応ウォッチフェイス側でデータ項目に MarketWatch を選択してください。コンプリケーションをタップするとその銘柄の詳細画面が直接開きます。">MarketWatch publishes up to two symbols as complications. Assign them in the Connect IQ settings panel (Complication Slot 1 / 2), then pick MarketWatch as a data field in any compatible watchface. Tapping the complication jumps straight into that symbol's detail screen.</p>
+      <h3>Glance</h3>
+      <p data-en="In the watch's glance list, MarketWatch shows either the Net (portfolio P&amp;L) or one symbol of your choice — set via Glance Display in the Connect IQ panel." data-ja="ウォッチの Glance リストでは、Net (ポートフォリオ損益) または任意の 1 銘柄を表示できます。Connect IQ パネルの Glance Display で設定してください。">In the watch's glance list, MarketWatch shows either the Net (portfolio P&amp;L) or one symbol of your choice — set via Glance Display in the Connect IQ panel.</p>
+    </section>
+
+    <!-- ─── 12. Troubleshooting ─── -->
+    <section class="chapter" id="troubleshooting">
+      <h2 data-en="12. Troubleshooting" data-ja="12. トラブルシューティング">12. Troubleshooting</h2>
+
+      <h3 data-en="Prices show “--” or stop updating" data-ja="価格が「--」のまま / 更新されない">Prices show “--” or stop updating</h3>
+      <p data-en="Check that your watch is connected to Garmin Connect Mobile and the phone has internet. With many symbols and a 30-second interval, some fetches can lag — reduce the symbol count or lengthen the Refresh Interval." data-ja="ウォッチが Garmin Connect Mobile と接続され、スマホがインターネットに繋がっているか確認してください。銘柄数が多く更新間隔が 30 秒の場合は取得が遅れることがあります。銘柄数を減らすか Refresh Interval を長くしてください。">Check that your watch is connected to Garmin Connect Mobile and the phone has internet. With many symbols and a 30-second interval, some fetches can lag — reduce the symbol count or lengthen the Refresh Interval.</p>
+
+      <h3 data-en="A ticker shows “--” forever" data-ja="特定の銘柄だけ「--」のまま">A ticker shows “--” forever</h3>
+      <p data-en="The ticker is probably wrong or delisted. Verify it with the lookup tool on the homepage (exchange suffix matters: 7203.T, not 7203)." data-ja="ティッカーが間違っているか上場廃止の可能性があります。ホームページの検索ツールで確認してください (取引所サフィックスが重要: 7203 ではなく 7203.T)。">The ticker is probably wrong or delisted. Verify it with the lookup tool on the homepage (exchange suffix matters: 7203.T, not 7203).</p>
+
+      <h3 data-en="The chart area says Loading... for a long time" data-ja="チャートが Loading... のまま">The chart area says Loading... for a long time</h3>
+      <p data-en="Chart data downloads on demand; on a weak phone connection the longer periods (1 week / 1 month) can take several seconds. Press START to retry." data-ja="チャートデータは都度ダウンロードされます。接続が弱いと長期足 (1 week / 1 month) は数秒かかることがあります。START で再取得できます。">Chart data downloads on demand; on a weak phone connection the longer periods (1 week / 1 month) can take several seconds. Press START to retry.</p>
+
+      <h3 data-en="Weather Bar shows “--”" data-ja="Weather Bar が「--」表示">Weather Bar shows “--”</h3>
+      <p data-en="The watch hasn't received weather from your phone recently. Open Garmin Connect on the phone with internet access, wait a minute, then re-open MarketWatch." data-ja="スマホからウォッチへ天気が届いていない状態です。インターネット接続のあるスマホで Garmin Connect を開き、1 分ほど待ってから MarketWatch を再起動してください。">The watch hasn't received weather from your phone recently. Open Garmin Connect on the phone with internet access, wait a minute, then re-open MarketWatch.</p>
+
+      <h3 data-en="“No volume data” in the volume graph" data-ja="出来高グラフが「No volume data」">“No volume data” in the volume graph</h3>
+      <p data-en="Normal for FX pairs and indices — they have no traded volume. MATIC additionally has no chart at all, because its data provider discontinued the feed." data-ja="為替・指数では正常な表示です (出来高という概念がありません)。また MATIC はデータ提供元の終了によりチャート自体が表示されません。">Normal for FX pairs and indices — they have no traded volume. MATIC additionally has no chart at all, because its data provider discontinued the feed.</p>
+
+      <h3 data-en="Trial expired — symbols disappeared" data-ja="トライアルが終了して銘柄が消えた">Trial expired — symbols disappeared</h3>
+      <p data-en="Purchase a license on the homepage ($7.99 one-time), enter the emailed key in Connect IQ settings → License Key, and restart the app. Your symbols and memos are still on the watch and reappear after activation." data-ja="ホームページでライセンスを購入 ($7.99 買い切り) し、メールで届いたキーを Connect IQ 設定の License Key に入力してアプリを再起動してください。銘柄とメモはウォッチ内に残っており、アクティベーション後に復元されます。">Purchase a license on the homepage ($7.99 one-time), enter the emailed key in Connect IQ settings → License Key, and restart the app. Your symbols and memos are still on the watch and reappear after activation.</p>
+
+      <h3 data-en="UP/DOWN doesn't change the symbol in the detail screen" data-ja="詳細画面で UP/DOWN を押しても銘柄が変わらない">UP/DOWN doesn't change the symbol in the detail screen</h3>
+      <p data-en="You're probably in period select mode (white frame around Per:). Press START or BACK to close it, then UP/DOWN switches symbols again." data-ja="期間選択モード (Per: に白枠) になっている可能性があります。START または BACK で枠を閉じると、UP/DOWN での銘柄切替に戻ります。">You're probably in period select mode (white frame around Per:). Press START or BACK to close it, then UP/DOWN switches symbols again.</p>
+    </section>
+
+  </article>
+</div>
+
+<script>
+function setLang(lang) {
+  document.documentElement.lang = lang === 'ja' ? 'ja' : 'en';
+  document.querySelectorAll('[data-en]').forEach(el => {
+    if (el.children.length > 0) return;
+    const text = el.getAttribute('data-' + lang);
+    if (text) el.textContent = text;
+  });
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+  try { localStorage.setItem('mw_lang', lang); } catch(e) {}
+}
+try {
+  var saved = localStorage.getItem('mw_lang');
+  if (saved === 'ja') { setLang('ja'); }
+} catch(e) {}
+
+/* ─── SVG Overlay Edit Mode (?edit=1) ────────────────────────────
+   Drag rect/line/text on figures to reposition. A panel shows the
+   live SVG source; copy it into the HTML to persist. */
+(function() {
+  if (!new URLSearchParams(location.search).has('edit')) return;
+  document.body.classList.add('mw-edit-mode');
+  document.body.style.cssText += ';padding-bottom:200px;';
+
+  // 編集モード固有のスタイル: 矩形リサイズハンドル + 線の端点ハンドル
+  var editCss = document.createElement('style');
+  editCss.textContent = [
+    '.mw-edit-mode .resize-handle { fill: #CC0022; stroke: #fff; stroke-width: 2; cursor: nwse-resize; }',
+    '.mw-edit-mode .endpoint-handle { fill: #117A3A; stroke: #fff; stroke-width: 2; cursor: grab; }'
+  ].join('\n');
+  document.head.appendChild(editCss);
+
+  // Floating panel
+  var panel = document.createElement('div');
+  panel.id = 'edit-panel';
+  panel.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#111;color:#fff;padding:8px 12px;font-family:monospace;font-size:11px;max-height:180px;overflow:auto;z-index:9999;border-top:2px solid #117A3A;';
+  panel.innerHTML = '<div style="color:#E5F5EC;margin-bottom:4px;">EDIT MODE — drag to move, red ⬤ to resize, green ⬤ to bend lines, <b>right-click to delete</b>. <button id="copy-svg" style="margin-left:8px;padding:2px 8px;background:#117A3A;color:#fff;border:0;border-radius:3px;cursor:pointer;">Copy</button> <button id="hide-panel" style="margin-left:4px;padding:2px 8px;background:#444;color:#fff;border:0;border-radius:3px;cursor:pointer;">−</button></div><pre id="svg-src" style="white-space:pre-wrap;color:#fff;"></pre>';
+  document.body.appendChild(panel);
+  var preEl = document.getElementById('svg-src');
+  document.getElementById('copy-svg').onclick = function(){
+    navigator.clipboard.writeText(preEl.textContent).then(()=>{this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500);});
+  };
+  document.getElementById('hide-panel').onclick = function(){
+    var p = panel.querySelector('pre'); var hid = p.style.display==='none';
+    p.style.display = hid?'block':'none'; this.textContent = hid?'−':'+';
+  };
+
+  var selectedSvg = null;
+  function renderSrc() {
+    if (!selectedSvg) { preEl.textContent = '(click a figure to select it)'; return; }
+    // 編集モード専用ハンドル (rect リサイズ + line 端点) はコピー対象から除外
+    var clone = selectedSvg.cloneNode(true);
+    clone.querySelectorAll('.resize-handle, .endpoint-handle').forEach(function(h){ h.remove(); });
+    preEl.textContent = clone.outerHTML.replace(/></g, '>\n<');
+  }
+  renderSrc();
+
+  document.querySelectorAll('figure.annotated svg.overlay').forEach(function(svg) {
+    svg.style.pointerEvents = 'auto';
+    svg.style.cursor = 'crosshair';
+    svg.addEventListener('mousedown', function(e) { selectedSvg = svg; });
+
+    // ダブルクリックで要素追加メニュー (box / line / text)
+    svg.addEventListener('dblclick', function(e) {
+      var pt = svg.createSVGPoint();
+      pt.x = e.clientX; pt.y = e.clientY;
+      var p = pt.matrixTransform(svg.getScreenCTM().inverse());
+      var kind = window.prompt('Add: box / line / text ?', 'box');
+      if (!kind) return;
+      var NS = 'http://www.w3.org/2000/svg';
+      if (kind === 'box') {
+        var r = document.createElementNS(NS, 'rect');
+        r.setAttribute('class', 'box');
+        r.setAttribute('x', Math.round(p.x)); r.setAttribute('y', Math.round(p.y));
+        r.setAttribute('width', 120); r.setAttribute('height', 40);
+        svg.appendChild(r);
+      } else if (kind === 'line') {
+        var l = document.createElementNS(NS, 'line');
+        l.setAttribute('x1', Math.round(p.x)); l.setAttribute('y1', Math.round(p.y));
+        l.setAttribute('x2', Math.round(p.x) + 80); l.setAttribute('y2', Math.round(p.y) - 50);
+        svg.appendChild(l);
+      } else if (kind === 'text') {
+        var t = document.createElementNS(NS, 'text');
+        t.setAttribute('x', Math.round(p.x)); t.setAttribute('y', Math.round(p.y));
+        var s = window.prompt('Label text:', 'Label');
+        t.textContent = s || 'Label';
+        t.setAttribute('data-en', t.textContent);
+        t.setAttribute('data-ja', t.textContent);
+        svg.appendChild(t);
+      }
+      location.reload ? renderSrc() : renderSrc();
+      // 追加後はリロードせず再選択でハンドルを付け直すのが確実 (再読み込みでも可)
+    });
+
+    // Map screen → SVG coords using viewBox
+    function toSvgPt(evt) {
+      var pt = svg.createSVGPoint();
+      pt.x = evt.clientX; pt.y = evt.clientY;
+      return pt.matrixTransform(svg.getScreenCTM().inverse());
+    }
+
+    // Helper: install drag on an element. updateFn(dx,dy,el,start) writes back.
+    function makeDraggable(el, getStart, updateFn) {
+      el.style.cursor = 'move';
+      el.addEventListener('mousedown', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        selectedSvg = svg;
+        var start = getStart(el);
+        var p0 = toSvgPt(e);
+        function mm(ev) {
+          var p = toSvgPt(ev);
+          updateFn(p.x - p0.x, p.y - p0.y, el, start);
+          renderSrc();
+        }
+        function mu() {
+          window.removeEventListener('mousemove', mm);
+          window.removeEventListener('mouseup', mu);
+        }
+        window.addEventListener('mousemove', mm);
+        window.addEventListener('mouseup', mu);
+      });
+    }
+
+    // 要素を右クリックで削除する共通ヘルパー
+    function makeRemovable(el, accomplices) {
+      el.addEventListener('contextmenu', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        el.remove();
+        if (accomplices) accomplices.forEach(function(a){ a && a.remove && a.remove(); });
+        renderSrc();
+      });
+    }
+
+    svg.querySelectorAll('rect').forEach(function(r) {
+      // 各 rect に右下リサイズハンドル (小さな円) を追加
+      var handle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      handle.setAttribute('class', 'resize-handle');
+      handle.setAttribute('r', '7');
+      var syncHandle = function() {
+        handle.setAttribute('cx', +r.getAttribute('x') + +r.getAttribute('width'));
+        handle.setAttribute('cy', +r.getAttribute('y') + +r.getAttribute('height'));
+      };
+      syncHandle();
+      svg.appendChild(handle);
+
+      // rect 本体: 移動 / 右クリックで削除 (ハンドルも一緒に消す)
+      makeDraggable(r,
+        function(el) { return {x: +el.getAttribute('x'), y: +el.getAttribute('y')}; },
+        function(dx, dy, el, st) {
+          el.setAttribute('x', Math.round(st.x + dx));
+          el.setAttribute('y', Math.round(st.y + dy));
+          syncHandle();
+        });
+      makeRemovable(r, [handle]);
+
+      // ハンドル: リサイズ (右下を引っ張る = width/height 変更)
+      makeDraggable(handle,
+        function() { return { w: +r.getAttribute('width'), h: +r.getAttribute('height') }; },
+        function(dx, dy, el, st) {
+          var nw = Math.max(10, Math.round(st.w + dx));
+          var nh = Math.max(10, Math.round(st.h + dy));
+          r.setAttribute('width', nw);
+          r.setAttribute('height', nh);
+          syncHandle();
+        });
+    });
+
+    // Lines: 線本体を引きずると平行移動。端点ハンドル (両端の○) を引きずると
+    // その端点だけを移動 = 長さ・角度を変更。
+    svg.querySelectorAll('line').forEach(function(ln) {
+      ln.style.strokeWidth = '6'; // easier to grab
+      ln.addEventListener('mouseenter', function(){ this.style.stroke = '#FF00FF'; });
+      ln.addEventListener('mouseleave', function(){ this.style.stroke = ''; });
+
+      // 両端の端点ハンドル
+      function makeEndpointHandle(attrX, attrY) {
+        var h = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        h.setAttribute('class', 'endpoint-handle');
+        h.setAttribute('r', '6');
+        var sync = function() {
+          h.setAttribute('cx', +ln.getAttribute(attrX));
+          h.setAttribute('cy', +ln.getAttribute(attrY));
+        };
+        sync();
+        svg.appendChild(h);
+        makeDraggable(h,
+          function() { return { x: +ln.getAttribute(attrX), y: +ln.getAttribute(attrY) }; },
+          function(dx, dy, el, st) {
+            ln.setAttribute(attrX, Math.round(st.x + dx));
+            ln.setAttribute(attrY, Math.round(st.y + dy));
+            sync();
+          });
+        return sync;
+      }
+      var syncA = makeEndpointHandle('x1', 'y1');
+      var syncB = makeEndpointHandle('x2', 'y2');
+      // 直前 2 要素 (端点ハンドル A, B) を捕捉
+      var hB = svg.lastElementChild;
+      var hA = hB && hB.previousElementSibling;
+
+      // 線全体の平行移動: 端点ハンドルも追従させる
+      makeDraggable(ln,
+        function(el){ return { x1:+el.getAttribute('x1'), y1:+el.getAttribute('y1'), x2:+el.getAttribute('x2'), y2:+el.getAttribute('y2') }; },
+        function(dx, dy, el, st) {
+          el.setAttribute('x1', Math.round(st.x1+dx));
+          el.setAttribute('y1', Math.round(st.y1+dy));
+          el.setAttribute('x2', Math.round(st.x2+dx));
+          el.setAttribute('y2', Math.round(st.y2+dy));
+          syncA(); syncB();
+        });
+
+      // 右クリックで線と両端ハンドルを一緒に削除
+      makeRemovable(ln, [hA, hB]);
+    });
+
+    svg.querySelectorAll('text').forEach(function(t) {
+      makeDraggable(t,
+        function(el){ return { x:+el.getAttribute('x'), y:+el.getAttribute('y') }; },
+        function(dx, dy, el, st) {
+          el.setAttribute('x', Math.round(st.x+dx));
+          el.setAttribute('y', Math.round(st.y+dy));
+        });
+      makeRemovable(t, null);
+    });
+  });
+  // Auto-select first svg
+  var first = document.querySelector('figure.annotated svg.overlay');
+  if (first) { selectedSvg = first; renderSrc(); }
+})();
+</script>
+
+</body>
+</html>

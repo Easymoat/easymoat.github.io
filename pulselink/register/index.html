@@ -119,6 +119,9 @@ function showAlert(kind, html) {
   alertEl.className = 'alert ' + kind;
   alertEl.innerHTML = html;
   alertEl.style.display = 'block';
+  // alert はフォームの上にあるため、ボタン(下部)を押した後に画面外へ出る。
+  // 表示したメッセージを必ず視界に入れる。
+  alertEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 form.addEventListener('submit', async (e) => {

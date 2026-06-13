@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Change Password — PulseLink | Easymoat</title>
+<link rel="icon" type="image/png" href="../../favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FC; --white: #FFFFFF; --border: #E2E6EF;
+    --accent: #0891B2; --accent-light: #CFFAFE; --accent-dark: #0E7490;
+    --text: #111827; --text2: #374151; --muted: #6B7280; --muted2: #9CA3AF;
+    --danger: #DC2626; --success: #16A34A;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 40px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; color: var(--muted); transition: all 0.15s; }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+  nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 40px; display: flex; align-items: center; }
+  main { flex: 1; max-width: 460px; margin: 0 auto; padding: 48px 24px; width: 100%; }
+  .card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 32px; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+  h1 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+  .subtitle { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+  .field { margin-bottom: 16px; }
+  label { display: block; font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+  input { width: 100%; padding: 12px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 15px; font-family: inherit; outline: none; transition: border-color 0.15s; }
+  input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(8,145,178,0.12); }
+  .hint { font-size: 11px; color: var(--muted2); margin-top: 4px; }
+  .btn { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s; margin-top: 8px; }
+  .btn:hover { background: var(--accent-dark); }
+  .btn:disabled { background: var(--muted2); cursor: not-allowed; }
+  .alert { padding: 12px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+  .alert.error { background: #FEF2F2; color: var(--danger); border: 1px solid #FECACA; }
+  .alert.success { background: #F0FDF4; color: var(--success); border: 1px solid #BBF7D0; }
+  .alert.success ol { margin: 8px 0 0 18px; line-height: 1.7; }
+  .alert.success code { background: rgba(0,0,0,0.05); padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+  .footer-links { text-align: center; margin-top: 20px; font-size: 13px; color: var(--muted); }
+  .footer-links a { color: var(--accent); text-decoration: none; margin: 0 8px; }
+  footer { background: var(--white); border-top: 1px solid var(--border); padding: 20px 40px; text-align: center; font-size: 12px; color: var(--muted2); }
+</style>
+</head>
+<body>
+<div class="lang-bar">
+  <span>🌐</span>
+  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+  <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+</div>
+<nav>
+  <a href="../" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;">
+    <img src="../../easymoat_logo.png" alt="Easymoat" style="height:32px; width:32px; border-radius:6px; object-fit:cover;">
+    <span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:800; font-size:20px;">PulseLink</span>
+  </a>
+</nav>
+<main>
+  <div class="card">
+    <h1 data-en="Change password" data-ja="パスワード変更">Change password</h1>
+    <p class="subtitle" data-en="Know your current password? Sign in with it and set a new one — no email link needed. (If you've forgotten it, use Reset password instead.)" data-ja="現在のパスワードが分かる場合はこちら。サインインして新しいパスワードに変更します（メールリンク不要）。忘れた場合は「パスワード再発行」をお使いください。">Know your current password? Sign in with it and set a new one — no email link needed. (If you've forgotten it, use Reset password instead.)</p>
+
+    <div id="alert" style="display:none;"></div>
+
+    <form id="cp-form">
+      <div class="field">
+        <label for="email" data-en="Email" data-ja="メールアドレス">Email</label>
+        <input id="email" type="email" autocomplete="email" required>
+      </div>
+      <div class="field">
+        <label for="current" data-en="Current password" data-ja="現在のパスワード">Current password</label>
+        <input id="current" type="password" autocomplete="current-password" required>
+      </div>
+      <div class="field">
+        <label for="new" data-en="New password" data-ja="新しいパスワード">New password</label>
+        <input id="new" type="text" required minlength="8" data-en-ph="At least 8 characters" data-ja-ph="8文字以上" placeholder="At least 8 characters">
+        <div class="hint" data-en="Stored on your phone (Connect IQ Mobile). You can view it any time, so use a long but memorable phrase." data-ja="スマホ（Connect IQ Mobile）に保存され、いつでも確認できます。長くて覚えやすいフレーズを推奨します。">Stored on your phone (Connect IQ Mobile). You can view it any time, so use a long but memorable phrase.</div>
+      </div>
+      <button class="btn" type="submit" id="submit-btn" data-en="Update password" data-ja="パスワードを更新">Update password</button>
+    </form>
+
+    <div class="footer-links">
+      <a href="../forgot/" data-en="Forgot password?" data-ja="パスワードを忘れた？">Forgot password?</a> · <a href="../" data-en="← PulseLink home" data-ja="← PulseLink ホーム">← PulseLink home</a>
+    </div>
+  </div>
+</main>
+<footer>© 2026 Easymoat. <a href="../" style="color:var(--accent); text-decoration:none;" data-en="PulseLink home" data-ja="PulseLink ホーム">PulseLink home</a></footer>
+
+<script>
+const API = 'https://mlbwatch-server.onrender.com/api/pulselink';
+var LANG = 'en';
+function T(en, ja) { return LANG === 'ja' ? ja : en; }
+
+const form = document.getElementById('cp-form');
+const alertEl = document.getElementById('alert');
+const submitBtn = document.getElementById('submit-btn');
+var successShown = false;
+
+function setLang(lang) {
+  LANG = (lang === 'ja') ? 'ja' : 'en';
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-en]').forEach(function (el) {
+    if (el.children.length > 0) return;
+    var t = el.getAttribute('data-' + LANG);
+    if (t != null) el.textContent = t;
+  });
+  document.querySelectorAll('[data-en-ph]').forEach(function (el) {
+    var t = el.getAttribute('data-' + LANG + '-ph');
+    if (t != null) el.placeholder = t;
+  });
+  document.getElementById('btn-en').classList.toggle('active', LANG === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', LANG === 'ja');
+  try { localStorage.setItem('pl_lang', LANG); } catch (e) {}
+  renderSuccess();
+}
+
+function showAlert(kind, html) {
+  alertEl.className = 'alert ' + kind;
+  alertEl.innerHTML = html;
+  alertEl.style.display = 'block';
+  alertEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function renderSuccess() {
+  if (!successShown) return;
+  if (LANG === 'ja') {
+    showAlert('success',
+      '<strong>パスワードを更新しました！</strong><br>' +
+      '次にウォッチ側でも更新してください:' +
+      '<ol>' +
+        '<li>スマホで <b>Garmin Connect IQ Mobile</b> を開く</li>' +
+        '<li><b>PulseLink → 設定</b> を開く</li>' +
+        '<li>パスワード欄を新しいパスワードに置き換える</li>' +
+        '<li>設定を保存し、Garmin ウォッチで PulseLink を起動</li>' +
+      '</ol>'
+    );
+  } else {
+    showAlert('success',
+      '<strong>Password updated!</strong><br>' +
+      'Now update it on your watch:' +
+      '<ol>' +
+        '<li>Open <b>Garmin Connect IQ Mobile</b> on your phone</li>' +
+        '<li>Go to <b>PulseLink → Settings</b></li>' +
+        '<li>Replace the Password field with your new password</li>' +
+        '<li>Save settings, launch PulseLink on your Garmin watch</li>' +
+      '</ol>'
+    );
+  }
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  alertEl.style.display = 'none';
+  const email   = document.getElementById('email').value.trim();
+  const current = document.getElementById('current').value;
+  const next    = document.getElementById('new').value;
+  if (next.length < 8) {
+    showAlert('error', T('New password must be at least 8 characters.', '新しいパスワードは8文字以上にしてください。'));
+    return;
+  }
+  submitBtn.disabled = true;
+  submitBtn.textContent = T('Updating…', '更新中…');
+  try {
+    // 1) 現在のパスワードでサインイン → JWT 取得 (認証兼 current 検証)
+    const lr = await fetch(API + '/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: current })
+    });
+    const lj = await lr.json().catch(() => ({}));
+    if (!lr.ok || !lj.token) {
+      showAlert('error', T('Wrong email or current password.', 'メールアドレスまたは現在のパスワードが違います。'));
+      return;
+    }
+    // 2) パスワード変更
+    const cr = await fetch(API + '/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + lj.token },
+      body: JSON.stringify({ current_password: current, new_password: next })
+    });
+    const cj = await cr.json().catch(() => ({}));
+    if (cr.ok) {
+      form.style.display = 'none';
+      successShown = true;
+      renderSuccess();
+    } else if (cj.error === 'wrong_current_password') {
+      showAlert('error', T('Wrong current password.', '現在のパスワードが違います。'));
+    } else if (cj.error === 'password_too_short') {
+      showAlert('error', T('New password too short (8+ characters).', '新しいパスワードが短すぎます（8文字以上）。'));
+    } else {
+      showAlert('error', T('Update failed (' + (cj.error || cr.status) + '). Please try again.',
+                           '更新に失敗しました（' + (cj.error || cr.status) + '）。もう一度お試しください。'));
+    }
+  } catch (e) {
+    showAlert('error', T('Network error. Please check your connection.', '通信エラー。接続を確認してください。'));
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = T('Update password', 'パスワードを更新');
+  }
+});
+
+(function () {
+  var saved = 'en';
+  try { saved = localStorage.getItem('pl_lang') || 'en'; } catch (e) {}
+  setLang(saved);
+})();
+</script>
+</body>
+</html>

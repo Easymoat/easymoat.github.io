@@ -493,11 +493,13 @@ try {
         r.setAttribute('x', Math.round(p.x)); r.setAttribute('y', Math.round(p.y));
         r.setAttribute('width', 120); r.setAttribute('height', 40);
         svg.appendChild(r);
+        setupRect(r);
       } else if (kind === 'line') {
         var l = document.createElementNS(NS, 'line');
         l.setAttribute('x1', Math.round(p.x)); l.setAttribute('y1', Math.round(p.y));
         l.setAttribute('x2', Math.round(p.x) + 80); l.setAttribute('y2', Math.round(p.y) - 50);
         svg.appendChild(l);
+        setupLine(l);
       } else if (kind === 'text') {
         var t = document.createElementNS(NS, 'text');
         t.setAttribute('x', Math.round(p.x)); t.setAttribute('y', Math.round(p.y));
@@ -506,9 +508,9 @@ try {
         t.setAttribute('data-en', t.textContent);
         t.setAttribute('data-ja', t.textContent);
         svg.appendChild(t);
+        setupText(t);
       }
-      location.reload ? renderSrc() : renderSrc();
-      // 追加後はリロードせず再選択でハンドルを付け直すのが確実 (再読み込みでも可)
+      renderSrc();
     });
 
     // Map screen → SVG coords using viewBox
@@ -550,7 +552,7 @@ try {
       });
     }
 
-    svg.querySelectorAll('rect').forEach(function(r) {
+    function setupRect(r) {
       // 各 rect に右下リサイズハンドル (小さな円) を追加
       var handle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
       handle.setAttribute('class', 'resize-handle');
@@ -582,11 +584,11 @@ try {
           r.setAttribute('height', nh);
           syncHandle();
         });
-    });
+    }
 
     // Lines: 線本体を引きずると平行移動。端点ハンドル (両端の○) を引きずると
     // その端点だけを移動 = 長さ・角度を変更。
-    svg.querySelectorAll('line').forEach(function(ln) {
+    function setupLine(ln) {
       ln.style.strokeWidth = '6'; // easier to grab
       ln.addEventListener('mouseenter', function(){ this.style.stroke = '#FF00FF'; });
       ln.addEventListener('mouseleave', function(){ this.style.stroke = ''; });
@@ -630,9 +632,9 @@ try {
 
       // 右クリックで線と両端ハンドルを一緒に削除
       makeRemovable(ln, [hA, hB]);
-    });
+    }
 
-    svg.querySelectorAll('text').forEach(function(t) {
+    function setupText(t) {
       makeDraggable(t,
         function(el){ return { x:+el.getAttribute('x'), y:+el.getAttribute('y') }; },
         function(dx, dy, el, st) {
@@ -640,7 +642,11 @@ try {
           el.setAttribute('y', Math.round(st.y+dy));
         });
       makeRemovable(t, null);
-    });
+    }
+
+    svg.querySelectorAll('rect').forEach(setupRect);
+    svg.querySelectorAll('line').forEach(setupLine);
+    svg.querySelectorAll('text').forEach(setupText);
   });
   // Auto-select first svg
   var first = document.querySelector('figure.annotated svg.overlay');

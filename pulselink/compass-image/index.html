@@ -164,8 +164,8 @@
     </div>
     <p class="preview-note" data-en="True-to-watch preview. Standard: image inside the ring, nothing overlaps. Full screen: image fills the watch face and the ring/labels draw over it — bright images can make them hard to read." data-ja="実機どおりのプレビュー。標準: 画像はリングの内側で何も重なりません。全画面: 画像が画面全体に広がり、目盛り・ラベルが画像の上に描かれます（明るい画像では読みにくくなることがあります）。">True-to-watch preview. Standard: image inside the ring, nothing overlaps. Full screen: image fills the watch face and the ring/labels draw over it — bright images can make them hard to read.</p>
     <!-- キャッシュ容量の実測 (プレビューと融合)。現在の 標準/全画面・色数 に連動して自動更新。 -->
-    <p style="font-weight:600; margin: 22px 0 4px;" data-en="Display size (colors × screen)" data-ja="表示サイズ（色数×画面）">Display size (colors × screen)</p>
-    <p class="preview-note" style="margin-top:0; text-align:left;" data-en="The watch can only show the image if its decoded bitmap fits in memory. That size is fixed by the screen pixels and color count (not the image content): pixels² × bits-per-pixel. 16 colors or fewer = 4 bpp; above 16 colors (32 in the selectable steps) = 8 bpp, which doubles the memory. On fr965, ≤~150 KB always displays; full screen at 32+ colors (~206 KB) is borderline — dark images squeak through, bright ones fail. If it displays, it is also cached." data-ja="ウォッチは、デコード後のビットマップがメモリに収まる時だけ画像を表示できます。その容量は画像の中身ではなく、画面の画素数と色数で決まります: 画素数² × ビット深度(bpp)。16色以下=4bpp、16色を超える（選べる色数では32色以上）と8bpp になり容量が倍増します。fr965 では ~150KB 以下は確実に表示。全画面の32色以上(~206KB)は境界で、暗い画像は通り、明るい画像は失敗します。表示できればキャッシュも成功します。">The watch can show the image only if the decoded bitmap (pixels² × bpp) fits in memory — set by screen size and color count, not image content.</p>
+    <p style="font-weight:600; margin: 22px 0 4px;" data-en="Will it show on your watch?" data-ja="ウォッチに表示できる？">Will it show on your watch?</p>
+    <p class="preview-note" style="margin-top:0; text-align:left;" data-en="The more colors you choose — and the bigger the image (full screen vs. inside the ring) — the more the watch has to handle. Too much, and it won't show the image at all. Use the guide below to check: green is fine, yellow is borderline, red may not show." data-ja="色数を増やすほど、また画像を大きく（リング内ではなく画面いっぱいに）するほど、ウォッチの負担が増えます。大きすぎると画像がまったく表示されません。下の目安で確認できます。緑＝OK、黄＝ぎりぎり、赤＝表示されないことがあります。">The more colors and the bigger the image, the more the watch has to handle. Use the guide below: green is fine, red may not show.</p>
     <div class="field">
       <label data-en="Target device (screen px)" data-ja="対象機種（画面px）">Target device (screen px)</label>
       <div id="deviceBtns" class="color-btns">
@@ -190,7 +190,7 @@
       <div class="hint" id="bppHint" style="margin-top:6px;"></div>
     </div>
     <div id="measureOut" style="margin-top:12px;"></div>
-    <p class="preview-note" style="text-align:left; margin-top:1em;" data-en="Practical rule: Standard size (image inside the ring) fits at any color count. Full screen needs 16 colors or fewer to be safe; 32+ colors full screen is risky. The KB shown is the decoded bitmap size, the same on every device of a given screen px — the threshold is fr965-measured and may be lower on devices with less memory." data-ja="実用ルール: 標準サイズ（リング内）なら何色でも収まります。全画面は16色以下なら安全、32色以上の全画面はリスクがあります。表示KBはデコード後ビットマップの容量で、同じ画面pxの機種なら常に同じです。閾値は fr965 実測で、メモリの少ない機種ではより低い可能性があります。">Practical rule: Standard fits at any color count; full screen needs ≤16 colors. The KB is the decoded bitmap size (fr965-measured threshold).</p>
+    <p class="preview-note" style="text-align:left; margin-top:1em;" data-en="Simple tip: with Standard (image inside the ring), any number of colors is fine. For Full screen, 16 colors or fewer is the safe choice. Fewer colors always displays more reliably." data-ja="かんたんルール: 「標準」（リングの内側に画像）なら、何色を選んでも大丈夫です。「全画面」にするときは、16色までが安心です。色数を抑えるほど、確実に表示されます。">Simple tip: Standard works with any colors; for Full screen, 16 colors or fewer is the safe choice.</p>
 
     <div id="uploadAlert"></div>
     <button class="btn" id="uploadBtn" disabled data-en="Upload to my watch" data-ja="ウォッチにアップロード">Upload to my watch</button>
@@ -461,11 +461,11 @@ function bppFor(colors) {
 function kbFor(px, bpp) { return (px * px * bpp / 8) / 1000; }
 
 function updateBppHint() {
-  var bpp = bppFor(mColors);
-  var el = document.getElementById('bppHint');
-  el.textContent = (document.documentElement.lang === 'ja')
-    ? (mColors + ' 色 = ' + bpp + ' bpp')
-    : (mColors + ' colors = ' + bpp + ' bpp');
+  var ja = document.documentElement.lang === 'ja';
+  var load = (mColors <= 16) ? (ja ? '負担：少なめ' : 'Load: light')
+           : (mColors <= 64) ? (ja ? '負担：多め' : 'Load: heavy')
+           :                    (ja ? '負担：かなり多い' : 'Load: very heavy');
+  document.getElementById('bppHint').textContent = load;
 }
 function selBtn(group, btn) {
   document.querySelectorAll('#' + group + ' button').forEach(function (b) { b.classList.remove('active'); });
@@ -503,9 +503,9 @@ function aClass(kb) {
 function aText(kb) {
   var ja = document.documentElement.lang === 'ja';
   if (kb == null) return '';
-  if (kb <= SAFE_KB) return ja ? '表示・キャッシュ可' : 'displays + caches';
-  if (kb <= FAIL_KB) return ja ? '境界（明るい画像は出ない場合あり）' : 'borderline (bright images may fail)';
-  return ja ? '大きすぎ・表示不可' : 'too big — no display';
+  if (kb <= SAFE_KB) return ja ? 'OK — 表示されます' : 'OK — will display';
+  if (kb <= FAIL_KB) return ja ? 'ぎりぎり（明るい画像は出ない場合あり）' : 'borderline (bright images may not show)';
+  return ja ? '大きすぎて表示できません' : 'too big — won\'t display';
 }
 
 // 計測: 現在の 標準/全画面(sizeMode)・対象機種・色数 に連動した1結果を表示。
@@ -514,9 +514,8 @@ function measure() {
   var ja = document.documentElement.lang === 'ja';
   var px = (sizeMode === 'full') ? mDevFull : mDevStd;
   var modeLbl = (sizeMode === 'full') ? (ja ? '全画面' : 'Full') : (ja ? '標準' : 'Standard');
-  var bpp = bppFor(mColors);
-  var kb = kbFor(px, bpp);
-  var lbl = px + 'px · ' + modeLbl + ' · ' + mColors + (ja ? '色 · ' : ' colors · ') + bpp + 'bpp';
+  var kb = kbFor(px, bppFor(mColors));
+  var lbl = px + 'px · ' + modeLbl + ' · ' + mColors + (ja ? '色' : ' colors');
   var html = '<div class="measure-res"><div class="cell ' + aClass(kb) + '" style="flex:1;">' +
     '<div class="lbl">' + lbl + '</div><div class="val">' + kb.toFixed(0) + ' KB</div>' +
     '<div class="verdict">' + aText(kb) + '</div></div></div>';

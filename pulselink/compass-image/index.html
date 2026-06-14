@@ -171,7 +171,7 @@
 
   <div class="card" id="measureCard">
     <h2 data-en="Cache size calculator" data-ja="キャッシュ容量の計測">Cache size calculator</h2>
-    <p class="preview-note" style="margin-top:0; text-align:left;" data-en="The compass image is cached on the watch only if its decoded bitmap fits. Bitmap bytes = width × height × bits-per-pixel ÷ 8, and bpp is set by the color count (1/2/4/8). Pick a color count to see the size per device. Measured on fr965: ≤45 KB caches, 103 KB fails." data-ja="コンパス画像はデコード後のビットマップが収まる時だけ端末にキャッシュされます。バイト数 = 幅 × 高さ × bpp ÷ 8 で、bpp は色数（1/2/4/8）で決まります。色数を選ぶと機種ごとのサイズが出ます。fr965 実測: ≤45KB はキャッシュ成功、103KB は失敗。">The compass image is cached on the watch only if its decoded bitmap fits. Pick a color count to see the size per device. Measured on fr965: ≤45 KB caches, 103 KB fails.</p>
+    <p class="preview-note" style="margin-top:0; text-align:left;" data-en="The compass image is cached on the watch only if it fits the Storage limit (32 KB per value). With an image loaded, this shows your image's actual compressed size at the chosen color count — content-aware, so darker/simpler images cache even at higher color counts. ≤32 KB caches; over that, no cache (re-fetched each time, needs the phone)." data-ja="コンパス画像は Storage の上限（1値あたり 32KB）に収まる時だけ端末にキャッシュされます。画像を選ぶと、その画像を選択色数で実際に減色した圧縮サイズ（実測）を表示します。暗い/単純な画像ほど圧縮が効くので、色数が多くてもキャッシュできます。≤32KB でキャッシュ可、超えると不可（毎回スマホ経由で再取得）。">The compass image caches only if it fits Storage's 32 KB-per-value limit. Load an image to see its actual compressed size at the chosen color count.</p>
     <div class="field">
       <label data-en="Device (screen px)" data-ja="機種（画面px）">Device (screen px)</label>
       <div id="deviceBtns" class="color-btns">
@@ -197,7 +197,7 @@
     </div>
     <button class="btn" id="measureBtn" data-en="Measure" data-ja="計測">Measure</button>
     <div id="measureOut" style="margin-top:16px;"></div>
-    <p class="preview-note" style="text-align:left; margin-top:1.2em;" data-en="Note: color count maps to bits-per-pixel in steps (1/2/4/8), so 32/64/128 colors all use 8 bpp — the same size as 256. The green/red thresholds are fr965-measured; other devices' cache ceilings are not yet verified." data-ja="注: 色数→bpp は 1/2/4/8 の段階なので、32/64/128色は全て 8bpp ＝ 256色と同じサイズです。緑/赤のしきい値は fr965 実測値で、他機種のキャッシュ上限は未検証です。">Note: 32/64/128 colors all use 8 bpp — same size as 256. Thresholds are fr965-measured.</p>
+    <p class="preview-note" style="text-align:left; margin-top:1.2em;" data-en="Note: the size is a PNG-compressed estimate of the quantized image — a close proxy for on-device Storage, not an exact match. The 32 KB line is Garmin's documented per-value Storage limit. Even if it doesn't cache, the image still displays (just re-downloaded each time the compass opens)." data-ja="注: サイズは減色後画像の PNG 圧縮による推定で、端末 Storage の近似（完全一致ではありません）。32KB は Garmin 公式の「1値あたり」Storage 上限です。キャッシュできなくても画像自体は表示されます（コンパスを開くたびに再取得されるだけ）。">Note: size is a PNG-compressed estimate; the 32 KB line is Garmin's documented per-value Storage limit.</p>
   </div>
 
   <div class="footer-links">
@@ -498,26 +498,89 @@ function verdictText(kb) {
   if (kb >= 103) return ja ? 'キャッシュ不可' : 'no cache';
   return ja ? '要実測' : 'untested';
 }
-function measure() {
-  var bpp = bppFor(mColors);
-  var stdKb  = kbFor(mDevStd, bpp);
-  var fullKb = kbFor(mDevFull, bpp);
+// 画像を size×size の円形構図で描く (オフスクリーン計測用。pan は 320基準でスケール)。
+function drawComposition(ctx, size) {
+  if (!curImg) return;
+  var base = Math.max(size / curImg.width, size / curImg.height);
+  var sc = base * zoom;
+  var dw = curImg.width * sc, dh = curImg.height * sc;
+  var maxX = Math.max(0, (dw - size) / 2);
+  var maxY = Math.max(0, (dh - size) / 2);
+  var k = size / 320;
+  var px = Math.max(-maxX, Math.min(maxX, panX * k));
+  var py = Math.max(-maxY, Math.min(maxY, panY * k));
+  ctx.clearRect(0, 0, size, size);
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, size, size);
+  ctx.drawImage(curImg, (size - dw) / 2 + px, (size - dh) / 2 + py, dw, dh);
+  ctx.globalCompositeOperation = 'destination-in';
+  ctx.beginPath(); ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2); ctx.fill();
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+// この画像を targetPx・n色で減色 → PNG圧縮サイズ(KB)を実測。Storage 実効サイズの近似。
+function quantizedSizeKB(targetPx, n) {
+  if (!curImg || typeof RgbQuant === 'undefined') return null;
+  try {
+    var c = document.createElement('canvas'); c.width = targetPx; c.height = targetPx;
+    var ctx = c.getContext('2d');
+    drawComposition(ctx, targetPx);
+    var q = new RgbQuant({ colors: n, dithKern: 'FloydSteinberg' });
+    q.sample(c);
+    var out = q.reduce(c);
+    var id = ctx.createImageData(targetPx, targetPx);
+    id.data.set(out);
+    ctx.putImageData(id, 0, 0);
+    var b64 = c.toDataURL('image/png').split(',')[1];
+    return Math.floor(b64.length * 3 / 4) / 1000;
+  } catch (e) { return null; }
+}
+
+// 実測(圧縮)サイズの判定: Storage の公式上限 32KB/値 を基準。
+function aClass(kb) { return (kb != null && kb <= 32) ? 'm-ok' : 'm-bad'; }
+function aText(kb) {
   var ja = document.documentElement.lang === 'ja';
-  function cell(label, px, kb) {
-    return '<div class="cell ' + verdictClass(kb) + '">' +
-      '<div class="lbl">' + label + ' · ' + px + 'px</div>' +
-      '<div class="val">' + kb.toFixed(1) + ' KB</div>' +
-      '<div class="verdict">' + verdictText(kb) + '</div></div>';
-  }
-  var html = '<div class="measure-res">' +
-      cell(ja ? '標準' : 'Standard', mDevStd, stdKb) +
-      cell(ja ? '全画面' : 'Full', mDevFull, fullKb) +
-    '</div>';
+  if (kb == null) return '';
+  return kb <= 32 ? (ja ? 'キャッシュ可' : 'caches') : (ja ? 'キャッシュ不可' : 'no cache');
+}
+
+function measure() {
+  var ja = document.documentElement.lang === 'ja';
+  var html;
   if (curImg) {
+    // 実測: この画像を選択色数で減色した圧縮サイズ (content-aware)
+    var stdKb  = quantizedSizeKB(mDevStd, mColors);
+    var fullKb = quantizedSizeKB(mDevFull, mColors);
+    var cellA = function (label, px, kb) {
+      var v = (kb == null) ? '—' : (kb.toFixed(1) + ' KB');
+      return '<div class="cell ' + aClass(kb) + '">' +
+        '<div class="lbl">' + label + ' · ' + px + 'px</div>' +
+        '<div class="val">' + v + '</div>' +
+        '<div class="verdict">' + aText(kb) + '</div></div>';
+    };
+    html = '<div class="measure-res">' +
+        cellA(ja ? '標準' : 'Standard', mDevStd, stdKb) +
+        cellA(ja ? '全画面' : 'Full', mDevFull, fullKb) +
+      '</div>';
     var cap = ja ? ('品質プレビュー（' + mColors + '色・最適パレット）')
                  : ('Quality preview — ' + mColors + ' colors (optimal palette)');
     html += '<div class="qprev"><div class="qprev-cap">' + cap +
             '</div><canvas id="qCanvas" width="320" height="320"></canvas></div>';
+  } else {
+    // 画像未選択: 理論値 (生ビットマップ) を参考表示
+    var bpp = bppFor(mColors);
+    var cellT = function (label, px, kb) {
+      return '<div class="cell ' + verdictClass(kb) + '">' +
+        '<div class="lbl">' + label + ' · ' + px + 'px</div>' +
+        '<div class="val">' + kb.toFixed(1) + ' KB</div>' +
+        '<div class="verdict">' + verdictText(kb) + '</div></div>';
+    };
+    html = '<div class="measure-res">' +
+        cellT(ja ? '標準' : 'Standard', mDevStd, kbFor(mDevStd, bpp)) +
+        cellT(ja ? '全画面' : 'Full', mDevFull, kbFor(mDevFull, bpp)) +
+      '</div>' +
+      '<p class="preview-note" style="text-align:left; margin-top:10px;">' +
+      (ja ? '画像を選ぶと、その画像を実際に減色した圧縮サイズ（実測）で判定します。'
+          : 'Load an image to see its actual compressed size at this color count.') + '</p>';
   }
   document.getElementById('measureOut').innerHTML = html;
   if (curImg) { renderQuality(); }

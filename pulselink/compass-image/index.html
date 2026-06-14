@@ -369,7 +369,7 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
     const r = await fetch(API + '/user/compass-image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
-      body: JSON.stringify({ image: maskedPng, size: sizeMode })
+      body: JSON.stringify({ image: maskedPng, size: sizeMode, colors: mColors })
     });
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || 'upload_failed');

@@ -164,8 +164,8 @@
     </div>
     <p class="preview-note" data-en="True-to-watch preview. Standard: image inside the ring, nothing overlaps. Full screen: image fills the watch face and the ring/labels draw over it — bright images can make them hard to read." data-ja="実機どおりのプレビュー。標準: 画像はリングの内側で何も重なりません。全画面: 画像が画面全体に広がり、目盛り・ラベルが画像の上に描かれます（明るい画像では読みにくくなることがあります）。">True-to-watch preview. Standard: image inside the ring, nothing overlaps. Full screen: image fills the watch face and the ring/labels draw over it — bright images can make them hard to read.</p>
     <!-- キャッシュ容量の実測 (プレビューと融合)。現在の 標準/全画面・色数 に連動して自動更新。 -->
-    <p style="font-weight:600; margin: 22px 0 4px;" data-en="Display size (this image)" data-ja="表示サイズ（この画像）">Display size (this image)</p>
-    <p class="preview-note" style="margin-top:0; text-align:left;" data-en="The watch can only show the image if it fits in memory. Below is this image's actual compressed size at the current size &amp; color count. On fr965, ~165 KB still works (limit being measured); larger images may fail to display. If it displays, it is also cached. Darker/simpler images compress smaller, so they fit even at higher color counts." data-ja="ウォッチは画像がメモリに収まる時だけ表示できます。下は、この画像を現在のサイズ・色数で実際に減色した圧縮サイズ（実測）。fr965 では ~165KB でも表示OK（上限は計測中）。これを超えると表示できない場合があります。表示できればキャッシュも成功します。暗い/単純な画像ほど圧縮が効くので、色数が多くても収まります。">The watch can only show the image if it fits in memory. ~165 KB still works on fr965 (limit being measured).</p>
+    <p style="font-weight:600; margin: 22px 0 4px;" data-en="Display size (colors × screen)" data-ja="表示サイズ（色数×画面）">Display size (colors × screen)</p>
+    <p class="preview-note" style="margin-top:0; text-align:left;" data-en="The watch can only show the image if its decoded bitmap fits in memory. That size is fixed by the screen pixels and color count (not the image content): pixels² × bits-per-pixel. 16 colors = 4 bpp; 17+ colors = 8 bpp. On fr965, ≤~150 KB always displays; full screen at 17+ colors (~206 KB) is borderline — dark images squeak through, bright ones fail. If it displays, it is also cached." data-ja="ウォッチは、デコード後のビットマップがメモリに収まる時だけ画像を表示できます。その容量は画像の中身ではなく、画面の画素数と色数で決まります: 画素数² × ビット深度(bpp)。16色=4bpp、17色以上=8bpp。fr965 では ~150KB 以下は確実に表示。全画面の17色以上(~206KB)は境界で、暗い画像は通り、明るい画像は失敗します。表示できればキャッシュも成功します。">The watch can show the image only if the decoded bitmap (pixels² × bpp) fits in memory — set by screen size and color count, not image content.</p>
     <div class="field">
       <label data-en="Target device (screen px)" data-ja="対象機種（画面px）">Target device (screen px)</label>
       <div id="deviceBtns" class="color-btns">
@@ -190,7 +190,7 @@
       <div class="hint" id="bppHint" style="margin-top:6px;"></div>
     </div>
     <div id="measureOut" style="margin-top:12px;"></div>
-    <p class="preview-note" style="text-align:left; margin-top:1em;" data-en="Note: size is a PNG-compressed estimate of the quantized image — a proxy for the on-device decode memory, not exact. The limit is makeImageRequest's decode memory (too big → the image won't load at all); when it loads, it also caches. The ~165 KB figure is fr965-measured and may differ on devices with less memory." data-ja="注: サイズは減色後画像の PNG 圧縮による推定で、端末のデコードメモリの近似（完全一致ではありません）。上限は makeImageRequest のデコードメモリ（大きすぎると画像が一切読み込めない）。読み込めればキャッシュも成功します。~165KB は fr965 実測で、メモリの少ない機種では異なる可能性があります。">Note: PNG-compressed estimate; the limit is makeImageRequest's decode memory (fr965-measured ~165 KB).</p>
+    <p class="preview-note" style="text-align:left; margin-top:1em;" data-en="Practical rule: Standard size (image inside the ring) fits at any color count. Full screen needs 16 colors or fewer to be safe; 17+ colors full screen is risky. The KB shown is the decoded bitmap size, the same on every device of a given screen px — the threshold is fr965-measured and may be lower on devices with less memory." data-ja="実用ルール: 標準サイズ（リング内）なら何色でも収まります。全画面は16色以下なら安全、17色以上の全画面はリスクがあります。表示KBはデコード後ビットマップの容量で、同じ画面pxの機種なら常に同じです。閾値は fr965 実測で、メモリの少ない機種ではより低い可能性があります。">Practical rule: Standard fits at any color count; full screen needs ≤16 colors. The KB is the decoded bitmap size (fr965-measured threshold).</p>
 
     <div id="uploadAlert"></div>
     <button class="btn" id="uploadBtn" disabled data-en="Upload to my watch" data-ja="ウォッチにアップロード">Upload to my watch</button>
@@ -489,97 +489,42 @@ document.querySelectorAll('#colorBtns button').forEach(function (b) {
   });
 });
 
-function verdictClass(kb) {
-  if (kb <= 45) return 'm-ok';
-  if (kb >= 103) return 'm-bad';
-  return 'm-warn';
-}
-function verdictText(kb) {
-  var ja = document.documentElement.lang === 'ja';
-  if (kb <= 45)  return ja ? 'キャッシュOK' : 'caches';
-  if (kb >= 103) return ja ? 'キャッシュ不可' : 'no cache';
-  return ja ? '要実測' : 'untested';
-}
-// 画像を size×size の円形構図で描く (オフスクリーン計測用。pan は 320基準でスケール)。
-function drawComposition(ctx, size) {
-  if (!curImg) return;
-  var base = Math.max(size / curImg.width, size / curImg.height);
-  var sc = base * zoom;
-  var dw = curImg.width * sc, dh = curImg.height * sc;
-  var maxX = Math.max(0, (dw - size) / 2);
-  var maxY = Math.max(0, (dh - size) / 2);
-  var k = size / 320;
-  var px = Math.max(-maxX, Math.min(maxX, panX * k));
-  var py = Math.max(-maxY, Math.min(maxY, panY * k));
-  ctx.clearRect(0, 0, size, size);
-  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, size, size);
-  ctx.drawImage(curImg, (size - dw) / 2 + px, (size - dh) / 2 + py, dw, dh);
-  ctx.globalCompositeOperation = 'destination-in';
-  ctx.beginPath(); ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2); ctx.fill();
-  ctx.globalCompositeOperation = 'source-over';
-}
-
-// この画像を targetPx・n色で減色 → PNG圧縮サイズ(KB)を実測。Storage 実効サイズの近似。
-function quantizedSizeKB(targetPx, n) {
-  if (!curImg || typeof RgbQuant === 'undefined') return null;
-  try {
-    var c = document.createElement('canvas'); c.width = targetPx; c.height = targetPx;
-    var ctx = c.getContext('2d');
-    drawComposition(ctx, targetPx);
-    var q = new RgbQuant({ colors: n, dithKern: 'FloydSteinberg' });
-    q.sample(c);
-    var out = q.reduce(c);
-    var id = ctx.createImageData(targetPx, targetPx);
-    id.data.set(out);
-    ctx.putImageData(id, 0, 0);
-    var b64 = c.toDataURL('image/png').split(',')[1];
-    return Math.floor(b64.length * 3 / 4) / 1000;
-  } catch (e) { return null; }
-}
-
-// 判定: makeImageRequest のデコード上限 (RAM)。fr965 実測で ~154KB まで表示+キャッシュ可、
-// 超えると c=0 (メモリ不足) で表示自体ができない。表示できれば必ずキャッシュも成功する。
-var LIMIT_KB = 170; // fr965 実測の表示上限の目安。165.5KB まで OK 確認済み、未失敗 (機種 RAM で変動)
+// 判定: デコード後ビットマップ容量 (画素数 × bpp) で決まる。fr965 実測:
+//   90/103KB は OK、206KB (全画面17色以上) は境界〜失敗 (c=0=メモリ不足)。
+//   画像の中身ではなく 色数×サイズ で決まる。境界帯は明るい画像で c=0 になりうる。
+var SAFE_KB = 150; // これ以下は確実に表示+キャッシュ
+var FAIL_KB = 210; // これ以上はほぼ表示不可
 function aClass(kb) {
   if (kb == null) return 'm-warn';
-  if (kb <= LIMIT_KB - 4) return 'm-ok';
-  if (kb <= LIMIT_KB + 6) return 'm-warn';
+  if (kb <= SAFE_KB) return 'm-ok';
+  if (kb <= FAIL_KB) return 'm-warn';
   return 'm-bad';
 }
 function aText(kb) {
   var ja = document.documentElement.lang === 'ja';
   if (kb == null) return '';
-  if (kb <= LIMIT_KB - 4) return ja ? '表示・キャッシュ可' : 'displays + caches';
-  if (kb <= LIMIT_KB + 6) return ja ? '境界（出ない場合あり）' : 'borderline';
+  if (kb <= SAFE_KB) return ja ? '表示・キャッシュ可' : 'displays + caches';
+  if (kb <= FAIL_KB) return ja ? '境界（明るい画像は出ない場合あり）' : 'borderline (bright images may fail)';
   return ja ? '大きすぎ・表示不可' : 'too big — no display';
 }
 
 // 計測: 現在の 標準/全画面(sizeMode)・対象機種・色数 に連動した1結果を表示。
+// 表示可否はデコード後ビットマップ容量 (画素数 × bpp) で決まる (画像の中身ではない)。
 function measure() {
   var ja = document.documentElement.lang === 'ja';
   var px = (sizeMode === 'full') ? mDevFull : mDevStd;
   var modeLbl = (sizeMode === 'full') ? (ja ? '全画面' : 'Full') : (ja ? '標準' : 'Standard');
-  var lbl = px + 'px · ' + modeLbl + ' · ' + mColors + (ja ? '色' : ' colors');
-  var html;
+  var bpp = bppFor(mColors);
+  var kb = kbFor(px, bpp);
+  var lbl = px + 'px · ' + modeLbl + ' · ' + mColors + (ja ? '色 · ' : ' colors · ') + bpp + 'bpp';
+  var html = '<div class="measure-res"><div class="cell ' + aClass(kb) + '" style="flex:1;">' +
+    '<div class="lbl">' + lbl + '</div><div class="val">' + kb.toFixed(0) + ' KB</div>' +
+    '<div class="verdict">' + aText(kb) + '</div></div></div>';
   if (curImg) {
-    var kb = quantizedSizeKB(px, mColors);
-    var v = (kb == null) ? '—' : (kb.toFixed(1) + ' KB');
-    html = '<div class="measure-res"><div class="cell ' + aClass(kb) + '" style="flex:1;">' +
-      '<div class="lbl">' + lbl + '</div><div class="val">' + v + '</div>' +
-      '<div class="verdict">' + aText(kb) + '</div></div></div>';
     var cap = ja ? ('品質プレビュー（' + mColors + '色・最適パレット）')
                  : ('Quality preview — ' + mColors + ' colors (optimal palette)');
     html += '<div class="qprev"><div class="qprev-cap">' + cap +
             '</div><canvas id="qCanvas" width="320" height="320"></canvas></div>';
-  } else {
-    var bpp = bppFor(mColors);
-    var kb2 = kbFor(px, bpp);
-    html = '<div class="measure-res"><div class="cell ' + verdictClass(kb2) + '" style="flex:1;">' +
-      '<div class="lbl">' + lbl + '</div><div class="val">' + kb2.toFixed(1) + ' KB</div>' +
-      '<div class="verdict">' + verdictText(kb2) + '</div></div></div>' +
-      '<p class="preview-note" style="text-align:left; margin-top:10px;">' +
-      (ja ? '画像を選ぶと、実際に減色した圧縮サイズ（実測）で判定します。'
-          : 'Load an image to see the actual compressed size.') + '</p>';
   }
   document.getElementById('measureOut').innerHTML = html;
   if (curImg) { renderQuality(); }

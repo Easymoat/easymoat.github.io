@@ -163,17 +163,11 @@
       </div>
     </div>
     <p class="preview-note" data-en="True-to-watch preview. Standard: image inside the ring, nothing overlaps. Full screen: image fills the watch face and the ring/labels draw over it — bright images can make them hard to read." data-ja="実機どおりのプレビュー。標準: 画像はリングの内側で何も重なりません。全画面: 画像が画面全体に広がり、目盛り・ラベルが画像の上に描かれます（明るい画像では読みにくくなることがあります）。">True-to-watch preview. Standard: image inside the ring, nothing overlaps. Full screen: image fills the watch face and the ring/labels draw over it — bright images can make them hard to read.</p>
-    <div id="uploadAlert"></div>
-    <button class="btn" id="uploadBtn" disabled data-en="Upload to my watch" data-ja="ウォッチにアップロード">Upload to my watch</button>
-    <button class="btn secondary" id="removeBtn" data-en="Remove custom image (back to default)" data-ja="カスタム画像を削除（デフォルトに戻す）">Remove custom image (back to default)</button>
-    <p class="preview-note" style="margin-top:14px;" data-en="After uploading, restart PulseLink on your watch. The image downloads via your phone the next time the compass opens." data-ja="アップロード後、ウォッチの PulseLink を再起動してください。次回コンパスを開いた時にスマホ経由で画像がダウンロードされます。">After uploading, restart PulseLink on your watch. The image downloads via your phone the next time the compass opens.</p>
-  </div>
-
-  <div class="card" id="measureCard">
-    <h2 data-en="Cache size calculator" data-ja="キャッシュ容量の計測">Cache size calculator</h2>
-    <p class="preview-note" style="margin-top:0; text-align:left;" data-en="The compass image is cached on the watch only if it fits the Storage limit (32 KB per value). With an image loaded, this shows your image's actual compressed size at the chosen color count — content-aware, so darker/simpler images cache even at higher color counts. ≤32 KB caches; over that, no cache (re-fetched each time, needs the phone)." data-ja="コンパス画像は Storage の上限（1値あたり 32KB）に収まる時だけ端末にキャッシュされます。画像を選ぶと、その画像を選択色数で実際に減色した圧縮サイズ（実測）を表示します。暗い/単純な画像ほど圧縮が効くので、色数が多くてもキャッシュできます。≤32KB でキャッシュ可、超えると不可（毎回スマホ経由で再取得）。">The compass image caches only if it fits Storage's 32 KB-per-value limit. Load an image to see its actual compressed size at the chosen color count.</p>
+    <!-- キャッシュ容量の実測 (プレビューと融合)。現在の 標準/全画面・色数 に連動して自動更新。 -->
+    <p style="font-weight:600; margin: 22px 0 4px;" data-en="Cache size (this image)" data-ja="キャッシュ容量（この画像）">Cache size (this image)</p>
+    <p class="preview-note" style="margin-top:0; text-align:left;" data-en="The image is cached on the watch only if it fits Storage's 32 KB-per-value limit. Below is this image's actual compressed size at the current size &amp; color count — darker/simpler images cache even at higher color counts. ≤32 KB caches; over that, no cache (re-fetched each time, needs the phone)." data-ja="画像は Storage の上限（1値あたり 32KB）に収まる時だけ端末にキャッシュされます。下は、この画像を現在のサイズ・色数で実際に減色した圧縮サイズ（実測）。暗い/単純な画像ほど圧縮が効き、色数が多くてもキャッシュできます。≤32KB でキャッシュ可、超えると不可（毎回スマホ経由で再取得）。">The image caches only if it fits Storage's 32 KB-per-value limit.</p>
     <div class="field">
-      <label data-en="Device (screen px)" data-ja="機種（画面px）">Device (screen px)</label>
+      <label data-en="Target device (screen px)" data-ja="対象機種（画面px）">Target device (screen px)</label>
       <div id="deviceBtns" class="color-btns">
         <button type="button" data-std="240" data-full="360">360px</button>
         <button type="button" data-std="260" data-full="390">390px</button>
@@ -195,9 +189,13 @@
       </div>
       <div class="hint" id="bppHint" style="margin-top:6px;"></div>
     </div>
-    <button class="btn" id="measureBtn" data-en="Measure" data-ja="計測">Measure</button>
-    <div id="measureOut" style="margin-top:16px;"></div>
-    <p class="preview-note" style="text-align:left; margin-top:1.2em;" data-en="Note: the size is a PNG-compressed estimate of the quantized image — a close proxy for on-device Storage, not an exact match. The 32 KB line is Garmin's documented per-value Storage limit. Even if it doesn't cache, the image still displays (just re-downloaded each time the compass opens)." data-ja="注: サイズは減色後画像の PNG 圧縮による推定で、端末 Storage の近似（完全一致ではありません）。32KB は Garmin 公式の「1値あたり」Storage 上限です。キャッシュできなくても画像自体は表示されます（コンパスを開くたびに再取得されるだけ）。">Note: size is a PNG-compressed estimate; the 32 KB line is Garmin's documented per-value Storage limit.</p>
+    <div id="measureOut" style="margin-top:12px;"></div>
+    <p class="preview-note" style="text-align:left; margin-top:1em;" data-en="Note: size is a PNG-compressed estimate of the quantized image — a close proxy for Storage, not exact. The 32 KB line is Garmin's documented per-value Storage limit. Even if it doesn't cache, the image still displays (re-downloaded each time the compass opens)." data-ja="注: サイズは減色後画像の PNG 圧縮による推定で、端末 Storage の近似（完全一致ではありません）。32KB は Garmin 公式の「1値あたり」Storage 上限です。キャッシュできなくても画像自体は表示されます（コンパスを開くたびに再取得されるだけ）。">Note: size is a PNG-compressed estimate; the 32 KB line is Garmin's per-value Storage limit.</p>
+
+    <div id="uploadAlert"></div>
+    <button class="btn" id="uploadBtn" disabled data-en="Upload to my watch" data-ja="ウォッチにアップロード">Upload to my watch</button>
+    <button class="btn secondary" id="removeBtn" data-en="Remove custom image (back to default)" data-ja="カスタム画像を削除（デフォルトに戻す）">Remove custom image (back to default)</button>
+    <p class="preview-note" style="margin-top:14px;" data-en="After uploading, restart PulseLink on your watch. The image downloads via your phone the next time the compass opens." data-ja="アップロード後、ウォッチの PulseLink を再起動してください。次回コンパスを開いた時にスマホ経由で画像がダウンロードされます。">After uploading, restart PulseLink on your watch. The image downloads via your phone the next time the compass opens.</p>
   </div>
 
   <div class="footer-links">
@@ -220,6 +218,7 @@ function setSizeMode(v) {
   sizeMode = (v === 'full') ? 'full' : 'standard';
   document.getElementById('previewStage').classList.toggle('full', sizeMode === 'full');
   if (typeof resetUploadBtn === 'function') { resetUploadBtn(); }
+  if (typeof scheduleMeasure === 'function') { scheduleMeasure(); }
 }
 
 // 現在の curImg + pan/zoom 状態で 320x320 円形マスクを再描画し maskedPng を更新する。
@@ -247,8 +246,9 @@ function redrawPreview() {
   ctx.fill();
   ctx.globalCompositeOperation = 'source-over';
   maskedPng = cv.toDataURL('image/png');
-  // 画像/位置/拡大を変えたら未アップロード状態に戻す。
+  // 画像/位置/拡大を変えたら未アップロード状態に戻し、計測を自動更新。
   if (typeof resetUploadBtn === 'function') { resetUploadBtn(); }
+  if (typeof scheduleMeasure === 'function') { scheduleMeasure(); }
 }
 
 // ─── 言語切替 ───
@@ -476,6 +476,7 @@ document.querySelectorAll('#deviceBtns button').forEach(function (b) {
     mDevStd = parseInt(b.getAttribute('data-std'), 10);
     mDevFull = parseInt(b.getAttribute('data-full'), 10);
     selBtn('deviceBtns', b);
+    scheduleMeasure();
   });
 });
 document.querySelectorAll('#colorBtns button').forEach(function (b) {
@@ -484,6 +485,7 @@ document.querySelectorAll('#colorBtns button').forEach(function (b) {
     selBtn('colorBtns', b);
     updateBppHint();
     if (typeof resetUploadBtn === 'function') { resetUploadBtn(); }
+    scheduleMeasure();
   });
 });
 
@@ -543,47 +545,42 @@ function aText(kb) {
   return kb <= 32 ? (ja ? 'キャッシュ可' : 'caches') : (ja ? 'キャッシュ不可' : 'no cache');
 }
 
+// 計測: 現在の 標準/全画面(sizeMode)・対象機種・色数 に連動した1結果を表示。
 function measure() {
   var ja = document.documentElement.lang === 'ja';
+  var px = (sizeMode === 'full') ? mDevFull : mDevStd;
+  var modeLbl = (sizeMode === 'full') ? (ja ? '全画面' : 'Full') : (ja ? '標準' : 'Standard');
+  var lbl = px + 'px · ' + modeLbl + ' · ' + mColors + (ja ? '色' : ' colors');
   var html;
   if (curImg) {
-    // 実測: この画像を選択色数で減色した圧縮サイズ (content-aware)
-    var stdKb  = quantizedSizeKB(mDevStd, mColors);
-    var fullKb = quantizedSizeKB(mDevFull, mColors);
-    var cellA = function (label, px, kb) {
-      var v = (kb == null) ? '—' : (kb.toFixed(1) + ' KB');
-      return '<div class="cell ' + aClass(kb) + '">' +
-        '<div class="lbl">' + label + ' · ' + px + 'px</div>' +
-        '<div class="val">' + v + '</div>' +
-        '<div class="verdict">' + aText(kb) + '</div></div>';
-    };
-    html = '<div class="measure-res">' +
-        cellA(ja ? '標準' : 'Standard', mDevStd, stdKb) +
-        cellA(ja ? '全画面' : 'Full', mDevFull, fullKb) +
-      '</div>';
+    var kb = quantizedSizeKB(px, mColors);
+    var v = (kb == null) ? '—' : (kb.toFixed(1) + ' KB');
+    html = '<div class="measure-res"><div class="cell ' + aClass(kb) + '" style="flex:1;">' +
+      '<div class="lbl">' + lbl + '</div><div class="val">' + v + '</div>' +
+      '<div class="verdict">' + aText(kb) + '</div></div></div>';
     var cap = ja ? ('品質プレビュー（' + mColors + '色・最適パレット）')
                  : ('Quality preview — ' + mColors + ' colors (optimal palette)');
     html += '<div class="qprev"><div class="qprev-cap">' + cap +
             '</div><canvas id="qCanvas" width="320" height="320"></canvas></div>';
   } else {
-    // 画像未選択: 理論値 (生ビットマップ) を参考表示
     var bpp = bppFor(mColors);
-    var cellT = function (label, px, kb) {
-      return '<div class="cell ' + verdictClass(kb) + '">' +
-        '<div class="lbl">' + label + ' · ' + px + 'px</div>' +
-        '<div class="val">' + kb.toFixed(1) + ' KB</div>' +
-        '<div class="verdict">' + verdictText(kb) + '</div></div>';
-    };
-    html = '<div class="measure-res">' +
-        cellT(ja ? '標準' : 'Standard', mDevStd, kbFor(mDevStd, bpp)) +
-        cellT(ja ? '全画面' : 'Full', mDevFull, kbFor(mDevFull, bpp)) +
-      '</div>' +
+    var kb2 = kbFor(px, bpp);
+    html = '<div class="measure-res"><div class="cell ' + verdictClass(kb2) + '" style="flex:1;">' +
+      '<div class="lbl">' + lbl + '</div><div class="val">' + kb2.toFixed(1) + ' KB</div>' +
+      '<div class="verdict">' + verdictText(kb2) + '</div></div></div>' +
       '<p class="preview-note" style="text-align:left; margin-top:10px;">' +
-      (ja ? '画像を選ぶと、その画像を実際に減色した圧縮サイズ（実測）で判定します。'
-          : 'Load an image to see its actual compressed size at this color count.') + '</p>';
+      (ja ? '画像を選ぶと、実際に減色した圧縮サイズ（実測）で判定します。'
+          : 'Load an image to see the actual compressed size.') + '</p>';
   }
   document.getElementById('measureOut').innerHTML = html;
   if (curImg) { renderQuality(); }
+}
+
+// 連続操作（ドラッグ/拡大）でも重くならないよう、計測はデバウンスして自動実行。
+var measureTimer = null;
+function scheduleMeasure() {
+  if (measureTimer) { clearTimeout(measureTimer); }
+  measureTimer = setTimeout(measure, 180);
 }
 
 // 現在のプレビュー画像を mColors 色に減色 (median-cut + Floyd-Steinberg) して表示。
@@ -621,7 +618,6 @@ function computeOptimalPalette(n) {
     return pal.map(function (c) { return (c[0] << 16) | (c[1] << 8) | c[2]; });
   } catch (e) { return null; }
 }
-document.getElementById('measureBtn').addEventListener('click', measure);
 updateBppHint();
 measure();
 </script>

@@ -274,6 +274,27 @@ try { if (localStorage.getItem('pl_lang') === 'ja') setLang('ja'); } catch(e) {}
   }
 })();
 
+// サインイン済み状態の表示に切り替える (ログイン成功 / セッション復元の両方で使う)。
+function enterSignedIn() {
+  const ja = document.documentElement.lang === 'ja';
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('loginDone').style.display = '';
+  document.getElementById('loginDoneMsg').textContent = ja ? 'サインイン済み。下で画像を選んでください。' : 'Signed in. Choose your image below.';
+  document.getElementById('uploadCard').style.display = '';
+}
+
+// 起動時: 保存済み JWT があれば検証して自動サインイン (リロードでサインイン画面に戻らない)。
+(async function restoreSession() {
+  let saved = null;
+  try { saved = localStorage.getItem('pl_jwt'); } catch (e) {}
+  if (!saved) return;
+  try {
+    const r = await fetch(API + '/user/me', { headers: { 'Authorization': 'Bearer ' + saved } });
+    if (r.ok) { jwt = saved; enterSignedIn(); }
+    else { try { localStorage.removeItem('pl_jwt'); } catch (e) {} }
+  } catch (e) {}
+})();
+
 // ─── ログイン ───
 document.getElementById('loginBtn').addEventListener('click', async () => {
   const email = document.getElementById('email').value.trim();
@@ -291,11 +312,8 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     const j = await r.json();
     if (!r.ok || !j.token) throw new Error(j.error || 'login_failed');
     jwt = j.token;
-    const ja = document.documentElement.lang === 'ja';
-    document.getElementById('loginForm').style.display = 'none';
-    document.getElementById('loginDone').style.display = '';
-    document.getElementById('loginDoneMsg').textContent = ja ? 'サインインしました。下で画像を選んでください。' : 'Signed in. Choose your image below.';
-    document.getElementById('uploadCard').style.display = '';
+    try { localStorage.setItem('pl_jwt', jwt); } catch (e2) {} // リロードしてもサインイン維持
+    enterSignedIn();
   } catch (e) {
     const ja = document.documentElement.lang === 'ja';
     alertBox.innerHTML = '<div class="alert error">' + (ja ? 'サインインに失敗しました。メールアドレスとパスワードをご確認ください。' : 'Sign-in failed. Check your email and password.') + '</div>';

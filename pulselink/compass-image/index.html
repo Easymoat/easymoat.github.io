@@ -76,6 +76,8 @@
   .qprev { margin-top: 16px; text-align: center; }
   .qprev-cap { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
   #qCanvas { width: 200px; height: 200px; border-radius: 50%; background: #000; }
+  .btn.done { background: #16A34A; }
+  .btn.done:hover { background: #128A3E; }
   footer { background: var(--white); border-top: 1px solid var(--border); padding: 20px 40px; text-align: center; font-size: 12px; color: var(--muted2); }
 </style>
 </head>
@@ -214,6 +216,7 @@ let curImg = null, panX = 0, panY = 0, zoom = 1;
 function setSizeMode(v) {
   sizeMode = (v === 'full') ? 'full' : 'standard';
   document.getElementById('previewStage').classList.toggle('full', sizeMode === 'full');
+  if (typeof resetUploadBtn === 'function') { resetUploadBtn(); }
 }
 
 // 現在の curImg + pan/zoom 状態で 320x320 円形マスクを再描画し maskedPng を更新する。
@@ -241,6 +244,8 @@ function redrawPreview() {
   ctx.fill();
   ctx.globalCompositeOperation = 'source-over';
   maskedPng = cv.toDataURL('image/png');
+  // 画像/位置/拡大を変えたら未アップロード状態に戻す。
+  if (typeof resetUploadBtn === 'function') { resetUploadBtn(); }
 }
 
 // ─── 言語切替 ───
@@ -376,6 +381,21 @@ document.getElementById('resetAdjust').addEventListener('click', () => {
 });
 
 // ─── アップロード ───
+// アップロード完了表示 / 設定変更で通常表示へ戻す。
+function markUploadDone() {
+  const btn = document.getElementById('uploadBtn');
+  const ja = document.documentElement.lang === 'ja';
+  btn.textContent = ja ? '✓ アップロード済み' : '✓ Uploaded';
+  btn.classList.add('done');
+}
+function resetUploadBtn() {
+  const btn = document.getElementById('uploadBtn');
+  if (!btn.classList.contains('done')) return;
+  const ja = document.documentElement.lang === 'ja';
+  btn.textContent = btn.getAttribute(ja ? 'data-ja' : 'data-en');
+  btn.classList.remove('done');
+}
+
 document.getElementById('uploadBtn').addEventListener('click', async () => {
   if (!jwt || !maskedPng) return;
   const ja = document.documentElement.lang === 'ja';
@@ -395,6 +415,7 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || 'upload_failed');
     box.innerHTML = '<div class="alert success">' + (ja ? 'アップロード完了。ウォッチの PulseLink を再起動し、コンパスを開くと反映されます。' : 'Uploaded. Restart PulseLink on your watch and open the compass to see it.') + '</div>';
+    markUploadDone();
   } catch (e) {
     box.innerHTML = '<div class="alert error">' + (ja ? 'アップロードに失敗しました: ' : 'Upload failed: ') + e.message + '</div>';
   } finally {
@@ -459,6 +480,7 @@ document.querySelectorAll('#colorBtns button').forEach(function (b) {
     mColors = parseInt(b.getAttribute('data-c'), 10);
     selBtn('colorBtns', b);
     updateBppHint();
+    if (typeof resetUploadBtn === 'function') { resetUploadBtn(); }
   });
 });
 

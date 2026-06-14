@@ -366,10 +366,13 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
   const btn = document.getElementById('uploadBtn');
   btn.disabled = true;
   try {
+    // 画像から最適パレット (median-cut) を mColors 色で算出して一緒に送る。
+    // ウォッチはこのパレットで makeImageRequest するので、同じ色数でも画質が大幅向上。
+    const palette = computeOptimalPalette(mColors);
     const r = await fetch(API + '/user/compass-image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
-      body: JSON.stringify({ image: maskedPng, size: sizeMode, colors: mColors })
+      body: JSON.stringify({ image: maskedPng, size: sizeMode, colors: mColors, palette: palette })
     });
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || 'upload_failed');
@@ -498,6 +501,19 @@ function renderQuality() {
   } catch (e) {
     qc.getContext('2d').drawImage(src, 0, 0);
   }
+}
+// 現在のプレビュー画像から n 色の最適パレット (median-cut) を算出し、色int配列で返す。
+// ウォッチへ送り、makeImageRequest の :palette に使う。
+function computeOptimalPalette(n) {
+  if (typeof RgbQuant === 'undefined' || !curImg) return null;
+  try {
+    var src = document.getElementById('previewCanvas');
+    var q = new RgbQuant({ colors: n, dithKern: 'FloydSteinberg' });
+    q.sample(src);
+    var pal = q.palette(true); // [[r,g,b,a], ...]
+    if (!pal || pal.length < 2) return null;
+    return pal.map(function (c) { return (c[0] << 16) | (c[1] << 8) | c[2]; });
+  } catch (e) { return null; }
 }
 document.getElementById('measureBtn').addEventListener('click', measure);
 updateBppHint();

@@ -127,6 +127,7 @@
     </div>
     <div id="loginDone" style="display:none;">
       <div class="alert success" id="loginDoneMsg"></div>
+      <button class="btn" id="signoutBtn" data-en="Sign out / switch account" data-ja="サインアウト / アカウント切替" style="margin-top:10px;">Sign out / switch account</button>
     </div>
   </div>
 
@@ -282,13 +283,29 @@ try { if (localStorage.getItem('pl_lang') === 'ja') setLang('ja'); } catch(e) {}
 })();
 
 // サインイン済み状態の表示に切り替える (ログイン成功 / セッション復元の両方で使う)。
-function enterSignedIn() {
+// email を渡すと「どのアカウントでサインイン中か」を表示する (アカウント取り違え防止)。
+function enterSignedIn(email) {
   const ja = document.documentElement.lang === 'ja';
   document.getElementById('loginForm').style.display = 'none';
   document.getElementById('loginDone').style.display = '';
-  document.getElementById('loginDoneMsg').textContent = ja ? 'サインイン済み。下で画像を選んでください。' : 'Signed in. Choose your image below.';
+  const who = email ? (' (' + email + ')') : '';
+  document.getElementById('loginDoneMsg').textContent =
+    (ja ? 'サインイン済み' : 'Signed in') + who + (ja ? '。下で画像を選んでください。' : '. Choose your image below.');
   document.getElementById('uploadCard').style.display = '';
 }
+
+// サインアウト: 保存 JWT を消してログインフォームに戻す (別アカウントでの再サインイン用)。
+function enterSignedOut() {
+  jwt = null;
+  try { localStorage.removeItem('pl_jwt'); } catch (e) {}
+  document.getElementById('loginForm').style.display = '';
+  document.getElementById('loginDone').style.display = 'none';
+  document.getElementById('uploadCard').style.display = 'none';
+  document.getElementById('loginAlert').innerHTML = '';
+  document.getElementById('email').value = '';
+  document.getElementById('password').value = '';
+}
+document.getElementById('signoutBtn').addEventListener('click', enterSignedOut);
 
 // 起動時: 保存済み JWT があれば検証して自動サインイン (リロードでサインイン画面に戻らない)。
 (async function restoreSession() {
@@ -297,7 +314,12 @@ function enterSignedIn() {
   if (!saved) return;
   try {
     const r = await fetch(API + '/user/me', { headers: { 'Authorization': 'Bearer ' + saved } });
-    if (r.ok) { jwt = saved; enterSignedIn(); }
+    if (r.ok) {
+      jwt = saved;
+      let me = {};
+      try { me = await r.json(); } catch (e2) {}
+      enterSignedIn(me.email);
+    }
     else { try { localStorage.removeItem('pl_jwt'); } catch (e) {} }
   } catch (e) {}
 })();
@@ -320,7 +342,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     if (!r.ok || !j.token) throw new Error(j.error || 'login_failed');
     jwt = j.token;
     try { localStorage.setItem('pl_jwt', jwt); } catch (e2) {} // リロードしてもサインイン維持
-    enterSignedIn();
+    enterSignedIn(email);
   } catch (e) {
     const ja = document.documentElement.lang === 'ja';
     alertBox.innerHTML = '<div class="alert error">' + (ja ? 'サインインに失敗しました。メールアドレスとパスワードをご確認ください。' : 'Sign-in failed. Check your email and password.') + '</div>';

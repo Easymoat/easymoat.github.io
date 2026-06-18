@@ -212,19 +212,19 @@
           <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
             <!-- Room name -->
             <rect class="box" x="160" y="75" width="195" height="30"/>
-            <line x1="152" y1="72" x2="75" y2="26"/>
-            <text x="-9" y="28" data-en="Room name" data-ja="部屋名">Room name</text>
+            <line x1="152" y1="72" x2="49" y2="36"/>
+            <text x="24" y="26" data-en="Room name" data-ja="部屋名">Room name</text>
             <!-- Status sub-row: Obs. / Upd. 60s (arrow + label only) -->
-            <line x1="170" y1="118" x2="112" y2="115"/>
-            <text x="-32" y="119" data-en="Host mode + interval" data-ja="ホストモード + 更新間隔">Host mode + interval</text>
+            <line x1="168" y1="120" x2="100" y2="105"/>
+            <text x="-16" y="95" data-en="Host mode + interval" data-ja="ホストモード + 更新間隔">Host mode + interval</text>
             <!-- Member rows -->
             <rect class="box" x="121" y="131" width="260" height="153"/>
             <line x1="393" y1="135" x2="457" y2="58"/>
             <text x="374" y="45" data-en="Members (HR / dist / steps)" data-ja="メンバー（心拍 / 距離 / 歩数）">Members (HR / dist / steps)</text>
             <!-- Weather bar -->
             <rect class="box" x="130" y="285" width="236" height="53"/>
-            <line x1="377" y1="320" x2="422" y2="366"/>
-            <text x="292" y="381" data-en="Weather bar (your own)" data-ja="気象バー（自分の）">Weather bar (your own)</text>
+            <line x1="375" y1="312" x2="402" y2="365"/>
+            <text x="314" y="383" data-en="Weather bar (your own)" data-ja="気象バー（自分の）">Weather bar (your own)</text>
             <!-- Date (unread = red) — arrow + label only -->
             <line x1="126" y1="387" x2="174" y2="364"/>
             <text x="-40" y="392" data-en="Date — red = unread msg" data-ja="日付 — 赤=未読メッセージ">Date — red = unread msg</text>
@@ -232,7 +232,7 @@
             <line x1="82" y1="247" x2="31" y2="306"/>
             <text x="-28" y="326" data-en="Left rim: battery" data-ja="左リム: バッテリー">Left rim: battery</text>
             <!-- Right rim meter (Body Battery / Stress, ConnectIQ 設定で切替) -->
-            <line x1="493" y1="382" x2="431" y2="243"/>
+            <line x1="506" y1="381" x2="431" y2="243"/>
             <text x="344" y="400" data-en="Right rim: Body Battery / Stress" data-ja="右リム: Body Battery / ストレス">Right rim: Body Battery / Stress</text>
           </svg>
         </div>
@@ -283,6 +283,17 @@
         <li><strong>Member weather</strong> — <span data-en="Show / hide other members' weather in their rows." data-ja="他メンバーの行に気象を表示／非表示。">Show / hide other members' weather in their rows.</span></li>
         <li><strong>My wx color / Background / Clock color</strong> — <span data-en="Personalize the look — 6 backgrounds, 12 clock colors, 6 weather bar colors." data-ja="見た目をカスタマイズ — 背景 6色、時計 12色、気象バー 6色。">Personalize the look — 6 backgrounds, 12 clock colors, 6 weather bar colors.</span></li>
       </ul>
+
+      <h3 data-en="Watchface image (host subscribers)" data-ja="ウォッチフェイス画像（有料ホスト限定）">Watchface image (host subscribers)</h3>
+      <p data-en="Host subscribers can show their own image on the PulseLink watchface (home screen) — a family crest, team logo, or any symbol. You upload it from the website; the watch downloads it via your phone and shows it automatically the next time PulseLink starts. On the upload page you can drag the image to position it and zoom to frame it before sending." data-ja="有料ホストは、PulseLink のウォッチフェイス（ホーム画面）に好きな画像（家紋・チームロゴ・お気に入りのシンボルなど）を表示できます。Web からアップロードすると、スマホ経由でウォッチがダウンロードし、次回 PulseLink 起動時に自動で表示します。アップロード画面では、画像をドラッグして位置を調整し、拡大して構図を決めてから送信できます。">Host subscribers can show their own image on the PulseLink watchface (home screen) — a family crest, team logo, or any symbol. You upload it from the website; the watch downloads it via your phone and shows it automatically the next time PulseLink starts. On the upload page you can drag the image to position it and zoom to frame it before sending.</p>
+      <ul>
+        <li><strong>Placement</strong> — <span data-en="Self menu → Image → Placement: Upper (top half) or Center (centered, full size)." data-ja="自分メニュー → Image → Placement: Upper（上半分）または Center（中央・全画面サイズ）。">Self menu → Image → Placement: Upper (top half) or Center (centered, full size).</span></li>
+        <li><strong data-en="Share with your Crew" data-ja="Crew に共有">Share with your Crew</strong> — <span data-en="Leaders can share their image with the whole Crew (Self menu → Share → Image). Members without their own image then see the Leader's; members who do have one can choose which to show in Image → Crew image." data-ja="Leader は自分の画像を Crew 全員に共有できます（自分メニュー → Share → Image）。自分の画像を持たない Member には Leader の画像が表示され、自分の画像も持つ Member は Image → Crew image でどちらを表示するか選べます。">Leaders can share their image with the whole Crew (Self menu → Share → Image). Members without their own image then see the Leader's; members who do have one can choose which to show in Image → Crew image.</span></li>
+      </ul>
+      <div class="callout">
+        <strong data-en="Set it up:" data-ja="設定はこちら：">Set it up:</strong>
+        <a href="../compass-image/" data-en="Watchface Image page →" data-ja="ウォッチフェイス画像ページ →">Watchface Image page →</a>
+      </div>
     </section>
 
     <!-- ─── 6. Messages ─── -->
@@ -369,13 +380,6 @@
         <br><br>
         <strong data-en="To recover:" data-ja="復帰方法：">To recover:</strong>
         <span data-en="Press BACK to leave the compass, then restart PulseLink (close and reopen). The compass works again." data-ja="BACK でコンパスを閉じ、PulseLink を一度終了して再起動してください。再びコンパスが使えるようになります。">Press BACK to leave the compass, then restart PulseLink (close and reopen). The compass works again.</span>
-      </div>
-
-      <h3 data-en="Custom compass image (host subscribers)" data-ja="カスタムコンパス画像（有料ホスト限定）">Custom compass image (host subscribers)</h3>
-      <p data-en="Host subscribers can put their own image at the center of the compass — a family crest, team logo, or any symbol. You upload it from the website; the watch downloads it via your phone the next time the compass opens. On the upload page you can drag the image to position it and zoom to frame it before sending." data-ja="有料ホストは、コンパス中央に好きな画像（家紋・チームロゴ・お気に入りのシンボルなど）を表示できます。Web からアップロードすると、次にコンパスを開いた時にスマホ経由でウォッチがダウンロードします。アップロード画面では、画像をドラッグして位置を調整し、拡大して構図を決めてから送信できます。">Host subscribers can put their own image at the center of the compass — a family crest, team logo, or any symbol. You upload it from the website; the watch downloads it via your phone the next time the compass opens. On the upload page you can drag the image to position it and zoom to frame it before sending.</p>
-      <div class="callout">
-        <strong data-en="Set it up:" data-ja="設定はこちら：">Set it up:</strong>
-        <a href="../compass-image/" data-en="Custom Compass Image page →" data-ja="カスタムコンパス画像ページ →">Custom Compass Image page →</a>
       </div>
     </section>
 

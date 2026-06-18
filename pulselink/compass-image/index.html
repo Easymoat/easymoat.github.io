@@ -44,7 +44,7 @@
   .preview-wrap { display: flex; justify-content: center; margin: 20px 0; }
   .preview-stage { position: relative; width: 320px; max-width: 100%; aspect-ratio: 1 / 1; flex: 0 0 auto; border-radius: 50%; background: #000; overflow: hidden; }
   /* ウォッチ実物に合わせ、画像は円形ステージの中央 66% に表示 (fr965: 300px/454px)。
-     ウォッチフェイスのリングは画像の外側にあり「リングあり」では重ならない。 */
+     「リングあり」= 周りに黒い縁が残る小さめ表示 / 「全画面」= ステージいっぱい。 */
   canvas#previewCanvas { position: absolute; left: 17%; top: 17%; width: 66%; height: 66%; border-radius: 50%; cursor: grab; touch-action: none; }
   canvas#previewCanvas:active { cursor: grabbing; }
   .preview-stage.full canvas#previewCanvas { left: 0; top: 0; width: 100%; height: 100%; }
@@ -58,7 +58,6 @@
   .size-toggle label { flex: 1; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 0; }
   .size-toggle label:has(input:checked) { border-color: var(--accent); background: var(--accent-light); color: var(--accent-dark); }
   .size-toggle input { width: auto; }
-  svg.watchface-mock { position: absolute; inset: 0; pointer-events: none; }
   .preview-note { text-align: center; font-size: 12px; color: var(--muted); margin-top: -8px; margin-bottom: 16px; }
   .footer-links { text-align: center; margin-top: 20px; font-size: 13px; color: var(--muted); }
   .footer-links a { color: var(--accent); text-decoration: none; margin: 0 8px; }
@@ -143,10 +142,6 @@
     <div class="preview-wrap">
       <div class="preview-stage" id="previewStage">
         <canvas id="previewCanvas" width="320" height="320"></canvas>
-        <!-- ウォッチフェイスのリング。リングあり: 画像は中央(リング内側)。全画面: 画像がリングに重なる。 -->
-        <svg class="watchface-mock" viewBox="0 0 320 320">
-          <circle cx="160" cy="160" r="150" fill="none" stroke="#39C0C8" stroke-width="4"/>
-        </svg>
       </div>
     </div>
     <div id="adjustRow" class="adjust-row" style="display:none;">
@@ -158,7 +153,7 @@
         <button type="button" class="btn-link" id="resetAdjust" data-en="Reset" data-ja="リセット">Reset</button>
       </div>
     </div>
-    <p class="preview-note" style="text-align:left;" data-en="True-to-watch preview. With ring: image sits inside the ring, nothing overlaps it. Full screen: image fills the watchface and the ring draws over it — bright images can make it harder to read." data-ja="実機どおりのプレビュー。リングあり: 画像はリングの内側に収まり、何も重なりません。全画面: 画像が画面全体に広がり、リングが画像の上に描かれます（明るい画像では読みにくくなることがあります）。">True-to-watch preview. With ring: image sits inside the ring, nothing overlaps it. Full screen: image fills the watchface and the ring draws over it — bright images can make it harder to read.</p>
+    <p class="preview-note" style="text-align:left;" data-en="True-to-watch preview. With ring: the image is shown smaller, with a black margin around it. Full screen: the image fills the entire watchface." data-ja="実機どおりのプレビュー。リングあり: 画像が小さめに表示され、周りに黒い縁が残ります。全画面: 画像が画面いっぱいに広がります。">True-to-watch preview. With ring: the image is shown smaller, with a black margin around it. Full screen: the image fills the entire watchface.</p>
     <!-- キャッシュ容量の実測 (プレビューと融合)。現在の 標準/全画面・色数 に連動して自動更新。 -->
     <p style="font-weight:600; margin: 22px 0 4px;" data-en="Will it show on your watch?" data-ja="ウォッチに表示できる？">Will it show on your watch?</p>
     <p class="preview-note" style="margin-top:0; text-align:left;" data-en="Pick a color count and size below. The result box then tells you whether the image will show on the watch. (More colors and a bigger image are harder to show.)" data-ja="下で色数と表示サイズを選ぶと、その組み合わせでウォッチに表示できるかどうかを下の枠に表示します。（色数が多く画像が大きいほど、表示が難しくなります。）">Pick a color count and size below; the result box tells you whether it will show on the watch.</p>
@@ -186,7 +181,7 @@
       <div class="hint" id="bppHint" style="margin-top:6px;"></div>
     </div>
     <div id="measureOut" style="margin-top:12px;"></div>
-    <p class="preview-note" style="text-align:left; margin-top:1em;" data-en="Rule: with the ring (image inside the ring), any number of colors is fine. For Full screen, 16 colors or fewer is the safe choice. Fewer colors always displays more reliably." data-ja="ルール: 「リングあり」（リングの内側に画像）なら、何色を選んでも大丈夫です。「全画面」にするときは、16色までが安心です。色数を抑えるほど、確実に表示されます。">Rule: With ring works with any colors; for Full screen, 16 colors or fewer is the safe choice.</p>
+    <p class="preview-note" style="text-align:left; margin-top:1em;" data-en="Rule: With ring (a smaller image) works with any number of colors. For Full screen, 16 colors or fewer is the safe choice. Fewer colors always displays more reliably." data-ja="ルール: 「リングあり」（小さめの画像）なら、何色を選んでも大丈夫です。「全画面」にするときは、16色までが安心です。色数を抑えるほど、確実に表示されます。">Rule: With ring works with any colors; for Full screen, 16 colors or fewer is the safe choice.</p>
 
     <div id="uploadAlert"></div>
     <button class="btn" id="uploadBtn" disabled data-en="Upload to my watch" data-ja="ウォッチにアップロード">Upload to my watch</button>

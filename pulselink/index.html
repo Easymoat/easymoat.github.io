@@ -172,7 +172,7 @@
       <h1><em>Pulse</em><br>Link</h1>
       <p class="hero-desc" data-en="Share your heart rate, steps and distance live with running friends or loved ones on your Garmin wrist. Host-led rooms with invite codes, up to 20 template messages, and a real-time member view designed for groups of 2-8 people. Guests join free — only the host subscribes." data-ja="ランニング仲間や大切な家族と、心拍数・歩数・距離をGarminウォッチでリアルタイム共有。ホスト主導の招待コード制ルーム、最大20の定型メッセージ、2〜8名のグループに最適化されたリアルタイム表示。ゲストは完全無料 — ホストだけがサブスクリプション登録します。">Share your heart rate, steps and distance live with running friends or loved ones on your Garmin wrist. Host-led rooms with invite codes, up to 20 template messages, and a real-time member view designed for groups of 2-8 people. Guests join free — only the host subscribes.</p>
       <div class="hero-cta">
-        <a href="https://apps.garmin.com/" class="btn-primary" data-en="Start 14-Day Free Trial" data-ja="14日間の無料トライアルを開始">Start 14-Day Free Trial</a>
+        <a href="https://apps.garmin.com/en-US/apps/bb7dfaab-d831-4206-a135-be7fc8fd0226" data-en-href="https://apps.garmin.com/en-US/apps/bb7dfaab-d831-4206-a135-be7fc8fd0226" data-ja-href="https://apps.garmin.com/ja-JP/apps/bb7dfaab-d831-4206-a135-be7fc8fd0226" class="btn-primary" data-en="Start 14-Day Free Trial" data-ja="14日間の無料トライアルを開始">Start 14-Day Free Trial</a>
         <a href="https://buy.stripe.com/3cI14g4SJ0p65KpeE09sk03" class="btn-secondary" data-en="Subscribe — $9.99/year" data-ja="登録 — $9.99/年">Subscribe — $9.99/year</a>
       </div>
       <p style="font-size:13px; color:var(--muted); margin-top:10px;" data-en="Guests join free. Host: 14-day free trial, then $9.99/year — no payment to start." data-ja="ゲストは無料で参加。ホストは14日間の無料トライアル後 $9.99/年 — 開始時の支払いは不要。">Guests join free. Host: 14-day free trial, then $9.99/year — no payment to start.</p>
@@ -616,6 +616,12 @@ function setLang(lang) {
 
   // 言語選択をサイト全体で共有 (Privacy/Terms 等の遷移先でも維持)
   try { localStorage.setItem('pl_lang', lang); } catch (e) {}
+
+  // ロケール連動リンク (Garmin ストア: en-US / ja-JP)
+  document.querySelectorAll('[data-en-href]').forEach(el => {
+    const href = el.getAttribute('data-' + lang + '-href');
+    if (href) el.setAttribute('href', href);
+  });
 
   injectEmails();
 }

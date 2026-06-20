@@ -202,7 +202,7 @@
       <h1><em>Market</em><br>Watch</h1>
       <p class="hero-desc" data-en="Auto-refreshing stock prices, crypto, FX and indices — directly on your Garmin watch. Designed for serious investors who need market data at a glance." data-ja="株価・暗号資産・為替・指数をGarminウォッチで自動更新表示。スマートフォンを取り出さずに、いつでも相場を確認できます。">Auto-refreshing stock prices, crypto, FX and indices — directly on your Garmin watch. Designed for serious investors who need market data at a glance.</p>
       <div class="hero-cta">
-        <a href="https://apps.garmin.com/" class="btn-primary" data-en="Start 14-Day Free Trial" data-ja="14日間の無料トライアルを開始">Start 14-Day Free Trial</a>
+        <a href="https://apps.garmin.com/en-US/apps/c65e1a35-e34e-4763-8c67-85e52da733bb" data-en-href="https://apps.garmin.com/en-US/apps/c65e1a35-e34e-4763-8c67-85e52da733bb" data-ja-href="https://apps.garmin.com/ja-JP/apps/c65e1a35-e34e-4763-8c67-85e52da733bb" class="btn-primary" data-en="Start 14-Day Free Trial" data-ja="14日間の無料トライアルを開始">Start 14-Day Free Trial</a>
         <a href="https://buy.stripe.com/4gM4gs3OF1tafkZ3Zm9sk01" class="btn-secondary" data-en="Buy — $7.99" data-ja="購入 — $7.99">Buy — $7.99</a>
       </div>
       <p style="font-size:13px; color:var(--muted); margin-top:10px;" data-en="All features free for 14 days — no payment to start. $7.99 one-time after trial, no subscription." data-ja="全機能を14日間無料 — 開始時の支払いは不要。トライアル後は$7.99の買い切り（サブスクなし）。">All features free for 14 days — no payment to start. $7.99 one-time after trial, no subscription.</p>
@@ -616,6 +616,12 @@ function setLang(lang) {
     var ph = sInput.getAttribute('data-' + lang + '-placeholder');
     if (ph) sInput.placeholder = ph;
   }
+
+  // ロケール連動リンク (Garmin ストア: en-US / ja-JP)
+  document.querySelectorAll('[data-en-href]').forEach(el => {
+    const href = el.getAttribute('data-' + lang + '-href');
+    if (href) el.setAttribute('href', href);
+  });
 
   injectEmails();
 }

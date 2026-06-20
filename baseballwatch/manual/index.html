@@ -55,6 +55,8 @@
   section.chapter > ul li, section.chapter > ol li { margin-bottom: 6px; }
   section.chapter strong { color: var(--text); font-weight: 600; }
   section.chapter code { background: var(--accent-light); color: var(--accent-dark); padding: 1px 6px; border-radius: 3px; font-size: 13px; font-family: 'SF Mono', monospace; }
+  .op-tap  { color: var(--accent);  font-weight: 600; }
+  .op-hold { color: var(--accent2); font-weight: 600; }
 
   table.ops { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 14px; background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
   table.ops th { background: var(--accent-light); color: var(--accent-dark); text-align: left; padding: 8px 12px; font-weight: 600; }
@@ -321,11 +323,11 @@
       <h3 data-en="By touch" data-ja="タッチで操作">By touch</h3>
       <table class="ops">
         <tr><th data-en="Action" data-ja="操作">Action</th><th data-en="What it does" data-ja="動作">What it does</th></tr>
-        <tr><td data-en="Long-press batter name (right)" data-ja="打者名 (右) を長押し">Long-press batter name (right)</td><td data-en="Enter batting-order browse, starting from the current batter" data-ja="現在の打者を起点に打順の閲覧を開始">Enter batting-order browse, starting from the current batter</td></tr>
-        <tr><td data-en="Long-press pitcher name (left)" data-ja="投手名 (左) を長押し">Long-press pitcher name (left)</td><td data-en="Enter pitching-order browse (starter → current pitcher)" data-ja="登板順 (先発 → 現在の投手) の閲覧を開始">Enter pitching-order browse (starter → current pitcher)</td></tr>
+        <tr><td data-en="<span class='op-hold'>Long-press</span> batter name (right)" data-ja="打者名 (右) を<span class='op-hold'>長押し</span>"><span class="op-hold">Long-press</span> batter name (right)</td><td data-en="Enter batting-order browse, starting from the current batter" data-ja="現在の打者を起点に打順の閲覧を開始">Enter batting-order browse, starting from the current batter</td></tr>
+        <tr><td data-en="<span class='op-hold'>Long-press</span> pitcher name (left)" data-ja="投手名 (左) を<span class='op-hold'>長押し</span>"><span class="op-hold">Long-press</span> pitcher name (left)</td><td data-en="Enter pitching-order browse (starter → current pitcher)" data-ja="登板順 (先発 → 現在の投手) の閲覧を開始">Enter pitching-order browse (starter → current pitcher)</td></tr>
         <tr><td><span data-en="UP / DOWN" data-ja="UP / DOWN">UP / DOWN</span><br><span data-en="(swipe down / swipe up)" data-ja="(スワイプDown / スワイプUp)">(swipe down / swipe up)</span></td><td data-en="Step to the previous / next player in the order" data-ja="打順/登板順の前後の選手へ">Step to the previous / next player in the order</td></tr>
-        <tr><td data-en="Tap a base" data-ja="塁をタップ">Tap a base</td><td data-en="Show the runner on that base instantly; tap the same base again to return" data-ja="その塁の走者を即表示。同じ塁を再タップで戻る">Show the runner on that base instantly; tap the same base again to return</td></tr>
-        <tr><td data-en="BACK / long-press again" data-ja="BACK / 再度長押し">BACK / long-press again</td><td data-en="Exit browse and return to the live player" data-ja="閲覧を終了してライブ表示へ戻る">Exit browse and return to the live player</td></tr>
+        <tr><td data-en="<span class='op-tap'>Tap</span> a base" data-ja="塁を<span class='op-tap'>タップ</span>"><span class="op-tap">Tap</span> a base</td><td data-en="Show the runner on that base instantly; <span class='op-tap'>tap</span> the same base again to return" data-ja="その塁の走者を即表示。同じ塁を再<span class='op-tap'>タップ</span>で戻る">Show the runner on that base instantly; <span class="op-tap">tap</span> the same base again to return</td></tr>
+        <tr><td data-en="BACK / <span class='op-hold'>long-press</span> again" data-ja="BACK / 再度<span class='op-hold'>長押し</span>">BACK / <span class="op-hold">long-press</span> again</td><td data-en="Exit browse and return to the live player" data-ja="閲覧を終了してライブ表示へ戻る">Exit browse and return to the live player</td></tr>
       </table>
 
       <h3 data-en="By buttons — the selection frame" data-ja="ボタンで操作 — 選択枠">By buttons — the selection frame</h3>
@@ -513,9 +515,8 @@
 function setLang(lang) {
   document.documentElement.lang = lang === 'ja' ? 'ja' : 'en';
   document.querySelectorAll('[data-en]').forEach(el => {
-    if (el.children.length > 0) return;
     const text = el.getAttribute('data-' + lang);
-    if (text) el.textContent = text;
+    if (text) el.innerHTML = text;
   });
   document.getElementById('btn-en').classList.toggle('active', lang === 'en');
   document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');

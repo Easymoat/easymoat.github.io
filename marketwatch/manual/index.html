@@ -242,11 +242,33 @@
       <p data-en="Tap a symbol (or choose Open Detail) to see its chart with key stats: high/low of the chart window, the chart's date range (S:/E:), today's volume (Vol:) and the current chart period (Per:)." data-ja="銘柄をタップ (または Open Detail) すると詳細画面へ。チャートと主要情報 — チャート窓の高値/安値、チャートの期間範囲 (S:/E:)、当日出来高 (Vol:)、現在のチャート期間 (Per:) — が表示されます。">Tap a symbol (or choose Open Detail) to see its chart with key stats: high/low of the chart window, the chart's date range (S:/E:), today's volume (Vol:) and the current chart period (Per:).</p>
 
       <figure class="annotated">
+        <style>
+          .ds-tabs { display:flex; gap:8px; justify-content:center; margin-bottom:12px; }
+          .ds-tabs button { font:inherit; font-size:13px; font-weight:600; padding:5px 14px; border:1px solid var(--accent); border-radius:14px; background:#fff; color:var(--accent-dark); cursor:pointer; }
+          .ds-tabs button.active { background:var(--accent); color:#fff; }
+        </style>
+        <div class="ds-tabs">
+          <button class="active" data-img="screens/detail-se.png?v=1" data-en="H/L · S/E" data-ja="H/L・S/E">H/L · S/E</button>
+          <button data-img="screens/detail.png?v=1" data-en="Volume bars" data-ja="出来高バー">Volume bars</button>
+        </div>
         <div class="stage">
-          <img src="screens/detail.png?v=1" alt="Detail screen">
+          <img class="ds-detail-img" src="screens/detail-se.png?v=1" alt="Detail screen">
           <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
-        <figcaption data-en="Detail screen — price chart with the volume bar graph below, plus Vol and Per." data-ja="詳細画面 — 価格チャートと下部の出来高バーグラフ、Vol と Per。">Detail screen — price chart with the volume bar graph below, plus Vol and Per.</figcaption>
+        <figcaption data-en="Detail screen — switch tabs between the H/L · S/E text view and the volume-bar view (chart long-press toggles it on the watch). Vol and Per always show." data-ja="詳細画面 — タブで「H/L・S/E テキスト表示」と「出来高バー表示」（ウォッチではチャート長押しで切替）を切り替え。Vol と Per は常時表示。">Detail screen — switch tabs between the H/L · S/E text view and the volume-bar view (chart long-press toggles it on the watch). Vol and Per always show.</figcaption>
+        <script>
+          (function(){
+            var fig = document.currentScript.closest('figure');
+            var img = fig.querySelector('.ds-detail-img');
+            fig.querySelectorAll('.ds-tabs button').forEach(function(btn){
+              btn.addEventListener('click', function(){
+                fig.querySelectorAll('.ds-tabs button').forEach(function(b){ b.classList.remove('active'); });
+                btn.classList.add('active');
+                img.src = btn.getAttribute('data-img');
+              });
+            });
+          })();
+        </script>
       </figure>
 
       <table class="ops">

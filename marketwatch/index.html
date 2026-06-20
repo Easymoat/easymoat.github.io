@@ -621,7 +621,9 @@ function setLang(lang) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  setLang('en');
+  // 初回表示: ブラウザ言語が日本語なら日本語、それ以外は英語。
+  var nav = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+  setLang(nav.indexOf('ja') === 0 ? 'ja' : 'en');
   injectEmails();
 });
 

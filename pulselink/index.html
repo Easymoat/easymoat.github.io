@@ -620,11 +620,18 @@ function setLang(lang) {
   injectEmails();
 }
 
-// 保存済みの言語設定があれば初期適用 (他ページで日本語にしていたら日本語で開く)
+// 初期言語: 明示的に保存された選択を優先、無ければブラウザ言語で判定。
 (function () {
-  var saved = 'en';
-  try { saved = localStorage.getItem('pl_lang') || 'en'; } catch (e) {}
-  if (saved === 'ja') { setLang('ja'); }
+  var saved = null;
+  try { saved = localStorage.getItem('pl_lang'); } catch (e) {}
+  var lang;
+  if (saved === 'ja' || saved === 'en') {
+    lang = saved;   // ユーザーが明示的に選んだ言語を尊重
+  } else {
+    var nav = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+    lang = nav.indexOf('ja') === 0 ? 'ja' : 'en';
+  }
+  if (lang === 'ja') { setLang('ja'); }
 })();
 
 injectEmails();

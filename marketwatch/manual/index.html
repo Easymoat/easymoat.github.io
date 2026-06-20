@@ -344,11 +344,28 @@
       <p data-en="Two optional bars can live inside your list, turning it into a glanceable dashboard — like a watch face with market data." data-ja="リストの中に 2 種類の情報バーを挿入できます。マーケット情報入りウォッチフェイスのような、一目で分かるダッシュボードになります。">Two optional bars can live inside your list, turning it into a glanceable dashboard — like a watch face with market data.</p>
 
       <figure class="annotated">
+        <div class="ds-tabs">
+          <button class="active" data-img="screens/infobars-list.png?v=1" data-en="List view" data-ja="リスト表示">List view</button>
+          <button data-img="screens/infobars-menu.png?v=1" data-en="Add menu" data-ja="追加メニュー">Add menu</button>
+        </div>
         <div class="stage">
-          <img src="screens/list.png?v=3" alt="Info bars">
+          <img class="ds-detail-img" src="screens/infobars-list.png?v=1" alt="Info bars">
           <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
-        <figcaption data-en="Weather Bar (top) and Physical Bar (bottom) between symbols." data-ja="銘柄の間に Weather Bar (上) と Physical Bar (下)。">Weather Bar (top) and Physical Bar (bottom) between symbols.</figcaption>
+        <figcaption data-en="Info bars in your list — Weather Bar (top) and Physical Bar (bottom), with rim meters. Switch tabs to the menu where you add or manage them." data-ja="リスト内の情報バー — 上が Weather Bar、下が Physical Bar、左右にリムメーター。タブで追加・管理メニューに切り替えられます。">Info bars in your list — Weather Bar (top) and Physical Bar (bottom), with rim meters. Switch tabs to the menu where you add or manage them.</figcaption>
+        <script>
+          (function(){
+            var fig = document.currentScript.closest('figure');
+            var img = fig.querySelector('.ds-detail-img');
+            fig.querySelectorAll('.ds-tabs button').forEach(function(btn){
+              btn.addEventListener('click', function(){
+                fig.querySelectorAll('.ds-tabs button').forEach(function(b){ b.classList.remove('active'); });
+                btn.classList.add('active');
+                img.src = btn.getAttribute('data-img');
+              });
+            });
+          })();
+        </script>
       </figure>
 
       <h3>Weather Bar</h3>

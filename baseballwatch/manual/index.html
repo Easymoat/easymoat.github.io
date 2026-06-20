@@ -223,19 +223,28 @@
       </ul>
 
       <figure class="annotated">
+        <div class="ds-tabs">
+          <button class="active" data-img="screens/main.png?v=2" data-en="Live" data-ja="試合中 (Live)">Live</button>
+          <button data-img="screens/main-final.png?v=1" data-en="Game over" data-ja="試合終了後">Game over</button>
+        </div>
         <div class="stage">
-          <img src="screens/main.png?v=2" alt="Main screen">
+          <img class="ds-detail-img" src="screens/main.png?v=2" alt="Main screen">
           <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
-        <figcaption data-en="Main screen — header (clock · player · status · scoreboard) on top; the live area (pitcher · diamond · batter) fills the bottom half." data-ja="メイン画面 — 上半分はヘッダー (時刻・選手・ステータス・スコアボード)、下半分がライブエリア (投手・ダイヤモンド・打者)。">Main screen — header (clock · player · status · scoreboard) on top; the live area (pitcher · diamond · batter) fills the bottom half.</figcaption>
-      </figure>
-
-      <figure class="annotated">
-        <div class="stage">
-          <img src="screens/main-final.png?v=1" alt="Main screen, game over">
-          <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"></svg>
-        </div>
-        <figcaption data-en="Game over — the status line reads Final and the scoreboard fills in with the full line score (runs per inning) and the final R total." data-ja="試合終了 — ステータスは Final になり、スコアボードにイニングごとの得点と最終的な合計得点 (R) が並びます。">Game over — the status line reads Final and the scoreboard fills in with the full line score (runs per inning) and the final R total.</figcaption>
+        <figcaption data-en="The main screen during a live game and after it ends — switch tabs to compare. Live: the status shows the current inning and the live area updates pitch by pitch. Game over: the status reads Final and the scoreboard fills in with the full line score (runs per inning) and the R total." data-ja="メイン画面の試合中と試合終了後 — タブで切り替えられます。試合中: ステータスに現在のイニングが出て、ライブエリアが 1 球ごとに更新されます。試合終了後: ステータスが Final になり、スコアボードにイニングごとの得点と合計 (R) が並びます。">The main screen during a live game and after it ends — switch tabs to compare. Live: the status shows the current inning and the live area updates pitch by pitch. Game over: the status reads Final and the scoreboard fills in with the full line score (runs per inning) and the R total.</figcaption>
+        <script>
+          (function(){
+            var fig = document.currentScript.closest('figure');
+            var img = fig.querySelector('.ds-detail-img');
+            fig.querySelectorAll('.ds-tabs button').forEach(function(btn){
+              btn.addEventListener('click', function(){
+                fig.querySelectorAll('.ds-tabs button').forEach(function(b){ b.classList.remove('active'); });
+                btn.classList.add('active');
+                img.src = btn.getAttribute('data-img');
+              });
+            });
+          })();
+        </script>
       </figure>
 
       <table class="ops">

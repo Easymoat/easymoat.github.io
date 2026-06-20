@@ -309,7 +309,7 @@
 
       <figure class="annotated">
         <div class="stage">
-          <img src="screens/history.png?v=1" alt="Inning history screen">
+          <img src="screens/history.png?v=2" alt="Inning history screen">
           <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
         <figcaption data-en="Inning history — order number, batter, result code, pitcher of the inning." data-ja="イニング履歴 — 打順・打者・結果コード・そのイニングの投手。">Inning history — order number, batter, result code, pitcher of the inning.</figcaption>
@@ -374,11 +374,33 @@
       </ul>
 
       <figure class="annotated">
+        <style>
+          .ds-tabs { display:flex; gap:8px; justify-content:center; margin-bottom:12px; }
+          .ds-tabs button { font:inherit; font-size:13px; font-weight:600; padding:5px 14px; border:1px solid var(--accent); border-radius:14px; background:#fff; color:var(--accent-dark); cursor:pointer; }
+          .ds-tabs button.active { background:var(--accent); color:#fff; }
+        </style>
+        <div class="ds-tabs">
+          <button class="active" data-img="screens/detail2.png?v=1" data-en="Batter" data-ja="打者">Batter</button>
+          <button data-img="screens/detail.png?v=1" data-en="Pitcher" data-ja="投手">Pitcher</button>
+        </div>
         <div class="stage">
-          <img src="screens/detail.png?v=1" alt="Detail screen">
+          <img class="ds-detail-img" src="screens/detail2.png?v=1" alt="Detail screen">
           <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
-        <figcaption data-en="Detail screen — today's at-bats (or game pitching) and season stats." data-ja="詳細画面 — 当日の打席結果 (または投球成績) とシーズン成績。">Detail screen — today's at-bats (or game pitching) and season stats.</figcaption>
+        <figcaption data-en="Detail screen — switch tabs between a batter (today's at-bats + the Add / Remove list button) and a pitcher (game pitching). Season stats show on both." data-ja="詳細画面 — タブで打者（当日の打席結果＋リスト追加/削除ボタン）と投手（投球成績）を切り替えられます。シーズン成績は両方に表示されます。">Detail screen — switch tabs between a batter (today's at-bats + the Add / Remove list button) and a pitcher (game pitching). Season stats show on both.</figcaption>
+        <script>
+          (function(){
+            var fig = document.currentScript.closest('figure');
+            var img = fig.querySelector('.ds-detail-img');
+            fig.querySelectorAll('.ds-tabs button').forEach(function(btn){
+              btn.addEventListener('click', function(){
+                fig.querySelectorAll('.ds-tabs button').forEach(function(b){ b.classList.remove('active'); });
+                btn.classList.add('active');
+                img.src = btn.getAttribute('data-img');
+              });
+            });
+          })();
+        </script>
       </figure>
 
       <h3 data-en="Add / remove from your Player Mode list" data-ja="Player Mode リストへの追加 / 解除">Add / remove from your Player Mode list</h3>

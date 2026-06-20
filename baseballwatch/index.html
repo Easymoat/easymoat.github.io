@@ -612,6 +612,12 @@ function copyId(btn, id) {
 }
 
 injectEmails();
+
+// 初回表示: ブラウザ言語が日本語なら日本語で初期化 (本文もリンクも ja-JP に)。
+(function () {
+  var nav = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+  if (nav.indexOf('ja') === 0) { setLang('ja'); }
+})();
 </script>
 </body>
 </html>

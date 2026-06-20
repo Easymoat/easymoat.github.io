@@ -180,7 +180,7 @@
       <h1><em>Baseball</em><br>Watch <span style="color:var(--muted2); font-size:0.5em; vertical-align:0.4em;">2026</span></h1>
       <p class="hero-desc" data-en="Live pro baseball game updates on your Garmin watch. Follow your favorite team's whole lineup and pitching staff in real time — or track up to 20 individual players across teams. Instant notifications for hits, home runs, strikeouts, pitching changes, and more, without picking up your phone." data-ja="プロ野球（メジャー）の試合状況をGarminウォッチでリアルタイムに。応援チームの打順・投手陣をまるごと自動追跡、または推しの選手を最大20名まで個別登録。ヒット・ホームラン・三振・登板交代などを瞬時に通知し、スマートフォンを取り出さずに試合を追えます。">Live pro baseball game updates on your Garmin watch. Follow your favorite team's whole lineup and pitching staff in real time — or track up to 20 individual players across teams. Instant notifications for hits, home runs, strikeouts, pitching changes, and more, without picking up your phone.</p>
       <div class="hero-cta">
-        <a href="https://apps.garmin.com/apps/bc799021-63e3-4355-b45d-114965f8a14f" class="btn-primary" data-en="Start 14-Day Free Trial" data-ja="14日間の無料トライアルを開始">Start 14-Day Free Trial</a>
+        <a href="https://apps.garmin.com/en-US/apps/bc799021-63e3-4355-b45d-114965f8a14f" data-en-href="https://apps.garmin.com/en-US/apps/bc799021-63e3-4355-b45d-114965f8a14f" data-ja-href="https://apps.garmin.com/ja-JP/apps/bc799021-63e3-4355-b45d-114965f8a14f" class="btn-primary" data-en="Start 14-Day Free Trial" data-ja="14日間の無料トライアルを開始">Start 14-Day Free Trial</a>
         <a href="https://buy.stripe.com/5kQ7sE1Gx3Bi0q5gM89sk02" class="btn-secondary" data-en="Subscribe — $1.49/month" data-ja="登録 — $1.49/月">Subscribe — $1.49/month</a>
       </div>
       <p style="font-size:13px; color:var(--muted); margin-top:10px;" data-en="All features free for 14 days — no payment to start. $1.49/month after trial, cancel anytime." data-ja="全機能を14日間無料 — 開始時の支払いは不要。トライアル後は月額$1.49（いつでも解約可能）。">All features free for 14 days — no payment to start. $1.49/month after trial, cancel anytime.</p>
@@ -473,6 +473,12 @@ function setLang(lang) {
     const placeholder = searchInput.getAttribute('data-' + lang + '-placeholder');
     if (placeholder) searchInput.placeholder = placeholder;
   }
+
+  // Locale-specific links (e.g. Garmin store: en-US / ja-JP)
+  document.querySelectorAll('[data-en-href]').forEach(el => {
+    const href = el.getAttribute('data-' + lang + '-href');
+    if (href) el.setAttribute('href', href);
+  });
 
   // Cancellation policy
   var cancel = document.getElementById('cancellation-policy');

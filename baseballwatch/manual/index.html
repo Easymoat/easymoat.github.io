@@ -181,11 +181,11 @@
     <!-- ─── 2. Two Modes ─── -->
     <section class="chapter" id="modes">
       <h2 data-en="2. Two Modes" data-ja="2. 2つのモード">2. Two Modes</h2>
-      <p data-en="BaseballWatch has two display modes. Switch anytime: tap the upper part of the main screen to open Settings, then choose Display Mode." data-ja="BaseballWatch には 2 つの表示モードがあります。切替はいつでも可能: メイン画面の上部をタップして設定を開き、Display Mode を選択してください。">BaseballWatch has two display modes. Switch anytime: tap the upper part of the main screen to open Settings, then choose Display Mode.</p>
+      <p data-en="BaseballWatch has two display modes. Team Mode is the easiest way to follow a whole team; Player Mode tracks specific players across teams. Switch anytime: tap the upper part of the main screen to open Settings, then choose Display Mode." data-ja="BaseballWatch には 2 つの表示モードがあります。Team Mode はチームをまるごと追ういちばん手軽な方法、Player Mode はチームを問わず特定の選手を追うモードです。切替はいつでも可能: メイン画面の上部をタップして設定を開き、Display Mode を選択してください。">BaseballWatch has two display modes. Team Mode is the easiest way to follow a whole team; Player Mode tracks specific players across teams. Switch anytime: tap the upper part of the main screen to open Settings, then choose Display Mode.</p>
       <table class="ops">
         <tr><th data-en="Mode" data-ja="モード">Mode</th><th data-en="What it shows" data-ja="表示内容">What it shows</th></tr>
-        <tr><td data-en="Player Mode" data-ja="Player Mode (選手)">Player Mode</td><td data-en="Up to 20 players of your choice, from any teams. UP/DOWN cycles through them; each screen is built around one player and their game today." data-ja="任意のチームから最大 20 名の選手を登録。UP/DOWN で切替でき、各画面は 1 選手とその日の試合を中心に構成されます。">Up to 20 players of your choice, from any teams. UP/DOWN cycles through them; each screen is built around one player and their game today.</td></tr>
         <tr><td data-en="Team Mode" data-ja="Team Mode (応援チーム)">Team Mode</td><td data-en="Pick one favorite team. The 20 slots fill automatically with today's lineup and pitchers, and the screen auto-focuses the current batter or pitcher live (chapter 8)." data-ja="応援チームを 1 つ選択。20 枠に当日のスタメンと投手が自動で入り、ライブ中は現在の打者/投手へ自動フォーカスします (第 8 章)。">Pick one favorite team. The 20 slots fill automatically with today's lineup and pitchers, and the screen auto-focuses the current batter or pitcher live (chapter 8).</td></tr>
+        <tr><td data-en="Player Mode" data-ja="Player Mode (選手)">Player Mode</td><td data-en="Up to 20 players of your choice, from any teams. UP/DOWN cycles through them; each screen is built around one player and their game today." data-ja="任意のチームから最大 20 名の選手を登録。UP/DOWN で切替でき、各画面は 1 選手とその日の試合を中心に構成されます。">Up to 20 players of your choice, from any teams. UP/DOWN cycles through them; each screen is built around one player and their game today.</td></tr>
       </table>
       <div class="callout" data-en="Your registered players and your favorite team are stored separately — switching modes never erases the other mode's setup." data-ja="登録選手と応援チームは別々に保存されます。モードを切り替えても、もう一方の設定が消えることはありません。">Your registered players and your favorite team are stored separately — switching modes never erases the other mode's setup.</div>
     </section>
@@ -202,8 +202,14 @@
         <li data-en="Edit ID opens a number pad — type the Player ID and confirm. Entering 0 clears the slot." data-ja="Edit ID は数字パッドを開きます。選手 ID を入力して確定。0 を入力すると枠を削除できます。">Edit ID opens a number pad — type the Player ID and confirm. Entering 0 clears the slot.</li>
       </ol>
 
-      <h3 data-en="Watched players (W)" data-ja="監視対象の選手 (W)">Watched players (W)</h3>
-      <p data-en="In Player Mode, notifications fire only for watched players — marked W in the Member List. Toggle it there, or long-press the upper part of the main screen to toggle the displayed player. In Team Mode every player of your team is watched automatically." data-ja="Player Mode では、通知は監視対象 (Member List で W マーク) の選手のみ発火します。Member List で切り替えるか、メイン画面上部を長押しすると表示中の選手を切り替えられます。Team Mode ではチームの全選手が自動で監視対象になります。">In Player Mode, notifications fire only for watched players — marked W in the Member List. Toggle it there, or long-press the upper part of the main screen to toggle the displayed player. In Team Mode every player of your team is watched automatically.</p>
+      <h3 data-en="Watched &amp; locked-in players" data-ja="監視・ロックイン">Watched &amp; locked-in players</h3>
+      <p data-en="In Player Mode each player has three states. Long-press the upper part of the main screen to cycle the displayed player through them (white → green → pink → green → white):" data-ja="Player Mode では各選手に 3 つの状態があります。メイン画面の上部を長押しすると、表示中の選手の状態が循環します (白 → 緑 → ピンク → 緑 → 白):">In Player Mode each player has three states. Long-press the upper part of the main screen to cycle the displayed player through them (white → green → pink → green → white):</p>
+      <ul>
+        <li><strong data-en="Off (white)" data-ja="オフ (白)">Off (white)</strong><span data-en=" — not watched; no notifications and no auto-switch." data-ja=" — 監視なし。通知も自動切替もありません。"> — not watched; no notifications and no auto-switch.</span></li>
+        <li><strong data-en="Watched (green)" data-ja="監視 (緑)">Watched (green)</strong><span data-en=" — notifications fire and the screen auto-switches to this player on their events. This is the W mark in the Member List." data-ja=" — イベント時に通知が鳴り、画面がこの選手へ自動で切り替わります。Member List の W マークがこれです。"> — notifications fire and the screen auto-switches to this player on their events. This is the W mark in the Member List.</span></li>
+        <li><strong data-en="Lock-in (pink)" data-ja="ロックイン (ピンク)">Lock-in (pink)</strong><span data-en=" — the screen pins to this player. While locked in, other watched players never pull the screen away and their notifications are held — perfect when two of your players are in action at once. Switching off lock-in moves to the next active watched player automatically." data-ja=" — 画面をこの選手に固定します。ロックイン中は他の監視選手に画面を奪われず、その通知も保留されます。2 人の選手が同時に動く時に最適です。ロックインを解除すると、自動で次のアクティブな監視選手へ移ります。"> — the screen pins to this player. While locked in, other watched players never pull the screen away and their notifications are held — perfect when two of your players are in action at once. Switching off lock-in moves to the next active watched player automatically.</span></li>
+      </ul>
+      <p data-en="Watched (green) can also be toggled from the Member List. In Team Mode every player of your team is watched automatically." data-ja="監視 (緑) は Member List からも切り替えられます。Team Mode ではチームの全選手が自動で監視対象になります。">Watched (green) can also be toggled from the Member List. In Team Mode every player of your team is watched automatically.</p>
     </section>
 
     <!-- ─── 4. Main Screen ─── -->
@@ -213,7 +219,7 @@
 
       <figure class="annotated">
         <div class="stage">
-          <div class="placeholder" data-en="Screenshot coming soon" data-ja="スクリーンショット準備中">Screenshot coming soon</div>
+          <img src="screens/main.png?v=2" alt="Main screen">
           <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
         <figcaption data-en="Main screen — player, scoreboard, diamond (runners + BSO) and live area." data-ja="メイン画面 — 選手・スコアボード・ダイヤモンド (走者 + BSO)・ライブエリア。">Main screen — player, scoreboard, diamond (runners + BSO) and live area.</figcaption>
@@ -231,7 +237,7 @@
         <tr><td data-en="Long-press batter name (right)" data-ja="打者名 (右) を長押し">Long-press batter name (right)</td><td data-en="Browse the batting order (chapter 6)" data-ja="打順の閲覧モード (第 6 章)">Browse the batting order (chapter 6)</td></tr>
         <tr><td data-en="Long-press pitcher name (left)" data-ja="投手名 (左) を長押し">Long-press pitcher name (left)</td><td data-en="Browse the pitching order (chapter 6)" data-ja="登板順の閲覧モード (第 6 章)">Browse the pitching order (chapter 6)</td></tr>
         <tr><td data-en="Long-press diamond center" data-ja="ダイヤモンド中央を長押し">Long-press diamond center</td><td data-en="Player detail screen (chapter 9)" data-ja="選手の詳細画面 (第 9 章)">Player detail screen (chapter 9)</td></tr>
-        <tr><td data-en="Long-press the upper area" data-ja="画面上部を長押し">Long-press the upper area</td><td data-en="Toggle watch (W) for the displayed player — Player Mode only" data-ja="表示中選手の監視 (W) を切替 — Player Mode のみ">Toggle watch (W) for the displayed player — Player Mode only</td></tr>
+        <tr><td data-en="Long-press the upper area" data-ja="画面上部を長押し">Long-press the upper area</td><td data-en="Cycle the displayed player: off → watched → lock-in (chapter 3) — Player Mode only" data-ja="表示中選手の状態を循環: オフ → 監視 → ロックイン (第 3 章) — Player Mode のみ">Cycle the displayed player: off → watched → lock-in (chapter 3) — Player Mode only</td></tr>
       </table>
       <div class="callout" data-en="Before the game the screen shows the start time; during the game it goes fully live; after the final out the result stays on screen. One screen covers the entire day." data-ja="試合前は開始時刻、試合中はフルライブ、試合後は最終結果が表示されたまま。1 つの画面で 1 日をカバーします。">Before the game the screen shows the start time; during the game it goes fully live; after the final out the result stays on screen. One screen covers the entire day.</div>
     </section>
@@ -258,7 +264,12 @@
         <li><strong data-en="Triple — gold ball" data-ja="スリーベース — 金のボール">Triple — gold ball</strong><span data-en=", with confetti" data-ja="、紙吹雪つき">, with confetti</span></li>
         <li><strong data-en="Home run — diamond (gem) ball" data-ja="ホームラン — ダイヤモンドのボール">Home run — diamond (gem) ball</strong><span data-en=", with fireworks and confetti" data-ja="、花火と紙吹雪つき">, with fireworks and confetti</span></li>
         <li><strong data-en="Strikeout — white ball with a red K" data-ja="奪三振 — 白いボールに赤い K">Strikeout — white ball with a red K</strong><span data-en=", swing-and-miss slashes, plus a snappy vibration (about 2.4 seconds). Fires when your pitcher records a strikeout." data-ja="、空振りスラッシュ演出、キレのある振動つき (約 2.4 秒)。応援している投手が三振を奪った時に発火します。">, swing-and-miss slashes, plus a snappy vibration (about 2.4 seconds). Fires when your pitcher records a strikeout.</span></li>
+        <li><strong data-en="Stolen base — speed lines and a dust burst" data-ja="盗塁 — スピードラインと砂煙">Stolen base — speed lines and a dust burst</strong><span data-en=" (about 3 seconds), when a watched runner steals." data-ja="(約 3 秒)。監視中の走者が盗塁した時に発火します。"> (about 3 seconds), when a watched runner steals.</span></li>
+        <li><strong data-en="Your team's win — a waving flag with fireworks" data-ja="応援チームの勝利 — はためく旗と花火">Your team's win — a waving flag with fireworks</strong><span data-en=" (Team Mode), the moment your team's game ends in a win." data-ja=" (Team Mode)。応援チームの試合が勝利で終わった瞬間に発火します。"> (Team Mode), the moment your team's game ends in a win.</span></li>
       </ul>
+
+      <h3 data-en="Statcast on the play" data-ja="Statcast 表示">Statcast on the play</h3>
+      <p data-en="Hit and home-run animations overlay the batted-ball data — the exit velocity (mph), and for home runs the distance (ft) too. And on the live main screen, the last pitch's speed and type (e.g. 96 FOUR) show by home plate inside the diamond, so you can read the radar gun every pitch. When the stadium doesn't supply this data, the figures simply don't appear." data-ja="安打・本塁打の演出には打球データが重なります — 打球速度 (mph)、本塁打は飛距離 (ft) も表示。さらにライブのメイン画面では、ダイヤモンド内のホームベース脇に最新球の球速・球種 (例 96 FOUR) が表示され、1 球ごとに球速を確認できます。球場側がデータを出さない場合は、数値は表示されません。">Hit and home-run animations overlay the batted-ball data — the exit velocity (mph), and for home runs the distance (ft) too. And on the live main screen, the last pitch's speed and type (e.g. 96 FOUR) show by home plate inside the diamond, so you can read the radar gun every pitch. When the stadium doesn't supply this data, the figures simply don't appear.</p>
     </section>
 
     <!-- ─── 6. Browse Mode ─── -->
@@ -298,7 +309,7 @@
 
       <figure class="annotated">
         <div class="stage">
-          <div class="placeholder" data-en="Screenshot coming soon" data-ja="スクリーンショット準備中">Screenshot coming soon</div>
+          <img src="screens/history.png?v=1" alt="Inning history screen">
           <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
         <figcaption data-en="Inning history — order number, batter, result code, pitcher of the inning." data-ja="イニング履歴 — 打順・打者・結果コード・そのイニングの投手。">Inning history — order number, batter, result code, pitcher of the inning.</figcaption>
@@ -306,20 +317,23 @@
 
       <h3 data-en="Reading the screen" data-ja="画面の読み方">Reading the screen</h3>
       <ul>
-        <li data-en="Header: the batting team's abbreviation + the half-inning — TOP n in cyan, BOT n in orange, so you always know which side is up." data-ja="ヘッダー: 攻撃側チームの略称 + 半イニング表示。TOP n はシアン、BOT n はオレンジで色分けされ、表裏が一目で分かります。">Header: the batting team's abbreviation + the half-inning — TOP n in cyan, BOT n in orange, so you always know which side is up.</li>
+        <li data-en="Header: the batting team's abbreviation + the half-inning — TOP n in cyan, BOT n in red, so you always know which side is up." data-ja="ヘッダー: 攻撃側チームの略称 + 半イニング表示。TOP n はシアン、BOT n は赤で色分けされ、表裏が一目で分かります。">Header: the batting team's abbreviation + the half-inning — TOP n in cyan, BOT n in red, so you always know which side is up.</li>
         <li data-en="Each row: batting-order number, batter's name, and the result code. +1 / +2 after the code is the RBI count." data-ja="各行: 打順番号・打者名・結果コード。コードの後の +1 / +2 は打点です。">Each row: batting-order number, batter's name, and the result code. +1 / +2 after the code is the RBI count.</li>
-        <li data-en="Bottom: P: the pitcher who threw that half-inning. A mid-inning relief shows both, e.g. Cole&gt;Weaver. Below it, 3 OUTS marks a completed inning, or - in progress - for the current one." data-ja="下部: P: はその半イニングを投げた投手。イニング途中の交代は Cole&gt;Weaver のように両者を表示します。その下の 3 OUTS は完了イニング、- in progress - は進行中を示します。">Bottom: P: the pitcher who threw that half-inning. A mid-inning relief shows both, e.g. Cole&gt;Weaver. Below it, 3 OUTS marks a completed inning, or - in progress - for the current one.</li>
+        <li data-en="Base-running rows: some rows show a runner's move instead of an at-bat — the runner's name with a code such as SB2 (stole 2nd). Steals, pickoffs and wild-pitch advances appear before that inning's batter; tag-ups and outs on the bases after." data-ja="走塁の行: 一部の行は打席ではなく走者のプレイを示します — 走者名と SB2 (二盗) のようなコード。盗塁・牽制・暴投での進塁は打者の前、タッチアップや走塁死は打者の後に並びます。">Base-running rows: some rows show a runner's move instead of an at-bat — the runner's name with a code such as SB2 (stole 2nd). Steals, pickoffs and wild-pitch advances appear before that inning's batter; tag-ups and outs on the bases after.</li>
+        <li data-en="Bottom: P: the pitcher who threw that half-inning. A mid-inning relief shows both, e.g. Cole&gt;Weaver. Below it, 3 OUTS (in red) marks a completed inning, or - in progress - for the current one." data-ja="下部: P: はその半イニングを投げた投手。イニング途中の交代は Cole&gt;Weaver のように両者を表示します。その下の 3 OUTS (赤) は完了イニング、- in progress - は進行中を示します。">Bottom: P: the pitcher who threw that half-inning. A mid-inning relief shows both, e.g. Cole&gt;Weaver. Below it, 3 OUTS (in red) marks a completed inning, or - in progress - for the current one.</li>
       </ul>
 
       <h3 data-en="Result codes" data-ja="結果コード">Result codes</h3>
       <table class="ops">
         <tr><th data-en="Code" data-ja="コード">Code</th><th data-en="Meaning" data-ja="意味">Meaning</th></tr>
-        <tr><td>1B / 2B / 3B / HR</td><td data-en="Single / double / triple / home run. A suffix shows the direction: -L left, -C center, -R right (HR-C = homer to center)." data-ja="シングル / ツーベース / スリーベース / ホームラン。サフィックスは打球方向: -L 左 / -C 中 / -R 右 (HR-C = センターへの本塁打)。">Single / double / triple / home run. A suffix shows the direction: -L left, -C center, -R right (HR-C = homer to center).</td></tr>
+        <tr><td>1B / 2B / 3B / HR</td><td data-en="Single / double / triple / home run. A suffix shows the direction: -L left, -C center, -R right (HR-C = homer to center). A trailing -O means the batter was thrown out trying for an extra base (2B-C-O = doubled to center, out advancing)." data-ja="シングル / ツーベース / スリーベース / ホームラン。サフィックスは打球方向: -L 左 / -C 中 / -R 右 (HR-C = センターへの本塁打)。末尾の -O は、打者が次の塁を狙って憤死したことを示します (2B-C-O = センターへの二塁打後に走塁死)。">Single / double / triple / home run. A suffix shows the direction: -L left, -C center, -R right (HR-C = homer to center). A trailing -O means the batter was thrown out trying for an extra base (2B-C-O = doubled to center, out advancing).</td></tr>
         <tr><td>GO / FLY / LINE / POP</td><td data-en="Ground out / fly out / line out / pop out, with the fielder: GO-SS = grounder to short, FLY-L = fly to left." data-ja="ゴロ / フライ / ライナー / 小フライ。守備位置つき: GO-SS = 遊ゴロ、FLY-L = レフトフライ。">Ground out / fly out / line out / pop out, with the fielder: GO-SS = grounder to short, FLY-L = fly to left.</td></tr>
         <tr><td>K / K-DP</td><td data-en="Strikeout / strikeout double play (shown in red)" data-ja="三振 / 三振ゲッツー (赤で表示)">Strikeout / strikeout double play (shown in red)</td></tr>
         <tr><td>BB / IBB / HBP</td><td data-en="Walk / intentional walk / hit by pitch (light blue)" data-ja="四球 / 敬遠 / 死球 (水色)">Walk / intentional walk / hit by pitch (light blue)</td></tr>
         <tr><td>GIDP / TP</td><td data-en="Grounded into double play / triple play (orange)" data-ja="併殺打 / 三重殺 (オレンジ)">Grounded into double play / triple play (orange)</td></tr>
         <tr><td>SF / SAC / FC / E / FORCE</td><td data-en="Sacrifice fly / sacrifice bunt / fielder's choice / reached on error / force out" data-ja="犠飛 / 犠打 / 野選 / エラー出塁 / 封殺">Sacrifice fly / sacrifice bunt / fielder's choice / reached on error / force out</td></tr>
+        <tr><td>SB / CS / PO</td><td data-en="Base-running by a runner (not the batter): stolen base / caught stealing / picked off, with the base — SB2, CS2, PO1." data-ja="走者のプレイ (打者ではない): 盗塁 / 盗塁死 / 牽制死。塁つき — SB2、CS2、PO1。">Base-running by a runner (not the batter): stolen base / caught stealing / picked off, with the base — SB2, CS2, PO1.</td></tr>
+        <tr><td>WP / PB / TAG / OA / FE</td><td data-en="Runner advanced on a wild pitch (WP) / passed ball (PB) / tag-up (TAG), thrown out advancing (OA), or advanced on a fielding error (FE) — with the base reached: WP3, TAGH (home), OA3, FE2." data-ja="走者の進塁: 暴投 (WP) / 捕逸 (PB) / タッチアップ (TAG)、走塁死 (OA)、守備エラーでの進塁 (FE)。到達塁つき — WP3、TAGH (本塁)、OA3、FE2。">Runner advanced on a wild pitch (WP) / passed ball (PB) / tag-up (TAG), thrown out advancing (OA), or advanced on a fielding error (FE) — with the base reached: WP3, TAGH (home), OA3, FE2.</td></tr>
       </table>
       <p data-en="Hits glow green, home runs gold — scan an inning at a glance and spot where the damage happened." data-ja="ヒットは緑、ホームランは金色で表示されるので、イニングをひと目見るだけで試合が動いた場所が分かります。">Hits glow green, home runs gold — scan an inning at a glance and spot where the damage happened.</p>
 
@@ -358,6 +372,17 @@
         <li><strong>Game Pitching</strong> — <span data-en="for pitchers: pitch count, strikes, strike %, decision, walks, HBP and home runs allowed" data-ja="投手の場合: 投球数・ストライク数・ストライク率・勝敗・与四球・与死球・被本塁打">for pitchers: pitch count, strikes, strike %, decision, walks, HBP and home runs allowed</span></li>
         <li><strong>Season</strong> — <span data-en="season totals: AVG / HR / RBI / OPS for batters, W-L / ERA / IP / K / WHIP / SV for pitchers" data-ja="シーズン成績: 打者は AVG / HR / RBI / OPS、投手は 勝敗 / ERA / 投球回 / 奪三振 / WHIP / セーブ">season totals: AVG / HR / RBI / OPS for batters, W-L / ERA / IP / K / WHIP / SV for pitchers</span></li>
       </ul>
+
+      <figure class="annotated">
+        <div class="stage">
+          <img src="screens/detail.png?v=1" alt="Detail screen">
+          <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <figcaption data-en="Detail screen — today's at-bats (or game pitching) and season stats." data-ja="詳細画面 — 当日の打席結果 (または投球成績) とシーズン成績。">Detail screen — today's at-bats (or game pitching) and season stats.</figcaption>
+      </figure>
+
+      <h3 data-en="Add / remove from your Player Mode list" data-ja="Player Mode リストへの追加 / 解除">Add / remove from your Player Mode list</h3>
+      <p data-en="At the bottom of the detail screen is a button — Add (green) when the player isn't in your Player Mode list, or Remove (red) when they are. Long-press the button to toggle. Adding also turns that player's watch (notifications) on; removing turns it off. If the list is already full (20 players), a List Full message appears instead. This makes Team Mode handy for discovery — open a teammate's detail and add them to your personal list in one long-press. START or BACK closes the detail screen." data-ja="詳細画面の下部にボタンがあります — Player Mode リストに未登録なら Add (緑)、登録済みなら Remove (赤)。ボタンを長押しで切替できます。追加するとその選手の監視 (通知) も ON に、解除すると OFF になります。リストが 20 名で満杯の場合は List Full と表示されます。Team Mode で気になった選手の詳細を開き、長押し一つで自分のリストに追加 — という使い方も便利です。START または BACK で詳細画面を閉じます。">At the bottom of the detail screen is a button — Add (green) when the player isn't in your Player Mode list, or Remove (red) when they are. Long-press the button to toggle. Adding also turns that player's watch (notifications) on; removing turns it off. If the list is already full (20 players), a List Full message appears instead. This makes Team Mode handy for discovery — open a teammate's detail and add them to your personal list in one long-press. START or BACK closes the detail screen.</p>
     </section>
 
     <!-- ─── 10. Settings ─── -->

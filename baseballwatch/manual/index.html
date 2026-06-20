@@ -60,6 +60,7 @@
   table.ops th { background: var(--accent-light); color: var(--accent-dark); text-align: left; padding: 8px 12px; font-weight: 600; }
   table.ops td { padding: 8px 12px; border-top: 1px solid var(--border); color: var(--text2); vertical-align: top; }
   table.ops td:first-child { white-space: nowrap; font-weight: 600; color: var(--text); }
+  table.ops.pitchcode td:nth-child(3) { white-space: nowrap; font-weight: 600; color: var(--text); }
 
   /* ─── Annotated figure (SVG overlay) ─── */
   figure.annotated {
@@ -281,7 +282,7 @@
       <h3 data-en="Statcast on the play" data-ja="Statcast 表示">Statcast on the play</h3>
       <p data-en="Hit and home-run animations overlay the batted-ball data — the exit velocity (mph), and for home runs the distance (ft) too. And on the live main screen, the last pitch's speed and type (e.g. 96 FOUR) show by home plate inside the diamond, so you can read the radar gun every pitch. When the stadium doesn't supply this data, the figures simply don't appear." data-ja="安打・本塁打の演出には打球データが重なります — 打球速度 (mph)、本塁打は飛距離 (ft) も表示。さらにライブのメイン画面では、ダイヤモンド内のホームベース脇に最新球の球速・球種 (例 96 FOUR) が表示され、1 球ごとに球速を確認できます。球場側がデータを出さない場合は、数値は表示されません。">Hit and home-run animations overlay the batted-ball data — the exit velocity (mph), and for home runs the distance (ft) too. And on the live main screen, the last pitch's speed and type (e.g. 96 FOUR) show by home plate inside the diamond, so you can read the radar gun every pitch. When the stadium doesn't supply this data, the figures simply don't appear.</p>
       <p data-en="The pitch type is shown as a 4-letter code:" data-ja="球種は 4 文字コードで表示されます:">The pitch type is shown as a 4-letter code:</p>
-      <table class="ops">
+      <table class="ops pitchcode">
         <tr><th data-en="Code" data-ja="コード">Code</th><th data-en="Pitch" data-ja="球種">Pitch</th><th data-en="Code" data-ja="コード">Code</th><th data-en="Pitch" data-ja="球種">Pitch</th></tr>
         <tr><td>FOUR</td><td data-en="Four-seam fastball" data-ja="フォーシーム">Four-seam fastball</td><td>SLRV</td><td data-en="Slurve" data-ja="スラーブ">Slurve</td></tr>
         <tr><td>FAST</td><td data-en="Fastball" data-ja="速球 (ストレート)">Fastball</td><td>CURV</td><td data-en="Curveball" data-ja="カーブ">Curveball</td></tr>

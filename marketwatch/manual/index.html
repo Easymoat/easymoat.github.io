@@ -54,6 +54,8 @@
   section.chapter > ul li, section.chapter > ol li { margin-bottom: 6px; }
   section.chapter strong { color: var(--text); font-weight: 600; }
   section.chapter code { background: var(--accent-light); color: var(--accent-dark); padding: 1px 6px; border-radius: 3px; font-size: 13px; font-family: 'SF Mono', monospace; }
+  .op-tap  { background: #5EEAD4; color: #0F3A36; padding: 2px 7px; border-radius: 4px; font-weight: 600; white-space: nowrap; }
+  .op-hold { background: #FECDD3; color: #9F1239; padding: 2px 7px; border-radius: 4px; font-weight: 600; white-space: nowrap; }
 
   table.ops { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 14px; background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
   table.ops th { background: var(--accent-light); color: var(--accent-dark); text-align: left; padding: 8px 12px; font-weight: 600; }
@@ -193,10 +195,10 @@
       <table class="ops">
         <tr><th data-en="Action" data-ja="操作">Action</th><th data-en="What it does" data-ja="動作">What it does</th></tr>
         <tr><td data-en="UP / DOWN or swipe" data-ja="UP / DOWN・スワイプ">UP / DOWN or swipe</td><td data-en="Scroll the list (cyclic)" data-ja="リストをスクロール (循環)">Scroll the list (cyclic)</td></tr>
-        <tr><td data-en="Tap / START" data-ja="タップ / START">Tap / START</td><td data-en="Open the detail screen of the top symbol" data-ja="先頭銘柄の詳細画面を開く">Open the detail screen of the top symbol</td></tr>
-        <tr><td data-en="Long-press a symbol" data-ja="銘柄を長押し">Long-press a symbol</td><td data-en="Symbol menu — Open Detail / Move to / Edit Ticker / Edit Name / Delete" data-ja="銘柄メニュー — Open Detail / Move to / Edit Ticker / Edit Name / Delete">Symbol menu — Open Detail / Move to / Edit Ticker / Edit Name / Delete</td></tr>
-        <tr><td data-en="Long-press the date area" data-ja="日付エリアを長押し">Long-press the date area</td><td data-en="Settings menu — add symbols / info bars, and adjust app settings" data-ja="設定メニュー — 銘柄・情報バーの追加、アプリ設定の変更">Settings menu — add symbols / info bars, and adjust app settings</td></tr>
-        <tr><td data-en="Long-press an info bar" data-ja="情報バーを長押し">Long-press an info bar</td><td data-en="Bar menu — Move to / Color / Change Type / Delete" data-ja="バーメニュー — Move to / Color / Change Type / Delete">Bar menu — Move to / Color / Change Type / Delete</td></tr>
+        <tr><td data-en="<span class='op-tap'>Tap</span> / START" data-ja="<span class='op-tap'>タップ</span> / START"><span class='op-tap'>Tap</span> / START</td><td data-en="Open the detail screen of the top symbol" data-ja="先頭銘柄の詳細画面を開く">Open the detail screen of the top symbol</td></tr>
+        <tr><td data-en="<span class='op-hold'>Long-press</span> a symbol" data-ja="銘柄を<span class='op-hold'>長押し</span>"><span class='op-hold'>Long-press</span> a symbol</td><td data-en="Symbol menu — Open Detail / Move to / Edit Ticker / Edit Name / Delete" data-ja="銘柄メニュー — Open Detail / Move to / Edit Ticker / Edit Name / Delete">Symbol menu — Open Detail / Move to / Edit Ticker / Edit Name / Delete</td></tr>
+        <tr><td data-en="<span class='op-hold'>Long-press</span> the date area" data-ja="日付エリアを<span class='op-hold'>長押し</span>"><span class='op-hold'>Long-press</span> the date area</td><td data-en="Settings menu — add symbols / info bars, and adjust app settings" data-ja="設定メニュー — 銘柄・情報バーの追加、アプリ設定の変更">Settings menu — add symbols / info bars, and adjust app settings</td></tr>
+        <tr><td data-en="<span class='op-hold'>Long-press</span> an info bar" data-ja="情報バーを<span class='op-hold'>長押し</span>"><span class='op-hold'>Long-press</span> an info bar</td><td data-en="Bar menu — Move to / Color / Change Type / Delete" data-ja="バーメニュー — Move to / Color / Change Type / Delete">Bar menu — Move to / Color / Change Type / Delete</td></tr>
         <tr><td>BACK</td><td data-en="Exit the app" data-ja="アプリを終了">Exit the app</td></tr>
       </table>
       <div class="callout" data-en="A Net row (portfolio total P&amp;L) appears at the top of the cycle once any symbol has Cost and Holdings set in its memo — see chapter 6." data-ja="いずれかの銘柄のメモに取得単価と保有数を設定すると、サイクル先頭に Net 行 (ポートフォリオ合計損益) が現れます — 第 6 章参照。">A Net row (portfolio total P&amp;L) appears at the top of the cycle once any symbol has Cost and Holdings set in its memo — see chapter 6.</div>
@@ -209,13 +211,13 @@
 
       <h3 data-en="Adding a symbol" data-ja="銘柄の追加">Adding a symbol</h3>
       <ol class="steps">
-        <li data-en="Long-press the date area at the bottom of the list screen." data-ja="リスト画面下部の日付エリアを長押し。">Long-press the date area at the bottom of the list screen.</li>
+        <li data-en="<span class='op-hold'>Long-press</span> the date area at the bottom of the list screen." data-ja="リスト画面下部の日付エリアを<span class='op-hold'>長押し</span>。"><span class='op-hold'>Long-press</span> the date area at the bottom of the list screen.</li>
         <li data-en="Choose New Entry — the keyboard opens." data-ja="New Entry を選択 — キーボードが開きます。">Choose New Entry — the keyboard opens.</li>
         <li data-en="Type the Yahoo Finance ticker (e.g. AAPL, 7203.T, BTC-USD) and confirm. The name fills in automatically." data-ja="Yahoo Finance のティッカー (例: AAPL、7203.T、BTC-USD) を入力して確定。銘柄名は自動入力されます。">Type the Yahoo Finance ticker (e.g. AAPL, 7203.T, BTC-USD) and confirm. The name fills in automatically.</li>
       </ol>
       <div class="callout" data-en="Not sure about the ticker? Use the lookup tool on the MarketWatch homepage — search by company name and copy the exact symbol with its exchange suffix." data-ja="ティッカーが分からない場合はホームページの検索ツールへ。会社名で検索すると取引所サフィックス込みの正確なシンボルが得られます。">Not sure about the ticker? Use the lookup tool on the MarketWatch homepage — search by company name and copy the exact symbol with its exchange suffix.</div>
 
-      <h3 data-en="The symbol menu (long-press a row)" data-ja="銘柄メニュー (行を長押し)">The symbol menu (long-press a row)</h3>
+      <h3 data-en="The symbol menu (<span class='op-hold'>long-press</span> a row)" data-ja="銘柄メニュー (行を<span class='op-hold'>長押し</span>)">The symbol menu (<span class='op-hold'>long-press</span> a row)</h3>
       <table class="ops">
         <tr><th data-en="Item" data-ja="項目">Item</th><th data-en="What it does" data-ja="動作">What it does</th></tr>
         <tr><td>Open Detail</td><td data-en="Open the chart / detail screen for this symbol" data-ja="この銘柄の詳細チャート画面を開く">Open the chart / detail screen for this symbol</td></tr>
@@ -239,7 +241,7 @@
     <!-- ─── 4. Detail Screen ─── -->
     <section class="chapter" id="detail-screen">
       <h2 data-en="4. Detail Screen" data-ja="4. 詳細画面">4. Detail Screen</h2>
-      <p data-en="Tap a symbol (or choose Open Detail) to see its chart with key stats: high/low of the chart window, the chart's date range (S:/E:), today's volume (Vol:) and the current chart period (Per:)." data-ja="銘柄をタップ (または Open Detail) すると詳細画面へ。チャートと主要情報 — チャート窓の高値/安値、チャートの期間範囲 (S:/E:)、当日出来高 (Vol:)、現在のチャート期間 (Per:) — が表示されます。">Tap a symbol (or choose Open Detail) to see its chart with key stats: high/low of the chart window, the chart's date range (S:/E:), today's volume (Vol:) and the current chart period (Per:).</p>
+      <p data-en="<span class='op-tap'>Tap</span> a symbol (or choose Open Detail) to see its chart with key stats: high/low of the chart window, the chart's date range (S:/E:), today's volume (Vol:) and the current chart period (Per:)." data-ja="銘柄を<span class='op-tap'>タップ</span> (または Open Detail) すると詳細画面へ。チャートと主要情報 — チャート窓の高値/安値、チャートの期間範囲 (S:/E:)、当日出来高 (Vol:)、現在のチャート期間 (Per:) — が表示されます。"><span class='op-tap'>Tap</span> a symbol (or choose Open Detail) to see its chart with key stats: high/low of the chart window, the chart's date range (S:/E:), today's volume (Vol:) and the current chart period (Per:).</p>
 
       <figure class="annotated">
         <style>
@@ -256,7 +258,7 @@
           <img class="ds-detail-img" src="screens/detail-se.png?v=2" alt="Detail screen">
           <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
-        <figcaption data-en="Detail screen — switch tabs: H/L · S/E text view, the volume-bar view (chart long-press toggles it on the watch), and the Memo panel (tap below the chart) with Cost, Holdings, P&amp;L and price Alerts." data-ja="詳細画面 — タブで切替: 「H/L・S/E テキスト表示」「出来高バー表示」（ウォッチではチャート長押し）「メモ」（チャート下をタップ。取得単価・保有数・損益・価格アラート）。">Detail screen — switch tabs: H/L · S/E text view, the volume-bar view (chart long-press toggles it on the watch), and the Memo panel (tap below the chart) with Cost, Holdings, P&amp;L and price Alerts.</figcaption>
+        <figcaption data-en="Detail screen — switch tabs: H/L · S/E text view, the volume-bar view (chart <span class='op-hold'>long-press</span> toggles it on the watch), and the Memo panel (<span class='op-tap'>tap</span> below the chart) with Cost, Holdings, P&amp;L and price Alerts." data-ja="詳細画面 — タブで切替: 「H/L・S/E テキスト表示」「出来高バー表示」（ウォッチではチャート<span class='op-hold'>長押し</span>）「メモ」（チャート下を<span class='op-tap'>タップ</span>。取得単価・保有数・損益・価格アラート）。">Detail screen — switch tabs: H/L · S/E text view, the volume-bar view (chart <span class='op-hold'>long-press</span> toggles it on the watch), and the Memo panel (<span class='op-tap'>tap</span> below the chart) with Cost, Holdings, P&amp;L and price Alerts.</figcaption>
         <script>
           (function(){
             var fig = document.currentScript.closest('figure');
@@ -276,11 +278,11 @@
         <tr><th data-en="Action" data-ja="操作">Action</th><th data-en="What it does" data-ja="動作">What it does</th></tr>
         <tr><td data-en="UP / DOWN or swipe" data-ja="UP / DOWN・スワイプ">UP / DOWN or swipe</td><td data-en="Previous / next symbol (info bars are skipped; Net opens its own detail)" data-ja="前/次の銘柄へ (情報バーはスキップ、Net は Net 詳細へ)">Previous / next symbol (info bars are skipped; Net opens its own detail)</td></tr>
         <tr><td>START</td><td data-en="Refresh this symbol's price now" data-ja="この銘柄を即時更新">Refresh this symbol's price now</td></tr>
-        <tr><td data-en="Tap the chart" data-ja="チャートをタップ">Tap the chart</td><td data-en="Return to the list" data-ja="リストへ戻る">Return to the list</td></tr>
-        <tr><td data-en="Tap below the chart" data-ja="チャート下をタップ">Tap below the chart</td><td data-en="Open the position memo" data-ja="ポジションメモを開く">Open the position memo</td></tr>
-        <tr><td data-en="Long-press UP" data-ja="UP を長押し">Long-press UP</td><td data-en="Chart period select mode (chapter 5)" data-ja="チャート期間選択モード (第 5 章)">Chart period select mode (chapter 5)</td></tr>
-        <tr><td data-en="Long-press the chart" data-ja="チャートを長押し">Long-press the chart</td><td data-en="Toggle the volume bar graph (chapter 5)" data-ja="出来高バーグラフの切替 (第 5 章)">Toggle the volume bar graph (chapter 5)</td></tr>
-        <tr><td data-en="Long-press the date (bottom)" data-ja="下部の日付を長押し">Long-press the date (bottom)</td><td data-en="Chart period menu" data-ja="チャート期間メニュー">Chart period menu</td></tr>
+        <tr><td data-en="<span class='op-tap'>Tap</span> the chart" data-ja="チャートを<span class='op-tap'>タップ</span>"><span class='op-tap'>Tap</span> the chart</td><td data-en="Return to the list" data-ja="リストへ戻る">Return to the list</td></tr>
+        <tr><td data-en="<span class='op-tap'>Tap</span> below the chart" data-ja="チャート下を<span class='op-tap'>タップ</span>"><span class='op-tap'>Tap</span> below the chart</td><td data-en="Open the position memo" data-ja="ポジションメモを開く">Open the position memo</td></tr>
+        <tr><td data-en="<span class='op-hold'>Long-press</span> UP" data-ja="UP を<span class='op-hold'>長押し</span>"><span class='op-hold'>Long-press</span> UP</td><td data-en="Chart period select mode (chapter 5)" data-ja="チャート期間選択モード (第 5 章)">Chart period select mode (chapter 5)</td></tr>
+        <tr><td data-en="<span class='op-hold'>Long-press</span> the chart" data-ja="チャートを<span class='op-hold'>長押し</span>"><span class='op-hold'>Long-press</span> the chart</td><td data-en="Toggle the volume bar graph (chapter 5)" data-ja="出来高バーグラフの切替 (第 5 章)">Toggle the volume bar graph (chapter 5)</td></tr>
+        <tr><td data-en="<span class='op-hold'>Long-press</span> the date (bottom)" data-ja="下部の日付を<span class='op-hold'>長押し</span>"><span class='op-hold'>Long-press</span> the date (bottom)</td><td data-en="Chart period menu" data-ja="チャート期間メニュー">Chart period menu</td></tr>
         <tr><td>BACK</td><td data-en="Return to the list" data-ja="リストへ戻る">Return to the list</td></tr>
       </table>
     </section>
@@ -300,31 +302,31 @@
 
       <h3 data-en="Switching with buttons (period select mode)" data-ja="ボタンで切替 (期間選択モード)">Switching with buttons (period select mode)</h3>
       <ol class="steps">
-        <li data-en="In the detail screen, long-press UP — a white frame appears around Per:." data-ja="詳細画面で UP を長押し — Per: 表示に白い枠が付きます。">In the detail screen, long-press UP — a white frame appears around Per:.</li>
+        <li data-en="In the detail screen, <span class='op-hold'>long-press</span> UP — a white frame appears around Per:." data-ja="詳細画面で UP を<span class='op-hold'>長押し</span> — Per: 表示に白い枠が付きます。">In the detail screen, <span class='op-hold'>long-press</span> UP — a white frame appears around Per:.</li>
         <li data-en="Press UP / DOWN to cycle through the periods. The chart reloads immediately each time." data-ja="UP / DOWN で期間を順に切替。チャートはその都度すぐに再読込されます。">Press UP / DOWN to cycle through the periods. The chart reloads immediately each time.</li>
         <li data-en="Press START (or BACK) to confirm and close the frame." data-ja="START (または BACK) で確定し、枠を閉じます。">Press START (or BACK) to confirm and close the frame.</li>
       </ol>
-      <div class="callout" data-en="Touch alternative: long-press the date area at the bottom of the detail screen to open the period menu directly." data-ja="タッチ操作の場合: 詳細画面下部の日付エリアを長押しすると期間メニューが直接開きます。">Touch alternative: long-press the date area at the bottom of the detail screen to open the period menu directly.</div>
+      <div class="callout" data-en="Touch alternative: <span class='op-hold'>long-press</span> the date area at the bottom of the detail screen to open the period menu directly." data-ja="タッチ操作の場合: 詳細画面下部の日付エリアを<span class='op-hold'>長押し</span>すると期間メニューが直接開きます。">Touch alternative: <span class='op-hold'>long-press</span> the date area at the bottom of the detail screen to open the period menu directly.</div>
       <p data-en="The period applies to all symbols and is remembered across restarts." data-ja="期間設定は全銘柄共通で、再起動後も保持されます。">The period applies to all symbols and is remembered across restarts.</p>
 
       <h3 data-en="Volume bar graph" data-ja="出来高バーグラフ">Volume bar graph</h3>
-      <p data-en="Long-press the chart to swap the H/L/S/E rows for a volume bar graph drawn on the same time axis (one bar per chart point). Long-press again to switch back. The choice is remembered." data-ja="チャートを長押しすると、H/L/S/E の 2 行が出来高バーグラフに切り替わります。価格チャートと同じ時間軸 (チャートの 1 点 = バー 1 本) で描画され、再度長押しで戻ります。表示状態は保存されます。">Long-press the chart to swap the H/L/S/E rows for a volume bar graph drawn on the same time axis (one bar per chart point). Long-press again to switch back. The choice is remembered.</p>
+      <p data-en="<span class='op-hold'>Long-press</span> the chart to swap the H/L/S/E rows for a volume bar graph drawn on the same time axis (one bar per chart point). <span class='op-hold'>Long-press</span> again to switch back. The choice is remembered." data-ja="チャートを<span class='op-hold'>長押し</span>すると、H/L/S/E の 2 行が出来高バーグラフに切り替わります。価格チャートと同じ時間軸 (チャートの 1 点 = バー 1 本) で描画され、再度<span class='op-hold'>長押し</span>で戻ります。表示状態は保存されます。"><span class='op-hold'>Long-press</span> the chart to swap the H/L/S/E rows for a volume bar graph drawn on the same time axis (one bar per chart point). <span class='op-hold'>Long-press</span> again to switch back. The choice is remembered.</p>
       <div class="callout warn" data-en="FX pairs and indices have no volume — the area shows &quot;No volume data&quot;. The Vol: figure is always today's volume, regardless of the chart period." data-ja="為替・指数には出来高が存在しないため「No volume data」と表示されます。また Vol: の数値は期間設定に関わらず常に当日の出来高です。">FX pairs and indices have no volume — the area shows "No volume data". The Vol: figure is always today's volume, regardless of the chart period.</div>
     </section>
 
     <!-- ─── 6. Position Memo & Net ─── -->
     <section class="chapter" id="memo">
       <h2 data-en="6. Position Memo &amp; Net" data-ja="6. ポジションメモと Net">6. Position Memo &amp; Net</h2>
-      <p data-en="Each symbol has a memo that turns MarketWatch into a portfolio tracker. Tap below the chart in the detail screen to open it." data-ja="各銘柄にはメモがあり、MarketWatch をポートフォリオ管理ツールとして使えます。詳細画面でチャートの下をタップすると開きます。">Each symbol has a memo that turns MarketWatch into a portfolio tracker. Tap below the chart in the detail screen to open it.</p>
+      <p data-en="Each symbol has a memo that turns MarketWatch into a portfolio tracker. <span class='op-tap'>Tap</span> below the chart in the detail screen to open it." data-ja="各銘柄にはメモがあり、MarketWatch をポートフォリオ管理ツールとして使えます。詳細画面でチャートの下を<span class='op-tap'>タップ</span>すると開きます。">Each symbol has a memo that turns MarketWatch into a portfolio tracker. <span class='op-tap'>Tap</span> below the chart in the detail screen to open it.</p>
       <ul>
-        <li><strong data-en="Cost / Qty" data-ja="取得単価 / 保有数">Cost / Qty</strong> — <span data-en="long-press to enter your cost basis and holdings" data-ja="長押しして取得単価と保有数を入力">long-press to enter your cost basis and holdings</span></li>
+        <li><strong data-en="Cost / Qty" data-ja="取得単価 / 保有数">Cost / Qty</strong> — <span data-en="<span class='op-hold'>long-press</span> to enter your cost basis and holdings" data-ja="<span class='op-hold'>長押し</span>して取得単価と保有数を入力"><span class='op-hold'>long-press</span> to enter your cost basis and holdings</span></li>
         <li><strong data-en="Value / P&amp;L / %" data-ja="評価額 / 損益 / %">Value / P&amp;L / %</strong> — <span data-en="calculated automatically from the current price" data-ja="現在価格から自動計算">calculated automatically from the current price</span></li>
-        <li><strong data-en="Alert 1 / Alert 2" data-ja="通知 1 / 通知 2">Alert 1 / Alert 2</strong> — <span data-en="long-press to set price-cross alert levels (chapter 7)" data-ja="長押しで価格クロス通知の水準を設定 (第 7 章)">long-press to set price-cross alert levels (chapter 7)</span></li>
+        <li><strong data-en="Alert 1 / Alert 2" data-ja="通知 1 / 通知 2">Alert 1 / Alert 2</strong> — <span data-en="<span class='op-hold'>long-press</span> to set price-cross alert levels (chapter 7)" data-ja="<span class='op-hold'>長押し</span>で価格クロス通知の水準を設定 (第 7 章)"><span class='op-hold'>long-press</span> to set price-cross alert levels (chapter 7)</span></li>
       </ul>
-      <p data-en="Tap the memo to close it. All memo data stays on the watch and survives app updates." data-ja="メモをタップすると閉じます。メモのデータはウォッチ内に保存され、アプリ更新後も保持されます。">Tap the memo to close it. All memo data stays on the watch and survives app updates.</p>
+      <p data-en="<span class='op-tap'>Tap</span> the memo to close it. All memo data stays on the watch and survives app updates." data-ja="メモを<span class='op-tap'>タップ</span>すると閉じます。メモのデータはウォッチ内に保存され、アプリ更新後も保持されます。"><span class='op-tap'>Tap</span> the memo to close it. All memo data stays on the watch and survives app updates.</p>
 
       <h3 data-en="The Net row" data-ja="Net 行">The Net row</h3>
-      <p data-en="Once at least one symbol has Cost and Holdings, a Net row joins the list cycle: your whole portfolio's P&amp;L at a glance. Tap or long-press it for the Net detail screen with an aggregate P&amp;L chart." data-ja="1 つでも取得単価と保有数を設定すると、リストのサイクルに Net 行が加わり、ポートフォリオ全体の損益が一目で分かります。タップまたは長押しで Net 詳細画面 (合計損益チャート) が開きます。">Once at least one symbol has Cost and Holdings, a Net row joins the list cycle: your whole portfolio's P&amp;L at a glance. Tap or long-press it for the Net detail screen with an aggregate P&amp;L chart.</p>
+      <p data-en="Once at least one symbol has Cost and Holdings, a Net row joins the list cycle: your whole portfolio's P&amp;L at a glance. <span class='op-tap'>Tap</span> or <span class='op-hold'>long-press</span> it for the Net detail screen with an aggregate P&amp;L chart." data-ja="1 つでも取得単価と保有数を設定すると、リストのサイクルに Net 行が加わり、ポートフォリオ全体の損益が一目で分かります。<span class='op-tap'>タップ</span>または<span class='op-hold'>長押し</span>で Net 詳細画面 (合計損益チャート) が開きます。">Once at least one symbol has Cost and Holdings, a Net row joins the list cycle: your whole portfolio's P&amp;L at a glance. <span class='op-tap'>Tap</span> or <span class='op-hold'>long-press</span> it for the Net detail screen with an aggregate P&amp;L chart.</p>
       <div class="callout warn" data-en="Net sums raw values and ignores currencies — mixing JPY and USD positions produces a nominal total only. For simulation, not investment advice." data-ja="Net は通貨を無視して数値をそのまま合算します。JPY と USD の建玉が混在する場合は名目上の合計になります。シミュレーション用であり投資助言ではありません。">Net sums raw values and ignores currencies — mixing JPY and USD positions produces a nominal total only. For simulation, not investment advice.</div>
     </section>
 
@@ -334,7 +336,7 @@
       <p data-en="Set up to two alert prices per symbol in its memo. When the current price crosses a level — in either direction — the watch vibrates and plays a tone, and the symbol's name blinks yellow on the list." data-ja="各銘柄のメモに最大 2 件の通知価格を設定できます。現在価格が水準を上抜けまたは下抜けすると、振動と音で通知され、リスト上の銘柄名が黄色く点滅します。">Set up to two alert prices per symbol in its memo. When the current price crosses a level — in either direction — the watch vibrates and plays a tone, and the symbol's name blinks yellow on the list.</p>
       <ul>
         <li data-en="Press BACK to stop the blinking (the name stays yellow until the next refresh)." data-ja="BACK を押すと点滅が止まります (名前は次回更新まで黄色のまま)。">Press BACK to stop the blinking (the name stays yellow until the next refresh).</li>
-        <li data-en="Vibration and sound can be toggled independently: long-press the date area → Alert Vibration / Alert Sound." data-ja="振動と音は個別に ON/OFF できます: 日付エリア長押し → Alert Vibration / Alert Sound。">Vibration and sound can be toggled independently: long-press the date area → Alert Vibration / Alert Sound.</li>
+        <li data-en="Vibration and sound can be toggled independently: <span class='op-hold'>long-press</span> the date area → Alert Vibration / Alert Sound." data-ja="振動と音は個別に ON/OFF できます: 日付エリア<span class='op-hold'>長押し</span> → Alert Vibration / Alert Sound。">Vibration and sound can be toggled independently: <span class='op-hold'>long-press</span> the date area → Alert Vibration / Alert Sound.</li>
         <li data-en="Alert baselines reset when you change settings, so a level you already crossed won't re-fire immediately." data-ja="設定変更時に基準価格がリセットされるため、既に越えた水準が直後に再発火することはありません。">Alert baselines reset when you change settings, so a level you already crossed won't re-fire immediately.</li>
       </ul>
     </section>
@@ -383,8 +385,8 @@
 
       <h3 data-en="Adding and customizing" data-ja="追加とカスタマイズ">Adding and customizing</h3>
       <ol class="steps">
-        <li data-en="Long-press the date area → choose Weather Bar or Physical Bar. The bar appears right after the top of the cycle." data-ja="日付エリアを長押し → Weather Bar または Physical Bar を選択。バーがサイクル先頭直後に追加されます。">Long-press the date area → choose Weather Bar or Physical Bar. The bar appears right after the top of the cycle.</li>
-        <li data-en="Long-press the bar itself to open its menu: Move to (position), Color (6 colors), Change Type (Weather ⇄ Physical), Delete." data-ja="バー自体を長押しするとメニューが開きます: Move to (位置)、Color (6 色)、Change Type (Weather ⇄ Physical)、Delete。">Long-press the bar itself to open its menu: Move to (position), Color (6 colors), Change Type (Weather ⇄ Physical), Delete.</li>
+        <li data-en="<span class='op-hold'>Long-press</span> the date area → choose Weather Bar or Physical Bar. The bar appears right after the top of the cycle." data-ja="日付エリアを<span class='op-hold'>長押し</span> → Weather Bar または Physical Bar を選択。バーがサイクル先頭直後に追加されます。"><span class='op-hold'>Long-press</span> the date area → choose Weather Bar or Physical Bar. The bar appears right after the top of the cycle.</li>
+        <li data-en="<span class='op-hold'>Long-press</span> the bar itself to open its menu: Move to (position), Color (6 colors), Change Type (Weather ⇄ Physical), Delete." data-ja="バー自体を<span class='op-hold'>長押し</span>するとメニューが開きます: Move to (位置)、Color (6 色)、Change Type (Weather ⇄ Physical)、Delete。"><span class='op-hold'>Long-press</span> the bar itself to open its menu: Move to (position), Color (6 colors), Change Type (Weather ⇄ Physical), Delete.</li>
       </ol>
       <div class="callout" data-en="Bars don't consume symbol slots — you keep all 20 even with both bars shown. Values update from on-device APIs with no battery-relevant network traffic. Weather data follows Garmin's weather cache (roughly every 15–30 minutes)." data-ja="バーは銘柄スロットを消費しません — 両方表示しても 20 銘柄そのまま使えます。値は端末内 API から更新され、ネットワーク通信は発生しません。天気データは Garmin の天気キャッシュ (およそ 15〜30 分間隔) に従います。">Bars don't consume symbol slots — you keep all 20 even with both bars shown. Values update from on-device APIs with no battery-relevant network traffic. Weather data follows Garmin's weather cache (roughly every 15–30 minutes).</div>
     </section>
@@ -404,7 +406,7 @@
     <!-- ─── 10. Settings ─── -->
     <section class="chapter" id="settings">
       <h2 data-en="10. Settings" data-ja="10. 設定">10. Settings</h2>
-      <p data-en="Most settings live on the watch: long-press the date area on the list screen. Each entry shows its current value." data-ja="ほとんどの設定はウォッチ上にあります: リスト画面の日付エリアを長押ししてください。各項目には現在値が表示されます。">Most settings live on the watch: long-press the date area on the list screen. Each entry shows its current value.</p>
+      <p data-en="Most settings live on the watch: <span class='op-hold'>long-press</span> the date area on the list screen. Each entry shows its current value." data-ja="ほとんどの設定はウォッチ上にあります: リスト画面の日付エリアを<span class='op-hold'>長押し</span>してください。各項目には現在値が表示されます。">Most settings live on the watch: <span class='op-hold'>long-press</span> the date area on the list screen. Each entry shows its current value.</p>
       <table class="ops">
         <tr><th data-en="Watch (date menu)" data-ja="ウォッチ (日付メニュー)">Watch (date menu)</th><th data-en="Options" data-ja="選択肢">Options</th></tr>
         <tr><td>New Entry</td><td data-en="Add a symbol (when a slot is free)" data-ja="銘柄を追加 (空きスロットがある時)">Add a symbol (when a slot is free)</td></tr>
@@ -431,7 +433,7 @@
     <section class="chapter" id="complications">
       <h2 data-en="11. Complications &amp; Glance" data-ja="11. コンプリケーションと Glance">11. Complications &amp; Glance</h2>
       <h3 data-en="Watchface complications" data-ja="ウォッチフェイスのコンプリケーション">Watchface complications</h3>
-      <p data-en="MarketWatch publishes up to two symbols as complications. Assign them in the Connect IQ settings panel (Complication Slot 1 / 2), then pick MarketWatch as a data field in any compatible watchface. Tapping the complication jumps straight into that symbol's detail screen." data-ja="MarketWatch は最大 2 銘柄をコンプリケーションとして提供します。Connect IQ 設定パネルの Complication Slot 1 / 2 で銘柄を指定し、対応ウォッチフェイス側でデータ項目に MarketWatch を選択してください。コンプリケーションをタップするとその銘柄の詳細画面が直接開きます。">MarketWatch publishes up to two symbols as complications. Assign them in the Connect IQ settings panel (Complication Slot 1 / 2), then pick MarketWatch as a data field in any compatible watchface. Tapping the complication jumps straight into that symbol's detail screen.</p>
+      <p data-en="MarketWatch publishes up to two symbols as complications. Assign them in the Connect IQ settings panel (Complication Slot 1 / 2), then pick MarketWatch as a data field in any compatible watchface. <span class='op-tap'>Tapping</span> the complication jumps straight into that symbol's detail screen." data-ja="MarketWatch は最大 2 銘柄をコンプリケーションとして提供します。Connect IQ 設定パネルの Complication Slot 1 / 2 で銘柄を指定し、対応ウォッチフェイス側でデータ項目に MarketWatch を選択してください。コンプリケーションを<span class='op-tap'>タップ</span>するとその銘柄の詳細画面が直接開きます。">MarketWatch publishes up to two symbols as complications. Assign them in the Connect IQ settings panel (Complication Slot 1 / 2), then pick MarketWatch as a data field in any compatible watchface. <span class='op-tap'>Tapping</span> the complication jumps straight into that symbol's detail screen.</p>
       <h3>Glance</h3>
       <p data-en="In the watch's glance list, MarketWatch shows either the Net (portfolio P&amp;L) or one symbol of your choice — set via Glance Display in the Connect IQ panel." data-ja="ウォッチの Glance リストでは、Net (ポートフォリオ損益) または任意の 1 銘柄を表示できます。Connect IQ パネルの Glance Display で設定してください。">In the watch's glance list, MarketWatch shows either the Net (portfolio P&amp;L) or one symbol of your choice — set via Glance Display in the Connect IQ panel.</p>
     </section>
@@ -469,9 +471,8 @@
 function setLang(lang) {
   document.documentElement.lang = lang === 'ja' ? 'ja' : 'en';
   document.querySelectorAll('[data-en]').forEach(el => {
-    if (el.children.length > 0) return;
     const text = el.getAttribute('data-' + lang);
-    if (text) el.textContent = text;
+    if (text) el.innerHTML = text;
   });
   document.getElementById('btn-en').classList.toggle('active', lang === 'en');
   document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');

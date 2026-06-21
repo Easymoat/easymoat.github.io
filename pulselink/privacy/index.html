@@ -66,8 +66,8 @@
     <h2>2. What we collect</h2>
     <ul>
       <li><strong>Account data</strong> — your email address, a password (stored only as a salted hash, never in plain text), and a nickname you choose.</li>
-      <li><strong>Activity &amp; health data</strong> — heart rate, step count, and distance, read from your Garmin device. These are shared in real time with the other members of the room you join.</li>
-      <li><strong>Room data</strong> — which room you belong to, invite codes for rooms you host, join/approval status, and the template messages you send.</li>
+      <li><strong>Activity &amp; health data</strong> — heart rate, step count, and distance, read from your Garmin device. These are shared in real time with the other members of the crew you join.</li>
+      <li><strong>Crew data</strong> — which crew you belong to, invite codes for crews you lead, join/approval status, and the template messages you send.</li>
       <li><strong>Payment data</strong> — handled entirely by Stripe. We never see, receive, or store your card number. We only receive a subscription status (active / expired) from Stripe.</li>
     </ul>
     <p>We do <strong>not</strong> collect your name, address, precise location track, contacts, or any advertising identifiers. PulseLink contains no third-party advertising or analytics SDKs.</p>
@@ -75,16 +75,16 @@
     <h2>3. How we use your data</h2>
     <ul>
       <li>To authenticate you and keep you signed in (email address + password → token).</li>
-      <li>To run the room you create or join, and to show your live heart rate, steps and distance to the other members of that room.</li>
+      <li>To run the crew you create or join, and to show your live heart rate, steps and distance to the other members of that crew.</li>
       <li>To deliver template messages between members.</li>
-      <li>To manage host subscriptions via Stripe.</li>
+      <li>To manage leader subscriptions via Stripe.</li>
     </ul>
-    <p><strong>Legal bases (GDPR):</strong> your <em>explicit consent</em> for heart-rate (health) data; <em>performance of a contract</em> for account and room features; and our <em>legitimate interest</em> in keeping the service secure.</p>
+    <p><strong>Legal bases (GDPR):</strong> your <em>explicit consent</em> for heart-rate (health) data; <em>performance of a contract</em> for account and crew features; and our <em>legitimate interest</em> in keeping the service secure.</p>
 
     <h2>4. Who can see your data</h2>
     <ul>
-      <li><strong>Other room members.</strong> When you join a room, the members of that room can see your nickname and the metrics you choose to share (heart rate, steps, distance) while you are active. You control what you share at any time (see Section 6).</li>
-      <li><strong>Stripe</strong> — our payment processor, for host subscriptions only.</li>
+      <li><strong>Other crew members.</strong> When you join a crew, the members of that crew can see your nickname and the metrics you choose to share (heart rate, steps, distance) while you are active. You control what you share at any time (see Section 6).</li>
+      <li><strong>Stripe</strong> — our payment processor, for leader subscriptions only.</li>
       <li><strong>Garmin</strong> — your data travels over the Garmin Connect IQ platform between your watch and your phone.</li>
     </ul>
     <p>We never sell your data, and we never share it with advertisers or data brokers.</p>
@@ -93,9 +93,9 @@
     <p>This reflects how PulseLink is actually built:</p>
     <ul>
       <li><strong>Heart rate, steps, distance</strong> — held only in server memory as the latest value, not written to permanent storage. It is overwritten by your next update (typically within seconds to minutes) and lost entirely if the server restarts.</li>
-      <li><strong>Messages</strong> — stored per room and automatically pruned after a retention period.</li>
+      <li><strong>Messages</strong> — stored per crew and automatically pruned after a retention period.</li>
       <li><strong>Account data (email address, password hash, nickname)</strong> — kept while your account exists.</li>
-      <li><strong>On account deletion</strong> — your account, any room you own, your memberships, and your messages are <strong>permanently and immediately erased</strong>.</li>
+      <li><strong>On account deletion</strong> — your account, any crew you own, your memberships, and your messages are <strong>permanently and immediately erased</strong>.</li>
     </ul>
 
     <h2>6. Your privacy controls</h2>
@@ -153,8 +153,8 @@
     <h2>2. 取得する情報</h2>
     <ul>
       <li><strong>アカウント情報</strong> — メールアドレス、パスワード（ソルト付きハッシュとしてのみ保存し、平文では保存しません）、お客様が設定するニックネーム。</li>
-      <li><strong>アクティビティ・健康データ</strong> — Garmin デバイスから読み取る心拍数・歩数・距離。参加中のルームの他メンバーとリアルタイムで共有されます。</li>
-      <li><strong>ルーム情報</strong> — 所属ルーム、ホストする場合の招待コード、参加・承認状況、送信した定型メッセージ。</li>
+      <li><strong>アクティビティ・健康データ</strong> — Garmin デバイスから読み取る心拍数・歩数・距離。参加中のCrewの他メンバーとリアルタイムで共有されます。</li>
+      <li><strong>Crew情報</strong> — 所属Crew、リーダーになる場合の招待コード、参加・承認状況、送信した定型メッセージ。</li>
       <li><strong>決済情報</strong> — すべて Stripe が処理します。当社はカード番号を一切閲覧・受領・保存しません。Stripe からはサブスクリプションの状態（有効／失効）のみを受け取ります。</li>
     </ul>
     <p>当社は氏名・住所・詳細な位置情報の軌跡・連絡先・広告 ID を<strong>取得しません</strong>。PulseLink には第三者の広告・分析 SDK は含まれていません。</p>
@@ -162,16 +162,16 @@
     <h2>3. 利用目的</h2>
     <ul>
       <li>お客様の認証とログイン状態の維持（メールアドレス＋パスワード → トークン）。</li>
-      <li>作成または参加したルームの運営、および当該ルームの他メンバーへのリアルタイムの心拍数・歩数・距離の表示。</li>
+      <li>作成または参加したCrewの運営、および当該Crewの他メンバーへのリアルタイムの心拍数・歩数・距離の表示。</li>
       <li>メンバー間の定型メッセージの送受信。</li>
-      <li>Stripe を通じたホストサブスクリプションの管理。</li>
+      <li>Stripe を通じたリーダーサブスクリプションの管理。</li>
     </ul>
-    <p><strong>法的根拠（GDPR）:</strong> 心拍数（健康）データについては<em>明示的な同意</em>、アカウント・ルーム機能については<em>契約の履行</em>、サービスの安全維持については<em>正当な利益</em>。</p>
+    <p><strong>法的根拠（GDPR）:</strong> 心拍数（健康）データについては<em>明示的な同意</em>、アカウント・Crew機能については<em>契約の履行</em>、サービスの安全維持については<em>正当な利益</em>。</p>
 
     <h2>4. 情報を閲覧できる者</h2>
     <ul>
-      <li><strong>同じルームのメンバー</strong>。ルームに参加すると、アクティブな間、ニックネームと共有を選択した指標（心拍数・歩数・距離）が当該ルームのメンバーに表示されます。共有内容はいつでもお客様が制御できます（第6項参照）。</li>
-      <li><strong>Stripe</strong> — 決済代行（ホストサブスクリプションのみ）。</li>
+      <li><strong>同じCrewのメンバー</strong>。Crewに参加すると、アクティブな間、ニックネームと共有を選択した指標（心拍数・歩数・距離）が当該Crewのメンバーに表示されます。共有内容はいつでもお客様が制御できます（第6項参照）。</li>
+      <li><strong>Stripe</strong> — 決済代行（リーダーサブスクリプションのみ）。</li>
       <li><strong>Garmin</strong> — データはウォッチとスマートフォン間で Garmin Connect IQ プラットフォームを経由します。</li>
     </ul>
     <p>当社はデータを販売せず、広告事業者やデータブローカーに共有することもありません。</p>
@@ -180,9 +180,9 @@
     <p>これは PulseLink の実際の設計を反映したものです:</p>
     <ul>
       <li><strong>心拍数・歩数・距離</strong> — 最新値としてサーバーのメモリ上にのみ保持し、永続ストレージには書き込みません。次回の更新（通常は数秒〜数分以内）で上書きされ、サーバー再起動時には完全に失われます。</li>
-      <li><strong>メッセージ</strong> — ルームごとに保存され、一定の保持期間後に自動削除されます。</li>
+      <li><strong>メッセージ</strong> — Crewごとに保存され、一定の保持期間後に自動削除されます。</li>
       <li><strong>アカウント情報（メールアドレス・パスワードハッシュ・ニックネーム）</strong> — アカウントが存在する間、保持します。</li>
-      <li><strong>アカウント削除時</strong> — アカウント、所有するルーム、メンバーシップ、メッセージを<strong>恒久的かつ即時に消去</strong>します。</li>
+      <li><strong>アカウント削除時</strong> — アカウント、所有するCrew、メンバーシップ、メッセージを<strong>恒久的かつ即時に消去</strong>します。</li>
     </ul>
 
     <h2>6. プライバシー制御</h2>
@@ -211,7 +211,7 @@
     <p>パスワードはソルト付き SHA-256 ハッシュとしてのみ保存します。認証には署名付きトークンを使用します。サーバーとの通信はすべて HTTPS です。完全に安全な送信・保存方法は存在しませんが、データの機微性に見合った措置を講じています。</p>
 
     <h2>10. 国際的なデータ移転</h2>
-    <p>当社のサーバーは Render 上でホストされています。地域によっては、お客様の国外に所在するサーバーでデータが処理される場合があります。当社はそのような移転に適切な保護措置を講じます。</p>
+    <p>当社のサーバーは Render 上でホスティングされています。地域によっては、お客様の国外に所在するサーバーでデータが処理される場合があります。当社はそのような移転に適切な保護措置を講じます。</p>
 
     <h2>11. 子どもについて</h2>
     <p>PulseLink は、Garmin アカウント規約が許可する年齢未満の子どもを対象としていません。当社は当該要件を満たさない方から意図的にデータを取得することはありません。</p>

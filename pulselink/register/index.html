@@ -59,7 +59,7 @@
 <main>
   <div class="card">
     <h1 data-en="Create your account" data-ja="アカウント作成">Create your account</h1>
-    <p class="subtitle" data-en="Free to register. Pick Host later (14-day trial) or use as Guest forever." data-ja="登録は無料。後でホスト（14日トライアル）を選ぶか、ゲストとしてずっと無料で使えます。">Free to register. Pick Host later (14-day trial) or use as Guest forever.</p>
+    <p class="subtitle" data-en="Free to register. Pick Leader later (14-day trial) or use as Member forever." data-ja="登録は無料。後でリーダー（14日トライアル）を選ぶか、メンバーとしてずっと無料で使えます。">Free to register. Pick Leader later (14-day trial) or use as Member forever.</p>
 
     <div id="alert" style="display:none;"></div>
 
@@ -75,8 +75,8 @@
       </div>
       <div class="field">
         <label for="nickname" data-en="Nickname" data-ja="ニックネーム">Nickname</label>
-        <input id="nickname" name="nickname" type="text" required maxlength="10" data-en-ph="How others see you in the room" data-ja-ph="ルームでの表示名" placeholder="How others see you in the room">
-        <div class="hint" data-en="Up to 10 characters. Visible to other members of any room you join." data-ja="最大10文字。参加したルームの他メンバーに表示されます。">Up to 10 characters. Visible to other members of any room you join.</div>
+        <input id="nickname" name="nickname" type="text" required maxlength="10" data-en-ph="How others see you in the crew" data-ja-ph="Crewでの表示名" placeholder="How others see you in the crew">
+        <div class="hint" data-en="Up to 10 characters. Visible to other members of any crew you join." data-ja="最大10文字。参加したCrewの他メンバーに表示されます。">Up to 10 characters. Visible to other members of any crew you join.</div>
       </div>
       <button class="btn" type="submit" id="submit-btn" data-en="Create account" data-ja="アカウント作成">Create account</button>
     </form>
@@ -156,7 +156,7 @@ form.addEventListener('submit', async (e) => {
             '<li><b>PulseLink → 設定</b> を開く</li>' +
             '<li>メールアドレスと、設定したパスワードを入力</li>' +
             '<li>設定を保存し、Garmin ウォッチで PulseLink を起動</li>' +
-            '<li>スプラッシュ画面をタップ、ニックネーム確認、Host か Guest を選択</li>' +
+            '<li>スプラッシュ画面をタップ、ニックネーム確認、Leader か Member を選択</li>' +
           '</ol>'
         );
       } else {
@@ -169,7 +169,7 @@ form.addEventListener('submit', async (e) => {
             '<li>Go to <b>PulseLink → Settings</b></li>' +
             '<li>Enter your email and the password you just set</li>' +
             '<li>Save settings, then launch PulseLink on your Garmin watch</li>' +
-            '<li>Tap the splash screen, confirm nickname, pick Host or Guest</li>' +
+            '<li>Tap the splash screen, confirm nickname, pick Leader or Member</li>' +
           '</ol>'
         );
       }

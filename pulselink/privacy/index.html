@@ -52,7 +52,7 @@
   <!-- ===================== ENGLISH ===================== -->
   <div class="lang-block" id="content-en">
     <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: May 30, 2026</p>
+    <p class="updated">Last updated: June 21, 2026</p>
 
     <p>PulseLink is a Garmin Connect IQ app operated by <strong>Easymoat</strong> (sole proprietor: Yoshicchi). This Privacy Policy explains what data PulseLink processes, why, and the choices you have. By using PulseLink you agree to this policy.</p>
 
@@ -71,6 +71,7 @@
       <li><strong>Payment data</strong> — handled entirely by Stripe. We never see, receive, or store your card number. We only receive a subscription status (active / expired) from Stripe.</li>
     </ul>
     <p>We do <strong>not</strong> collect your name, address, precise location track, contacts, or any advertising identifiers. PulseLink contains no third-party advertising or analytics SDKs.</p>
+    <p><strong>On-device profile reading (not collected).</strong> To draw certain on-watch displays — the heat-stress advisory and the body-metrics bar — PulseLink reads your weight, age and resting heart rate from your Garmin user profile. This happens only on your watch to render those displays; this profile data is <strong>never transmitted to our server, stored, or shared with anyone</strong>.</p>
 
     <h2>3. How we use your data</h2>
     <ul>
@@ -121,7 +122,7 @@
     <p>PulseLink requires a Garmin device and a Garmin account. You must meet the eligibility and age requirements of your Garmin account to use PulseLink.</p>
 
     <h2>9. Security</h2>
-    <p>Passwords are stored only as salted SHA-256 hashes. Authentication uses signed tokens. All communication with our server is over HTTPS. No method of transmission or storage is perfectly secure, but we apply measures appropriate to the sensitivity of the data.</p>
+    <p>All communication between the app and our server is <strong>encrypted in transit using HTTPS (TLS)</strong>. Passwords are stored only as salted SHA-256 hashes — never in plain text — and authentication uses signed tokens. Heart-rate, step and distance values are held only transiently in server memory (see Section 5). No method of transmission or storage is perfectly secure, but we apply measures appropriate to the sensitivity of the data.</p>
 
     <h2>10. International transfers</h2>
     <p>Our server is hosted on Render. Depending on region, your data may be processed on servers located outside your country. We rely on appropriate safeguards for such transfers.</p>
@@ -139,7 +140,7 @@
   <!-- ===================== 日本語 ===================== -->
   <div class="lang-block hidden" id="content-ja">
     <h1>プライバシーポリシー</h1>
-    <p class="updated">最終更新日: 2026年5月30日</p>
+    <p class="updated">最終更新日: 2026年6月21日</p>
 
     <p>PulseLink は <strong>Easymoat</strong>（個人事業主: Yoshicchi）が運営する Garmin Connect IQ アプリです。本ポリシーは、PulseLink が取り扱うデータの内容・目的・お客様の選択肢を説明します。PulseLink をご利用いただくことで、本ポリシーに同意したものとみなされます。</p>
 
@@ -158,6 +159,7 @@
       <li><strong>決済情報</strong> — すべて Stripe が処理します。当社はカード番号を一切閲覧・受領・保存しません。Stripe からはサブスクリプションの状態（有効／失効）のみを受け取ります。</li>
     </ul>
     <p>当社は氏名・住所・詳細な位置情報の軌跡・連絡先・広告 ID を<strong>取得しません</strong>。PulseLink には第三者の広告・分析 SDK は含まれていません。</p>
+    <p><strong>端末内でのプロフィール参照（取得はしません）。</strong> 一部のウォッチ表示（熱ストレス・アドバイザリーおよび身体指標バー）を描画するため、PulseLink は Garmin のユーザープロフィールから体重・年齢・安静時心拍を読み取ります。これらは当該表示を描画するためにウォッチ内でのみ参照され、<strong>当社サーバーへの送信・保存・第三者への共有は一切行いません</strong>。</p>
 
     <h2>3. 利用目的</h2>
     <ul>
@@ -208,7 +210,7 @@
     <p>PulseLink のご利用には Garmin デバイスおよび Garmin アカウントが必要です。Garmin アカウントの利用要件（年齢を含む）を満たす方が対象です。</p>
 
     <h2>9. セキュリティ</h2>
-    <p>パスワードはソルト付き SHA-256 ハッシュとしてのみ保存します。認証には署名付きトークンを使用します。サーバーとの通信はすべて HTTPS です。完全に安全な送信・保存方法は存在しませんが、データの機微性に見合った措置を講じています。</p>
+    <p>アプリとサーバー間の通信はすべて <strong>HTTPS（TLS）で暗号化</strong>されています。パスワードはソルト付き SHA-256 ハッシュとしてのみ保存し（平文では保存しません）、認証には署名付きトークンを使用します。心拍数・歩数・距離の値はサーバーのメモリ上に一時的に保持されるのみです（第5項参照）。完全に安全な送信・保存方法は存在しませんが、データの機微性に見合った措置を講じています。</p>
 
     <h2>10. 国際的なデータ移転</h2>
     <p>当社のサーバーは Render 上でホスティングされています。地域によっては、お客様の国外に所在するサーバーでデータが処理される場合があります。当社はそのような移転に適切な保護措置を講じます。</p>

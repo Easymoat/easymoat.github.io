@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Watchface Image — MarketWatch | Easymoat</title>
+<link rel="icon" type="image/png" href="../../favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FC; --white: #FFFFFF; --border: #E2E6EF;
+    --accent: #117A3A; --accent-light: #E5F5EC; --accent-dark: #0E5E2D;
+    --text: #111827; --text2: #374151; --muted: #6B7280; --muted2: #9CA3AF;
+    --danger: #DC2626; --success: #16A34A;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 40px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; color: var(--muted); transition: all 0.15s; }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+  nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 40px; display: flex; align-items: center; justify-content: space-between; }
+  main { flex: 1; max-width: 560px; margin: 0 auto; padding: 48px 24px; width: 100%; }
+  .card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 32px; box-shadow: 0 4px 16px rgba(0,0,0,0.04); margin-bottom: 24px; }
+  h1 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+  h2 { font-size: 17px; font-weight: 700; margin-bottom: 12px; color: var(--accent-dark); }
+  .subtitle { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+  .field { margin-bottom: 16px; }
+  label { display: block; font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+  input { width: 100%; padding: 12px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 15px; font-family: inherit; outline: none; transition: border-color 0.15s; }
+  input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(17,122,58,0.12); }
+  .btn { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s; margin-top: 8px; }
+  .btn:hover { background: var(--accent-dark); }
+  .btn:disabled { background: var(--muted2); cursor: not-allowed; }
+  .btn.secondary { background: transparent; color: var(--danger); border: 1px solid #FECACA; }
+  .btn.secondary:hover { background: #FEF2F2; }
+  .alert { padding: 12px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+  .alert.error { background: #FEF2F2; color: var(--danger); border: 1px solid #FECACA; }
+  .alert.success { background: #F0FDF4; color: var(--success); border: 1px solid #BBF7D0; }
+  .guide li { font-size: 14px; color: var(--text2); margin: 0 0 10px 20px; }
+  .guide strong { color: var(--text); }
+  .badge { display: inline-block; background: var(--accent-light); color: var(--accent-dark); font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 99px; margin-bottom: 10px; letter-spacing: 0.05em; }
+  /* プレビュー */
+  .preview-wrap { display: flex; justify-content: center; margin: 20px 0; }
+  .preview-stage { position: relative; width: 320px; max-width: 100%; aspect-ratio: 1 / 1; flex: 0 0 auto; border-radius: 50%; background: #000; overflow: hidden; }
+  /* ウォッチ実物に合わせ、画像は円形ステージの中央 66% に表示 (fr965: 300px/454px)。
+     「リングあり」= 周りに黒い縁が残る小さめ表示 / 「全画面」= ステージいっぱい。 */
+  canvas#previewCanvas { position: absolute; left: 17%; top: 17%; width: 66%; height: 66%; border-radius: 50%; cursor: grab; touch-action: none; }
+  canvas#previewCanvas:active { cursor: grabbing; }
+  .preview-stage.full canvas#previewCanvas { left: 0; top: 0; width: 100%; height: 100%; }
+  .adjust-row { margin: 4px 0 12px; }
+  .adjust-hint { font-size: 12px; color: var(--text2); text-align: center; margin: 0 0 8px; }
+  .zoom-ctl { display: flex; align-items: center; gap: 10px; }
+  .zoom-ctl input[type=range] { flex: 1; }
+  .zoom-ico { font-size: 18px; font-weight: 700; color: var(--text2); width: 14px; text-align: center; }
+  .btn-link { background: none; border: none; color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer; padding: 4px 6px; }
+  .size-toggle { display: flex; gap: 10px; margin-bottom: 14px; }
+  .size-toggle label { flex: 1; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 0; }
+  .size-toggle label:has(input:checked) { border-color: var(--accent); background: var(--accent-light); color: var(--accent-dark); }
+  .size-toggle input { width: auto; }
+  .preview-note { text-align: center; font-size: 12px; color: var(--muted); margin-top: -8px; margin-bottom: 16px; }
+  .footer-links { text-align: center; margin-top: 20px; font-size: 13px; color: var(--muted); }
+  .footer-links a { color: var(--accent); text-decoration: none; margin: 0 8px; }
+  .color-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+  .color-btns button { flex: 1; min-width: 56px; padding: 9px 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--white); font-size: 14px; font-weight: 500; font-family: inherit; color: var(--text2); cursor: pointer; transition: all 0.15s; }
+  .color-btns button.active { border-color: var(--accent); background: var(--accent-light); color: var(--accent-dark); }
+  .measure-res { display: flex; gap: 12px; }
+  .measure-res .cell { flex: 1; border-radius: 10px; padding: 12px; text-align: center; }
+  .measure-res .cell .lbl { font-size: 12px; font-weight: 600; opacity: 0.8; }
+  .measure-res .cell .val { font-size: 22px; font-weight: 700; margin: 2px 0; }
+  .measure-res .cell .verdict { font-size: 12px; font-weight: 600; }
+  .m-ok   { background: #E1F5EE; color: #0F6E56; }
+  .m-warn { background: #FAEEDA; color: #854F0B; }
+  .m-bad  { background: #FCEBEB; color: #A32D2D; }
+  .qprev { margin-top: 16px; text-align: center; }
+  .qprev-cap { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  #qCanvas { width: 200px; height: 200px; border-radius: 50%; background: #000; }
+  .btn.done { background: #16A34A; }
+  .btn.done:hover { background: #128A3E; }
+  footer { background: var(--white); border-top: 1px solid var(--border); padding: 20px 40px; text-align: center; font-size: 12px; color: var(--muted2); }
+</style>
+</head>
+<body>
+<div class="lang-bar">
+  <span>🌐</span>
+  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+  <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+</div>
+<nav>
+  <div class="logo" style="display:flex; align-items:center; gap:10px;">
+    <a href="../" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;">
+      <img src="../../easymoat_logo.png" alt="Easymoat" style="height:32px; width:32px; border-radius:6px; object-fit:cover;">
+      <span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:800;">MarketWatch</span>
+    </a>
+  </div>
+</nav>
+<main>
+
+  <div class="card">
+    <div class="badge" data-en="WATCHFACE FEATURE" data-ja="文字盤の機能">WATCHFACE FEATURE</div>
+    <h1 data-en="Watchface Image" data-ja="文字盤画像">Watchface Image</h1>
+    <p class="subtitle" data-en="Put your own image on the MarketWatch watchface home — a photo, logo, or any symbol you love. No account needed; it links to your watch by its Device ID." data-ja="MarketWatch の文字盤ホームに、自分だけの画像を表示できます — 写真、ロゴ、お気に入りの図柄など。アカウント不要、端末ID（Device ID）で紐づきます。">Put your own image on the MarketWatch watchface home — a photo, logo, or any symbol you love. No account needed; it links to your watch by its Device ID.</p>
+
+    <h2 data-en="What makes an ideal image" data-ja="理想的な画像とは">What makes an ideal image</h2>
+    <ul class="guide">
+      <li data-en="Black background is best. The watchface background is black, so a black-background image blends in seamlessly — no visible edges. Transparent PNG backgrounds also work (treated as black)." data-ja="背景は黒がベスト。ウォッチフェイスの背景が黒なので、黒背景の画像は境界が見えず一体化します。透明背景の PNG も OK（黒として扱われます）。"><strong data-en="Black background is best." data-ja="背景は黒がベスト。">Black background is best.</strong> <span data-en="The watchface background is black, so a black-background image blends in seamlessly — no visible edges. Transparent PNG backgrounds also work (treated as black)." data-ja="ウォッチフェイスの背景が黒なので、黒背景の画像は境界が見えず一体化します。透明背景の PNG も OK（黒として扱われます）。">The watchface background is black, so a black-background image blends in seamlessly — no visible edges. Transparent PNG backgrounds also work (treated as black).</span></li>
+      <li><strong data-en="Square, 400×400 px or larger." data-ja="正方形、400×400px 以上。">Square, 400×400 px or larger.</strong> <span data-en="It will be scaled down to about 240–300 px on the watch. Non-square images are center-cropped." data-ja="ウォッチでは約 240〜300px に縮小されます。正方形でない画像は中央が切り抜かれます。">It will be scaled down to about 240–300 px on the watch. Non-square images are center-cropped.</span></li>
+      <li><strong data-en="Bright, high-contrast colors." data-ja="明るい・高コントラストの色。">Bright, high-contrast colors.</strong> <span data-en="White, yellow, cyan and red pop on the black screen. Dark colors sink into the background." data-ja="白・黄・シアン・赤は黒画面に映えます。暗い色は背景に沈みます。">White, yellow, cyan and red pop on the black screen. Dark colors sink into the background.</span></li>
+      <li><strong data-en="Photos work too." data-ja="写真も使えます。">Photos work too.</strong> <span data-en="To fit the watch's memory the image is reduced to a limited color palette, so very subtle shades and smooth gradients may shift slightly. With enough colors, photos can still come through well. Logos, crests and bold shapes with flat colors are the most forgiving." data-ja="ウォッチのメモリに収めるため画像は限られた色数（パレット）に減色されるので、ごく微妙な色合いや滑らかなグラデーションは多少変わることがあります。色数を十分に取れば、写真もきれいに表示できます。フラットな色のロゴ・紋・大胆な図形は特に再現しやすいです。">To fit the watch's memory the image is reduced to a limited color palette, so very subtle shades and smooth gradients may shift slightly. With enough colors, photos can still come through well. Logos, crests and bold shapes with flat colors are the most forgiving.</span></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2 data-en="1. Your Device ID" data-ja="1. 端末ID（Device ID）">1. Your Device ID</h2>
+    <div id="loginAlert"></div>
+    <div id="loginForm">
+      <div class="field">
+        <label for="deviceId" data-en="Device ID" data-ja="端末ID（Device ID）">Device ID</label>
+        <input id="deviceId" type="text" placeholder="XXXX-XXXX" autocomplete="off" spellcheck="false" maxlength="40" style="text-align:center; letter-spacing:0.12em; font-size:17px;">
+        <p class="preview-note" style="margin:8px 0 0; text-align:left;" data-en="On the watch: long-press the watchface home → Settings → Device ID (e.g. 1A2B-3C4D). No account or password needed." data-ja="ウォッチで文字盤ホームを長押し → 設定 → Device ID で確認できます（例: 1A2B-3C4D）。アカウントもパスワードも不要です。">On the watch: long-press the watchface home → Settings → Device ID (e.g. 1A2B-3C4D). No account or password needed.</p>
+      </div>
+      <button class="btn" id="loginBtn" data-en="Continue" data-ja="次へ">Continue</button>
+    </div>
+    <div id="loginDone" style="display:none;">
+      <div class="alert success" id="loginDoneMsg"></div>
+      <button class="btn" id="signoutBtn" data-en="Change device" data-ja="端末を変更" style="margin-top:10px;">Change device</button>
+    </div>
+  </div>
+
+  <div class="card" id="uploadCard" style="display:none;">
+    <h2 data-en="2. Choose &amp; preview your image" data-ja="2. 画像を選んでプレビュー">2. Choose &amp; preview your image</h2>
+    <div class="field">
+      <input id="file" type="file" accept="image/png,image/jpeg,image/webp">
+    </div>
+    <div class="size-toggle">
+      <label><input type="radio" name="imgsize" value="standard" checked onchange="setSizeMode(this.value)"><span data-en="With ring" data-ja="リングあり">With ring</span></label>
+      <label><input type="radio" name="imgsize" value="full" onchange="setSizeMode(this.value)"><span data-en="Full screen" data-ja="全画面">Full screen</span></label>
+    </div>
+    <div class="preview-wrap">
+      <div class="preview-stage" id="previewStage">
+        <canvas id="previewCanvas" width="320" height="320"></canvas>
+      </div>
+    </div>
+    <div id="adjustRow" class="adjust-row" style="display:none;">
+      <p class="adjust-hint" data-en="Drag the image to position it. Use the slider to zoom." data-ja="画像をドラッグして位置を調整。スライダーで拡大できます。">Drag the image to position it. Use the slider to zoom.</p>
+      <div class="zoom-ctl">
+        <span class="zoom-ico" aria-hidden="true">−</span>
+        <input id="zoom" type="range" min="1" max="3" step="0.01" value="1">
+        <span class="zoom-ico" aria-hidden="true">+</span>
+        <button type="button" class="btn-link" id="resetAdjust" data-en="Reset" data-ja="リセット">Reset</button>
+      </div>
+    </div>
+    <p class="preview-note" style="text-align:left;" data-en="True-to-watch preview. With ring: the image is shown smaller, with a black margin around it. Full screen: the image fills the entire watchface." data-ja="実機どおりのプレビュー。リングあり: 画像が小さめに表示され、周りに黒い縁が残ります。全画面: 画像が画面いっぱいに広がります。">True-to-watch preview. With ring: the image is shown smaller, with a black margin around it. Full screen: the image fills the entire watchface.</p>
+    <!-- キャッシュ容量の実測 (プレビューと融合)。現在の 標準/全画面・色数 に連動して自動更新。 -->
+    <p style="font-weight:600; margin: 22px 0 4px;" data-en="Will it show on your watch?" data-ja="ウォッチに表示できる？">Will it show on your watch?</p>
+    <p class="preview-note" style="margin-top:0; text-align:left;" data-en="Pick a color count and size below. The result box then tells you whether the image will show on the watch. (More colors and a bigger image are harder to show.)" data-ja="下で色数と表示サイズを選ぶと、その組み合わせでウォッチに表示できるかどうかを下の枠に表示します。（色数が多く画像が大きいほど、表示が難しくなります。）">Pick a color count and size below; the result box tells you whether it will show on the watch.</p>
+    <div class="field">
+      <label data-en="Target device (screen px)" data-ja="対象機種（画面px）">Target device (screen px)</label>
+      <div id="deviceBtns" class="color-btns">
+        <button type="button" data-std="240" data-full="360">360px</button>
+        <button type="button" data-std="260" data-full="390">390px</button>
+        <button type="button" data-std="275" data-full="416">416px</button>
+        <button type="button" data-std="300" data-full="454" class="active">454px (fr965)</button>
+      </div>
+    </div>
+    <div class="field">
+      <label data-en="Colors" data-ja="色数">Colors</label>
+      <div id="colorBtns" class="color-btns">
+        <button type="button" data-c="2">2</button>
+        <button type="button" data-c="4">4</button>
+        <button type="button" data-c="8">8</button>
+        <button type="button" data-c="16" class="active">16</button>
+        <button type="button" data-c="32">32</button>
+        <button type="button" data-c="64">64</button>
+        <button type="button" data-c="128">128</button>
+        <button type="button" data-c="256">256</button>
+      </div>
+      <div class="hint" id="bppHint" style="margin-top:6px;"></div>
+    </div>
+    <div id="measureOut" style="margin-top:12px;"></div>
+    <p class="preview-note" style="text-align:left; margin-top:1em;" data-en="Rule: With ring (a smaller image) works with any number of colors. For Full screen, 16 colors or fewer is the safe choice. Fewer colors always displays more reliably." data-ja="ルール: 「リングあり」（小さめの画像）なら、何色を選んでも大丈夫です。「全画面」にするときは、16色までが安心です。色数を抑えるほど、確実に表示されます。">Rule: With ring works with any colors; for Full screen, 16 colors or fewer is the safe choice.</p>
+
+    <div id="uploadAlert"></div>
+    <button class="btn" id="uploadBtn" disabled data-en="Upload to my watch" data-ja="ウォッチにアップロード">Upload to my watch</button>
+    <button class="btn secondary" id="removeBtn" data-en="Remove custom image (back to default)" data-ja="カスタム画像を削除（デフォルトに戻す）">Remove custom image (back to default)</button>
+    <p class="preview-note" style="margin-top:14px; text-align:left;" data-en="After uploading, open the MarketWatch watchface home on your watch. The image downloads via your phone and appears automatically. A larger file can take 10 seconds or more to appear — give it time. If it still doesn't show after waiting, it's too large and failed; reduce colors or switch to With ring." data-ja="アップロード後、ウォッチで MarketWatch の文字盤ホームを開いてください。スマホ経由で画像がダウンロードされ、自動で表示されます。容量の大きいファイルほど届くのに時間がかかり、反映まで10秒以上かかることがあるので少し待ってください。しばらく待っても表示されない場合は容量が大きすぎて読み込みに失敗しています — 色数を減らすか「リングあり」にして、もう一度アップロードしてください。">After uploading, open the MarketWatch watchface home on your watch. The image downloads via your phone and appears automatically. A larger file can take 10 seconds or more to appear — give it time. If it still doesn't show after waiting, it's too large and failed; reduce colors or switch to With ring.</p>
+  </div>
+
+  <div class="footer-links">
+    <a href="../" data-en="← MarketWatch home" data-ja="← MarketWatch ホーム">← MarketWatch home</a>
+    <a href="../manual/" data-en="User manual" data-ja="ユーザーマニュアル">User manual</a>
+  </div>
+</main>
+<footer>© 2026 Easymoat</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/rgbquant@1.1.2/src/rgbquant.js"></script>
+<script>
+const API = 'https://mlbwatch-server.onrender.com/api/marketwatch';
+let deviceId = null;
+const DEV_RE = /^[0-9a-zA-Z-]{4,40}$/;
+let maskedPng = null;   // 320x320 円形マスク済み data URL
+let sizeMode = 'standard';  // 'standard' = リング内側 66% / 'full' = 画面いっぱい
+// 位置決め状態: 読み込んだ画像と、ユーザーが調整した移動量(panX/panY px)・拡大率(zoom)
+let curImg = null, panX = 0, panY = 0, zoom = 1;
+
+function setSizeMode(v) {
+  sizeMode = (v === 'full') ? 'full' : 'standard';
+  document.getElementById('previewStage').classList.toggle('full', sizeMode === 'full');
+  if (typeof resetUploadBtn === 'function') { resetUploadBtn(); }
+  if (typeof scheduleMeasure === 'function') { scheduleMeasure(); }
+}
+
+// 現在の curImg + pan/zoom 状態で 320x320 円形マスクを再描画し maskedPng を更新する。
+function redrawPreview() {
+  if (!curImg) return;
+  const cv = document.getElementById('previewCanvas');
+  const ctx = cv.getContext('2d');
+  // cover フィット基準スケール × ユーザー拡大率
+  const base = Math.max(320 / curImg.width, 320 / curImg.height);
+  const sc = base * zoom;
+  const dw = curImg.width * sc, dh = curImg.height * sc;
+  // 黒い縁が出ないよう pan を画像が円を覆う範囲にクランプ
+  const maxX = Math.max(0, (dw - 320) / 2);
+  const maxY = Math.max(0, (dh - 320) / 2);
+  panX = Math.max(-maxX, Math.min(maxX, panX));
+  panY = Math.max(-maxY, Math.min(maxY, panY));
+  ctx.clearRect(0, 0, 320, 320);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, 320, 320);
+  ctx.drawImage(curImg, (320 - dw) / 2 + panX, (320 - dh) / 2 + panY, dw, dh);
+  // 円形マスク
+  ctx.globalCompositeOperation = 'destination-in';
+  ctx.beginPath();
+  ctx.arc(160, 160, 160, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalCompositeOperation = 'source-over';
+  maskedPng = cv.toDataURL('image/png');
+  // 画像/位置/拡大を変えたら未アップロード状態に戻し、計測を自動更新。
+  if (typeof resetUploadBtn === 'function') { resetUploadBtn(); }
+  if (typeof scheduleMeasure === 'function') { scheduleMeasure(); }
+}
+
+// ─── 言語切替 ───
+function setLang(lang) {
+  document.documentElement.lang = lang === 'ja' ? 'ja' : 'en';
+  document.querySelectorAll('[data-en]').forEach(el => {
+    if (el.children.length > 0 && !el.classList.contains('btn')) return;
+    const t = el.getAttribute('data-' + lang);
+    if (t) el.textContent = t;
+  });
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+  try { localStorage.setItem('mw_lang', lang); } catch(e) {}
+}
+try { if (localStorage.getItem('mw_lang') === 'ja') setLang('ja'); } catch(e) {}
+
+// (ウォッチフェイスモックは静的 SVG。旧コンパス目盛り生成は廃止。)
+
+// Device ID 確定状態の表示に切り替える (確定 / 復元の両方で使う)。
+function enterSignedIn(id) {
+  const ja = document.documentElement.lang === 'ja';
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('loginDone').style.display = '';
+  document.getElementById('loginDoneMsg').textContent =
+    (ja ? '端末: ' : 'Device: ') + id + (ja ? '。下で画像を選んでください。' : '. Choose your image below.');
+  document.getElementById('uploadCard').style.display = '';
+}
+
+// 端末変更: 保存した Device ID を消して入力フォームに戻す。
+function enterSignedOut() {
+  deviceId = null;
+  try { localStorage.removeItem('mw_device_id'); } catch (e) {}
+  document.getElementById('loginForm').style.display = '';
+  document.getElementById('loginDone').style.display = 'none';
+  document.getElementById('uploadCard').style.display = 'none';
+  document.getElementById('loginAlert').innerHTML = '';
+}
+document.getElementById('signoutBtn').addEventListener('click', enterSignedOut);
+
+// 入力を大文字・許可文字 (英数とハイフン) のみに整形。
+document.getElementById('deviceId').addEventListener('input', (e) => {
+  e.target.value = e.target.value.replace(/[^0-9a-zA-Z-]/g, '');
+});
+
+// 起動時: 保存済み Device ID があれば自動復元 (リロードで入力に戻らない)。
+(function restoreSession() {
+  let saved = null;
+  try { saved = localStorage.getItem('mw_device_id'); } catch (e) {}
+  if (!saved || !DEV_RE.test(saved)) return;
+  deviceId = saved;
+  document.getElementById('deviceId').value = saved;
+  enterSignedIn(saved);
+})();
+
+// ─── Device ID 確定 ───
+document.getElementById('loginBtn').addEventListener('click', () => {
+  const id = document.getElementById('deviceId').value.trim();
+  const alertBox = document.getElementById('loginAlert');
+  alertBox.innerHTML = '';
+  const ja = document.documentElement.lang === 'ja';
+  if (!DEV_RE.test(id)) {
+    alertBox.innerHTML = '<div class="alert error">' + (ja ? 'Device ID を正しく入力してください（例: 1A2B-3C4D）。' : 'Enter a valid Device ID (e.g. 1A2B-3C4D).') + '</div>';
+    return;
+  }
+  deviceId = id;
+  try { localStorage.setItem('mw_device_id', id); } catch (e) {}
+  enterSignedIn(id);
+});
+
+// ─── 画像選択 → プレビュー (位置・拡大は redrawPreview が担当) ───
+document.getElementById('file').addEventListener('change', (ev) => {
+  const f = ev.target.files && ev.target.files[0];
+  if (!f) return;
+  const img = new Image();
+  img.onload = () => {
+    curImg = img;
+    panX = 0; panY = 0; zoom = 1;            // 新しい画像は中央・等倍から
+    document.getElementById('zoom').value = '1';
+    document.getElementById('adjustRow').style.display = '';
+    redrawPreview();
+    document.getElementById('uploadBtn').disabled = false;
+    URL.revokeObjectURL(img.src);
+  };
+  img.src = URL.createObjectURL(f);
+});
+
+// ─── ドラッグで移動 (マウス + タッチ共通の pointer events) ───
+(function () {
+  const cv = document.getElementById('previewCanvas');
+  let dragging = false, lastX = 0, lastY = 0;
+  cv.addEventListener('pointerdown', (e) => {
+    if (!curImg) return;
+    dragging = true; lastX = e.clientX; lastY = e.clientY;
+    cv.setPointerCapture(e.pointerId);
+  });
+  cv.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    // CSS 表示px → canvas 内部px (320) へスケール変換
+    const k = 320 / cv.clientWidth;
+    panX += (e.clientX - lastX) * k;
+    panY += (e.clientY - lastY) * k;
+    lastX = e.clientX; lastY = e.clientY;
+    redrawPreview();
+  });
+  const end = (e) => { dragging = false; };
+  cv.addEventListener('pointerup', end);
+  cv.addEventListener('pointercancel', end);
+})();
+
+// ─── 拡大スライダー ───
+document.getElementById('zoom').addEventListener('input', (e) => {
+  zoom = parseFloat(e.target.value) || 1;
+  redrawPreview();
+});
+
+// ─── リセット (中央・等倍に戻す) ───
+document.getElementById('resetAdjust').addEventListener('click', () => {
+  panX = 0; panY = 0; zoom = 1;
+  document.getElementById('zoom').value = '1';
+  redrawPreview();
+});
+
+// ─── アップロード ───
+// アップロード完了表示 / 設定変更で通常表示へ戻す。
+function markUploadDone() {
+  const btn = document.getElementById('uploadBtn');
+  const ja = document.documentElement.lang === 'ja';
+  btn.textContent = ja ? '✓ アップロード済み' : '✓ Uploaded';
+  btn.classList.add('done');
+}
+function resetUploadBtn() {
+  const btn = document.getElementById('uploadBtn');
+  if (!btn.classList.contains('done')) return;
+  const ja = document.documentElement.lang === 'ja';
+  btn.textContent = btn.getAttribute(ja ? 'data-ja' : 'data-en');
+  btn.classList.remove('done');
+}
+
+document.getElementById('uploadBtn').addEventListener('click', async () => {
+  if (!deviceId || !maskedPng) return;
+  const ja = document.documentElement.lang === 'ja';
+  const box = document.getElementById('uploadAlert');
+  box.innerHTML = '';
+  const btn = document.getElementById('uploadBtn');
+  btn.disabled = true;
+  try {
+    // 画像から最適パレット (median-cut) を mColors 色で算出して一緒に送る。
+    // ウォッチはこのパレットで makeImageRequest するので、同じ色数でも画質が大幅向上。
+    const palette = computeOptimalPalette(mColors);
+    const r = await fetch(API + '/image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ device_id: deviceId, image: maskedPng, size: sizeMode, colors: mColors, palette: palette })
+    });
+    const j = await r.json();
+    if (!r.ok || !j.ok) throw new Error(j.error || 'upload_failed');
+    box.innerHTML = '<div class="alert success">' + (ja ? 'アップロード完了。ウォッチで MarketWatch の文字盤ホームを開くと反映されます。' : 'Uploaded. Open the MarketWatch watchface home on your watch to see it.') + '</div>';
+    markUploadDone();
+  } catch (e) {
+    box.innerHTML = '<div class="alert error">' + (ja ? 'アップロードに失敗しました: ' : 'Upload failed: ') + e.message + '</div>';
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ─── 削除 (デフォルトに戻す) ───
+document.getElementById('removeBtn').addEventListener('click', async () => {
+  if (!deviceId) return;
+  const ja = document.documentElement.lang === 'ja';
+  const box = document.getElementById('uploadAlert');
+  box.innerHTML = '';
+  try {
+    const r = await fetch(API + '/image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ device_id: deviceId, remove: true })
+    });
+    const j = await r.json();
+    if (!r.ok || !j.ok) throw new Error(j.error || 'remove_failed');
+    box.innerHTML = '<div class="alert success">' + (ja ? '削除しました。ウォッチフェイスはデフォルトの画像に戻ります。' : 'Removed. The watchface goes back to the default image.') + '</div>';
+  } catch (e) {
+    box.innerHTML = '<div class="alert error">' + (ja ? '削除に失敗しました: ' : 'Remove failed: ') + e.message + '</div>';
+  }
+});
+
+// ─── キャッシュ容量の計測ツール ───
+// ウォッチ内のデコード後ビットマップ = width × height × bpp ÷ 8。
+// bpp は色数で 1/2/4/8 の段階 (2色=1, 4色=2, 16色=4, それ以上=8)。
+// fr965 実測: ≤45KB はキャッシュ成功 / 103KB は失敗。
+let mDevStd = 300, mDevFull = 454, mColors = 16;
+
+function bppFor(colors) {
+  if (colors <= 2) return 1;
+  if (colors <= 4) return 2;
+  if (colors <= 16) return 4;
+  return 8;
+}
+function kbFor(px, bpp) { return (px * px * bpp / 8) / 1000; }
+
+function updateBppHint() {
+  var ja = document.documentElement.lang === 'ja';
+  var load = (mColors <= 16) ? (ja ? '負担：少なめ' : 'Load: light')
+           : (mColors <= 64) ? (ja ? '負担：多め' : 'Load: heavy')
+           :                    (ja ? '負担：かなり多い' : 'Load: very heavy');
+  document.getElementById('bppHint').textContent = load;
+}
+function selBtn(group, btn) {
+  document.querySelectorAll('#' + group + ' button').forEach(function (b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+document.querySelectorAll('#deviceBtns button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    mDevStd = parseInt(b.getAttribute('data-std'), 10);
+    mDevFull = parseInt(b.getAttribute('data-full'), 10);
+    selBtn('deviceBtns', b);
+    scheduleMeasure();
+  });
+});
+document.querySelectorAll('#colorBtns button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    mColors = parseInt(b.getAttribute('data-c'), 10);
+    selBtn('colorBtns', b);
+    updateBppHint();
+    if (typeof resetUploadBtn === 'function') { resetUploadBtn(); }
+    scheduleMeasure();
+  });
+});
+
+// 判定: デコード後ビットマップ容量 (画素数 × bpp) で決まる。fr965 実測:
+//   90/103KB は OK、206KB (全画面32色以上=8bpp) は境界〜失敗 (c=0=メモリ不足)。
+//   画像の中身ではなく 色数×サイズ で決まる。境界帯は明るい画像で c=0 になりうる。
+var SAFE_KB = 150; // これ以下は確実に表示+キャッシュ
+var FAIL_KB = 210; // これ以上はほぼ表示不可
+function aClass(kb) {
+  if (kb == null) return 'm-warn';
+  if (kb <= SAFE_KB) return 'm-ok';
+  if (kb <= FAIL_KB) return 'm-warn';
+  return 'm-bad';
+}
+function aText(kb) {
+  var ja = document.documentElement.lang === 'ja';
+  if (kb == null) return '';
+  if (kb <= SAFE_KB) return ja ? 'OK — 表示されます' : 'OK — will display';
+  if (kb <= FAIL_KB) return ja ? 'ぎりぎり（明るい画像は出ない場合あり）' : 'borderline (bright images may not show)';
+  return ja ? '大きすぎて表示できません' : 'too big — won\'t display';
+}
+
+// 計測: 現在の 標準/全画面(sizeMode)・対象機種・色数 に連動した1結果を表示。
+// 表示可否はデコード後ビットマップ容量 (画素数 × bpp) で決まる (画像の中身ではない)。
+function measure() {
+  var ja = document.documentElement.lang === 'ja';
+  var px = (sizeMode === 'full') ? mDevFull : mDevStd;
+  var modeLbl = (sizeMode === 'full') ? (ja ? '全画面' : 'Full') : (ja ? 'リングあり' : 'With ring');
+  var kb = kbFor(px, bppFor(mColors));
+  var lbl = px + 'px · ' + modeLbl + ' · ' + mColors + (ja ? '色' : ' colors');
+  var html = '<div class="measure-res"><div class="cell ' + aClass(kb) + '" style="flex:1;">' +
+    '<div class="lbl">' + lbl + '</div><div class="val">' + kb.toFixed(0) + ' KB</div>' +
+    '<div class="verdict">' + aText(kb) + '</div></div></div>';
+  if (curImg) {
+    var cap = ja ? ('品質プレビュー（' + mColors + '色・最適パレット）')
+                 : ('Quality preview — ' + mColors + ' colors (optimal palette)');
+    html += '<div class="qprev"><div class="qprev-cap">' + cap +
+            '</div><canvas id="qCanvas" width="320" height="320"></canvas></div>';
+  }
+  document.getElementById('measureOut').innerHTML = html;
+  if (curImg) { renderQuality(); }
+}
+
+// 連続操作（ドラッグ/拡大）でも重くならないよう、計測はデバウンスして自動実行。
+var measureTimer = null;
+function scheduleMeasure() {
+  if (measureTimer) { clearTimeout(measureTimer); }
+  measureTimer = setTimeout(measure, 180);
+}
+
+// 現在のプレビュー画像を mColors 色に減色 (median-cut + Floyd-Steinberg) して表示。
+// makeImageRequest の挙動に近い「N色での到達品質」を机上で確認する。
+function renderQuality() {
+  var qc = document.getElementById('qCanvas');
+  if (!qc) return;
+  var src = document.getElementById('previewCanvas');
+  if (typeof RgbQuant === 'undefined') {
+    qc.getContext('2d').drawImage(src, 0, 0);
+    return;
+  }
+  try {
+    var q = new RgbQuant({ colors: mColors, dithKern: 'FloydSteinberg', dithSerp: true });
+    q.sample(src);
+    var out = q.reduce(src);
+    var ctx = qc.getContext('2d');
+    var id = ctx.createImageData(320, 320);
+    id.data.set(out);
+    ctx.putImageData(id, 0, 0);
+  } catch (e) {
+    qc.getContext('2d').drawImage(src, 0, 0);
+  }
+}
+// 現在のプレビュー画像から n 色の最適パレット (median-cut) を算出し、色int配列で返す。
+// ウォッチへ送り、makeImageRequest の :palette に使う。
+function computeOptimalPalette(n) {
+  if (typeof RgbQuant === 'undefined' || !curImg) return null;
+  try {
+    var src = document.getElementById('previewCanvas');
+    var q = new RgbQuant({ colors: n, dithKern: 'FloydSteinberg' });
+    q.sample(src);
+    var pal = q.palette(true); // [[r,g,b,a], ...]
+    if (!pal || pal.length < 2) return null;
+    return pal.map(function (c) { return (c[0] << 16) | (c[1] << 8) | c[2]; });
+  } catch (e) { return null; }
+}
+updateBppHint();
+measure();
+</script>
+</body>
+</html>

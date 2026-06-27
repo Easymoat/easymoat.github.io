@@ -97,9 +97,9 @@
 <main>
 
   <div class="card">
-    <div class="badge" data-en="WATCHFACE FEATURE" data-ja="文字盤の機能">WATCHFACE FEATURE</div>
-    <h1 data-en="Watchface Image" data-ja="文字盤画像">Watchface Image</h1>
-    <p class="subtitle" data-en="Put your own image on the MarketWatch watchface home — a photo, logo, or any symbol you love. No account needed; it links to your watch by its Device ID." data-ja="MarketWatch の文字盤ホームに、自分だけの画像を表示できます — 写真、ロゴ、お気に入りの図柄など。アカウント不要、端末ID（Device ID）で紐づきます。">Put your own image on the MarketWatch watchface home — a photo, logo, or any symbol you love. No account needed; it links to your watch by its Device ID.</p>
+    <div class="badge" data-en="WATCHFACE FEATURE" data-ja="ウォッチフェイスの機能">WATCHFACE FEATURE</div>
+    <h1 data-en="Watchface Image" data-ja="ウォッチフェイス画像">Watchface Image</h1>
+    <p class="subtitle" data-en="Put your own image on the MarketWatch watchface home — a photo, logo, or any symbol you love. No account needed; it links to your watch by its Device ID." data-ja="MarketWatch のウォッチフェイスホームに、自分だけの画像を表示できます — 写真、ロゴ、お気に入りの図柄など。アカウント不要、端末ID（Device ID）で紐づきます。">Put your own image on the MarketWatch watchface home — a photo, logo, or any symbol you love. No account needed; it links to your watch by its Device ID.</p>
 
     <h2 data-en="What makes an ideal image" data-ja="理想的な画像とは">What makes an ideal image</h2>
     <ul class="guide">
@@ -117,7 +117,7 @@
       <div class="field">
         <label for="deviceId" data-en="Device ID" data-ja="端末ID（Device ID）">Device ID</label>
         <input id="deviceId" type="text" placeholder="XXXX-XXXX" autocomplete="off" spellcheck="false" maxlength="40" style="text-align:center; letter-spacing:0.12em; font-size:17px;">
-        <p class="preview-note" style="margin:8px 0 0; text-align:left;" data-en="On the watch: long-press the watchface home → Settings → Device ID (e.g. 1A2B-3C4D). No account or password needed." data-ja="ウォッチで文字盤ホームを長押し → 設定 → Device ID で確認できます（例: 1A2B-3C4D）。アカウントもパスワードも不要です。">On the watch: long-press the watchface home → Settings → Device ID (e.g. 1A2B-3C4D). No account or password needed.</p>
+        <p class="preview-note" style="margin:8px 0 0; text-align:left;" data-en="On the watch: long-press the watchface home → Settings → Device ID (e.g. 1A2B-3C4D). No account or password needed." data-ja="ウォッチでウォッチフェイスホームを長押し → 設定 → Device ID で確認できます（例: 1A2B-3C4D）。アカウントもパスワードも不要です。">On the watch: long-press the watchface home → Settings → Device ID (e.g. 1A2B-3C4D). No account or password needed.</p>
       </div>
       <button class="btn" id="loginBtn" data-en="Continue" data-ja="次へ">Continue</button>
     </div>
@@ -182,7 +182,7 @@
     <div id="uploadAlert"></div>
     <button class="btn" id="uploadBtn" disabled data-en="Upload to my watch" data-ja="ウォッチにアップロード">Upload to my watch</button>
     <button class="btn secondary" id="removeBtn" data-en="Remove custom image (back to default)" data-ja="カスタム画像を削除（デフォルトに戻す）">Remove custom image (back to default)</button>
-    <p class="preview-note" style="margin-top:14px; text-align:left;" data-en="After uploading, open the MarketWatch watchface home on your watch. The image downloads via your phone and appears automatically. A larger file can take 10 seconds or more to appear — give it time. If it still doesn't show after waiting, it's too large and failed; reduce colors or switch to With ring." data-ja="アップロード後、ウォッチで MarketWatch の文字盤ホームを開いてください。スマホ経由で画像がダウンロードされ、自動で表示されます。容量の大きいファイルほど届くのに時間がかかり、反映まで10秒以上かかることがあるので少し待ってください。しばらく待っても表示されない場合は容量が大きすぎて読み込みに失敗しています — 色数を減らすか「リングあり」にして、もう一度アップロードしてください。">After uploading, open the MarketWatch watchface home on your watch. The image downloads via your phone and appears automatically. A larger file can take 10 seconds or more to appear — give it time. If it still doesn't show after waiting, it's too large and failed; reduce colors or switch to With ring.</p>
+    <p class="preview-note" style="margin-top:14px; text-align:left;" data-en="After uploading, open the MarketWatch watchface home on your watch. The image downloads via your phone and appears automatically. A larger file can take 10 seconds or more to appear — give it time. If it still doesn't show after waiting, it's too large and failed; reduce colors or switch to With ring." data-ja="アップロード後、ウォッチで MarketWatch のウォッチフェイスホームを開いてください。スマホ経由で画像がダウンロードされ、自動で表示されます。容量の大きいファイルほど届くのに時間がかかり、反映まで10秒以上かかることがあるので少し待ってください。しばらく待っても表示されない場合は容量が大きすぎて読み込みに失敗しています — 色数を減らすか「リングあり」にして、もう一度アップロードしてください。">After uploading, open the MarketWatch watchface home on your watch. The image downloads via your phone and appears automatically. A larger file can take 10 seconds or more to appear — give it time. If it still doesn't show after waiting, it's too large and failed; reduce colors or switch to With ring.</p>
   </div>
 
   <div class="footer-links">
@@ -393,7 +393,7 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
     });
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || 'upload_failed');
-    box.innerHTML = '<div class="alert success">' + (ja ? 'アップロード完了。ウォッチで MarketWatch の文字盤ホームを開くと反映されます。' : 'Uploaded. Open the MarketWatch watchface home on your watch to see it.') + '</div>';
+    box.innerHTML = '<div class="alert success">' + (ja ? 'アップロード完了。ウォッチで MarketWatch のウォッチフェイスホームを開くと反映されます。' : 'Uploaded. Open the MarketWatch watchface home on your watch to see it.') + '</div>';
     markUploadDone();
   } catch (e) {
     box.innerHTML = '<div class="alert error">' + (ja ? 'アップロードに失敗しました: ' : 'Upload failed: ') + e.message + '</div>';

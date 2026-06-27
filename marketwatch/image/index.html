@@ -182,7 +182,7 @@
     <div id="uploadAlert"></div>
     <button class="btn" id="uploadBtn" disabled data-en="Upload to my watch" data-ja="ウォッチにアップロード">Upload to my watch</button>
     <button class="btn secondary" id="removeBtn" data-en="Remove custom image (back to default)" data-ja="カスタム画像を削除（デフォルトに戻す）">Remove custom image (back to default)</button>
-    <p class="preview-note" style="margin-top:14px; text-align:left;" data-en="After uploading, open the MarketWatch watchface home on your watch. The image downloads via your phone and appears automatically. A larger file can take 10 seconds or more to appear — give it time. If it still doesn't show after waiting, it's too large and failed; reduce colors or switch to With ring." data-ja="アップロード後、ウォッチで MarketWatch のウォッチフェイスホームを開いてください。スマホ経由で画像がダウンロードされ、自動で表示されます。容量の大きいファイルほど届くのに時間がかかり、反映まで10秒以上かかることがあるので少し待ってください。しばらく待っても表示されない場合は容量が大きすぎて読み込みに失敗しています — 色数を減らすか「リングあり」にして、もう一度アップロードしてください。">After uploading, open the MarketWatch watchface home on your watch. The image downloads via your phone and appears automatically. A larger file can take 10 seconds or more to appear — give it time. If it still doesn't show after waiting, it's too large and failed; reduce colors or switch to With ring.</p>
+    <p class="preview-note" style="margin-top:14px; text-align:left;" data-en="After uploading, restart MarketWatch. The image downloads via your phone and appears automatically. A larger file can take 10 seconds or more to appear — give it time. If it still doesn't show after waiting, it's too large and failed; reduce colors or switch to With ring." data-ja="アップロード後、MarketWatch を再起動して下さい。スマホ経由で画像がダウンロードされ、自動で表示されます。容量の大きいファイルほど届くのに時間がかかり、反映まで10秒以上かかることがあるので少し待ってください。しばらく待っても表示されない場合は容量が大きすぎて読み込みに失敗しています — 色数を減らすか「リングあり」にして、もう一度アップロードしてください。">After uploading, restart MarketWatch. The image downloads via your phone and appears automatically. A larger file can take 10 seconds or more to appear — give it time. If it still doesn't show after waiting, it's too large and failed; reduce colors or switch to With ring.</p>
   </div>
 
   <div class="footer-links">
@@ -393,7 +393,7 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
     });
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || 'upload_failed');
-    box.innerHTML = '<div class="alert success">' + (ja ? 'アップロード完了。ウォッチで MarketWatch のウォッチフェイスホームを開くと反映されます。' : 'Uploaded. Open the MarketWatch watchface home on your watch to see it.') + '</div>';
+    box.innerHTML = '<div class="alert success">' + (ja ? 'アップロード完了。MarketWatch を再起動すると反映されます。' : 'Uploaded. Restart MarketWatch to see it.') + '</div>';
     markUploadDone();
   } catch (e) {
     box.innerHTML = '<div class="alert error">' + (ja ? 'アップロードに失敗しました: ' : 'Upload failed: ') + e.message + '</div>';

@@ -52,7 +52,7 @@
   }
   .screenshots { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   @media (max-width: 720px) { .screenshots { grid-template-columns: 1fr 1fr; max-width: 420px; margin: 0 auto; } }
-  .screenshot { border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid var(--border); background: var(--white); }
+  .screenshot { background: transparent; }
   .screenshot img { width: 100%; height: auto; display: block; }
   .screenshot-label { background: var(--white); padding: 10px 14px; font-size: 12px; font-weight: 500; color: var(--muted); border-top: 1px solid var(--border); text-align: center; }
   .hero-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; padding: 5px 12px; border-radius: 20px; margin-bottom: 20px; }
@@ -169,7 +169,7 @@
   <div class="hero">
     <div>
       <div class="hero-tag" data-en="14-day free trial" data-ja="14日間無料トライアル">14-day free trial</div>
-      <h1 style="position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); border:0;">PulseLink</h1>
+      <h1><em>Pulse</em><br>Link</h1>
       <p class="hero-desc" data-en="Share your heart rate, steps and distance live with running friends or loved ones on your Garmin wrist. Leader-led Crews with invite codes, up to 20 template messages, and a real-time Member view designed for groups of 2-8 people. Members join free — only the Leader subscribes." data-ja="ランニング仲間や大切な家族と、心拍数・歩数・距離をGarminウォッチでリアルタイム共有。リーダー主導の招待コード制Crew、最大20の定型メッセージ、2〜8名のグループに最適化されたリアルタイム表示。メンバーは完全無料 — リーダーだけがサブスクリプション登録します。">Share your heart rate, steps and distance live with running friends or loved ones on your Garmin wrist. Leader-led Crews with invite codes, up to 20 template messages, and a real-time Member view designed for groups of 2-8 people. Members join free — only the Leader subscribes.</p>
       <div class="hero-cta">
         <a href="https://apps.garmin.com/en-US/apps/bb7dfaab-d831-4206-a135-be7fc8fd0226" data-en-href="https://apps.garmin.com/en-US/apps/bb7dfaab-d831-4206-a135-be7fc8fd0226" data-ja-href="https://apps.garmin.com/ja-JP/apps/bb7dfaab-d831-4206-a135-be7fc8fd0226" class="btn-primary" data-en="Start 14-Day Free Trial" data-ja="14日間の無料トライアルを開始">Start 14-Day Free Trial</a>
@@ -180,11 +180,9 @@
     <div class="screenshots">
       <div class="screenshot">
         <img src="screenshot_Crew.png" alt="PulseLink watch face with custom image, weather and physical bars">
-        <div class="screenshot-label" data-en="Watch Face Home" data-ja="文字盤ホーム">Watch Face Home</div>
       </div>
       <div class="screenshot">
         <img src="screenshot_members.png" alt="PulseLink Member list with live heart rate">
-        <div class="screenshot-label" data-en="Member List" data-ja="メンバー一覧">Member List</div>
       </div>
     </div>
   </div>

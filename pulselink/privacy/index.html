@@ -52,7 +52,7 @@
   <!-- ===================== ENGLISH ===================== -->
   <div class="lang-block" id="content-en">
     <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: June 21, 2026</p>
+    <p class="updated">Last updated: July 4, 2026</p>
 
     <p>PulseLink is a Garmin Connect IQ app operated by <strong>Easymoat</strong> (sole proprietor: Yoshicchi). This Privacy Policy explains what data PulseLink processes, why, and the choices you have. By using PulseLink you agree to this policy.</p>
 
@@ -67,24 +67,26 @@
     <ul>
       <li><strong>Account data</strong> — your email address, a password (stored only as a salted hash, never in plain text), and a nickname you choose.</li>
       <li><strong>Activity &amp; health data</strong> — heart rate, step count, and distance, read from your Garmin device. These are shared in real time with the other Members of the Crew you join.</li>
+      <li><strong>Location data (optional, off by default)</strong> — only if you turn on Location sharing, your current GPS position is read from your Garmin device and shared with the other Members of your Crew, so they can see you on the compass radar. It is used for that purpose only. If you never enable this feature, no position is ever collected.</li>
       <li><strong>Crew data</strong> — which Crew you belong to, invite codes for Crews you lead, join/approval status, and the template messages you send.</li>
       <li><strong>Payment data</strong> — handled entirely by Stripe. We never see, receive, or store your card number. We only receive a subscription status (active / expired) from Stripe.</li>
     </ul>
-    <p>We do <strong>not</strong> collect your name, address, precise location track, contacts, or any advertising identifiers. PulseLink contains no third-party advertising or analytics SDKs.</p>
+    <p>We do <strong>not</strong> collect your name, address, contacts, or any advertising identifiers, and we do <strong>not</strong> build a location history or movement track. PulseLink contains no third-party advertising or analytics SDKs. Location sharing is off by default; when you turn it on, only your <strong>latest</strong> position is shared with your Crew — never a stored trail of where you have been.</p>
     <p><strong>On-device profile reading (not collected).</strong> To draw certain on-watch displays — the heat-stress advisory and the body-metrics bar — PulseLink reads your weight, age and resting heart rate from your Garmin user profile. This happens only on your watch to render those displays; this profile data is <strong>never transmitted to our server, stored, or shared with anyone</strong>.</p>
 
     <h2>3. How we use your data</h2>
     <ul>
       <li>To authenticate you and keep you signed in (email address + password → token).</li>
       <li>To run the Crew you create or join, and to show your live heart rate, steps and distance to the other Members of that Crew.</li>
+      <li>If you enable Location sharing, to show your current position to the other Members of your Crew on the compass radar.</li>
       <li>To deliver template messages between Members.</li>
       <li>To manage Leader subscriptions via Stripe.</li>
     </ul>
-    <p><strong>Legal bases (GDPR):</strong> your <em>explicit consent</em> for heart-rate (health) data; <em>performance of a contract</em> for account and Crew features; and our <em>legitimate interest</em> in keeping the service secure.</p>
+    <p><strong>Legal bases (GDPR):</strong> your <em>explicit consent</em> for heart-rate (health) data and for Location sharing; <em>performance of a contract</em> for account and Crew features; and our <em>legitimate interest</em> in keeping the service secure.</p>
 
     <h2>4. Who can see your data</h2>
     <ul>
-      <li><strong>Other Crew Members.</strong> When you join a Crew, the Members of that Crew can see your nickname and the metrics you choose to share (heart rate, steps, distance) while you are active. You control what you share at any time (see Section 6).</li>
+      <li><strong>Other Crew Members.</strong> When you join a Crew, the Members of that Crew can see your nickname and the metrics you choose to share (heart rate, steps, distance, and — only if you enable it — your current location) while you are active. You control what you share at any time (see Section 6).</li>
       <li><strong>A shared image (Leaders).</strong> If you are a Leader and share a watchface image, it is delivered to your Crew members' watches; each member can choose whether to display it (the "Use Leader's" toggle).</li>
       <li><strong>Stripe</strong> — our payment processor, for Leader subscriptions only.</li>
       <li><strong>Garmin</strong> — your data travels over the Garmin Connect IQ platform between your watch and your phone.</li>
@@ -95,17 +97,19 @@
     <p>This reflects how PulseLink is actually built:</p>
     <ul>
       <li><strong>Heart rate, steps, distance</strong> — held only in server memory as the latest value, not written to permanent storage. It is overwritten by your next update (typically within seconds to minutes) and lost entirely if the server restarts.</li>
+      <li><strong>Location</strong> — treated the same way: held only in server memory as your latest position, overwritten by your next update and lost if the server restarts. Turning Location sharing off clears your stored position immediately.</li>
       <li><strong>Messages</strong> — stored per Crew and automatically pruned after a retention period.</li>
       <li><strong>Account data (email address, password hash, nickname)</strong> — kept while your account exists.</li>
       <li><strong>On account deletion</strong> — your account, any Crew you own, your memberships, and your messages are <strong>permanently and immediately erased</strong>.</li>
     </ul>
 
     <h2>6. Your privacy controls</h2>
-    <p>PulseLink gives you three independent in-app controls:</p>
+    <p>PulseLink gives you these independent in-app controls:</p>
     <ul>
       <li><strong>Pause sharing</strong> — stops sending any data; you appear offline.</li>
       <li><strong>Manual interval</strong> — disables automatic sending; data is sent only when you choose.</li>
       <li><strong>Heart-rate off</strong> — keeps steps/distance active but stops sharing heart rate specifically.</li>
+      <li><strong>Location off</strong> — Location sharing is off by default. Leaving it off means your position is never sent; turning it off clears any stored position immediately.</li>
     </ul>
 
     <h2>7. Your rights</h2>
@@ -114,7 +118,7 @@
       <li><strong>Access</strong> the personal data we hold about you.</li>
       <li><strong>Delete</strong> your account and all associated data — at any time, yourself, via the <a href="../delete/">Delete account</a> page.</li>
       <li><strong>Rectify</strong> your data — change your nickname in-app, or reset your password via the <a href="../forgot/">Forgot password</a> page.</li>
-      <li><strong>Withdraw consent</strong> for health-data processing — use the in-app privacy controls above, or delete your account.</li>
+      <li><strong>Withdraw consent</strong> for health-data or Location processing — use the in-app privacy controls above (including Location off), or delete your account.</li>
       <li><strong>Data portability</strong> and <strong>object</strong> to processing — contact us at <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a>.</li>
     </ul>
     <p>EU/UK users also have the right to lodge a complaint with their local data protection authority.</p>
@@ -143,7 +147,7 @@
   <!-- ===================== 日本語 ===================== -->
   <div class="lang-block hidden" id="content-ja">
     <h1>プライバシーポリシー</h1>
-    <p class="updated">最終更新日: 2026年6月21日</p>
+    <p class="updated">最終更新日: 2026年7月4日</p>
 
     <p>PulseLink は <strong>Easymoat</strong>（個人事業主: Yoshicchi）が運営する Garmin Connect IQ アプリです。本ポリシーは、PulseLink が取り扱うデータの内容・目的・お客様の選択肢を説明します。PulseLink をご利用いただくことで、本ポリシーに同意したものとみなされます。</p>
 
@@ -158,24 +162,26 @@
     <ul>
       <li><strong>アカウント情報</strong> — メールアドレス、パスワード（ソルト付きハッシュとしてのみ保存し、平文では保存しません）、お客様が設定するニックネーム。</li>
       <li><strong>アクティビティ・健康データ</strong> — Garmin デバイスから読み取る心拍数・歩数・距離。参加中のCrewの他メンバーとリアルタイムで共有されます。</li>
+      <li><strong>位置情報（任意・既定 OFF）</strong> — 位置共有を ON にした場合に限り、Garmin デバイスから現在の GPS 位置を読み取り、Crew の他メンバーと共有します（コンパスレーダーに表示するため）。用途はこれに限られます。本機能を有効にしなければ、位置は一切取得されません。</li>
       <li><strong>Crew情報</strong> — 所属Crew、リーダーになる場合の招待コード、参加・承認状況、送信した定型メッセージ。</li>
       <li><strong>決済情報</strong> — すべて Stripe が処理します。当社はカード番号を一切閲覧・受領・保存しません。Stripe からはサブスクリプションの状態（有効／失効）のみを受け取ります。</li>
     </ul>
-    <p>当社は氏名・住所・詳細な位置情報の軌跡・連絡先・広告 ID を<strong>取得しません</strong>。PulseLink には第三者の広告・分析 SDK は含まれていません。</p>
+    <p>当社は氏名・住所・連絡先・広告 ID を<strong>取得せず</strong>、位置情報の履歴や移動の軌跡も<strong>作成しません</strong>。PulseLink には第三者の広告・分析 SDK は含まれていません。位置共有は既定で OFF で、ON にした場合も共有されるのは<strong>最新の</strong>現在地のみ — 移動した経路の記録が保存されることはありません。</p>
     <p><strong>端末内でのプロフィール参照（取得はしません）。</strong> 一部のウォッチ表示（熱ストレス・アドバイザリーおよび身体指標バー）を描画するため、PulseLink は Garmin のユーザープロフィールから体重・年齢・安静時心拍を読み取ります。これらは当該表示を描画するためにウォッチ内でのみ参照され、<strong>当社サーバーへの送信・保存・第三者への共有は一切行いません</strong>。</p>
 
     <h2>3. 利用目的</h2>
     <ul>
       <li>お客様の認証とログイン状態の維持（メールアドレス＋パスワード → トークン）。</li>
       <li>作成または参加したCrewの運営、および当該Crewの他メンバーへのリアルタイムの心拍数・歩数・距離の表示。</li>
+      <li>位置共有を有効にした場合、コンパスレーダー上で現在地を当該Crewの他メンバーに表示すること。</li>
       <li>メンバー間の定型メッセージの送受信。</li>
       <li>Stripe を通じたリーダーサブスクリプションの管理。</li>
     </ul>
-    <p><strong>法的根拠（GDPR）:</strong> 心拍数（健康）データについては<em>明示的な同意</em>、アカウント・Crew機能については<em>契約の履行</em>、サービスの安全維持については<em>正当な利益</em>。</p>
+    <p><strong>法的根拠（GDPR）:</strong> 心拍数（健康）データおよび位置共有については<em>明示的な同意</em>、アカウント・Crew機能については<em>契約の履行</em>、サービスの安全維持については<em>正当な利益</em>。</p>
 
     <h2>4. 情報を閲覧できる者</h2>
     <ul>
-      <li><strong>同じCrewのメンバー</strong>。Crewに参加すると、アクティブな間、ニックネームと共有を選択した指標（心拍数・歩数・距離）が当該Crewのメンバーに表示されます。共有内容はいつでもお客様が制御できます（第6項参照）。</li>
+      <li><strong>同じCrewのメンバー</strong>。Crewに参加すると、アクティブな間、ニックネームと共有を選択した指標（心拍数・歩数・距離、および有効にした場合のみ現在地）が当該Crewのメンバーに表示されます。共有内容はいつでもお客様が制御できます（第6項参照）。</li>
       <li><strong>共有画像（リーダー）</strong>。リーダーが watchface 画像を共有した場合、その画像は Crew メンバーのウォッチへ配信されます。各メンバーは「Use Leader's」トグルで表示するかどうかを選べます。</li>
       <li><strong>Stripe</strong> — 決済代行（リーダーサブスクリプションのみ）。</li>
       <li><strong>Garmin</strong> — データはウォッチとスマートフォン間で Garmin Connect IQ プラットフォームを経由します。</li>
@@ -186,17 +192,19 @@
     <p>これは PulseLink の実際の設計を反映したものです:</p>
     <ul>
       <li><strong>心拍数・歩数・距離</strong> — 最新値としてサーバーのメモリ上にのみ保持し、永続ストレージには書き込みません。次回の更新（通常は数秒〜数分以内）で上書きされ、サーバー再起動時には完全に失われます。</li>
+      <li><strong>位置情報</strong> — 上記と同様に、最新の現在地としてサーバーのメモリ上にのみ保持し、次回の更新で上書き、サーバー再起動時に失われます。位置共有を OFF にすると、保存済みの位置は即座に削除されます。</li>
       <li><strong>メッセージ</strong> — Crewごとに保存され、一定の保持期間後に自動削除されます。</li>
       <li><strong>アカウント情報（メールアドレス・パスワードハッシュ・ニックネーム）</strong> — アカウントが存在する間、保持します。</li>
       <li><strong>アカウント削除時</strong> — アカウント、所有するCrew、メンバーシップ、メッセージを<strong>恒久的かつ即時に消去</strong>します。</li>
     </ul>
 
     <h2>6. プライバシー制御</h2>
-    <p>PulseLink はアプリ内に3つの独立した制御を備えています:</p>
+    <p>PulseLink はアプリ内に以下の独立した制御を備えています:</p>
     <ul>
       <li><strong>共有の一時停止（Pause）</strong> — すべてのデータ送信を停止し、オフライン表示になります。</li>
       <li><strong>手動インターバル（Manual）</strong> — 自動送信を無効化し、お客様が選んだ時のみ送信します。</li>
       <li><strong>心拍オフ</strong> — 歩数・距離は有効のまま、心拍数の共有のみを停止します。</li>
+      <li><strong>位置オフ</strong> — 位置共有は既定で OFF です。OFF のままにすれば位置は一切送信されず、OFF にすると保存済みの位置は即座に削除されます。</li>
     </ul>
 
     <h2>7. お客様の権利</h2>
@@ -205,7 +213,7 @@
       <li>当社が保持する個人データへの<strong>アクセス</strong>。</li>
       <li>アカウントと全関連データの<strong>削除</strong> — いつでもご自身で <a href="../delete/">アカウント削除</a>ページから実行できます。</li>
       <li>データの<strong>訂正</strong> — アプリ内でニックネームを変更、または <a href="../forgot/">パスワード再発行</a>ページからリセットできます。</li>
-      <li>健康データ処理への<strong>同意の撤回</strong> — 上記アプリ内プライバシー制御の利用、またはアカウント削除によります。</li>
+      <li>健康データまたは位置情報の処理への<strong>同意の撤回</strong> — 上記アプリ内プライバシー制御（位置オフを含む）の利用、またはアカウント削除によります。</li>
       <li><strong>データポータビリティ</strong>および処理への<strong>異議申立</strong> — <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a> までご連絡ください。</li>
     </ul>
     <p>EU/UK ユーザーは、所在地のデータ保護監督機関へ苦情を申し立てる権利も有します。</p>

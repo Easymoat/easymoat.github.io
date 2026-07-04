@@ -64,6 +64,24 @@
   .color-btns { display: flex; flex-wrap: wrap; gap: 8px; }
   .color-btns button { flex: 1; min-width: 56px; padding: 9px 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--white); font-size: 14px; font-weight: 500; font-family: inherit; color: var(--text2); cursor: pointer; transition: all 0.15s; }
   .color-btns button.active { border-color: var(--accent); background: var(--accent-light); color: var(--accent-dark); }
+  /* デバイスボタンにカーソルを重ねると対象機種名を吹き出しで表示 (px だけでは分かりにくいため)。
+     ページと同じ明色。機種名が語中で折り返さないよう 1 機種 1 行 (white-space: pre で折返し無効)。 */
+  .dev-tip { position: relative; }
+  .dev-tip::after {
+    content: attr(data-devices);
+    position: absolute; left: 50%; bottom: calc(100% + 10px); transform: translateX(-50%);
+    width: max-content; white-space: pre; text-align: left;
+    background: var(--white); color: var(--text2); border: 1px solid var(--border);
+    font-size: 12px; font-weight: 500; line-height: 1.55;
+    padding: 9px 13px; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    opacity: 0; visibility: hidden; transition: opacity 0.15s; z-index: 20; pointer-events: none;
+  }
+  .dev-tip::before {
+    content: ''; position: absolute; left: 50%; bottom: calc(100% + 5px); transform: translateX(-50%);
+    border: 6px solid transparent; border-top-color: var(--border);
+    opacity: 0; visibility: hidden; transition: opacity 0.15s; z-index: 20; pointer-events: none;
+  }
+  .dev-tip:hover::after, .dev-tip:hover::before, .dev-tip:focus::after, .dev-tip:focus::before { opacity: 1; visibility: visible; }
   .measure-res { display: flex; gap: 12px; }
   .measure-res .cell { flex: 1; border-radius: 10px; padding: 12px; text-align: center; }
   .measure-res .cell .lbl { font-size: 12px; font-weight: 600; opacity: 0.8; }
@@ -155,12 +173,16 @@
     <p style="font-weight:600; margin: 22px 0 4px;" data-en="Will it show on your watch?" data-ja="ウォッチに表示できる？">Will it show on your watch?</p>
     <p class="preview-note" style="margin-top:0; text-align:left;" data-en="Pick a color count and size below. The result box then tells you whether the image will show on the watch. (More colors and a bigger image are harder to show.)" data-ja="下で色数と表示サイズを選ぶと、その組み合わせでウォッチに表示できるかどうかを下の枠に表示します。（色数が多く画像が大きいほど、表示が難しくなります。）">Pick a color count and size below; the result box tells you whether it will show on the watch.</p>
     <div class="field">
-      <label data-en="Target device (screen px)" data-ja="対象機種（画面px）">Target device (screen px)</label>
+      <label data-en="Target device (screen px) — hover a button for models" data-ja="対象機種（画面px）— ボタンにカーソルを重ねると機種名">Target device (screen px) — hover a button for models</label>
       <div id="deviceBtns" class="color-btns">
-        <button type="button" data-std="240" data-full="360">360px</button>
-        <button type="button" data-std="260" data-full="390">390px</button>
-        <button type="button" data-std="275" data-full="416">416px</button>
-        <button type="button" data-std="300" data-full="454" class="active">454px</button>
+        <button type="button" class="dev-tip" data-std="240" data-full="360"
+          data-devices="Forerunner 265S&#10;Venu 2S">360px</button>
+        <button type="button" class="dev-tip" data-std="260" data-full="390"
+          data-devices="Venu 3S&#10;Venu 4 (41mm)&#10;vívoactive 5&#10;vívoactive 6&#10;Forerunner 165 / 165 Music&#10;Forerunner 570 (42mm)&#10;Approach S50&#10;Approach S70 (42mm)&#10;epix Pro 42mm&#10;Instinct 3 AMOLED (45mm)&#10;Instinct Crossover AMOLED&#10;MARQ (Gen 2) / Aviator">390px</button>
+        <button type="button" class="dev-tip" data-std="275" data-full="416"
+          data-devices="Venu 2&#10;Venu 2 Plus&#10;Forerunner 265&#10;epix (Gen 2)&#10;epix Pro 47mm&#10;fēnix 8 (43mm)&#10;fēnix E&#10;Instinct 3 AMOLED (50mm)&#10;D2 Mach 1">416px</button>
+        <button type="button" class="dev-tip active" data-std="300" data-full="454"
+          data-devices="Forerunner 965 / 970&#10;Forerunner 570 (47mm)&#10;Venu 3&#10;Venu 4 (45mm)&#10;Venu X1&#10;fēnix 8 (47mm)&#10;fēnix 8 Pro (47mm)&#10;epix Pro 51mm&#10;Approach S70 (47mm)&#10;Descent Mk3 (51mm)&#10;D2 Mach 2 / 2 Pro">454px</button>
       </div>
     </div>
     <div class="field">

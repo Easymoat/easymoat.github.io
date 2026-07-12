@@ -84,14 +84,11 @@
     width: 100%; height: 100%; border-radius: 50%;
     background: #111; color: #555; font-size: 13px;
   }
+  /* オーバーレイを画像と完全一致 (inset:0) させ、viewBox 0-500 を画像に 1:1 対応。
+     ブラウザ・画面幅に依存せず注釈が常に画像と揃う。円外/枠外のラベルは overflow:visible で余白へ。 */
   figure.annotated .stage svg.overlay {
-    position: absolute;
-    top: -24px; bottom: -24px; left: -80px; right: -80px;
-    width: auto; height: auto;
+    position: absolute; inset: 0;
     overflow: visible; pointer-events: none;
-  }
-  @media (max-width: 700px) {
-    figure.annotated .stage svg.overlay { top: -16px; bottom: -16px; left: -32px; right: -32px; }
   }
   figure.annotated .stage svg.overlay line { stroke: #EA6A00; stroke-width: 2.5; }
   figure.annotated .stage svg.overlay circle.dot { fill: #EA6A00; }
@@ -156,7 +153,7 @@
 
   <article>
     <h1 data-en="MarketWatch — User Manual" data-ja="MarketWatch ユーザーマニュアル">MarketWatch — User Manual</h1>
-    <p class="subtitle" data-en="A complete walkthrough of every screen, gesture and setting. (v2.3.0)" data-ja="すべての画面・操作・設定を網羅した完全ガイド。(v2.3.0)">A complete walkthrough of every screen, gesture and setting. (v2.3.0)</p>
+    <p class="subtitle" data-en="A complete walkthrough of every screen, gesture and setting. (v2.3.3)" data-ja="すべての画面・操作・設定を網羅した完全ガイド。(v2.3.3)">A complete walkthrough of every screen, gesture and setting. (v2.3.3)</p>
 
     <!-- ─── 1. Getting Started ─── -->
     <section class="chapter" id="getting-started">
@@ -198,18 +195,19 @@
         <li><span data-en="<strong>Rim marks</strong> — slim hands that sweep along the rim." data-ja="<strong>Rim marks</strong> — 縁に沿って動く細い針。"><strong>Rim marks</strong> — slim hands that sweep along the rim.</span></li>
         <li><span data-en="<strong>Digital</strong> — time at the top and date at the bottom, like the list screen." data-ja="<strong>Digital</strong> — 上に時刻・下に日付。リスト画面と同じ表示。"><strong>Digital</strong> — time at the top and date at the bottom, like the list screen.</span></li>
       </ul>
-      <p data-en="Turn Clock Ticks (the rim graduations) on or off, and set the Hand, Clock and Background colors independently." data-ja="Clock Ticks (リムの目盛) の表示を切り替えられ、針・時計・背景の色を個別に設定できます。">Turn Clock Ticks (the rim graduations) on or off, and set the Hand, Clock and Background colors independently.</p>
+      <p data-en="Turn Clock Ticks (the rim graduations) on or off. Colors are grouped under <strong>Color</strong>: Hand, Clock and Background — Background includes an <strong>Auto</strong> option that derives a matching tone from your custom image — plus <strong>Halo</strong>, a dark outline that keeps text readable over a photo background." data-ja="Clock Ticks (リムの目盛) の表示を切り替えられます。色は <strong>Color</strong> にまとめられており、針・時計・背景を設定できます (背景にはカスタム画像から馴染む色を自動算出する <strong>Auto</strong> があります)。さらに <strong>Halo</strong> — 写真背景でも文字が読めるよう暗い縁取りを付ける機能 — も選べます。">Turn Clock Ticks (the rim graduations) on or off. Colors are grouped under <strong>Color</strong>: Hand, Clock and Background — Background includes an <strong>Auto</strong> option that derives a matching tone from your custom image — plus <strong>Halo</strong>, a dark outline that keeps text readable over a photo background.</p>
 
       <h3 data-en="Info rows" data-ja="情報行">Info rows</h3>
       <p data-en="The home has three row slots (Row 1 / 2 / 3). Set each to Off, Net (portfolio total), the Weather Bar, the Physical Bar, or any symbol — chosen by its list slot number. That's up to three rows in total, info bars included." data-ja="ホームには 3 つの行スロット (Row 1 / 2 / 3) があります。各スロットに Off / Net (ポートフォリオ合計) / Weather Bar / Physical Bar / 任意の銘柄 (リストのスロット番号で指定) を割り当てられます。情報バーを含めて合計 3 行までです。">The home has three row slots (Row 1 / 2 / 3). Set each to Off, Net (portfolio total), the Weather Bar, the Physical Bar, or any symbol — chosen by its list slot number. That's up to three rows in total, info bars included.</p>
 
       <h3 data-en="Custom image" data-ja="カスタム画像">Custom image</h3>
       <p data-en="Show your own image on the face. Open <a href='https://easymoat.github.io/marketwatch/image/' target='_blank' rel='noopener' style='color:var(--accent); font-weight:600;'>the MarketWatch image page</a>, enter your Device ID (no account needed) and upload — it appears as a circular image on your watch, sized to follow the number of rows. Without a custom image, a default logo is shown." data-ja="好きな画像をウォッチフェイスに表示できます。<a href='https://easymoat.github.io/marketwatch/image/' target='_blank' rel='noopener' style='color:var(--accent); font-weight:600;'>MarketWatch の画像ページ</a>で Device ID を入力 (アカウント不要) して画像をアップロードすると、ウォッチに円形で、行数に追随したサイズで表示されます。未設定時は既定のロゴが表示されます。">Show your own image on the face. Open <a href='https://easymoat.github.io/marketwatch/image/' target='_blank' rel='noopener' style='color:var(--accent); font-weight:600;'>the MarketWatch image page</a>, enter your Device ID (no account needed) and upload — it appears as a circular image on your watch, sized to follow the number of rows. Without a custom image, a default logo is shown.</p>
-      <p data-en="Use the <strong>Image</strong> item in the Watch Face menu to choose placement: <strong>Off</strong> shows the default logo, <strong>Upper</strong> puts the image in the upper area (sized to follow the rows), and <strong>Center</strong> centers it on the face." data-ja="Watch Face メニューの <strong>Image</strong> 項目で配置を選べます: <strong>Off</strong> は既定のロゴ、<strong>Upper</strong> は上部に表示 (行数に追随したサイズ)、<strong>Center</strong> は中央に表示。">Use the <strong>Image</strong> item in the Watch Face menu to choose placement: <strong>Off</strong> shows the default logo, <strong>Upper</strong> puts the image in the upper area (sized to follow the rows), and <strong>Center</strong> centers it on the face.</p>
+      <p data-en="Tap the <strong>Image</strong> item in the Watch Face menu to cycle its placement: <strong>Upper</strong> (upper area, sized to follow the rows) ⇄ <strong>Center</strong> (centered on the face). If you haven't uploaded a custom image, the default logo is shown instead." data-ja="Watch Face メニューの <strong>Image</strong> 項目をタップすると配置が循環します: <strong>Upper</strong> (上部・行数に追随したサイズ) ⇄ <strong>Center</strong> (中央)。カスタム画像を未アップロードの場合は既定のロゴが表示されます。">Tap the <strong>Image</strong> item in the Watch Face menu to cycle its placement: <strong>Upper</strong> (upper area, sized to follow the rows) ⇄ <strong>Center</strong> (centered on the face). If you haven't uploaded a custom image, the default logo is shown instead.</p>
       <div class="callout" data-en="Your Device ID is shown in the Watch Face settings menu (long-press the home). The custom image is available during the trial and after purchase. Upload page: <a href='https://easymoat.github.io/marketwatch/image/' target='_blank' rel='noopener' style='color:var(--accent); font-weight:600;'>easymoat.github.io/marketwatch/image</a>" data-ja="Device ID は Watch Face 設定メニュー (ホームを長押し) に表示されます。カスタム画像はトライアル中・購入後に利用できます。アップロードページ: <a href='https://easymoat.github.io/marketwatch/image/' target='_blank' rel='noopener' style='color:var(--accent); font-weight:600;'>easymoat.github.io/marketwatch/image</a>">Your Device ID is shown in the Watch Face settings menu (long-press the home). The custom image is available during the trial and after purchase. Upload page: <a href='https://easymoat.github.io/marketwatch/image/' target='_blank' rel='noopener' style='color:var(--accent); font-weight:600;'>easymoat.github.io/marketwatch/image</a></div>
 
       <h3 data-en="Watch Face settings menu" data-ja="Watch Face 設定メニュー">Watch Face settings menu</h3>
-      <p data-en="<span class='op-hold'>Long-press</span> an empty part of the home (the clock or image) to open it: Clock Style, Clock Ticks, Hand Color, Clock Color, Background, Image, Row 1 / 2 / 3, and your Device ID." data-ja="ホームの何もない部分 (時計や画像) を<span class='op-hold'>長押し</span>で開きます: Clock Style / Clock Ticks / Hand Color / Clock Color / Background / Image / Row 1・2・3 / Device ID。"><span class='op-hold'>Long-press</span> an empty part of the home (the clock or image) to open it: Clock Style, Clock Ticks, Hand Color, Clock Color, Background, Image, Row 1 / 2 / 3, and your Device ID.</p>
+      <p data-en="<span class='op-hold'>Long-press</span> an empty part of the home (the clock or image) to open it: Clock Style, Clock Ticks, Color (Hand / Clock / Background / Halo), Image, Row 1 / 2 / 3, and your Device ID. Single-choice items like Clock Style and Image <strong>cycle in place</strong> — just tap to advance, no submenu to open." data-ja="ホームの何もない部分 (時計や画像) を<span class='op-hold'>長押し</span>で開きます: Clock Style / Clock Ticks / Color (Hand / Clock / Background / Halo) / Image / Row 1・2・3 / Device ID。Clock Style や Image のような単一選択の項目はサブメニューを開かず<strong>タップでその場循環</strong>します。"><span class='op-hold'>Long-press</span> an empty part of the home (the clock or image) to open it: Clock Style, Clock Ticks, Color (Hand / Clock / Background / Halo), Image, Row 1 / 2 / 3, and your Device ID. Single-choice items like Clock Style and Image <strong>cycle in place</strong> — just tap to advance, no submenu to open.</p>
+      <div class="callout" data-en="Prefer the app to open straight to your list? Turn the Watch Face Home off with the <strong>Watchface</strong> toggle in the list's date menu (chapter 11). With it off, the app opens to the list and BACK exits the app." data-ja="リストに直接入りたい場合は、リストの日付メニュー (第 11 章) の <strong>Watchface</strong> トグルでウォッチフェイスホームをオフにできます。オフのときはリストで起動し、BACK でアプリを終了します。">Prefer the app to open straight to your list? Turn the Watch Face Home off with the <strong>Watchface</strong> toggle in the list's date menu (chapter 11). With it off, the app opens to the list and BACK exits the app.</div>
     </section>
 
     <!-- ─── 3. List Screen ─── -->
@@ -220,15 +218,15 @@
       <figure class="annotated">
         <div class="stage">
           <img src="screens/list.png?v=3" alt="List screen">
-          <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
-            <rect class="box" x="119" y="65" width="260" height="111"></rect>
-            <rect class="box" x="118" y="185" width="263" height="166"></rect>
-            <line x1="390" y1="118" x2="434" y2="91"></line>
-            <line x1="392" y1="281" x2="441" y2="324"></line>
-            <line x1="110" y1="374" x2="172" y2="367"></line>
-            <text x="442" y="90" data-en="Info bars" data-ja="情報バー">Info bars</text>
-            <text x="442" y="341" data-en="Symbols" data-ja="銘柄">Symbols</text>
-            <text x="41" y="379" data-en="Date area" data-ja="日付エリア">Date area</text>
+          <svg class="overlay" viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet">
+            <rect class="box" x="75" y="62" width="347" height="148"></rect>
+            <rect class="box" x="74" y="222" width="351" height="221"></rect>
+            <line x1="437" y1="132" x2="495" y2="96"></line>
+            <line x1="439" y1="350" x2="505" y2="407"></line>
+            <line x1="63" y1="474" x2="146" y2="464"></line>
+            <text x="506" y="95" data-en="Info bars" data-ja="情報バー">Info bars</text>
+            <text x="506" y="430" data-en="Symbols" data-ja="銘柄">Symbols</text>
+            <text x="-29" y="480" data-en="Date area" data-ja="日付エリア">Date area</text>
           </svg>
         </div>
         <figcaption data-en="List screen — symbols, info bars and rim meters in one view." data-ja="リスト画面 — 銘柄・情報バー・リムメーターを 1 画面に。">List screen — symbols, info bars and rim meters in one view.</figcaption>
@@ -298,7 +296,7 @@
         </div>
         <div class="stage">
           <img class="ds-detail-img" src="screens/detail-se.png?v=2" alt="Detail screen">
-          <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"></svg>
+          <svg class="overlay" viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
         <figcaption data-en="Detail screen — switch tabs: H/L · S/E text view, the volume-bar view (chart <span class='op-hold'>long-press</span> toggles it on the watch), and the Memo panel (<span class='op-tap'>tap</span> below the chart) with Cost, Holdings, P&amp;L and price Alerts." data-ja="詳細画面 — タブで切替: 「H/L・S/E テキスト表示」「出来高バー表示」（ウォッチではチャート<span class='op-hold'>長押し</span>）「メモ」（チャート下を<span class='op-tap'>タップ</span>。取得単価・保有数・損益・価格アラート）。">Detail screen — switch tabs: H/L · S/E text view, the volume-bar view (chart <span class='op-hold'>long-press</span> toggles it on the watch), and the Memo panel (<span class='op-tap'>tap</span> below the chart) with Cost, Holdings, P&amp;L and price Alerts.</figcaption>
         <script>
@@ -378,7 +376,7 @@
       <p data-en="Set up to two alert prices per symbol in its memo. When the current price crosses a level — in either direction — the watch vibrates and plays a tone, and the symbol's name blinks yellow on the list." data-ja="各銘柄のメモに最大 2 件の通知価格を設定できます。現在価格が水準を上抜けまたは下抜けすると、振動と音で通知され、リスト上の銘柄名が黄色く点滅します。">Set up to two alert prices per symbol in its memo. When the current price crosses a level — in either direction — the watch vibrates and plays a tone, and the symbol's name blinks yellow on the list.</p>
       <ul>
         <li data-en="Press BACK to stop the blinking (the name stays yellow until the next refresh)." data-ja="BACK を押すと点滅が止まります (名前は次回更新まで黄色のまま)。">Press BACK to stop the blinking (the name stays yellow until the next refresh).</li>
-        <li data-en="Vibration and sound can be toggled independently: <span class='op-hold'>long-press</span> the date area → Alert Vibration / Alert Sound." data-ja="振動と音は個別に ON/OFF できます: 日付エリア<span class='op-hold'>長押し</span> → Alert Vibration / Alert Sound。">Vibration and sound can be toggled independently: <span class='op-hold'>long-press</span> the date area → Alert Vibration / Alert Sound.</li>
+        <li data-en="How you're notified is a single <strong>Alert</strong> item: <span class='op-hold'>long-press</span> the date area → tap <strong>Alert</strong> to cycle Vib + Snd → Vibration → Off." data-ja="通知方法は <strong>Alert</strong> の 1 項目にまとまっています: 日付エリア<span class='op-hold'>長押し</span> → <strong>Alert</strong> をタップで Vib + Snd → Vibration → Off と循環します。">How you're notified is a single <strong>Alert</strong> item: <span class='op-hold'>long-press</span> the date area → tap <strong>Alert</strong> to cycle Vib + Snd → Vibration → Off.</li>
         <li data-en="Alert baselines reset when you change settings, so a level you already crossed won't re-fire immediately." data-ja="設定変更時に基準価格がリセットされるため、既に越えた水準が直後に再発火することはありません。">Alert baselines reset when you change settings, so a level you already crossed won't re-fire immediately.</li>
       </ul>
     </section>
@@ -395,7 +393,7 @@
         </div>
         <div class="stage">
           <img class="ds-detail-img" src="screens/infobars-list.png?v=1" alt="Info bars">
-          <svg class="overlay" viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"></svg>
+          <svg class="overlay" viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
         <figcaption data-en="Info bars in your list — Weather Bar (top) and Physical Bar (bottom), with rim meters. Switch tabs to the menu where you add or manage them." data-ja="リスト内の情報バー — 上が Weather Bar、下が Physical Bar、左右にリムメーター。タブで追加・管理メニューに切り替えられます。">Info bars in your list — Weather Bar (top) and Physical Bar (bottom), with rim meters. Switch tabs to the menu where you add or manage them.</figcaption>
         <script>
@@ -442,23 +440,24 @@
         <li><strong data-en="Stress" data-ja="ストレス">Stress</strong> — <span data-en="red-orange; higher means more stress" data-ja="赤橙。高いほどストレス大">red-orange; higher means more stress</span></li>
         <li><strong data-en="Battery" data-ja="バッテリー">Battery</strong> — <span data-en="follows your Clock Color setting" data-ja="Clock Color 設定に追従">follows your Clock Color setting</span></li>
       </ul>
-      <p data-en="Set them via the date menu: Left Rim Meter / Right Rim Meter. Choose None to hide a side. Values refresh about once a minute." data-ja="設定は日付メニューの Left Rim Meter / Right Rim Meter から。None で非表示になります。値は約 1 分間隔で更新されます。">Set them via the date menu: Left Rim Meter / Right Rim Meter. Choose None to hide a side. Values refresh about once a minute.</p>
+      <p data-en="Set the source via the date menu: tap <strong>Left Rim Meter</strong> / <strong>Right Rim Meter</strong> to cycle Battery → Body Battery → Stress → None (None hides that side). Values refresh about once a minute." data-ja="ソースは日付メニューの <strong>Left Rim Meter</strong> / <strong>Right Rim Meter</strong> をタップで循環: Battery → Body Battery → Stress → None (None で非表示)。値は約 1 分間隔で更新されます。">Set the source via the date menu: tap <strong>Left Rim Meter</strong> / <strong>Right Rim Meter</strong> to cycle Battery → Body Battery → Stress → None (None hides that side). Values refresh about once a minute.</p>
+      <p data-en="Each meter's color can be set independently under the date menu's <strong>Color</strong> submenu (Left / Right Rim Meter): <strong>Auto</strong> keeps the color-by-metric behavior above, or pick any of the clock palette colors." data-ja="各メーターの色は日付メニューの <strong>Color</strong> サブメニュー (Left / Right Rim Meter) で個別に設定できます: <strong>Auto</strong> は上記のメトリック別配色を維持、または時計と同じパレットの任意色を選べます。">Each meter's color can be set independently under the date menu's <strong>Color</strong> submenu (Left / Right Rim Meter): <strong>Auto</strong> keeps the color-by-metric behavior above, or pick any of the clock palette colors.</p>
       <div class="callout" data-en="The rim meters appear on both the list screen and the Watch Face Home (it's the same setting). On the home with an analog clock and Clock Ticks on, the meters blend into the rim graduations as a single gauge." data-ja="リムメーターはリスト画面とウォッチフェイスホームの両方に表示されます (設定は共通)。ホームでアナログ時計 + Clock Ticks がオンのときは、メーターがリムの目盛と一体化したゲージとして表示されます。">The rim meters appear on both the list screen and the Watch Face Home (it's the same setting). On the home with an analog clock and Clock Ticks on, the meters blend into the rim graduations as a single gauge.</div>
     </section>
 
     <!-- ─── 10. Settings ─── -->
     <section class="chapter" id="settings">
       <h2 data-en="11. Settings" data-ja="11. 設定">11. Settings</h2>
-      <p data-en="Most settings live on the watch: <span class='op-hold'>long-press</span> the date area on the list screen. Each entry shows its current value." data-ja="ほとんどの設定はウォッチ上にあります: リスト画面の日付エリアを<span class='op-hold'>長押し</span>してください。各項目には現在値が表示されます。">Most settings live on the watch: <span class='op-hold'>long-press</span> the date area on the list screen. Each entry shows its current value.</p>
+      <p data-en="Most settings live on the watch: <span class='op-hold'>long-press</span> the date area on the list screen. Each entry shows its current value, and single-choice items <strong>cycle in place</strong> when you tap them — no submenu to open." data-ja="ほとんどの設定はウォッチ上にあります: リスト画面の日付エリアを<span class='op-hold'>長押し</span>してください。各項目には現在値が表示され、単一選択の項目はタップで<strong>その場循環</strong>します (サブメニュー不要)。">Most settings live on the watch: <span class='op-hold'>long-press</span> the date area on the list screen. Each entry shows its current value, and single-choice items <strong>cycle in place</strong> when you tap them — no submenu to open.</p>
       <table class="ops">
         <tr><th data-en="Watch (date menu)" data-ja="ウォッチ (日付メニュー)">Watch (date menu)</th><th data-en="Options" data-ja="選択肢">Options</th></tr>
         <tr><td>New Entry</td><td data-en="Add a symbol (when a slot is free)" data-ja="銘柄を追加 (空きスロットがある時)">Add a symbol (when a slot is free)</td></tr>
         <tr><td>Weather Bar / Physical Bar</td><td data-en="Add the info bar" data-ja="情報バーを追加">Add the info bar</td></tr>
+        <tr><td>Watchface</td><td data-en="On / Off — the Watch Face Home (Off opens the app straight to the list)" data-ja="On / Off — ウォッチフェイスホーム (Off はリスト直行で起動)">On / Off — the Watch Face Home (Off opens the app straight to the list)</td></tr>
         <tr><td>Refresh Interval</td><td>30 sec / 1 min / 5 min / 15 min / 30 min</td></tr>
-        <tr><td>Clock Color</td><td data-en="12 colors" data-ja="12 色">12 colors</td></tr>
-        <tr><td>Background Color</td><td>Black / Charcoal / Gray / Navy / Dark Red / Dark Green</td></tr>
-        <tr><td>Left / Right Rim Meter</td><td>None / Body Battery / Stress / Battery</td></tr>
-        <tr><td>Alert Vibration / Alert Sound</td><td>On / Off</td></tr>
+        <tr><td data-en="Color (submenu)" data-ja="Color (サブメニュー)">Color (submenu)</td><td data-en="Clock (12 colors) / Background (Black / Charcoal / Gray / Navy / Dark Red / Dark Green / Auto) / Left &amp; Right Rim Meter color (Auto + 11 colors)" data-ja="Clock (12 色) / Background (Black / Charcoal / Gray / Navy / Dark Red / Dark Green / Auto) / Left・Right Rim Meter の色 (Auto + 11 色)">Clock (12 colors) / Background (Black / Charcoal / Gray / Navy / Dark Red / Dark Green / Auto) / Left &amp; Right Rim Meter color (Auto + 11 colors)</td></tr>
+        <tr><td>Left / Right Rim Meter</td><td data-en="Battery / Body Battery / Stress / None (tap to cycle)" data-ja="Battery / Body Battery / Stress / None (タップ循環)">Battery / Body Battery / Stress / None (tap to cycle)</td></tr>
+        <tr><td>Alert</td><td data-en="Vib + Snd / Vibration / Off (tap to cycle)" data-ja="Vib + Snd / Vibration / Off (タップ循環)">Vib + Snd / Vibration / Off (tap to cycle)</td></tr>
       </table>
       <p data-en="A few items remain in the phone's Connect IQ settings panel:" data-ja="以下の項目はスマホの Connect IQ 設定パネルにあります:">A few items remain in the phone's Connect IQ settings panel:</p>
       <table class="ops">

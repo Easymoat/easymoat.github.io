@@ -185,11 +185,30 @@
       <p data-en="When you open BaseballWatch you land on the home screen — Today's Scores, the whole day's schedule in one scrolling list. It's the hub: every game of the day in one place, with the teams of your followed players highlighted. From here you open any game, jump to another day, or reach the settings. The single-game live view (the main screen, chapter 5) is what you get when you follow a player or team, or open a live game from this list." data-ja="BaseballWatch を開くと、最初にホーム画面 — その日の全試合を 1 つのスクロールリストにまとめた「Today's Scores」が表示されます。ここが起点です。当日の全試合が 1 か所に並び、フォロー中の選手がいるチームがハイライトされます。ここから任意の試合を開いたり、別の日付へ移動したり、設定を開けます。1 試合のライブ表示 (メイン画面・第 5 章) は、選手やチームをフォローするか、このリストからライブ中の試合を開いたときに表示されます。">When you open BaseballWatch you land on the home screen — Today's Scores, the whole day's schedule in one scrolling list. It's the hub: every game of the day in one place, with the teams of your followed players highlighted. From here you open any game, jump to another day, or reach the settings. The single-game live view (the main screen, chapter 5) is what you get when you follow a player or team, or open a live game from this list.</p>
 
       <figure class="annotated">
+        <div class="ds-tabs">
+          <button class="active" data-img="screens/scores.png?v=1" data-en="Game List" data-ja="ゲームリスト">Game List</button>
+          <button data-img="screens/game-detail.png?v=1" data-en="Game Detail" data-ja="試合詳細">Game Detail</button>
+          <button data-img="screens/game-weather.png?v=1" data-en="Weather" data-ja="気象バー">Weather</button>
+          <button data-img="screens/game-result.png?v=1" data-en="Game Result" data-ja="試合結果">Game Result</button>
+        </div>
         <div class="stage">
-          <img src="screens/scores.png?v=1" alt="Home screen — Today's Scores">
+          <img class="ds-detail-img" src="screens/scores.png?v=1" alt="Home screen — Today's Scores">
           <svg class="overlay" viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
-        <figcaption data-en="The home game list — each row is one game, with the teams of your followed players underlined in green. The title reflects the day (here RESULTS, a completed day; live days read IN GAME, upcoming ones NEXT GAMES). This example uses the Rim marks watch face." data-ja="ホームのゲームリスト — 各行が 1 試合。フォロー中の選手がいるチームは緑の下線付き。タイトルはその日の状態を表します (ここでは全試合終了の RESULTS、進行中は IN GAME、開始前は NEXT GAMES)。この例は Rim marks 文字盤です。">The home game list — each row is one game, with the teams of your followed players underlined in green. The title reflects the day (here RESULTS, a completed day; live days read IN GAME, upcoming ones NEXT GAMES). This example uses the Rim marks watch face.</figcaption>
+        <figcaption data-en="Game List — the home list; each row is one game, teams of your followed players underlined in green, title by the day (here RESULTS). Game Detail &amp; Weather are the same game-detail screen (long-press a row) scrolled from the starting pitchers / members down to the Stadium &amp; Weather bar. Game Result (tap a finished game) shows the line score, W / S / L pitchers and home runs." data-ja="Game List — ホームのリスト。各行が 1 試合、フォロー中の選手がいるチームは緑の下線、タイトルはその日の状態 (ここでは RESULTS)。Game Detail と Weather は同じ試合詳細画面 (行を長押し) を、先発投手/メンバーから Stadium &amp; Weather バーまでスクロールしたものです。Game Result (終了試合をタップ) はラインスコア・W / S / L 投手・本塁打を表示します。">Game List — the home list; each row is one game, teams of your followed players underlined in green, title by the day (here RESULTS). Game Detail &amp; Weather are the same game-detail screen (long-press a row) scrolled from the starting pitchers / members down to the Stadium &amp; Weather bar. Game Result (tap a finished game) shows the line score, W / S / L pitchers and home runs.</figcaption>
+        <script>
+          (function(){
+            var fig = document.currentScript.closest('figure');
+            var img = fig.querySelector('.ds-detail-img');
+            fig.querySelectorAll('.ds-tabs button').forEach(function(btn){
+              btn.addEventListener('click', function(){
+                fig.querySelectorAll('.ds-tabs button').forEach(function(b){ b.classList.remove('active'); });
+                btn.classList.add('active');
+                img.src = btn.getAttribute('data-img');
+              });
+            });
+          })();
+        </script>
       </figure>
 
       <h3 data-en="The game list" data-ja="ゲームリスト">The game list</h3>

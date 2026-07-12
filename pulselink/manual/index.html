@@ -81,14 +81,11 @@
     width: 100%; aspect-ratio: 1 / 1; border-radius: 50%;
     background: #111; color: #555; font-size: 13px;
   }
+  /* オーバーレイを画像と完全一致 (inset:0) させ、viewBox 0-500 を画像に 1:1 対応。
+     ブラウザ・画面幅に依存せず注釈が常に画像と揃う。円外/枠外のラベルは overflow:visible で余白へ。 */
   figure.annotated .stage svg.overlay {
-    position: absolute;
-    top: -24px; bottom: -24px; left: -80px; right: -80px;
-    width: auto; height: auto;
+    position: absolute; inset: 0;
     overflow: visible; pointer-events: none;
-  }
-  @media (max-width: 700px) {
-    figure.annotated .stage svg.overlay { top: -16px; bottom: -16px; left: -32px; right: -32px; }
   }
   figure.annotated .stage svg.overlay line { stroke: var(--accent); stroke-width: 1.5; }
   figure.annotated .stage svg.overlay circle.dot { fill: var(--accent); }
@@ -206,31 +203,31 @@
       <figure class="annotated">
         <div class="stage">
           <img src="screens/crew.png?v=1" alt="Crew Screen">
-          <svg class="overlay" viewBox="0 0 454 454" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+          <svg class="overlay" viewBox="0 0 454 454" preserveAspectRatio="xMidYMid meet">
             <!-- Crew name -->
-            <rect class="box" x="133" y="59" width="183" height="27"/>
-            <line x1="125" y1="62" x2="66" y2="26"/>
-            <text x="14" y="20" data-en="Crew name" data-ja="Crew名">Crew name</text>
+            <rect class="box" x="102" y="56" width="244" height="36"/>
+            <line x1="91" y1="60" x2="12" y2="12"/>
+            <text x="-57" y="4" data-en="Crew name" data-ja="Crew名">Crew name</text>
             <!-- Status sub-row -->
-            <line x1="313" y1="99" x2="448" y2="27"/>
-            <text x="322" y="31" data-en="Leader mode + interval" data-ja="リーダーモード + 更新間隔">Leader mode + interval</text>
+            <line x1="342" y1="109" x2="522" y2="13"/>
+            <text x="354" y="19" data-en="Leader mode + interval" data-ja="リーダーモード + 更新間隔">Leader mode + interval</text>
             <!-- Member rows -->
-            <rect class="box" x="94" y="116" width="248" height="145"/>
-            <line x1="344" y1="143" x2="459" y2="116"/>
-            <text x="345" y="104" data-en="Members (HR / dist / steps)" data-ja="メンバー（心拍 / 距離 / 歩数）">Members (HR / dist / steps)</text>
+            <rect class="box" x="50" y="132" width="331" height="193"/>
+            <line x1="383" y1="168" x2="536" y2="132"/>
+            <text x="384" y="116" data-en="Members (HR / dist / steps)" data-ja="メンバー（心拍 / 距離 / 歩数）">Members (HR / dist / steps)</text>
             <!-- Weather bar -->
-            <rect class="box" x="104" y="269" width="226" height="48"/>
-            <line x1="346" y1="320" x2="424" y2="337"/>
-            <text x="300" y="355" data-en="Weather bar (your own)" data-ja="気象バー（自分の）">Weather bar (your own)</text>
+            <rect class="box" x="63" y="336" width="301" height="64"/>
+            <line x1="386" y1="404" x2="490" y2="427"/>
+            <text x="324" y="451" data-en="Weather bar (your own)" data-ja="気象バー（自分の）">Weather bar (your own)</text>
             <!-- Date -->
-            <line x1="142" y1="332" x2="85" y2="345"/>
-            <text x="-29" y="351" data-en="Date — red = unread msg" data-ja="日付 — 赤=未読メッセージ">Date — red = unread msg</text>
+            <line x1="114" y1="420" x2="38" y2="437"/>
+            <text x="-114" y="445" data-en="Date — red = unread msg" data-ja="日付 — 赤=未読メッセージ">Date — red = unread msg</text>
             <!-- Left rim meter -->
-            <line x1="60" y1="241" x2="15" y2="282"/>
-            <text x="-18" y="300" data-en="Left rim: battery" data-ja="左リム: バッテリー">Left rim: battery</text>
+            <line x1="4" y1="299" x2="-56" y2="353"/>
+            <text x="-100" y="377" data-en="Left rim: battery" data-ja="左リム: バッテリー">Left rim: battery</text>
             <!-- Right rim meter -->
-            <line x1="406" y1="212" x2="498" y2="274"/>
-            <text x="354" y="292" data-en="Right rim: Body Battery / Stress" data-ja="右リム: Body Battery / ストレス">Right rim: Body Battery / Stress</text>
+            <line x1="466" y1="260" x2="588" y2="343"/>
+            <text x="396" y="367" data-en="Right rim: Body Battery / Stress" data-ja="右リム: Body Battery / ストレス">Right rim: Body Battery / Stress</text>
           </svg>
         </div>
         <figcaption data-en="Crew Screen — Leader with Observing mode, 60-second update interval, 3 Members sharing live data." data-ja="Crew画面 — Observe モードのリーダー、60秒更新間隔、3名のメンバーがライブ共有中。">Crew Screen — Leader with Observing mode, 60-second update interval, 3 Members sharing live data.</figcaption>
@@ -340,21 +337,21 @@
       <figure class="annotated">
         <div class="stage">
           <img src="screens/heat.png?v=2" alt="Heat Stress guide screen">
-          <svg class="overlay" viewBox="0 0 454 454" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+          <svg class="overlay" viewBox="0 0 454 454" preserveAspectRatio="xMidYMid meet">
             <!-- Monitor toggle -->
-            <rect class="box" x="166" y="27" width="123" height="24"/>
-            <line x1="292" y1="41" x2="385" y2="21"/>
-            <text x="291" y="17" data-en="Monitor toggle (tap / START)" data-ja="Monitor 切替（タップ / START）">Monitor toggle (tap / START)</text>
+            <rect class="box" x="146" y="13" width="164" height="32"/>
+            <line x1="314" y1="32" x2="438" y2="5"/>
+            <text x="312" y="0" data-en="Monitor toggle (tap / START)" data-ja="Monitor 切替（タップ / START）">Monitor toggle (tap / START)</text>
             <!-- Heat tier + WBGT -->
-            <rect class="box" x="150" y="91" width="158" height="95"/>
-            <line x1="316" y1="137" x2="430" y2="78"/>
-            <text x="355" y="70" data-en="Heat tier + est. WBGT" data-ja="暑熱段階 + 推定WBGT">Heat tier + est. WBGT</text>
+            <rect class="box" x="124" y="99" width="211" height="127"/>
+            <line x1="346" y1="160" x2="498" y2="81"/>
+            <text x="398" y="71" data-en="Heat tier + est. WBGT" data-ja="暑熱段階 + 推定WBGT">Heat tier + est. WBGT</text>
             <!-- Advice -->
-            <line x1="92" y1="222" x2="27" y2="339"/>
-            <text x="-15" y="357" data-en="Advice (scrolls if long)" data-ja="アドバイス（長文はスクロール）">Advice (scrolls if long)</text>
+            <line x1="47" y1="273" x2="-40" y2="429"/>
+            <text x="-96" y="453" data-en="Advice (scrolls if long)" data-ja="アドバイス（長文はスクロール）">Advice (scrolls if long)</text>
             <!-- HR / %HRR -->
-            <line x1="315" y1="272" x2="400" y2="335"/>
-            <text x="332" y="352" data-en="Your HR + %HRR" data-ja="自分の HR + %HRR">Your HR + %HRR</text>
+            <line x1="344" y1="340" x2="458" y2="424"/>
+            <text x="367" y="447" data-en="Your HR + %HRR" data-ja="自分の HR + %HRR">Your HR + %HRR</text>
           </svg>
         </div>
         <figcaption data-en="Heat Stress guide — Monitor ON, Safe tier (blue) with estimated WBGT, conditions and HR strain." data-ja="Heat Stress ガイド — Monitor ON、Safe 段階（青）と推定 WBGT・気象条件・心拍負荷。">Heat Stress guide — Monitor ON, Safe tier (blue) with estimated WBGT, conditions and HR strain.</figcaption>

@@ -76,8 +76,13 @@
   .event-item { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 8px; }
   .event-item::before { content: '✓'; color: var(--accent); font-weight: 700; flex-shrink: 0; }
 
-  .pricing-grid { display: grid; grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; }
+  .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 880px; margin: 0 auto; align-items: start; }
+  @media (max-width: 760px) { .pricing-grid { grid-template-columns: 1fr; max-width: 480px; } }
   .plan { background: var(--white); border: 2px solid var(--accent); border-radius: 16px; padding: 32px; position: relative; box-shadow: 0 0 0 4px rgba(0,122,61,0.08); }
+  .plan.secondary { border-color: var(--border); box-shadow: none; }
+  .plan.secondary .plan-badge { background: var(--muted); }
+  .btn-plan.outline { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); box-shadow: none; }
+  .btn-plan.outline:hover { background: var(--accent-light); transform: translateY(-1px); }
   .plan-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; padding: 4px 16px; border-radius: 20px; white-space: nowrap; }
   .plan-name { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
   .plan-price { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 800; color: var(--text); line-height: 1; margin-bottom: 4px; }
@@ -181,9 +186,9 @@
       <p class="hero-desc" data-en="Live pro baseball game updates on your Garmin watch. Follow your favorite team's whole lineup and pitching staff in real time — or track up to 20 individual players across teams. Instant notifications for hits, home runs, strikeouts, pitching changes, and more, without picking up your phone." data-ja="プロ野球（メジャー）の試合状況をGarminウォッチでリアルタイムに。応援チームの打順・投手陣をまるごと自動追跡、または推しの選手を最大20名まで個別登録。ヒット・ホームラン・三振・登板交代などを瞬時に通知し、スマートフォンを取り出さずに試合を追えます。">Live pro baseball game updates on your Garmin watch. Follow your favorite team's whole lineup and pitching staff in real time — or track up to 20 individual players across teams. Instant notifications for hits, home runs, strikeouts, pitching changes, and more, without picking up your phone.</p>
       <div class="hero-cta">
         <a href="https://apps.garmin.com/en-US/apps/bc799021-63e3-4355-b45d-114965f8a14f" data-en-href="https://apps.garmin.com/en-US/apps/bc799021-63e3-4355-b45d-114965f8a14f" data-ja-href="https://apps.garmin.com/ja-JP/apps/bc799021-63e3-4355-b45d-114965f8a14f" class="btn-primary" data-en="Start 14-Day Free Trial" data-ja="14日間の無料トライアルを開始">Start 14-Day Free Trial</a>
-        <a href="https://buy.stripe.com/5kQ7sE1Gx3Bi0q5gM89sk02" class="btn-secondary" data-en="Subscribe — $1.49/month" data-ja="登録 — $1.49/月">Subscribe — $1.49/month</a>
+        <a href="https://buy.stripe.com/eVqbIUetjdbS3Ch8fC9sk04" class="btn-secondary" data-en="Season Pass — $4.99 one-time" data-ja="シーズンパス — $4.99 買い切り">Season Pass — $4.99 one-time</a>
       </div>
-      <p style="font-size:13px; color:var(--muted); margin-top:10px;" data-en="All features free for 14 days — no payment to start. $1.49/month after trial, cancel anytime." data-ja="全機能を14日間無料 — 開始時の支払いは不要。トライアル後は月額$1.49（いつでも解約可能）。">All features free for 14 days — no payment to start. $1.49/month after trial, cancel anytime.</p>
+      <p style="font-size:13px; color:var(--muted); margin-top:10px;" data-en="All features free for 14 days — no payment to start. After the trial: Season Pass $4.99 one-time, or $1.49/month (cancel anytime)." data-ja="全機能を14日間無料 — 開始時の支払いは不要。トライアル後はシーズンパス$4.99買い切り、または月額$1.49（いつでも解約可能）。">All features free for 14 days — no payment to start. After the trial: Season Pass $4.99 one-time, or $1.49/month (cancel anytime).</p>
     </div>
     <div class="screenshots">
       <div class="screenshot">
@@ -282,11 +287,25 @@
   <div class="section">
     <div class="section-header">
       <div class="section-tag" data-en="Pricing" data-ja="料金">Pricing</div>
-      <h2 data-en="Free for 14 days, then one simple plan" data-ja="14日間無料、その後はシンプルな月額プラン">Free for 14 days, then one simple plan</h2>
-      <p class="section-desc" data-en="Start with a 14-day free trial — no credit card required. Billing only begins if you subscribe after the trial. Just over the price of a coffee for a month of live baseball on your wrist." data-ja="まずは14日間の無料トライアル — クレジットカード登録は不要です。課金はトライアル後にご自身でサブスク登録した場合のみ開始します。コーヒー一杯分でひと月、プロ野球の試合をリアルタイムで追えます。">Start with a 14-day free trial — no credit card required. Billing only begins if you subscribe after the trial. Just over the price of a coffee for a month of live baseball on your wrist.</p>
+      <h2 data-en="Free for 14 days, then pick your pass" data-ja="14日間無料、その後は2つのプランから選択">Free for 14 days, then pick your pass</h2>
+      <p class="section-desc" data-en="Start with a 14-day free trial — no credit card required. Billing only begins if you buy after the trial. One-time Season Pass (no subscription) or a flexible monthly plan — your choice." data-ja="まずは14日間の無料トライアル — クレジットカード登録は不要です。課金はトライアル後にご自身で購入した場合のみ開始します。買い切りのシーズンパス（サブスク不要）か、柔軟な月額プランをお選びください。">Start with a 14-day free trial — no credit card required. Billing only begins if you buy after the trial. One-time Season Pass (no subscription) or a flexible monthly plan — your choice.</p>
     </div>
     <div class="pricing-grid">
       <div class="plan">
+        <div class="plan-badge" data-en="NEW · One-time, no subscription" data-ja="新登場 · 買い切り（サブスク不要）">NEW · One-time, no subscription</div>
+        <div class="plan-name" data-en="Season Pass 2026" data-ja="シーズンパス 2026">Season Pass 2026</div>
+        <div class="plan-price">$4.99<span class="plan-price-unit" data-en=" one-time" data-ja=" 買い切り"> one-time</span></div>
+        <div class="plan-note" data-en="Pay once · valid through Opening Day 2027 · no auto-renewal" data-ja="一回払い · 2027年開幕まで有効 · 自動更新なし">Pay once · valid through Opening Day 2027 · no auto-renewal</div>
+        <ul class="plan-features">
+          <li class="included" data-en="Everything in the app — same features as Monthly" data-ja="アプリの全機能 — 月額プランと同一">Everything in the app — same features as Monthly</li>
+          <li class="included" data-en="Covers the rest of 2026: pennant race, postseason, World Series" data-ja="2026年の残り全部 — ペナントレース・ポストシーズン・ワールドシリーズ">Covers the rest of 2026: pennant race, postseason, World Series</li>
+          <li class="included" data-en="No subscription, no auto-renewal, nothing to cancel" data-ja="サブスクなし・自動更新なし・解約手続き不要">No subscription, no auto-renewal, nothing to cancel</li>
+          <li class="included" data-en="Valid through Opening Day 2027 (March 31, 2027)" data-ja="2027年開幕（2027年3月31日）まで有効">Valid through Opening Day 2027 (March 31, 2027)</li>
+        </ul>
+        <a href="https://buy.stripe.com/eVqbIUetjdbS3Ch8fC9sk04" class="btn-plan" data-en="Get Season Pass — $4.99" data-ja="シーズンパスを購入 — $4.99">Get Season Pass — $4.99</a>
+        <div class="plan-sub" data-en="One payment covers the whole season — billing happens once, never again." data-ja="一回の支払いでシーズン全体をカバー。課金は一度きり、以後は発生しません。">One payment covers the whole season — billing happens once, never again.</div>
+      </div>
+      <div class="plan secondary">
         <div class="plan-badge" data-en="14-day free trial, then subscription" data-ja="14日間無料トライアル → 月額">14-day free trial, then subscription</div>
         <div class="plan-name" data-en="Monthly" data-ja="月額プラン">Monthly</div>
         <div class="plan-price">$1.49<span class="plan-price-unit" data-en="/month" data-ja="/月">/month</span></div>
@@ -300,7 +319,7 @@
           <li class="included" data-en="Season stats display" data-ja="シーズン成績表示">Season stats display</li>
           <li class="included" data-en="Cancel anytime — full access through the paid month" data-ja="いつでも解約可能 — 決済済みの月末まで利用可">Cancel anytime — full access through the paid month</li>
         </ul>
-        <a href="https://buy.stripe.com/5kQ7sE1Gx3Bi0q5gM89sk02" class="btn-plan" data-en="Subscribe — $1.49/month" data-ja="登録する — $1.49/月">Subscribe — $1.49/month</a>
+        <a href="https://buy.stripe.com/5kQ7sE1Gx3Bi0q5gM89sk02" class="btn-plan outline" data-en="Subscribe — $1.49/month" data-ja="登録する — $1.49/月">Subscribe — $1.49/month</a>
         <div class="plan-sub" data-en="The trial needs no payment. After it ends, subscribe via Stripe to keep full access — that is when billing and auto-renewal begin." data-ja="トライアルに支払いは不要です。終了後、フル機能を継続するには Stripe でサブスク登録してください。そこから課金と自動更新が始まります。">The trial needs no payment. After it ends, subscribe via Stripe to keep full access — that is when billing and auto-renewal begin.</div>
       </div>
     </div>
@@ -384,8 +403,8 @@
       <h2 data-en="Cancel anytime" data-ja="いつでも解約可能">Cancel anytime</h2>
     </div>
     <div class="privacy-box">
-      <p id="cancellation-policy">Cancellation Policy: BaseballWatch starts with a 14-day free trial (no credit card required). Nothing is charged and nothing auto-renews during the trial. Monthly billing and auto-renewal begin only if you subscribe after the trial. You can cancel anytime via the Stripe Customer Portal — link is included in your activation email and Stripe receipt — and access continues until the end of the current billing period.</p>
-      <p id="seasonal-pause-note" style="background: var(--accent-light); padding: 16px; border-radius: 8px; color: var(--text2); border-left: 3px solid var(--accent);">Currently in development: automatic subscription pause at season end and automatic resume at opening day.</p>
+      <p id="cancellation-policy">Cancellation Policy: BaseballWatch starts with a 14-day free trial (no credit card required). Nothing is charged and nothing auto-renews during the trial. Monthly billing and auto-renewal begin only if you subscribe after the trial. You can cancel anytime via the Stripe Customer Portal — link is included in your activation email and Stripe receipt — and access continues until the end of the current billing period. The Season Pass is a one-time purchase: it never auto-renews, requires no cancellation, and simply remains valid through Opening Day 2027 (March 31, 2027).</p>
+      <p id="seasonal-pause-note" style="background: var(--accent-light); padding: 16px; border-radius: 8px; color: var(--text2); border-left: 3px solid var(--accent);">Prefer not to subscribe? The Season Pass is a one-time $4.99 purchase — no subscription, no auto-renewal, valid through Opening Day 2027.</p>
       <p id="refund-policy-mlb">Refund Policy: As BaseballWatch is a digital service activated by license key, refunds are not provided once the activation key has been issued. If your license key does not function correctly, please contact us at <span class="em"></span> and we will resolve the issue promptly.</p>
       <p id="questions-line-mlb">For any questions: <span class="em"></span></p>
     </div>
@@ -484,9 +503,9 @@ function setLang(lang) {
   var cancel = document.getElementById('cancellation-policy');
   if (cancel) {
     if (lang === 'ja') {
-      cancel.textContent = '解約ポリシー：BaseballWatch は14日間の無料トライアル（クレジットカード登録不要）から始まります。トライアル中は課金されず、自動更新もありません。トライアル後にサブスク登録した場合のみ月額課金が始まり、自動更新されます。Stripeカスタマーポータルからいつでも解約でき（リンクはアクティベーションメールおよびStripe領収書メールに記載）、現在の請求期間終了まで利用可能です。';
+      cancel.textContent = '解約ポリシー：BaseballWatch は14日間の無料トライアル（クレジットカード登録不要）から始まります。トライアル中は課金されず、自動更新もありません。トライアル後にサブスク登録した場合のみ月額課金が始まり、自動更新されます。Stripeカスタマーポータルからいつでも解約でき（リンクはアクティベーションメールおよびStripe領収書メールに記載）、現在の請求期間終了まで利用可能です。シーズンパスは一回払いの買い切りです。自動更新はなく、解約手続きも不要で、2027年開幕（2027年3月31日）までそのまま有効です。';
     } else {
-      cancel.textContent = 'Cancellation Policy: BaseballWatch starts with a 14-day free trial (no credit card required). Nothing is charged and nothing auto-renews during the trial. Monthly billing and auto-renewal begin only if you subscribe after the trial. You can cancel anytime via the Stripe Customer Portal — link is included in your activation email and Stripe receipt — and access continues until the end of the current billing period.';
+      cancel.textContent = 'Cancellation Policy: BaseballWatch starts with a 14-day free trial (no credit card required). Nothing is charged and nothing auto-renews during the trial. Monthly billing and auto-renewal begin only if you subscribe after the trial. You can cancel anytime via the Stripe Customer Portal — link is included in your activation email and Stripe receipt — and access continues until the end of the current billing period. The Season Pass is a one-time purchase: it never auto-renews, requires no cancellation, and simply remains valid through Opening Day 2027 (March 31, 2027).';
     }
   }
 
@@ -494,9 +513,9 @@ function setLang(lang) {
   var seasonNote = document.getElementById('seasonal-pause-note');
   if (seasonNote) {
     if (lang === 'ja') {
-      seasonNote.textContent = '鋭意検討中：シーズン終了でサブスク自動休止、開幕で自動再開を実装予定です。';
+      seasonNote.textContent = 'サブスクに抵抗がある方へ：シーズンパスは $4.99 の一回払い買い切りです。サブスク不要・自動更新なし・2027年開幕まで有効。';
     } else {
-      seasonNote.textContent = 'Currently in development: automatic subscription pause at season end and automatic resume at opening day.';
+      seasonNote.textContent = 'Prefer not to subscribe? The Season Pass is a one-time $4.99 purchase — no subscription, no auto-renewal, valid through Opening Day 2027.';
     }
   }
 

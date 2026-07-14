@@ -76,8 +76,7 @@
   .event-item { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 8px; }
   .event-item::before { content: '✓'; color: var(--accent); font-weight: 700; flex-shrink: 0; }
 
-  .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 880px; margin: 0 auto; align-items: start; }
-  @media (max-width: 760px) { .pricing-grid { grid-template-columns: 1fr; max-width: 480px; } }
+  .pricing-grid { display: grid; grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; }
   .plan { background: var(--white); border: 2px solid var(--accent); border-radius: 16px; padding: 32px; position: relative; box-shadow: 0 0 0 4px rgba(0,122,61,0.08); }
   .plan.secondary { border-color: var(--border); box-shadow: none; }
   .plan.secondary .plan-badge { background: var(--muted); }
@@ -186,10 +185,9 @@
       <p class="hero-desc" data-en="Live pro baseball game updates on your Garmin watch. Follow your favorite team's whole lineup and pitching staff in real time — or track up to 20 individual players across teams. Instant notifications for hits, home runs, strikeouts, pitching changes, and more, without picking up your phone." data-ja="プロ野球（メジャー）の試合状況をGarminウォッチでリアルタイムに。応援チームの打順・投手陣をまるごと自動追跡、または推しの選手を最大20名まで個別登録。ヒット・ホームラン・三振・登板交代などを瞬時に通知し、スマートフォンを取り出さずに試合を追えます。">Live pro baseball game updates on your Garmin watch. Follow your favorite team's whole lineup and pitching staff in real time — or track up to 20 individual players across teams. Instant notifications for hits, home runs, strikeouts, pitching changes, and more, without picking up your phone.</p>
       <div class="hero-cta">
         <a href="https://apps.garmin.com/en-US/apps/bc799021-63e3-4355-b45d-114965f8a14f" data-en-href="https://apps.garmin.com/en-US/apps/bc799021-63e3-4355-b45d-114965f8a14f" data-ja-href="https://apps.garmin.com/ja-JP/apps/bc799021-63e3-4355-b45d-114965f8a14f" class="btn-primary" data-en="Start 14-Day Free Trial" data-ja="14日間の無料トライアルを開始">Start 14-Day Free Trial</a>
-        <a href="https://buy.stripe.com/eVqbIUetjdbS3Ch8fC9sk04" class="btn-secondary" data-en="Season Pass — $4.99 one-time" data-ja="シーズンパス — $4.99 買い切り">Season Pass — $4.99 one-time</a>
-        <a href="https://buy.stripe.com/5kQ7sE1Gx3Bi0q5gM89sk02" class="btn-secondary" data-en="Subscribe — $1.49/month" data-ja="登録 — $1.49/月">Subscribe — $1.49/month</a>
-      </div>
-      <p style="font-size:13px; color:var(--muted); margin-top:10px;" data-en="All features free for 14 days — no payment to start. After the trial: Season Pass $4.99 one-time, or $1.49/month (cancel anytime)." data-ja="全機能を14日間無料 — 開始時の支払いは不要。トライアル後はシーズンパス$4.99買い切り、または月額$1.49（いつでも解約可能）。">All features free for 14 days — no payment to start. After the trial: Season Pass $4.99 one-time, or $1.49/month (cancel anytime).</p>
+        <a href="https://buy.stripe.com/eVqbIUetjdbS3Ch8fC9sk04" class="btn-secondary" data-en="Get the 1-Year Pass — $4.99" data-ja="年間パスを購入 — $4.99">Get the 1-Year Pass — $4.99</a>
+              </div>
+      <p style="font-size:13px; color:var(--muted); margin-top:10px;" data-en="All features free for 14 days — no payment to start. After the trial, one simple purchase: $4.99 for a full year. No subscription." data-ja="全機能を14日間無料 — 開始時の支払いは不要。トライアル後は $4.99 の買い切り1本（1年間有効）。サブスクはありません。">All features free for 14 days — no payment to start. After the trial, one simple purchase: $4.99 for a full year. No subscription.</p>
     </div>
     <div class="screenshots">
       <div class="screenshot">
@@ -288,40 +286,25 @@
   <div class="section">
     <div class="section-header">
       <div class="section-tag" data-en="Pricing" data-ja="料金">Pricing</div>
-      <h2 data-en="Free for 14 days, then pick your pass" data-ja="14日間無料、その後は2つのプランから選択">Free for 14 days, then pick your pass</h2>
-      <p class="section-desc" data-en="Start with a 14-day free trial — no credit card required. Billing only begins if you buy after the trial. One-time Season Pass (no subscription) or a flexible monthly plan — your choice." data-ja="まずは14日間の無料トライアル — クレジットカード登録は不要です。課金はトライアル後にご自身で購入した場合のみ開始します。買い切りのシーズンパス（サブスク不要）か、柔軟な月額プランをお選びください。">Start with a 14-day free trial — no credit card required. Billing only begins if you buy after the trial. One-time Season Pass (no subscription) or a flexible monthly plan — your choice.</p>
+      <h2 data-en="Free for 14 days, then one simple purchase" data-ja="14日間無料、その後はシンプルな買い切り1本">Free for 14 days, then one simple purchase</h2>
+      <p class="section-desc" data-en="Start with a 14-day free trial — no credit card required. After that, a single one-time purchase unlocks everything for a full year. No subscription, no auto-renewal, nothing to cancel." data-ja="まずは14日間の無料トライアル — クレジットカード登録は不要です。その後は一回払いの買い切りで、全機能が1年間使えます。サブスクも自動更新もなく、解約手続きも不要です。">Start with a 14-day free trial — no credit card required. After that, a single one-time purchase unlocks everything for a full year. No subscription, no auto-renewal, nothing to cancel.</p>
     </div>
     <div class="pricing-grid">
       <div class="plan">
-        <div class="plan-badge" data-en="NEW · One-time, no subscription" data-ja="新登場 · 買い切り（サブスク不要）">NEW · One-time, no subscription</div>
-        <div class="plan-name" data-en="Season Pass 2026" data-ja="シーズンパス 2026">Season Pass 2026</div>
+        <div class="plan-badge" data-en="One-time purchase · no subscription" data-ja="買い切り · サブスクなし">One-time purchase · no subscription</div>
+        <div class="plan-name" data-en="1-Year Pass" data-ja="年間パス">1-Year Pass</div>
         <div class="plan-price">$4.99<span class="plan-price-unit" data-en=" one-time" data-ja=" 買い切り"> one-time</span></div>
-        <div class="plan-note" data-en="Pay once · valid through April 30, 2027 · no auto-renewal" data-ja="一回払い · 2027年4月30日まで有効 · 自動更新なし">Pay once · valid through April 30, 2027 · no auto-renewal</div>
+        <div class="plan-note" data-en="Pay once · full access for 1 year from purchase · no auto-renewal" data-ja="一回払い · 購入日から1年間フル機能 · 自動更新なし">Pay once · full access for 1 year from purchase · no auto-renewal</div>
         <ul class="plan-features">
-          <li class="included" data-en="Everything in the app — same features as Monthly" data-ja="アプリの全機能 — 月額プランと同一">Everything in the app — same features as Monthly</li>
-          <li class="included" data-en="Covers the rest of 2026: pennant race, postseason, World Series" data-ja="2026年の残り全部 — ペナントレース・ポストシーズン・ワールドシリーズ">Covers the rest of 2026: pennant race, postseason, World Series</li>
-          <li class="included" data-en="No subscription, no auto-renewal, nothing to cancel" data-ja="サブスクなし・自動更新なし・解約手続き不要">No subscription, no auto-renewal, nothing to cancel</li>
-          <li class="included" data-en="Valid through April 30, 2027 — well past 2027 Opening Day" data-ja="2027年4月30日まで有効 — 2027年の開幕後も余裕をもってカバー">Valid through April 30, 2027 — well past 2027 Opening Day</li>
-        </ul>
-        <a href="https://buy.stripe.com/eVqbIUetjdbS3Ch8fC9sk04" class="btn-plan" data-en="Get Season Pass — $4.99" data-ja="シーズンパスを購入 — $4.99">Get Season Pass — $4.99</a>
-        <div class="plan-sub" data-en="One payment covers the whole season — billing happens once, never again." data-ja="一回の支払いでシーズン全体をカバー。課金は一度きり、以後は発生しません。">One payment covers the whole season — billing happens once, never again.</div>
-      </div>
-      <div class="plan secondary">
-        <div class="plan-badge" data-en="Subscription" data-ja="月額">Subscription</div>
-        <div class="plan-name" data-en="Monthly" data-ja="月額プラン">Monthly</div>
-        <div class="plan-price">$1.49<span class="plan-price-unit" data-en="/month" data-ja="/月">/month</span></div>
-        <div class="plan-note" data-en="Auto-renews monthly · cancel anytime" data-ja="毎月自動更新 · いつでも解約可能">Auto-renews monthly · cancel anytime</div>
-        <ul class="plan-features">
-          <li class="included" data-en="Flexible — pay only for the months you use" data-ja="柔軟 — 使う月だけ支払う">Flexible — pay only for the months you use</li>
+          <li class="included" data-en="Full access for a whole year from the day you buy" data-ja="購入した日から1年間、全機能を利用可能">Full access for a whole year from the day you buy</li>
           <li class="included" data-en="Team Mode — auto-follow your favorite team" data-ja="応援チームモード — チームをまるごと自動追跡">Team Mode — auto-follow your favorite team</li>
-          <li class="included" data-en="Player Mode — up to 20 individual players" data-ja="選手モード — 個別選手を最大20名">Player Mode — up to 20 individual players</li>
+          <li class="included" data-en="Player Mode — up to 20 players, majors and minors" data-ja="選手モード — 最大20名、メジャーもマイナーも">Player Mode — up to 20 players, majors and minors</li>
           <li class="included" data-en="Real-time event notifications" data-ja="リアルタイムイベント通知">Real-time event notifications</li>
-          <li class="included" data-en="Live game view (BSO, score)" data-ja="ライブ試合表示（BSO・スコア）">Live game view (BSO, score)</li>
-          <li class="included" data-en="Season stats display" data-ja="シーズン成績表示">Season stats display</li>
-          <li class="included" data-en="Cancel anytime — full access through the paid month" data-ja="いつでも解約可能 — 決済済みの月末まで利用可">Cancel anytime — full access through the paid month</li>
+          <li class="included" data-en="Live game view, season stats, inning history" data-ja="ライブ試合表示・シーズン成績・イニング履歴">Live game view, season stats, inning history</li>
+          <li class="included" data-en="No subscription, no auto-renewal, nothing to cancel" data-ja="サブスクなし・自動更新なし・解約手続き不要">No subscription, no auto-renewal, nothing to cancel</li>
         </ul>
-        <a href="https://buy.stripe.com/5kQ7sE1Gx3Bi0q5gM89sk02" class="btn-plan outline" data-en="Subscribe — $1.49/month" data-ja="登録する — $1.49/月">Subscribe — $1.49/month</a>
-        <div class="plan-sub" data-en="Billing and auto-renewal begin only when you subscribe here. Nothing starts automatically." data-ja="課金と自動更新は、ご自身でここから登録した時にのみ始まります。自動的に開始されることはありません。">Billing and auto-renewal begin only when you subscribe here. Nothing starts automatically.</div>
+        <a href="https://buy.stripe.com/eVqbIUetjdbS3Ch8fC9sk04" class="btn-plan" data-en="Get the 1-Year Pass — $4.99" data-ja="年間パスを購入 — $4.99">Get the 1-Year Pass — $4.99</a>
+        <div class="plan-sub" data-en="Billing happens once. Nothing renews automatically, and there is nothing to cancel." data-ja="課金は一度きり。自動更新はなく、解約手続きも必要ありません。">Billing happens once. Nothing renews automatically, and there is nothing to cancel.</div>
       </div>
     </div>
   </div>
@@ -400,12 +383,12 @@
 
   <div class="section">
     <div class="section-header">
-      <div class="section-tag" data-en="Subscription &amp; Cancellation" data-ja="サブスク・解約">Subscription &amp; Cancellation</div>
-      <h2 data-en="Cancel anytime" data-ja="いつでも解約可能">Cancel anytime</h2>
+      <div class="section-tag" data-en="Billing &amp; Refunds" data-ja="お支払い・返金">Billing &amp; Refunds</div>
+      <h2 data-en="One payment. Nothing to cancel." data-ja="一回払い。解約手続きはありません。">One payment. Nothing to cancel.</h2>
     </div>
     <div class="privacy-box">
-      <p id="cancellation-policy">Cancellation Policy: BaseballWatch starts with a 14-day free trial (no credit card required). Nothing is charged and nothing auto-renews during the trial. Monthly billing and auto-renewal begin only if you subscribe after the trial. You can cancel anytime via the Stripe Customer Portal — link is included in your activation email and Stripe receipt — and access continues until the end of the current billing period. The Season Pass is a one-time purchase: it never auto-renews, requires no cancellation, and simply remains valid through April 30, 2027 (well past 2027 Opening Day).</p>
-      <p id="seasonal-pause-note" style="background: var(--accent-light); padding: 16px; border-radius: 8px; color: var(--text2); border-left: 3px solid var(--accent);">Prefer not to subscribe? The Season Pass is a one-time $4.99 purchase — no subscription, no auto-renewal, valid through April 30, 2027.</p>
+      <p id="cancellation-policy">Billing Policy: BaseballWatch starts with a 14-day free trial (no credit card required). Nothing is charged and nothing auto-renews during the trial. After the trial, the 1-Year Pass is a one-time purchase: you are billed once, nothing renews automatically, and there is nothing to cancel — access simply runs for one year from the day you buy. If you subscribed to the monthly plan previously, that subscription continues as before and is unaffected. You can manage or cancel it anytime via the Stripe Customer Portal — the link is in your activation email and in every Stripe receipt — and access continues until the end of the current billing period.</p>
+      <p id="seasonal-pause-note" style="background: var(--accent-light); padding: 16px; border-radius: 8px; color: var(--text2); border-left: 3px solid var(--accent);">No subscriptions for new purchases. One payment of $4.99 unlocks everything for a full year — then it simply ends, unless you choose to buy again.</p>
       <p id="refund-policy-mlb">Refund Policy: As BaseballWatch is a digital service activated by license key, refunds are not provided once the activation key has been issued. If your license key does not function correctly, please contact us at <span class="em"></span> and we will resolve the issue promptly.</p>
       <p id="questions-line-mlb">For any questions: <span class="em"></span></p>
     </div>
@@ -504,9 +487,9 @@ function setLang(lang) {
   var cancel = document.getElementById('cancellation-policy');
   if (cancel) {
     if (lang === 'ja') {
-      cancel.textContent = '解約ポリシー：BaseballWatch は14日間の無料トライアル（クレジットカード登録不要）から始まります。トライアル中は課金されず、自動更新もありません。トライアル後にサブスク登録した場合のみ月額課金が始まり、自動更新されます。Stripeカスタマーポータルからいつでも解約でき（リンクはアクティベーションメールおよびStripe領収書メールに記載）、現在の請求期間終了まで利用可能です。シーズンパスは一回払いの買い切りです。自動更新はなく、解約手続きも不要で、2027年4月30日（2027年の開幕後）までそのまま有効です。';
+      cancel.textContent = 'お支払いについて：BaseballWatch は14日間の無料トライアル（クレジットカード登録不要）から始まります。トライアル中は課金されず、自動更新もありません。トライアル後の年間パスは一回払いの買い切りです。課金は一度きりで、自動更新はなく、解約手続きも必要ありません。購入した日から1年間ご利用いただけます。過去に月額プランに登録された方は、そのサブスクリプションは従来どおり継続し、影響はありません。Stripeカスタマーポータル（リンクはアクティベーションメールおよびStripeの領収書メールに記載）からいつでも管理・解約でき、解約後も現在の請求期間終了まで利用可能です。';
     } else {
-      cancel.textContent = 'Cancellation Policy: BaseballWatch starts with a 14-day free trial (no credit card required). Nothing is charged and nothing auto-renews during the trial. Monthly billing and auto-renewal begin only if you subscribe after the trial. You can cancel anytime via the Stripe Customer Portal — link is included in your activation email and Stripe receipt — and access continues until the end of the current billing period. The Season Pass is a one-time purchase: it never auto-renews, requires no cancellation, and simply remains valid through April 30, 2027 (well past 2027 Opening Day).';
+      cancel.textContent = 'Billing Policy: BaseballWatch starts with a 14-day free trial (no credit card required). Nothing is charged and nothing auto-renews during the trial. After the trial, the 1-Year Pass is a one-time purchase: you are billed once, nothing renews automatically, and there is nothing to cancel — access simply runs for one year from the day you buy. If you subscribed to the monthly plan previously, that subscription continues as before and is unaffected. You can manage or cancel it anytime via the Stripe Customer Portal — the link is in your activation email and in every Stripe receipt — and access continues until the end of the current billing period.';
     }
   }
 
@@ -514,9 +497,9 @@ function setLang(lang) {
   var seasonNote = document.getElementById('seasonal-pause-note');
   if (seasonNote) {
     if (lang === 'ja') {
-      seasonNote.textContent = 'サブスクに抵抗がある方へ：シーズンパスは $4.99 の一回払い買い切りです。サブスク不要・自動更新なし・2027年4月30日まで有効。';
+      seasonNote.textContent = '新規のご購入にサブスクリプションはありません。$4.99 の一回払いで全機能が1年間使え、期間が終われば自動的に終了します（続けたい場合のみ、あらためて購入してください）。';
     } else {
-      seasonNote.textContent = 'Prefer not to subscribe? The Season Pass is a one-time $4.99 purchase — no subscription, no auto-renewal, valid through April 30, 2027.';
+      seasonNote.textContent = 'No subscriptions for new purchases. One payment of $4.99 unlocks everything for a full year — then it simply ends, unless you choose to buy again.';
     }
   }
 

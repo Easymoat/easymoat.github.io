@@ -553,9 +553,14 @@ function renderSlots() {
   const occSel = slotState.slots[String(selSlot)] === true;
   const actSel = (slotState.active === selSlot);
   document.getElementById('slotNote').textContent = ja
-    ? ('スロット ' + selSlot + ': ' + (occSel ? '画像あり' : '空') + (actSel ? '（ウォッチで使用中）' : '') + ' ｜ ● = 画像あり / ★ = 使用中')
-    : ('Slot ' + selSlot + ': ' + (occSel ? 'has an image' : 'empty') + (actSel ? ' (active on watch)' : '') + ' | ● = has image / ★ = active');
-  document.getElementById('useSlotBtn').style.display = (occSel && !actSel) ? '' : 'none';
+    ? ('スロット ' + selSlot + ': ' + (occSel ? '画像あり' : '空（選ぶとデフォルト画像に戻ります）') + (actSel ? '（ウォッチで使用中）' : '') + ' ｜ ● = 画像あり / ★ = 使用中')
+    : ('Slot ' + selSlot + ': ' + (occSel ? 'has an image' : 'empty (selecting it shows the default image)') + (actSel ? ' (active on watch)' : '') + ' | ● = has image / ★ = active');
+  // 空スロットも選べる (カスタム画像を使わず既定の画像に戻す)
+  const useBtn = document.getElementById('useSlotBtn');
+  useBtn.style.display = actSel ? 'none' : '';
+  useBtn.textContent = occSel
+    ? (ja ? 'このスロットをウォッチで使う' : 'Use this slot on my watch')
+    : (ja ? 'デフォルト画像に戻す（空スロット）' : 'Show the default image (empty slot)');
 }
 
 async function loadSlots() {
@@ -585,7 +590,12 @@ document.getElementById('useSlotBtn').addEventListener('click', async () => {
     });
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || 'switch_failed');
-    box.innerHTML = '<div class="alert success">' + (ja ? 'スロット ' + selSlot + ' をウォッチで使う設定にしました。ウォッチの PulseLink を再起動すると反映されます。' : 'Slot ' + selSlot + ' is now active. Restart PulseLink on your watch to see it.') + '</div>';
+    const wasEmpty = (j.empty === true);
+    box.innerHTML = '<div class="alert success">' + (ja
+      ? (wasEmpty ? '空のスロット ' + selSlot + ' を選びました。ウォッチフェイスはデフォルト画像に戻ります（PulseLink を再起動すると反映）。'
+                  : 'スロット ' + selSlot + ' をウォッチで使う設定にしました。ウォッチの PulseLink を再起動すると反映されます。')
+      : (wasEmpty ? 'Empty slot ' + selSlot + ' selected — the watchface goes back to the default image. Restart PulseLink on your watch to see it.'
+                  : 'Slot ' + selSlot + ' is now active. Restart PulseLink on your watch to see it.')) + '</div>';
     loadSlots();
   } catch (e) {
     box.innerHTML = '<div class="alert error">' + (ja ? '切替に失敗しました: ' : 'Switch failed: ') + e.message + '</div>';

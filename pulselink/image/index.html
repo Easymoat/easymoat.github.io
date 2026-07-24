@@ -479,7 +479,56 @@ document.getElementById('removeBtn').addEventListener('click', async () => {
 // サーバーに slot 1-5 で保存し、ウォッチが使う1枚 (アクティブ) を選ぶ。
 // ● = 画像あり / ★ = ウォッチで使用中。選択中スロットがアップロード/削除/切替の対象。
 let selSlot = 1;
-let slotState = { slots: {}, active: 1 };
+let slotState = { slots: {}, active: 1, meta: {}, uid: '' };
+
+// 選択スロットに保存済みの画像をサーバーから読み込み、プレビュー (と品質プレビュー) に表示する。
+// 保存時のサイズ/色数も復元するので、そのスロットが実機でどう見えるかをそのまま確認できる。
+// blob 経由で読むことで canvas が汚染されず toDataURL / 減色プレビューが動く。
+async function loadSlotImage(n) {
+  const ja = document.documentElement.lang === 'ja';
+  if (!slotState.uid || slotState.slots[String(n)] !== true) return;
+  const note = document.getElementById('slotNote');
+  const prevNote = note.textContent;
+  note.textContent = ja ? 'スロット ' + n + ' の画像を読み込み中…' : 'Loading image in slot ' + n + '…';
+  try {
+    const meta = slotState.meta[String(n)] || {};
+    const url = API + '/compass-image/' + slotState.uid + '_s' + n + '.png?t=' + Date.now();
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('http_' + r.status);
+    const blob = await r.blob();
+    const objUrl = URL.createObjectURL(blob);
+    await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        curImg = img;
+        panX = 0; panY = 0; zoom = 1;   // 保存済み画像は 320x320 マスク済み = 等倍中央でぴったり
+        const z = document.getElementById('zoom');
+        if (z) z.value = '1';
+        document.getElementById('adjustRow').style.display = '';
+        // 保存時の表示サイズ・色数を復元 (品質プレビューを実機の条件に合わせる)
+        if (meta.size) {
+          setSizeMode(meta.size);
+          const radio = document.querySelector('input[name="imgsize"][value="' + meta.size + '"]');
+          if (radio) radio.checked = true;
+        }
+        if (meta.colors) {
+          const cb = document.querySelector('#colorBtns button[data-c="' + meta.colors + '"]');
+          if (cb) { mColors = Number(meta.colors); selBtn('colorBtns', cb); updateBppHint(); }
+        }
+        redrawPreview();                // maskedPng 更新 + scheduleMeasure で品質プレビュー再描画
+        document.getElementById('uploadBtn').disabled = false;
+        URL.revokeObjectURL(objUrl);
+        resolve();
+      };
+      img.onerror = () => { URL.revokeObjectURL(objUrl); reject(new Error('decode_failed')); };
+      img.src = objUrl;
+    });
+    renderSlots();                      // note を通常表示に戻す
+  } catch (e) {
+    note.textContent = (ja ? 'スロット ' + n + ' の画像を読み込めませんでした。' : 'Could not load the image in slot ' + n + '.');
+    setTimeout(() => { if (note.textContent.indexOf('slot') >= 0 || note.textContent.indexOf('スロット') >= 0) renderSlots(); }, 2500);
+  }
+}
 
 function renderSlots() {
   const ja = document.documentElement.lang === 'ja';
@@ -496,6 +545,8 @@ function renderSlots() {
       selSlot = n;
       renderSlots();
       if (typeof resetUploadBtn === 'function') resetUploadBtn();
+      // 画像が入っているスロットなら、その画像をプレビュー + 品質プレビューに表示
+      if (slotState.slots[String(n)] === true) { loadSlotImage(n); }
     });
     wrap.appendChild(b);
   }
@@ -515,6 +566,8 @@ async function loadSlots() {
     const me = await r.json();
     slotState.slots = me.image_slots || {};
     slotState.active = Number(me.image_active_slot || 1);
+    slotState.meta = me.image_slot_meta || {};
+    slotState.uid = me.user_id || '';
     renderSlots();
   } catch (e) {}
 }

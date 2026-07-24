@@ -199,6 +199,18 @@
       <div class="hint" id="bppHint" style="margin-top:6px;"></div>
     </div>
     <div id="measureOut" style="margin-top:12px;"></div>
+
+    <div class="field" id="bgAutoRow" style="display:none; margin-top:16px;">
+      <label data-en="Auto background color" data-ja="背景色（Auto）">Auto background color</label>
+      <p class="preview-note" style="margin:2px 0 8px; text-align:left;" data-en="Applies when Background is set to Auto on the watch. The color is taken from your image; drag to make it darker/deeper or lighter/paler. The preview above sits on the color." data-ja="ウォッチの Background を Auto にしているときに使われます。色は画像から取り出されます。左ほど濃く暗く、右ほど薄く明るくなります。上のプレビューがその色の上に表示されます。">Applies when Background is set to Auto on the watch. The color is taken from your image; drag to make it darker/deeper or lighter/paler.</p>
+      <div class="zoom-ctl">
+        <span class="zoom-ico" aria-hidden="true" data-en="Deep" data-ja="濃" style="width:auto; font-size:13px;">Deep</span>
+        <input id="bgAuto" type="range" min="0" max="100" step="1" value="33">
+        <span class="zoom-ico" aria-hidden="true" data-en="Pale" data-ja="薄" style="width:auto; font-size:13px;">Pale</span>
+        <span id="bgAutoSwatch" style="display:inline-block; width:26px; height:26px; border-radius:6px; border:1px solid var(--border); vertical-align:middle; margin-left:8px;"></span>
+      </div>
+    </div>
+
     <p class="preview-note" style="text-align:left; margin-top:1em;" data-en="Rule: With ring (a smaller image) works with any number of colors. For Full screen, 16 colors or fewer is the safe choice. Fewer colors always displays more reliably." data-ja="ルール: 「リングあり」（小さめの画像）なら、何色を選んでも大丈夫です。「全画面」にするときは、16色までが安心です。色数を抑えるほど、確実に表示されます。">Rule: With ring works with any colors; for Full screen, 16 colors or fewer is the safe choice.</p>
 
     <div id="uploadAlert"></div>
@@ -411,7 +423,7 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
     const r = await fetch(API + '/image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ device_id: deviceId, image: maskedPng, size: sizeMode, colors: mColors, palette: palette })
+      body: JSON.stringify({ device_id: deviceId, image: maskedPng, size: sizeMode, colors: mColors, palette: palette, bg_auto: mBgAuto })
     });
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || 'upload_failed');
@@ -524,6 +536,7 @@ function measure() {
             '</div><canvas id="qCanvas" width="320" height="320"></canvas></div>';
   }
   document.getElementById('measureOut').innerHTML = html;
+  document.getElementById('bgAutoRow').style.display = curImg ? '' : 'none';
   if (curImg) { renderQuality(); }
 }
 
@@ -534,27 +547,85 @@ function scheduleMeasure() {
   measureTimer = setTimeout(measure, 180);
 }
 
-// 現在のプレビュー画像を mColors 色に減色 (median-cut + Floyd-Steinberg) して表示。
-// makeImageRequest の挙動に近い「N色での到達品質」を机上で確認する。
+// Auto 背景色の強度 (0-100)。ウォッチ autoBgColor と同じ既定値 33。
+var mBgAuto = 33;
+// 減色済み画像のキャッシュ (スライダー操作時に再減色せず背景だけ塗り替える)。
+var mReducedCanvas = null;
+
+// ウォッチ側 autoBgColor (Monkey C) の JS 複製。パレット(色int配列)と強度 p から
+// 「ドミナント色相の背景色」を算出。p=33 (既定) で旧固定挙動相当。返り値 "#rrggbb"。
+function autoBgColorJS(pal, p) {
+  if (!pal || pal.length < 2) return '#000000';
+  var secW = [0,0,0,0,0,0], secR = [0,0,0,0,0,0], secG = [0,0,0,0,0,0], secB = [0,0,0,0,0,0];
+  for (var i = 0; i < pal.length; i++) {
+    var c = pal[i]; var r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b), sat = mx - mn;
+    if (mx < 30 || sat < 16) continue;
+    var s;
+    if (r >= g && r >= b) s = (g >= b) ? 0 : 5;
+    else if (g >= r && g >= b) s = (r >= b) ? 1 : 2;
+    else s = (g >= r) ? 3 : 4;
+    secW[s] += sat; secR[s] += r * sat; secG[s] += g * sat; secB[s] += b * sat;
+  }
+  var best = 0; for (var k = 1; k < 6; k++) if (secW[k] > secW[best]) best = k;
+  if (secW[best] <= 0) return '#000000';
+  var w = secW[best], ar = secR[best]/w, ag = secG[best]/w, ab = secB[best]/w;
+  var amn = Math.min(ar, ag, ab); ar -= amn; ag -= amn; ab -= amn;
+  var amx = Math.max(ar, ag, ab); if (amx < 1) return '#000000';
+  var pr = ar/amx, pg = ag/amx, pb = ab/amx;
+  var t = Math.max(0, Math.min(1, p / 100));
+  var maxc = 40 + t * 195;
+  var mix = (t <= 0.4) ? 0 : (t - 0.4) / 0.6;
+  var rr = Math.min(255, Math.round((pr*(1-mix)+mix) * maxc));
+  var gg = Math.min(255, Math.round((pg*(1-mix)+mix) * maxc));
+  var bb = Math.min(255, Math.round((pb*(1-mix)+mix) * maxc));
+  var hex = function (v) { return ('0' + v.toString(16)).slice(-2); };
+  return '#' + hex(rr) + hex(gg) + hex(bb);
+}
+
+// 現在のプレビュー画像から Auto 背景色を計算 (品質プレビューと同じ最適パレット使用)。
+function currentAutoBg() { return autoBgColorJS(computeOptimalPalette(mColors), mBgAuto); }
+
+// 品質プレビュー合成: Auto 背景色を塗り、その上に減色画像を配置。スウォッチも更新。
+function repaintQuality() {
+  var qc = document.getElementById('qCanvas');
+  var bg = currentAutoBg();
+  var sw = document.getElementById('bgAutoSwatch');
+  if (sw) sw.style.background = bg;
+  if (!qc) return;
+  var ctx = qc.getContext('2d');
+  ctx.clearRect(0, 0, 320, 320);
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, 320, 320);
+  var srcImg = mReducedCanvas || document.getElementById('previewCanvas');
+  // Full は全画面、それ以外 (リングあり) は約72%で背景色の枠が見える。
+  var sz = (sizeMode === 'full') ? 320 : Math.round(320 * 0.72);
+  var off = (320 - sz) / 2;
+  ctx.drawImage(srcImg, off, off, sz, sz);
+}
+
+// 現在のプレビュー画像を mColors 色に減色してキャッシュし、Auto 背景色の上に置いて表示
+// = ウォッチでの見え方 (画像＋背景色の枠) を確認する。
 function renderQuality() {
   var qc = document.getElementById('qCanvas');
   if (!qc) return;
   var src = document.getElementById('previewCanvas');
-  if (typeof RgbQuant === 'undefined') {
-    qc.getContext('2d').drawImage(src, 0, 0);
-    return;
+  mReducedCanvas = null;
+  if (typeof RgbQuant !== 'undefined') {
+    try {
+      var q = new RgbQuant({ colors: mColors, dithKern: 'FloydSteinberg', dithSerp: true });
+      q.sample(src); var out = q.reduce(src);
+      var tmp = document.createElement('canvas'); tmp.width = 320; tmp.height = 320;
+      var tctx = tmp.getContext('2d');
+      var id = tctx.createImageData(320, 320);
+      id.data.set(out); tctx.putImageData(id, 0, 0);
+      // 減色で失われた円形透明を復元 (角を透過 → 背景色が枠として見える)。
+      tctx.globalCompositeOperation = 'destination-in';
+      tctx.beginPath(); tctx.arc(160, 160, 160, 0, Math.PI * 2); tctx.fill();
+      tctx.globalCompositeOperation = 'source-over';
+      mReducedCanvas = tmp;
+    } catch (e) { mReducedCanvas = null; }
   }
-  try {
-    var q = new RgbQuant({ colors: mColors, dithKern: 'FloydSteinberg', dithSerp: true });
-    q.sample(src);
-    var out = q.reduce(src);
-    var ctx = qc.getContext('2d');
-    var id = ctx.createImageData(320, 320);
-    id.data.set(out);
-    ctx.putImageData(id, 0, 0);
-  } catch (e) {
-    qc.getContext('2d').drawImage(src, 0, 0);
-  }
+  repaintQuality();
 }
 // 現在のプレビュー画像から n 色の最適パレット (median-cut) を算出し、色int配列で返す。
 // ウォッチへ送り、makeImageRequest の :palette に使う。
@@ -569,6 +640,13 @@ function computeOptimalPalette(n) {
     return pal.map(function (c) { return (c[0] << 16) | (c[1] << 8) | c[2]; });
   } catch (e) { return null; }
 }
+// bg スライダー: 動かすたびに品質プレビューの背景色だけ更新 (再減色しない=軽量)。
+document.getElementById('bgAuto').addEventListener('input', function (e) {
+  mBgAuto = parseInt(e.target.value, 10) || 0;
+  repaintQuality();
+  if (typeof resetUploadBtn === 'function') resetUploadBtn();
+});
+
 updateBppHint();
 measure();
 </script>

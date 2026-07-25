@@ -81,7 +81,7 @@
       <button data-v="64" class="active" data-en="64 — medium" data-ja="64 — 中">64 — medium</button>
       <button data-v="128" data-en="128 — heavy" data-ja="128 — 重い">128 — heavy</button>
     </div>
-    <p class="hint" data-en="Full screen + 128 colors can exceed watch memory on some models — if the image doesn't show, choose fewer colors or With ring." data-ja="全画面 + 128色は機種によりウォッチのメモリ上限を超えます。表示されない時は色数を下げるか「リングあり」に。">Full screen + 128 colors can exceed watch memory on some models — if the image doesn't show, choose fewer colors or With ring.</p>
+    <p class="hint" id="sizeHint" data-en="Full screen locks colors to 16 — more colors exceed watch memory on large-screen models and the image won't show at all." data-ja="全画面は16色固定です。それ以上の色数は大画面機種でウォッチのメモリ上限を超え、画像が一切表示されなくなります。">Full screen locks colors to 16 — more colors exceed watch memory on large-screen models and the image won't show at all.</p>
     <div class="row">
       <button class="btn" id="startBtn" data-en="Start camera" data-ja="カメラ開始">Start camera</button>
       <button class="btn stop" id="stopBtn" style="display:none;" data-en="Stop" data-ja="停止">Stop</button>
@@ -170,20 +170,39 @@ document.getElementById('loginBtn').addEventListener('click', async function () 
 document.getElementById('logoutBtn').addEventListener('click', enterSignedOut);
 
 // ─── 設定 (サイズ / 色数) ───
+// 全画面は16色固定: 大画面機 (454px) では 8bpp (17色以上) のデコード後容量が
+// 206KB となりウォッチのメモリ上限を超え、画像が一切表示されなくなる。
+// 16色 = 4bpp なら 103KB で全機種安全。リングありは 64/128色も可。
 let sizeMode = 'standard';
 let mColors = 64;
+function setColors(n) {
+  mColors = n;
+  document.querySelectorAll('#colorSeg button').forEach(function (x) {
+    x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === n);
+  });
+}
+function applyColorLock() {
+  const full = (sizeMode === 'full');
+  document.querySelectorAll('#colorSeg button').forEach(function (x) {
+    const v = parseInt(x.getAttribute('data-v'), 10);
+    const locked = full && v > 16;
+    x.disabled = locked;
+    x.style.opacity = locked ? '0.4' : '';
+  });
+  if (full && mColors > 16) { setColors(16); }
+}
 document.querySelectorAll('#sizeSeg button').forEach(function (b) {
   b.addEventListener('click', function () {
     sizeMode = b.getAttribute('data-v');
     document.querySelectorAll('#sizeSeg button').forEach(function (x) { x.classList.remove('active'); });
     b.classList.add('active');
+    applyColorLock();
   });
 });
 document.querySelectorAll('#colorSeg button').forEach(function (b) {
   b.addEventListener('click', function () {
-    mColors = parseInt(b.getAttribute('data-v'), 10);
-    document.querySelectorAll('#colorSeg button').forEach(function (x) { x.classList.remove('active'); });
-    b.classList.add('active');
+    if (b.disabled) { return; }
+    setColors(parseInt(b.getAttribute('data-v'), 10));
   });
 });
 
@@ -206,18 +225,38 @@ async function acquireWakeLock() {
   } catch (e) { wakeLock = null; }
 }
 document.addEventListener('visibilitychange', function () {
-  if (document.visibilityState === 'visible' && stream && !wakeLock) acquireWakeLock();
+  if (document.visibilityState !== 'visible') { return; }
+  if (stream && !wakeLock) { acquireWakeLock(); }
+  // 中断からの復帰: ストリームは死んでいることが多い。5秒後に撮影を前倒しして
+  // (captureAndUpload 内の健全性チェックが取り直す)、新鮮な実画像をすぐ送る。
+  if (timerId != null) {
+    const soon = Date.now() + 5000;
+    if (nextShotAt == null || nextShotAt > soon) { nextShotAt = soon; }
+  }
 });
+
+// カメラストリームの取得。iOS Safari はロック/アプリ切替で復帰後もストリームが
+// 死んだままになる (track.readyState='ended' や muted、あるいは黒フレームを返す)。
+// 撮影のたびに健全性を確認し、死んでいたらここで取り直す。
+async function openStream() {
+  if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+  stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+    audio: false
+  });
+  document.getElementById('video').srcObject = stream;
+}
+function streamAlive() {
+  if (!stream) { return false; }
+  const t = stream.getVideoTracks()[0];
+  return !!t && t.readyState === 'live' && !t.muted;
+}
 
 document.getElementById('startBtn').addEventListener('click', async function () {
   const box = document.getElementById('camAlert');
   box.innerHTML = '';
   try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
-      audio: false
-    });
-    document.getElementById('video').srcObject = stream;
+    await openStream();
     document.getElementById('startBtn').style.display = 'none';
     document.getElementById('stopBtn').style.display = '';
     document.getElementById('shotBtn').style.display = '';
@@ -256,11 +295,16 @@ function tick() {
 // 撮影 → 中央正方形クロップ → 320x320 円形マスク → 減色 (最適パレット) → アップロード。
 // 減色済み PNG を送る = ファイルが小さく (300KB 上限対策)、ウォッチの見た目と一致する。
 async function captureAndUpload() {
-  if (!jwt || !stream) return;
+  if (!jwt) return;
   inFlight = true;
   nextShotAt = Date.now() + INTERVAL_MS; // 成功/失敗に関わらず次回を先に予約 (失敗時は下で前倒し)
   const box = document.getElementById('camAlert');
   try {
+    // ストリームが死んでいたら取り直し、露出が安定するまで 2秒待つ。
+    if (!streamAlive()) {
+      await openStream();
+      await new Promise(function (r) { setTimeout(r, 2000); });
+    }
     const video = document.getElementById('video');
     const vw = video.videoWidth, vh = video.videoHeight;
     if (!vw || !vh) throw new Error('camera not ready');
@@ -269,6 +313,20 @@ async function captureAndUpload() {
     const side = Math.min(vw, vh);
     ctx.clearRect(0, 0, 320, 320);
     ctx.drawImage(video, (vw - side) / 2, (vh - side) / 2, side, side, 0, 0, 320, 320);
+    // 黒フレーム検出: 死にかけのストリームは真っ黒な絵を返すことがある。
+    // 平均輝度がほぼゼロならカメラ停止とみなし、取り直して 60秒後に再試行する
+    // (真っ暗な部屋でも通常は 6/255 を下回らない)。黒画像をウォッチに送ると
+    // 「画像が消えた」ように見えるため、アップロードしないことが重要。
+    const px = ctx.getImageData(0, 0, 320, 320).data;
+    let luma = 0;
+    for (let i = 0; i < px.length; i += 64) { // 16画素ごとにサンプリング
+      luma += 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+    }
+    luma /= (px.length / 64);
+    if (luma < 6) {
+      await openStream();
+      throw new Error(ja() ? 'カメラ映像が真っ黒 (取り直します)' : 'black frame — restarting camera');
+    }
     // 減色 (median-cut + Floyd-Steinberg)。パレットはウォッチの makeImageRequest にも渡す。
     let palette = null;
     if (typeof RgbQuant !== 'undefined') {

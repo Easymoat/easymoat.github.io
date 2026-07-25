@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PulseLink Cam — iPhone Watch Camera</title>
+<link rel="icon" type="image/png" href="../../favicon.png">
+<script src="https://cdn.jsdelivr.net/npm/rgbquant@1.1.2/src/rgbquant.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #F8F9FC; color: #111827; font-family: -apple-system, 'Inter', sans-serif; min-height: 100vh; }
+  .lang-bar { background: #FFF; border-bottom: 1px solid #E2E6EF; padding: 8px 20px; display: flex; justify-content: flex-end; gap: 8px; font-size: 13px; }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid #E2E6EF; background: transparent; cursor: pointer; color: #6B7280; }
+  .lang-btn.active { background: #111827; color: #fff; border-color: #111827; }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  .sub { color: #6B7280; font-size: 14px; margin-bottom: 20px; }
+  .card { background: #FFF; border: 1px solid #E2E6EF; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+  .card h2 { font-size: 16px; margin-bottom: 12px; }
+  label { font-size: 13px; color: #6B7280; display: block; margin: 10px 0 4px; }
+  input[type=email], input[type=password] { width: 100%; padding: 10px 12px; border: 1px solid #E2E6EF; border-radius: 8px; font-size: 15px; }
+  .btn { display: inline-block; width: 100%; padding: 12px; margin-top: 14px; border: none; border-radius: 10px; background: #0891B2; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .btn:disabled { background: #9CA3AF; }
+  .btn.stop { background: #DC2626; }
+  .btn.ghost { background: #FFF; color: #0891B2; border: 1px solid #0891B2; }
+  .alert { padding: 10px 12px; border-radius: 8px; font-size: 13px; margin-top: 10px; }
+  .alert.error { background: #FEE2E2; color: #B91C1C; }
+  .alert.success { background: #D1FAE5; color: #065F46; }
+  video { width: 100%; border-radius: 12px; background: #000; }
+  canvas#shot { display: none; }
+  .row { display: flex; gap: 8px; }
+  .row .btn { margin-top: 10px; }
+  .status { font-size: 13px; color: #374151; line-height: 1.8; margin-top: 12px; }
+  .status b { font-variant-numeric: tabular-nums; }
+  .seg { display: flex; gap: 6px; margin-top: 4px; }
+  .seg button { flex: 1; padding: 8px 4px; border: 1px solid #E2E6EF; background: #FFF; border-radius: 8px; font-size: 13px; cursor: pointer; }
+  .seg button.active { border-color: #0891B2; color: #0891B2; font-weight: 600; }
+  .hint { font-size: 12px; color: #9CA3AF; margin-top: 6px; }
+  .thumbwrap { display: flex; gap: 12px; align-items: center; margin-top: 12px; }
+  .thumbwrap canvas { width: 96px; height: 96px; border-radius: 50%; border: 1px solid #E2E6EF; }
+  .note { font-size: 12px; color: #6B7280; background: #F3F4F6; border-radius: 8px; padding: 10px 12px; margin-top: 12px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="lang-bar">
+  <span>🌐</span>
+  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+  <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+</div>
+<div class="wrap">
+  <h1>PulseLink Cam</h1>
+  <p class="sub" data-en="Turn a spare iPhone into a watch-face camera. A photo is taken and sent to your watch every 10 minutes." data-ja="余った iPhone を文字盤カメラに。10分ごとに撮影してウォッチに送ります。">Turn a spare iPhone into a watch-face camera. A photo is taken and sent to your watch every 10 minutes.</p>
+
+  <div class="card" id="loginCard">
+    <h2 data-en="1. Sign in" data-ja="1. サインイン">1. Sign in</h2>
+    <div id="loginForm">
+      <label data-en="Email" data-ja="メールアドレス">Email</label>
+      <input type="email" id="email" autocomplete="username">
+      <label data-en="Password" data-ja="パスワード">Password</label>
+      <input type="password" id="password" autocomplete="current-password">
+      <button class="btn" id="loginBtn" data-en="Sign in" data-ja="サインイン">Sign in</button>
+      <div id="loginAlert"></div>
+    </div>
+    <div id="loginDone" style="display:none;">
+      <div class="alert success" id="loginDoneMsg"></div>
+      <button class="btn ghost" id="logoutBtn" data-en="Sign out" data-ja="サインアウト">Sign out</button>
+    </div>
+  </div>
+
+  <div class="card" id="camCard" style="display:none;">
+    <h2 data-en="2. Camera" data-ja="2. カメラ">2. Camera</h2>
+    <video id="video" autoplay playsinline muted></video>
+    <label data-en="Watch display size" data-ja="ウォッチでの表示サイズ">Watch display size</label>
+    <div class="seg" id="sizeSeg">
+      <button data-v="standard" class="active" data-en="With ring" data-ja="リングあり">With ring</button>
+      <button data-v="full" data-en="Full screen" data-ja="全画面">Full screen</button>
+    </div>
+    <label data-en="Colors (watch memory load)" data-ja="色数（ウォッチの負担）">Colors (watch memory load)</label>
+    <div class="seg" id="colorSeg">
+      <button data-v="16" data-en="16 — light" data-ja="16 — 軽い">16 — light</button>
+      <button data-v="64" class="active" data-en="64 — medium" data-ja="64 — 中">64 — medium</button>
+      <button data-v="128" data-en="128 — heavy" data-ja="128 — 重い">128 — heavy</button>
+    </div>
+    <p class="hint" data-en="Full screen + 128 colors can exceed watch memory on some models — if the image doesn't show, choose fewer colors or With ring." data-ja="全画面 + 128色は機種によりウォッチのメモリ上限を超えます。表示されない時は色数を下げるか「リングあり」に。">Full screen + 128 colors can exceed watch memory on some models — if the image doesn't show, choose fewer colors or With ring.</p>
+    <div class="row">
+      <button class="btn" id="startBtn" data-en="Start camera" data-ja="カメラ開始">Start camera</button>
+      <button class="btn stop" id="stopBtn" style="display:none;" data-en="Stop" data-ja="停止">Stop</button>
+    </div>
+    <button class="btn ghost" id="shotBtn" style="display:none;" data-en="Send a photo now" data-ja="今すぐ撮影して送る">Send a photo now</button>
+    <div class="thumbwrap" id="thumbwrap" style="display:none;">
+      <canvas id="thumb" width="320" height="320"></canvas>
+      <div class="status" id="status"></div>
+    </div>
+    <div id="camAlert"></div>
+    <div class="note" data-en="Keep this page open in Safari with the iPhone plugged in. The page keeps the screen awake. Photos go only to your own PulseLink account; on the watch, choose You menu → Image slot → Camera." data-ja="iPhone を電源につなぎ、この Safari ページを開いたままにしてください。ページが画面消灯を防ぎます。写真は自分の PulseLink アカウントだけに送られます。ウォッチ側は You メニュー → Image slot → Camera を選択してください。">Keep this page open in Safari with the iPhone plugged in. The page keeps the screen awake. Photos go only to your own PulseLink account; on the watch, choose You menu → Image slot → Camera.</div>
+  </div>
+</div>
+<canvas id="shot" width="320" height="320"></canvas>
+
+<script>
+const API = 'https://mlbwatch-server.onrender.com/api/pulselink';
+const CAM_SLOT = 6;
+const INTERVAL_MS = 10 * 60 * 1000;   // 10分間隔 (仕様固定)
+const RETRY_MS = 60 * 1000;           // 失敗時は 60秒後に再試行
+
+// ─── 言語 ───
+function setLang(lang) {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-en]').forEach(function (el) {
+    var v = el.getAttribute('data-' + lang);
+    if (v != null) el.textContent = v;
+  });
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+  try { localStorage.setItem('pl_lang', lang); } catch (e) {}
+  renderStatus();
+}
+try { if (localStorage.getItem('pl_lang') === 'ja') setLang('ja'); } catch (e) {}
+function ja() { return document.documentElement.lang === 'ja'; }
+
+// ─── サインイン (画像ページと同じ pl_jwt を共有) ───
+let jwt = null;
+function enterSignedIn(email) {
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('loginDone').style.display = '';
+  document.getElementById('loginDoneMsg').textContent =
+    (ja() ? 'サインイン済み: ' : 'Signed in: ') + email;
+  document.getElementById('camCard').style.display = '';
+}
+function enterSignedOut() {
+  jwt = null;
+  try { localStorage.removeItem('pl_jwt'); } catch (e) {}
+  stopCamera();
+  document.getElementById('loginForm').style.display = '';
+  document.getElementById('loginDone').style.display = 'none';
+  document.getElementById('camCard').style.display = 'none';
+}
+(async function restoreSession() {
+  let saved = null;
+  try { saved = localStorage.getItem('pl_jwt'); } catch (e) {}
+  if (!saved) return;
+  try {
+    const r = await fetch(API + '/user/me', { headers: { 'Authorization': 'Bearer ' + saved } });
+    if (r.ok) { const j = await r.json(); jwt = saved; enterSignedIn(j.email || ''); }
+    else { try { localStorage.removeItem('pl_jwt'); } catch (e) {} }
+  } catch (e) {}
+})();
+document.getElementById('loginBtn').addEventListener('click', async function () {
+  const box = document.getElementById('loginAlert');
+  box.innerHTML = '';
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  try {
+    const r = await fetch(API + '/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value
+      })
+    });
+    const j = await r.json();
+    if (!r.ok || !j.token) throw new Error(j.error || 'login_failed');
+    jwt = j.token;
+    try { localStorage.setItem('pl_jwt', jwt); } catch (e2) {}
+    enterSignedIn(document.getElementById('email').value.trim());
+  } catch (e) {
+    box.innerHTML = '<div class="alert error">' + (ja() ? 'サインインに失敗しました: ' : 'Sign-in failed: ') + e.message + '</div>';
+  } finally { btn.disabled = false; }
+});
+document.getElementById('logoutBtn').addEventListener('click', enterSignedOut);
+
+// ─── 設定 (サイズ / 色数) ───
+let sizeMode = 'standard';
+let mColors = 64;
+document.querySelectorAll('#sizeSeg button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    sizeMode = b.getAttribute('data-v');
+    document.querySelectorAll('#sizeSeg button').forEach(function (x) { x.classList.remove('active'); });
+    b.classList.add('active');
+  });
+});
+document.querySelectorAll('#colorSeg button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    mColors = parseInt(b.getAttribute('data-v'), 10);
+    document.querySelectorAll('#colorSeg button').forEach(function (x) { x.classList.remove('active'); });
+    b.classList.add('active');
+  });
+});
+
+// ─── カメラ + 定期撮影 ───
+let stream = null;
+let timerId = null;
+let wakeLock = null;
+let shotCount = 0;
+let lastUploadAt = null;
+let nextShotAt = null;
+let lastError = '';
+
+async function acquireWakeLock() {
+  // iOS 16.4+ Safari で利用可。失敗しても続行 (自動ロック=なし を併用してもらう)。
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', function () { wakeLock = null; });
+    }
+  } catch (e) { wakeLock = null; }
+}
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'visible' && stream && !wakeLock) acquireWakeLock();
+});
+
+document.getElementById('startBtn').addEventListener('click', async function () {
+  const box = document.getElementById('camAlert');
+  box.innerHTML = '';
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false
+    });
+    document.getElementById('video').srcObject = stream;
+    document.getElementById('startBtn').style.display = 'none';
+    document.getElementById('stopBtn').style.display = '';
+    document.getElementById('shotBtn').style.display = '';
+    document.getElementById('thumbwrap').style.display = '';
+    await acquireWakeLock();
+    // 初回は 3秒後 (露出が安定してから)、以降 10分間隔。
+    nextShotAt = Date.now() + 3000;
+    timerId = setInterval(tick, 1000);
+    renderStatus();
+  } catch (e) {
+    box.innerHTML = '<div class="alert error">' + (ja() ? 'カメラを開始できません: ' : 'Cannot start camera: ') + e.message + '</div>';
+  }
+});
+function stopCamera() {
+  if (timerId) { clearInterval(timerId); timerId = null; }
+  if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+  if (wakeLock) { try { wakeLock.release(); } catch (e) {} wakeLock = null; }
+  nextShotAt = null;
+  document.getElementById('video').srcObject = null;
+  document.getElementById('startBtn').style.display = '';
+  document.getElementById('stopBtn').style.display = 'none';
+  document.getElementById('shotBtn').style.display = 'none';
+  renderStatus();
+}
+document.getElementById('stopBtn').addEventListener('click', stopCamera);
+document.getElementById('shotBtn').addEventListener('click', function () { captureAndUpload(); });
+
+let inFlight = false;
+function tick() {
+  renderStatus();
+  if (nextShotAt != null && Date.now() >= nextShotAt && !inFlight) {
+    captureAndUpload();
+  }
+}
+
+// 撮影 → 中央正方形クロップ → 320x320 円形マスク → 減色 (最適パレット) → アップロード。
+// 減色済み PNG を送る = ファイルが小さく (300KB 上限対策)、ウォッチの見た目と一致する。
+async function captureAndUpload() {
+  if (!jwt || !stream) return;
+  inFlight = true;
+  nextShotAt = Date.now() + INTERVAL_MS; // 成功/失敗に関わらず次回を先に予約 (失敗時は下で前倒し)
+  const box = document.getElementById('camAlert');
+  try {
+    const video = document.getElementById('video');
+    const vw = video.videoWidth, vh = video.videoHeight;
+    if (!vw || !vh) throw new Error('camera not ready');
+    const cv = document.getElementById('shot');
+    const ctx = cv.getContext('2d');
+    const side = Math.min(vw, vh);
+    ctx.clearRect(0, 0, 320, 320);
+    ctx.drawImage(video, (vw - side) / 2, (vh - side) / 2, side, side, 0, 0, 320, 320);
+    // 減色 (median-cut + Floyd-Steinberg)。パレットはウォッチの makeImageRequest にも渡す。
+    let palette = null;
+    if (typeof RgbQuant !== 'undefined') {
+      const q = new RgbQuant({ colors: mColors, dithKern: 'FloydSteinberg', dithSerp: true });
+      q.sample(cv);
+      const out = q.reduce(cv);
+      const id = ctx.createImageData(320, 320);
+      id.data.set(out);
+      ctx.putImageData(id, 0, 0);
+      const pal = q.palette(true);
+      if (pal && pal.length >= 2) {
+        palette = pal.map(function (c) { return (c[0] << 16) | (c[1] << 8) | c[2]; });
+      }
+    }
+    // 円形マスク (既存の画像パイプラインと同じ形式。丸画面では角は見えない)。
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.beginPath(); ctx.arc(160, 160, 160, 0, Math.PI * 2); ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+    const png = cv.toDataURL('image/png');
+    // サムネイル更新
+    const tctx = document.getElementById('thumb').getContext('2d');
+    tctx.clearRect(0, 0, 320, 320);
+    tctx.drawImage(cv, 0, 0);
+    // アップロード (スロット6 = カメラ専用)
+    const r = await fetch(API + '/user/compass-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
+      body: JSON.stringify({ image: png, size: sizeMode, colors: mColors, palette: palette, slot: CAM_SLOT })
+    });
+    const j = await r.json();
+    if (!r.ok || !j.ok) throw new Error(j.error || 'upload_failed');
+    shotCount++;
+    lastUploadAt = new Date();
+    lastError = '';
+    box.innerHTML = '';
+  } catch (e) {
+    lastError = e.message;
+    nextShotAt = Date.now() + RETRY_MS; // 失敗 → 60秒後に再試行
+    box.innerHTML = '<div class="alert error">' + (ja() ? '送信に失敗しました (60秒後に再試行): ' : 'Upload failed (retrying in 60s): ') + e.message + '</div>';
+  } finally {
+    inFlight = false;
+    renderStatus();
+  }
+}
+
+function hhmm(d) {
+  return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ':' + ('0' + d.getSeconds()).slice(-2);
+}
+function renderStatus() {
+  const el = document.getElementById('status');
+  if (!el) return;
+  const j = ja();
+  let html = '';
+  html += (j ? '送信回数: ' : 'Uploads: ') + '<b>' + shotCount + '</b><br>';
+  html += (j ? '最終送信: ' : 'Last: ') + '<b>' + (lastUploadAt ? hhmm(lastUploadAt) : '—') + '</b><br>';
+  if (nextShotAt != null) {
+    const s = Math.max(0, Math.round((nextShotAt - Date.now()) / 1000));
+    html += (j ? '次回まで: ' : 'Next in: ') + '<b>' + Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2) + '</b><br>';
+  }
+  html += (j ? '画面ロック防止: ' : 'Wake lock: ') + (wakeLock ? 'ON' : (j ? 'OFF (自動ロックを「なし」に)' : 'OFF (set Auto-Lock to Never)'));
+  el.innerHTML = html;
+}
+</script>
+</body>
+</html>

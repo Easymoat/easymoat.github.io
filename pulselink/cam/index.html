@@ -189,7 +189,18 @@ function setColors(n) {
 }
 document.querySelectorAll('#colorSeg button').forEach(function (b) {
   b.addEventListener('click', function () {
-    setColors(parseInt(b.getAttribute('data-v'), 10));
+    const n = parseInt(b.getAttribute('data-v'), 10);
+    setColors(n);
+    // サーバのステートにも反映 → Viewer 側の表示と一致し、次のポーリングで
+    // 「変更」と誤検知して余計な撮影が走ることもない。
+    camCfg.colors = n;
+    if (jwt) {
+      fetch(API + '/user/cam-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
+        body: JSON.stringify({ colors: n })
+      }).catch(function () {});
+    }
   });
 });
 
@@ -237,7 +248,7 @@ renderRingBtn();
 // ─── リモート制御 (Viewer → サーバ → ここ、のステートリレー) ───
 // 30秒 (調整モード中は10秒) ごとに /user/cam-config をポーリングし、最終値を適用する。
 // paused はストリーム停止のみ (Wake Lock とポーリングは維持 = リモート再開が効く)。
-let camCfg = { paused: false, zoom: 100, brightness: 0, shoot_seq: 0, boost_until: 0 };
+let camCfg = { paused: false, zoom: 100, brightness: 0, colors: 16, shoot_seq: 0, boost_until: 0 };
 let remotePaused = false;
 let lastShootSeq = null;   // 初回ポーリングは現在値を採用 (過去の shoot で発火しない)
 let nextCfgPollAt = 0;
@@ -263,8 +274,11 @@ async function pollCamConfig() {
       remotePaused = false;
       nextShotAt = Date.now() + 2000;  // 再開 → 即撮影 (ストリームは capture 内で取り直される)
     }
-    // 設定変更 (zoom/明るさ) や「今すぐ撮影」→ 次の定期撮影を待たず前倒し
-    const changed = (prev.zoom !== camCfg.zoom) || (prev.brightness !== camCfg.brightness);
+    // 色数は Viewer からも変えられる (サーバのステートが正)。ローカル選択を追随させる。
+    if (camCfg.colors && camCfg.colors !== mColors) { setColors(camCfg.colors); }
+    // 設定変更 (zoom/明るさ/色数) や「今すぐ撮影」→ 次の定期撮影を待たず前倒し
+    const changed = (prev.zoom !== camCfg.zoom) || (prev.brightness !== camCfg.brightness)
+                 || (prev.colors !== camCfg.colors);
     const shootReq = (camCfg.shoot_seq || 0) !== lastShootSeq;
     if (shootReq) { lastShootSeq = camCfg.shoot_seq || 0; }
     if (!camCfg.paused && (changed || shootReq)) {

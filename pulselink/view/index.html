@@ -94,6 +94,13 @@
       <button data-v="1">+1</button>
       <button data-v="2">+2</button>
     </div>
+    <label data-en="Colors (watch transfer speed)" data-ja="色数（ウォッチへの転送速度）">Colors (watch transfer speed)</label>
+    <div class="seg" id="colorSeg">
+      <button data-v="16" data-en="16 — fast" data-ja="16 — 速い">16 — fast</button>
+      <button data-v="32">32</button>
+      <button data-v="64" data-en="64 — best" data-ja="64 — 高画質">64 — best</button>
+    </div>
+    <p class="hint" data-en="16 colors reaches the watch about twice as fast. 32 and 64 cost the same, so choose 64 if you want the best looking image. This page always shows full quality." data-ja="16色はウォッチへの到着が約2倍速くなります。32色と64色は転送量が同じなので、画質を求めるなら64色を。このページの表示は色数に関わらず常に元画質です。">16 colors reaches the watch about twice as fast. 32 and 64 cost the same, so choose 64 if you want the best looking image. This page always shows full quality.</p>
     <p class="hint" data-en="Changes reach the camera within about 10-30 seconds, and a fresh photo is taken right away. While you are adjusting, this page refreshes every 5 seconds for about 3 minutes (adjustment mode)." data-ja="変更は約10〜30秒でカメラに届き、すぐに撮り直されます。操作すると約3分間は「調整モード」になり、このページは5秒ごとに自動更新されます。">Changes reach the camera within about 10-30 seconds, and a fresh photo is taken right away. While you are adjusting, this page refreshes every 5 seconds for about 3 minutes (adjustment mode).</p>
     <div id="ctrlAlert"></div>
   </div>
@@ -183,7 +190,7 @@ document.getElementById('logoutBtn').addEventListener('click', enterSignedOut);
 let mode = null;
 let camUid = '';
 let camVer = '0';
-let cfg = { paused: false, zoom: 100, brightness: 0, shoot_seq: 0, boost_until: 0 };
+let cfg = { paused: false, zoom: 100, brightness: 0, colors: 16, shoot_seq: 0, boost_until: 0 };
 let nextPollAt = 0;
 let pollTimer = null;
 
@@ -295,6 +302,9 @@ document.querySelectorAll('#zoomSeg button').forEach(function (b) {
 document.querySelectorAll('#brSeg button').forEach(function (b) {
   b.addEventListener('click', function () { sendCfg({ brightness: parseInt(b.getAttribute('data-v'), 10) }); });
 });
+document.querySelectorAll('#colorSeg button').forEach(function (b) {
+  b.addEventListener('click', function () { sendCfg({ colors: parseInt(b.getAttribute('data-v'), 10) }); });
+});
 
 function renderControls() {
   if (mode !== 'own') { return; }
@@ -306,6 +316,9 @@ function renderControls() {
   });
   document.querySelectorAll('#brSeg button').forEach(function (x) {
     x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === (cfg.brightness || 0));
+  });
+  document.querySelectorAll('#colorSeg button').forEach(function (x) {
+    x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === (cfg.colors || 16));
   });
   const badge = document.getElementById('srcBadge');
   if (cfg.paused) {

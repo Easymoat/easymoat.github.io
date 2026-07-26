@@ -172,7 +172,7 @@ document.getElementById('logoutBtn').addEventListener('click', enterSignedOut);
 // ─── 設定 (サイズ / 色数) ───
 // 全画面は16色固定: 大画面機 (454px) では 8bpp (17色以上) のデコード後容量が
 // 206KB となりウォッチのメモリ上限を超え、画像が一切表示されなくなる。
-// 16色 = 4bpp なら 103KB で全機種安全。リングありは 64/128色も可。
+// 16色 = 4bpp なら 103KB で全機種安全。リングありは 32/64色も可。
 let sizeMode = 'standard';
 let mColors = 64;
 function setColors(n) {

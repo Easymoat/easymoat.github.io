@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PulseLink Viewer — Camera</title>
+<link rel="icon" type="image/png" href="../../favicon.png">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #F8F9FC; color: #111827; font-family: -apple-system, 'Inter', sans-serif; min-height: 100vh; }
+  .lang-bar { background: #FFF; border-bottom: 1px solid #E2E6EF; padding: 8px 20px; display: flex; justify-content: flex-end; gap: 8px; font-size: 13px; }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid #E2E6EF; background: transparent; cursor: pointer; color: #6B7280; }
+  .lang-btn.active { background: #111827; color: #fff; border-color: #111827; }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  .sub { color: #6B7280; font-size: 14px; margin-bottom: 20px; }
+  .card { background: #FFF; border: 1px solid #E2E6EF; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+  .card h2 { font-size: 16px; margin-bottom: 12px; }
+  label { font-size: 13px; color: #6B7280; display: block; margin: 10px 0 4px; }
+  input[type=email], input[type=password] { width: 100%; padding: 10px 12px; border: 1px solid #E2E6EF; border-radius: 8px; font-size: 15px; }
+  .btn { display: inline-block; width: 100%; padding: 12px; margin-top: 14px; border: none; border-radius: 10px; background: #0891B2; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .btn:disabled { background: #9CA3AF; }
+  .btn.ghost { background: #FFF; color: #0891B2; border: 1px solid #0891B2; }
+  .btn.danger { background: #DC2626; }
+  .alert { padding: 10px 12px; border-radius: 8px; font-size: 13px; margin-top: 10px; }
+  .alert.error { background: #FEE2E2; color: #B91C1C; }
+  .alert.success { background: #D1FAE5; color: #065F46; }
+  .camview { text-align: center; }
+  .camview img { width: min(80vw, 400px); height: min(80vw, 400px); border-radius: 50%;
+                 border: 1px solid #E2E6EF; background: #111; object-fit: cover; }
+  .meta { font-size: 13px; color: #6B7280; margin-top: 10px; }
+  .meta b { color: #111827; font-variant-numeric: tabular-nums; }
+  .seg { display: flex; gap: 6px; margin-top: 4px; }
+  .seg button { flex: 1; padding: 8px 4px; border: 1px solid #E2E6EF; background: #FFF; border-radius: 8px; font-size: 13px; cursor: pointer; }
+  .seg button.active { border-color: #0891B2; color: #0891B2; font-weight: 600; }
+  .row { display: flex; gap: 8px; }
+  .row .btn { margin-top: 10px; }
+  .hint { font-size: 12px; color: #9CA3AF; margin-top: 8px; line-height: 1.6; }
+  .badge { display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 12px; background: #CFFAFE; color: #0891B2; font-weight: 600; margin-bottom: 8px; }
+  .badge.paused { background: #FEE2E2; color: #B91C1C; }
+</style>
+</head>
+<body>
+<div class="lang-bar">
+  <span>🌐</span>
+  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+  <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+</div>
+<div class="wrap">
+  <h1>PulseLink Viewer</h1>
+  <p class="sub" data-en="Watch your PulseLink camera from any phone or PC — and adjust it remotely." data-ja="PulseLink カメラをスマホや PC から見る・リモートで調整する。">Watch your PulseLink camera from any phone or PC — and adjust it remotely.</p>
+
+  <div class="card" id="loginCard">
+    <h2 data-en="Sign in" data-ja="サインイン">Sign in</h2>
+    <div id="loginForm">
+      <label data-en="Email" data-ja="メールアドレス">Email</label>
+      <input type="email" id="email" autocomplete="username">
+      <label data-en="Password" data-ja="パスワード">Password</label>
+      <input type="password" id="password" autocomplete="current-password">
+      <button class="btn" id="loginBtn" data-en="Sign in" data-ja="サインイン">Sign in</button>
+      <div id="loginAlert"></div>
+    </div>
+    <div id="loginDone" style="display:none;">
+      <div class="alert success" id="loginDoneMsg"></div>
+      <button class="btn ghost" id="logoutBtn" data-en="Sign out" data-ja="サインアウト">Sign out</button>
+    </div>
+  </div>
+
+  <div class="card camview" id="viewCard" style="display:none;">
+    <div class="badge" id="srcBadge">Camera</div>
+    <div><img id="camImg" alt="camera"></div>
+    <div class="meta" id="metaLine">—</div>
+  </div>
+
+  <div class="card" id="ctrlCard" style="display:none;">
+    <h2 data-en="Remote control" data-ja="リモート制御">Remote control</h2>
+    <div class="row">
+      <button class="btn" id="pauseBtn">Pause</button>
+      <button class="btn ghost" id="shootBtn" data-en="Shoot now" data-ja="今すぐ撮影">Shoot now</button>
+    </div>
+    <label data-en="Zoom (digital)" data-ja="ズーム（デジタル）">Zoom (digital)</label>
+    <div class="seg" id="zoomSeg">
+      <button data-v="100">1x</button>
+      <button data-v="125">1.25x</button>
+      <button data-v="150">1.5x</button>
+      <button data-v="200">2x</button>
+      <button data-v="250">2.5x</button>
+    </div>
+    <label data-en="Brightness" data-ja="明るさ">Brightness</label>
+    <div class="seg" id="brSeg">
+      <button data-v="-2">-2</button>
+      <button data-v="-1">-1</button>
+      <button data-v="0">0</button>
+      <button data-v="1">+1</button>
+      <button data-v="2">+2</button>
+    </div>
+    <p class="hint" data-en="Changes reach the camera within about 10-30 seconds, and a fresh photo is taken right away. While you are adjusting, this page refreshes every 5 seconds for about 3 minutes (adjustment mode)." data-ja="変更は約10〜30秒でカメラに届き、すぐに撮り直されます。操作すると約3分間は「調整モード」になり、このページは5秒ごとに自動更新されます。">Changes reach the camera within about 10-30 seconds, and a fresh photo is taken right away. While you are adjusting, this page refreshes every 5 seconds for about 3 minutes (adjustment mode).</p>
+    <div id="ctrlAlert"></div>
+  </div>
+
+  <div class="card" id="noneCard" style="display:none;">
+    <p class="hint" data-en="No camera found on this account. Start the camera on the Cam page first — or, if you are a Crew member, ask your Leader to turn on camera sharing." data-ja="このアカウントにカメラがありません。先に Cam ページでカメラを開始してください。Crew の Member の方は、Leader にカメラ共有を ON にしてもらってください。">No camera found on this account. Start the camera on the Cam page first — or, if you are a Crew member, ask your Leader to turn on camera sharing.</p>
+    <button class="btn ghost" onclick="location.href='../cam/'" data-en="Open the Cam page" data-ja="Cam ページを開く">Open the Cam page</button>
+  </div>
+</div>
+
+<script>
+const API = 'https://mlbwatch-server.onrender.com/api/pulselink';
+const CAM_SLOT = 6;
+
+// ─── 言語 ───
+function setLang(lang) {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-en]').forEach(function (el) {
+    var v = el.getAttribute('data-' + lang);
+    if (v != null) el.textContent = v;
+  });
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+  try { localStorage.setItem('pl_lang', lang); } catch (e) {}
+  renderControls();
+  renderMeta();
+}
+try { if (localStorage.getItem('pl_lang') === 'ja') setLang('ja'); } catch (e) {}
+function ja() { return document.documentElement.lang === 'ja'; }
+
+// ─── サインイン (cam/image ページと pl_jwt を共有) ───
+let jwt = null;
+function enterSignedIn(email) {
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('loginDone').style.display = '';
+  document.getElementById('loginDoneMsg').textContent =
+    (ja() ? 'サインイン済み: ' : 'Signed in: ') + email;
+  initSource();
+}
+function enterSignedOut() {
+  jwt = null;
+  try { localStorage.removeItem('pl_jwt'); } catch (e) {}
+  mode = null;
+  document.getElementById('loginForm').style.display = '';
+  document.getElementById('loginDone').style.display = 'none';
+  document.getElementById('viewCard').style.display = 'none';
+  document.getElementById('ctrlCard').style.display = 'none';
+  document.getElementById('noneCard').style.display = 'none';
+}
+(async function restoreSession() {
+  let saved = null;
+  try { saved = localStorage.getItem('pl_jwt'); } catch (e) {}
+  if (!saved) return;
+  try {
+    const r = await fetch(API + '/user/me', { headers: { 'Authorization': 'Bearer ' + saved } });
+    if (r.ok) { const j = await r.json(); jwt = saved; enterSignedIn(j.email || ''); }
+    else { try { localStorage.removeItem('pl_jwt'); } catch (e) {} }
+  } catch (e) {}
+})();
+document.getElementById('loginBtn').addEventListener('click', async function () {
+  const box = document.getElementById('loginAlert');
+  box.innerHTML = '';
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  try {
+    const r = await fetch(API + '/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value
+      })
+    });
+    const j = await r.json();
+    if (!r.ok || !j.token) throw new Error(j.error || 'login_failed');
+    jwt = j.token;
+    try { localStorage.setItem('pl_jwt', jwt); } catch (e2) {}
+    enterSignedIn(document.getElementById('email').value.trim());
+  } catch (e) {
+    box.innerHTML = '<div class="alert error">' + (ja() ? 'サインインに失敗しました: ' : 'Sign-in failed: ') + e.message + '</div>';
+  } finally { btn.disabled = false; }
+});
+document.getElementById('logoutBtn').addEventListener('click', enterSignedOut);
+
+// ─── 表示ソースの決定 ───
+// 'own'  = 自分のカメラ (slot6 占有) → 表示 + リモート制御
+// 'crew' = Leader のカメラ (crew_camera) → 表示のみ
+let mode = null;
+let camUid = '';
+let camVer = '0';
+let cfg = { paused: false, zoom: 100, brightness: 0, shoot_seq: 0, boost_until: 0 };
+let nextPollAt = 0;
+let pollTimer = null;
+
+async function initSource() {
+  try {
+    const r = await fetch(API + '/user/me', { headers: { 'Authorization': 'Bearer ' + jwt } });
+    if (!r.ok) return;
+    const j = await r.json();
+    if (j.image_slots && j.image_slots['6'] === true) {
+      mode = 'own';
+      camUid = j.user_id;
+    } else if (j.crew_camera === true) {
+      mode = 'crew';
+      camUid = j.crew_camera_uid;
+      camVer = j.crew_camera_version || '0';
+    } else {
+      mode = null;
+    }
+    document.getElementById('viewCard').style.display = (mode != null) ? '' : 'none';
+    document.getElementById('ctrlCard').style.display = (mode === 'own') ? '' : 'none';
+    document.getElementById('noneCard').style.display = (mode == null) ? '' : 'none';
+    const badge = document.getElementById('srcBadge');
+    badge.textContent = (mode === 'crew') ? (ja() ? 'Leader のカメラ' : "Leader's camera")
+                                          : (ja() ? '自分のカメラ' : 'My camera');
+    if (mode === 'own') { await pollOwn(); }
+    else if (mode === 'crew') { updateImg(); }
+    if (pollTimer == null && mode != null) { pollTimer = setInterval(tick, 1000); }
+  } catch (e) {}
+}
+
+function updateImg() {
+  if (!camUid) return;
+  document.getElementById('camImg').src =
+    API + '/compass-image/' + camUid + '_s' + CAM_SLOT + '.png?v=' + camVer;
+  renderMeta();
+}
+
+// ─── ポーリング ───
+// own: /user/cam-config (設定 + 画像版)。調整モード中 5秒 / 平常 30秒。
+// crew: /user/me (Leader の版)。30秒固定。タブ非表示中は停止。
+async function pollOwn() {
+  try {
+    const r = await fetch(API + '/user/cam-config', { headers: { 'Authorization': 'Bearer ' + jwt } });
+    if (!r.ok) return;
+    const j = await r.json();
+    if (j.config) { cfg = j.config; renderControls(); }
+    if (j.cam_version && j.cam_version !== camVer) { camVer = j.cam_version; updateImg(); }
+  } catch (e) {}
+}
+async function pollCrew() {
+  try {
+    const r = await fetch(API + '/user/me', { headers: { 'Authorization': 'Bearer ' + jwt } });
+    if (!r.ok) return;
+    const j = await r.json();
+    if (j.crew_camera === true && j.crew_camera_version !== camVer) {
+      camVer = j.crew_camera_version;
+      updateImg();
+    }
+  } catch (e) {}
+}
+function tick() {
+  renderMeta();
+  if (document.visibilityState !== 'visible') { return; }
+  const now = Date.now();
+  if (now < nextPollAt) { return; }
+  if (mode === 'own') {
+    const boost = cfg.boost_until && cfg.boost_until > now;
+    nextPollAt = now + (boost ? 5000 : 30000);
+    pollOwn();
+  } else if (mode === 'crew') {
+    nextPollAt = now + 30000;
+    pollCrew();
+  }
+}
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'visible') { nextPollAt = 0; }
+});
+
+// ─── リモート制御 (own のみ) ───
+// 操作のたびに boost:true を添えて3分間の調整モードに入る (Cam のポーリングも高速化)。
+async function sendCfg(body) {
+  const box = document.getElementById('ctrlAlert');
+  box.innerHTML = '';
+  try {
+    body.boost = true;
+    const r = await fetch(API + '/user/cam-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
+      body: JSON.stringify(body)
+    });
+    const j = await r.json();
+    if (!r.ok || !j.ok) throw new Error(j.error || 'failed');
+    cfg = j.config;
+    nextPollAt = 0;  // 調整モードの5秒ポーリングを即開始
+    renderControls();
+  } catch (e) {
+    box.innerHTML = '<div class="alert error">' + (ja() ? '送信に失敗しました: ' : 'Failed: ') + e.message + '</div>';
+  }
+}
+document.getElementById('pauseBtn').addEventListener('click', function () {
+  sendCfg({ paused: !cfg.paused });
+});
+document.getElementById('shootBtn').addEventListener('click', function () {
+  sendCfg({ shoot: true });
+});
+document.querySelectorAll('#zoomSeg button').forEach(function (b) {
+  b.addEventListener('click', function () { sendCfg({ zoom: parseInt(b.getAttribute('data-v'), 10) }); });
+});
+document.querySelectorAll('#brSeg button').forEach(function (b) {
+  b.addEventListener('click', function () { sendCfg({ brightness: parseInt(b.getAttribute('data-v'), 10) }); });
+});
+
+function renderControls() {
+  if (mode !== 'own') { return; }
+  const pb = document.getElementById('pauseBtn');
+  pb.textContent = cfg.paused ? (ja() ? '再開する' : 'Resume') : (ja() ? '一時停止' : 'Pause');
+  pb.classList.toggle('danger', !cfg.paused);
+  document.querySelectorAll('#zoomSeg button').forEach(function (x) {
+    x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === (cfg.zoom || 100));
+  });
+  document.querySelectorAll('#brSeg button').forEach(function (x) {
+    x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === (cfg.brightness || 0));
+  });
+  const badge = document.getElementById('srcBadge');
+  if (cfg.paused) {
+    badge.textContent = ja() ? '一時停止中' : 'Paused';
+    badge.classList.add('paused');
+  } else {
+    badge.textContent = ja() ? '自分のカメラ' : 'My camera';
+    badge.classList.remove('paused');
+  }
+}
+
+function renderMeta() {
+  const el = document.getElementById('metaLine');
+  if (!el || !mode) { return; }
+  const j = ja();
+  const vms = Number(camVer);
+  if (!vms) { el.textContent = j ? '画像なし' : 'No image yet'; return; }
+  const s = Math.max(0, Math.round((Date.now() - vms) / 1000));
+  let ago;
+  if (s < 60) { ago = j ? s + '秒前' : s + 's ago'; }
+  else if (s < 3600) { ago = j ? Math.floor(s / 60) + '分前' : Math.floor(s / 60) + 'm ago'; }
+  else { ago = j ? Math.floor(s / 3600) + '時間前' : Math.floor(s / 3600) + 'h ago'; }
+  el.innerHTML = (j ? '最終更新: ' : 'Updated: ') + '<b>' + ago + '</b>'
+    + (cfg.boost_until && cfg.boost_until > Date.now()
+        ? ' · <span style="color:#0891B2;">' + (j ? '調整モード (5秒更新)' : 'adjusting (5s refresh)') + '</span>'
+        : '');
+}
+</script>
+</body>
+</html>

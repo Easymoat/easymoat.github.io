@@ -31,7 +31,7 @@
   /* 撮影ターゲット (中央正方形の内接円 = 実際に切り取られて送信されるエリア)。
      box-shadow の巨大スプレッドで円の外側を減光する。 */
   #targetRing { position: absolute; border: 2px dashed rgba(255,255,255,0.95); border-radius: 50%;
-                box-shadow: 0 0 0 9999px rgba(0,0,0,0.45); pointer-events: none; display: none; }
+                box-shadow: 0 0 0 2000px rgba(0,0,0,0.45); pointer-events: none; display: none; }
   canvas#shot { display: none; }
   .row { display: flex; gap: 8px; }
   .row .btn { margin-top: 10px; }
@@ -207,7 +207,8 @@ function updateRing() {
   ring.style.height = d + 'px';
   ring.style.left = ((W - d) / 2) + 'px';
   ring.style.top = ((H - d) / 2) + 'px';
-  ring.style.display = '';
+  // 注意: '' だとスタイルシートの display:none に戻ってしまう。'block' を明示。
+  ring.style.display = 'block';
 }
 function renderRingBtn() {
   const b = document.getElementById('ringBtn');

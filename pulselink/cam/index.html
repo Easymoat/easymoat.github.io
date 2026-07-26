@@ -92,6 +92,7 @@
       <button class="btn stop" id="stopBtn" style="display:none;" data-en="Stop" data-ja="停止">Stop</button>
     </div>
     <button class="btn ghost" id="shotBtn" style="display:none;" data-en="Send a photo now" data-ja="今すぐ撮影して送る">Send a photo now</button>
+    <button class="btn ghost" id="screenBtn" style="display:none;" data-en="Darken screen (keeps running)" data-ja="画面を暗くする（動作は継続）">Darken screen (keeps running)</button>
     <div class="thumbwrap" id="thumbwrap" style="display:none;">
       <canvas id="thumb" width="320" height="320"></canvas>
       <div class="status" id="status"></div>
@@ -101,6 +102,13 @@
   </div>
 </div>
 <canvas id="shot" width="320" height="320"></canvas>
+<!-- 画面スリープ (黒画面)。撮影/アップロード/ポーリングは下で動き続ける。
+     Wake Lock は維持 = 画面は技術的には点灯したまま黒を表示 (LCD 機はバックライトの
+     微光が残るので、夜間は本体の明るさも最小にしておくとよい)。タップで解除。 -->
+<div id="blackout" style="position:fixed; inset:0; background:#000; z-index:9999; display:none;">
+  <div style="position:absolute; bottom:28px; width:100%; text-align:center; color:#2A2A2A; font-size:13px;"
+       data-en="tap to wake" data-ja="タップで解除">tap to wake</div>
+</div>
 
 <script>
 const API = 'https://mlbwatch-server.onrender.com/api/pulselink';
@@ -248,7 +256,55 @@ renderRingBtn();
 // ─── リモート制御 (Viewer → サーバ → ここ、のステートリレー) ───
 // 30秒 (調整モード中は10秒) ごとに /user/cam-config をポーリングし、最終値を適用する。
 // paused はストリーム停止のみ (Wake Lock とポーリングは維持 = リモート再開が効く)。
-let camCfg = { paused: false, zoom: 100, brightness: 0, colors: 16, shoot_seq: 0, boost_until: 0 };
+let camCfg = { paused: false, zoom: 100, brightness: 0, colors: 16,
+               screen_off: false, torch: false, shoot_seq: 0, boost_until: 0 };
+
+// ─── 画面スリープ (黒画面)。ローカル操作と Viewer からのリモート操作の両対応。 ───
+function applyScreenOff(on) {
+  document.getElementById('blackout').style.display = on ? 'block' : 'none';
+}
+function setScreenOffLocal(on) {
+  camCfg.screen_off = on;
+  applyScreenOff(on);
+  // サーバへ反映 (Viewer 表示と一致させる)。直後の stale なポーリング応答で
+  // 巻き戻らないよう、次のポーリングを少し先へ。
+  nextCfgPollAt = Date.now() + 5000;
+  if (jwt) {
+    fetch(API + '/user/cam-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
+      body: JSON.stringify({ screen_off: on })
+    }).catch(function () {});
+  }
+}
+document.getElementById('screenBtn').addEventListener('click', function () { setScreenOffLocal(true); });
+document.getElementById('blackout').addEventListener('click', function () { setScreenOffLocal(false); });
+
+// ─── ライト (torch)。WebKit は 2023-10 実装 = iOS 17.5+ / Android のみ。
+// 対応可否を実測してサーバへ報告し、Viewer のボタン活性に使う。 ───
+let torchReported = null;
+function torchCapable() {
+  if (!stream) { return false; }
+  const t = stream.getVideoTracks()[0];
+  if (!t || !t.getCapabilities) { return false; }
+  try { return t.getCapabilities().torch === true; } catch (e) { return false; }
+}
+async function applyTorch() {
+  const cap = torchCapable();
+  if (cap) {
+    try {
+      await stream.getVideoTracks()[0].applyConstraints({ advanced: [{ torch: camCfg.torch === true }] });
+    } catch (e) {}
+  }
+  if (jwt && torchReported !== cap) {
+    torchReported = cap;
+    fetch(API + '/user/cam-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
+      body: JSON.stringify({ torch_supported: cap })
+    }).catch(function () {});
+  }
+}
 let remotePaused = false;
 let lastShootSeq = null;   // 初回ポーリングは現在値を採用 (過去の shoot で発火しない)
 let nextCfgPollAt = 0;
@@ -276,6 +332,10 @@ async function pollCamConfig() {
     }
     // 色数は Viewer からも変えられる (サーバのステートが正)。ローカル選択を追随させる。
     if (camCfg.colors && camCfg.colors !== mColors) { setColors(camCfg.colors); }
+    // 画面スリープ (リモート ON/OFF、ステートが正)
+    applyScreenOff(camCfg.screen_off === true);
+    // ライト (対応端末のみ実際に点灯。変化した時だけ適用)
+    if (prev.torch !== camCfg.torch) { applyTorch(); }
     // 設定変更 (zoom/明るさ/色数) や「今すぐ撮影」→ 次の定期撮影を待たず前倒し
     const changed = (prev.zoom !== camCfg.zoom) || (prev.brightness !== camCfg.brightness)
                  || (prev.colors !== camCfg.colors);
@@ -330,6 +390,8 @@ async function openStream() {
     audio: false
   });
   document.getElementById('video').srcObject = stream;
+  // ストリーム取り直しのたびにライト状態を再適用 + 対応可否を報告
+  applyTorch();
 }
 function streamAlive() {
   if (!stream) { return false; }
@@ -345,6 +407,7 @@ document.getElementById('startBtn').addEventListener('click', async function () 
     document.getElementById('startBtn').style.display = 'none';
     document.getElementById('stopBtn').style.display = '';
     document.getElementById('shotBtn').style.display = '';
+    document.getElementById('screenBtn').style.display = '';
     document.getElementById('thumbwrap').style.display = '';
     await acquireWakeLock();
     // 初回は 3秒後 (露出が安定してから)、以降は INTERVAL_MS 間隔。
@@ -365,6 +428,8 @@ function stopCamera() {
   document.getElementById('startBtn').style.display = '';
   document.getElementById('stopBtn').style.display = 'none';
   document.getElementById('shotBtn').style.display = 'none';
+  document.getElementById('screenBtn').style.display = 'none';
+  applyScreenOff(false);  // 停止時に黒画面のまま取り残されないように
   updateRing();
   renderStatus();
 }

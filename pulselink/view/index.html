@@ -78,6 +78,11 @@
       <button class="btn" id="pauseBtn">Pause</button>
       <button class="btn ghost" id="shootBtn" data-en="Shoot now" data-ja="今すぐ撮影">Shoot now</button>
     </div>
+    <div class="row">
+      <button class="btn ghost" id="screenBtn">Screen off</button>
+      <button class="btn ghost" id="torchBtn">Torch</button>
+    </div>
+    <p class="hint" id="torchHint" style="display:none;" data-en="Torch is not available on this camera phone — the web torch API needs iOS 17.5+ or Android." data-ja="このカメラ端末ではライトを点けられません — Web のライト API は iOS 17.5 以降か Android が必要です。">Torch is not available on this camera phone — the web torch API needs iOS 17.5+ or Android.</p>
     <label data-en="Zoom (digital)" data-ja="ズーム（デジタル）">Zoom (digital)</label>
     <div class="seg" id="zoomSeg">
       <button data-v="100">1x</button>
@@ -190,7 +195,8 @@ document.getElementById('logoutBtn').addEventListener('click', enterSignedOut);
 let mode = null;
 let camUid = '';
 let camVer = '0';
-let cfg = { paused: false, zoom: 100, brightness: 0, colors: 16, shoot_seq: 0, boost_until: 0 };
+let cfg = { paused: false, zoom: 100, brightness: 0, colors: 16,
+            screen_off: false, torch: false, torch_supported: null, shoot_seq: 0, boost_until: 0 };
 let nextPollAt = 0;
 let pollTimer = null;
 
@@ -305,6 +311,13 @@ document.querySelectorAll('#brSeg button').forEach(function (b) {
 document.querySelectorAll('#colorSeg button').forEach(function (b) {
   b.addEventListener('click', function () { sendCfg({ colors: parseInt(b.getAttribute('data-v'), 10) }); });
 });
+document.getElementById('screenBtn').addEventListener('click', function () {
+  sendCfg({ screen_off: !cfg.screen_off });
+});
+document.getElementById('torchBtn').addEventListener('click', function () {
+  if (cfg.torch_supported === false) { return; }
+  sendCfg({ torch: !cfg.torch });
+});
 
 function renderControls() {
   if (mode !== 'own') { return; }
@@ -320,6 +333,19 @@ function renderControls() {
   document.querySelectorAll('#colorSeg button').forEach(function (x) {
     x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === (cfg.colors || 16));
   });
+  // 画面スリープ (カメラ端末の画面を黒く)
+  const sb = document.getElementById('screenBtn');
+  sb.textContent = cfg.screen_off ? (ja() ? '画面を点ける' : 'Screen on')
+                                  : (ja() ? '画面を暗くする' : 'Screen off');
+  // ライト: Cam ページが報告した対応可否でボタン活性を切替 (null=未報告は押せる)
+  const tb = document.getElementById('torchBtn');
+  const noTorch = (cfg.torch_supported === false);
+  tb.disabled = noTorch;
+  tb.style.opacity = noTorch ? '0.4' : '';
+  tb.textContent = noTorch ? (ja() ? 'ライト (非対応)' : 'Torch (n/a)')
+                 : (cfg.torch ? (ja() ? 'ライト OFF' : 'Torch off')
+                              : (ja() ? 'ライト ON' : 'Torch on'));
+  document.getElementById('torchHint').style.display = noTorch ? '' : 'none';
   const badge = document.getElementById('srcBadge');
   if (cfg.paused) {
     badge.textContent = ja() ? '一時停止中' : 'Paused';

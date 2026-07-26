@@ -27,7 +27,8 @@
   .alert.error { background: #FEE2E2; color: #B91C1C; }
   .alert.success { background: #D1FAE5; color: #065F46; }
   .vidwrap { position: relative; overflow: hidden; border-radius: 12px; background: #000; }
-  video { display: block; width: 100%; background: #000; }
+  /* ズーム時は映像自体を拡大表示 (カメラアプリと同じ)。はみ出しは wrapper が切る */
+  video { display: block; width: 100%; background: #000; transform-origin: center center; }
   /* 撮影ターゲット (中央正方形の内接円 = 実際に切り取られて送信されるエリア)。
      box-shadow の巨大スプレッドで円の外側を減光する。 */
   #targetRing { position: absolute; border: 2px dashed rgba(255,255,255,0.95); border-radius: 50%;
@@ -202,15 +203,22 @@ function updateRing() {
   const v = document.getElementById('video');
   if (!ringOn || !stream || !v.videoWidth || !v.clientWidth) { ring.style.display = 'none'; return; }
   const W = v.clientWidth, H = v.clientHeight;
-  // デジタルズーム時は切り出しが小さくなるので円も 1/zoom に縮む
-  const zr = Math.max(100, Math.min(250, (camCfg.zoom || 100))) / 100;
-  const d = Math.min(W, H) / zr;
+  // 円の大きさは常に一定。ズームは映像側を拡大表示する (applyPreviewZoom) ので、
+  // 「円の中に見えているもの = 送信されるもの」の関係はズーム倍率に依らず保たれる。
+  const d = Math.min(W, H);
   ring.style.width = d + 'px';
   ring.style.height = d + 'px';
   ring.style.left = ((W - d) / 2) + 'px';
   ring.style.top = ((H - d) / 2) + 'px';
   // 注意: '' だとスタイルシートの display:none に戻ってしまう。'block' を明示。
   ring.style.display = 'block';
+}
+// デジタルズームをプレビューに反映: 映像を CSS scale で拡大し、wrapper が外側を切る。
+// 撮影の切り出し (min(vw,vh)/zoom の中央正方形) と表示が幾何学的に一致するので、
+// ターゲット円の中に見えているものがそのまま送信される。
+function applyPreviewZoom() {
+  const z = Math.max(100, Math.min(250, (camCfg.zoom || 100))) / 100;
+  document.getElementById('video').style.transform = (z !== 1) ? ('scale(' + z + ')') : '';
 }
 function renderRingBtn() {
   const b = document.getElementById('ringBtn');
@@ -263,7 +271,7 @@ async function pollCamConfig() {
       const soon = Date.now() + 1500;
       if (nextShotAt == null || nextShotAt > soon) { nextShotAt = soon; }
     }
-    updateRing();  // zoom がターゲット円の直径に効く
+    applyPreviewZoom();  // ズームはプレビュー映像の拡大として反映 (円は不変)
     renderStatus();
   } catch (e) {}
 }

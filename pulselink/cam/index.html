@@ -26,7 +26,12 @@
   .alert { padding: 10px 12px; border-radius: 8px; font-size: 13px; margin-top: 10px; }
   .alert.error { background: #FEE2E2; color: #B91C1C; }
   .alert.success { background: #D1FAE5; color: #065F46; }
-  video { width: 100%; border-radius: 12px; background: #000; }
+  .vidwrap { position: relative; overflow: hidden; border-radius: 12px; background: #000; }
+  video { display: block; width: 100%; background: #000; }
+  /* 撮影ターゲット (中央正方形の内接円 = 実際に切り取られて送信されるエリア)。
+     box-shadow の巨大スプレッドで円の外側を減光する。 */
+  #targetRing { position: absolute; border: 2px dashed rgba(255,255,255,0.95); border-radius: 50%;
+                box-shadow: 0 0 0 9999px rgba(0,0,0,0.45); pointer-events: none; display: none; }
   canvas#shot { display: none; }
   .row { display: flex; gap: 8px; }
   .row .btn { margin-top: 10px; }
@@ -36,8 +41,8 @@
   .seg button { flex: 1; padding: 8px 4px; border: 1px solid #E2E6EF; background: #FFF; border-radius: 8px; font-size: 13px; cursor: pointer; }
   .seg button.active { border-color: #0891B2; color: #0891B2; font-weight: 600; }
   .hint { font-size: 12px; color: #9CA3AF; margin-top: 6px; }
-  .thumbwrap { display: flex; gap: 12px; align-items: center; margin-top: 12px; }
-  .thumbwrap canvas { width: 96px; height: 96px; border-radius: 50%; border: 1px solid #E2E6EF; }
+  .thumbwrap { display: flex; gap: 14px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+  .thumbwrap canvas { width: 200px; height: 200px; border-radius: 50%; border: 1px solid #E2E6EF; }
   .note { font-size: 12px; color: #6B7280; background: #F3F4F6; border-radius: 8px; padding: 10px 12px; margin-top: 12px; line-height: 1.6; }
 </style>
 </head>
@@ -69,19 +74,18 @@
 
   <div class="card" id="camCard" style="display:none;">
     <h2 data-en="2. Camera" data-ja="2. カメラ">2. Camera</h2>
-    <video id="video" autoplay playsinline muted></video>
-    <label data-en="Watch display size" data-ja="ウォッチでの表示サイズ">Watch display size</label>
-    <div class="seg" id="sizeSeg">
-      <button data-v="standard" class="active" data-en="With ring" data-ja="リングあり">With ring</button>
-      <button data-v="full" data-en="Full screen" data-ja="全画面">Full screen</button>
+    <div class="vidwrap">
+      <video id="video" autoplay playsinline muted></video>
+      <div id="targetRing"></div>
     </div>
+    <button class="btn ghost" id="ringBtn">Target circle: ON</button>
     <label data-en="Colors (watch memory load)" data-ja="色数（ウォッチの負担）">Colors (watch memory load)</label>
     <div class="seg" id="colorSeg">
-      <button data-v="16" data-en="16 — light" data-ja="16 — 軽い">16 — light</button>
+      <button data-v="16" class="active" data-en="16 — light" data-ja="16 — 軽い">16 — light</button>
       <button data-v="32" data-en="32 — medium" data-ja="32 — 中">32 — medium</button>
-      <button data-v="64" class="active" data-en="64 — heavy" data-ja="64 — 重い">64 — heavy</button>
+      <button data-v="64" data-en="64 — heavy" data-ja="64 — 重い">64 — heavy</button>
     </div>
-    <p class="hint" id="sizeHint" data-en="Full screen locks colors to 16 — more colors exceed watch memory on large-screen models and the image won't show at all." data-ja="全画面は16色固定です。それ以上の色数は大画面機種でウォッチのメモリ上限を超え、画像が一切表示されなくなります。">Full screen locks colors to 16 — more colors exceed watch memory on large-screen models and the image won't show at all.</p>
+    <p class="hint" data-en="More colors look better but can exceed watch memory on large-screen models — if the image doesn't show on the watch, choose fewer colors." data-ja="色数が多いほどきれいですが、大画面機種ではウォッチのメモリ上限を超えることがあります。ウォッチに表示されない時は色数を下げてください。">More colors look better but can exceed watch memory on large-screen models — if the image doesn't show on the watch, choose fewer colors.</p>
     <div class="row">
       <button class="btn" id="startBtn" data-en="Start camera" data-ja="カメラ開始">Start camera</button>
       <button class="btn stop" id="stopBtn" style="display:none;" data-en="Stop" data-ja="停止">Stop</button>
@@ -114,6 +118,7 @@ function setLang(lang) {
   document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
   try { localStorage.setItem('pl_lang', lang); } catch (e) {}
   renderStatus();
+  if (typeof renderRingBtn === 'function') { renderRingBtn(); }
 }
 try { if (localStorage.getItem('pl_lang') === 'ja') setLang('ja'); } catch (e) {}
 function ja() { return document.documentElement.lang === 'ja'; }
@@ -169,42 +174,54 @@ document.getElementById('loginBtn').addEventListener('click', async function () 
 });
 document.getElementById('logoutBtn').addEventListener('click', enterSignedOut);
 
-// ─── 設定 (サイズ / 色数) ───
-// 全画面は16色固定: 大画面機 (454px) では 8bpp (17色以上) のデコード後容量が
-// 206KB となりウォッチのメモリ上限を超え、画像が一切表示されなくなる。
-// 16色 = 4bpp なら 103KB で全機種安全。リングありは 32/64色も可。
-let sizeMode = 'standard';
-let mColors = 64;
+// ─── 設定 (色数) ───
+// 表示サイズは全画面固定 (リングあり/全画面の選択は廃止)。
+// 色数はウォッチのデコード後メモリに直結: 16色=4bpp は全機種安全、
+// 17色以上=8bpp は大画面機 (454px) で上限を超えることがある。既定は安全な16。
+const sizeMode = 'full';
+let mColors = 16;
 function setColors(n) {
   mColors = n;
   document.querySelectorAll('#colorSeg button').forEach(function (x) {
     x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === n);
   });
 }
-function applyColorLock() {
-  const full = (sizeMode === 'full');
-  document.querySelectorAll('#colorSeg button').forEach(function (x) {
-    const v = parseInt(x.getAttribute('data-v'), 10);
-    const locked = full && v > 16;
-    x.disabled = locked;
-    x.style.opacity = locked ? '0.4' : '';
-  });
-  if (full && mColors > 16) { setColors(16); }
-}
-document.querySelectorAll('#sizeSeg button').forEach(function (b) {
-  b.addEventListener('click', function () {
-    sizeMode = b.getAttribute('data-v');
-    document.querySelectorAll('#sizeSeg button').forEach(function (x) { x.classList.remove('active'); });
-    b.classList.add('active');
-    applyColorLock();
-  });
-});
 document.querySelectorAll('#colorSeg button').forEach(function (b) {
   b.addEventListener('click', function () {
-    if (b.disabled) { return; }
     setColors(parseInt(b.getAttribute('data-v'), 10));
   });
 });
+
+// ─── ターゲット円 (送信されるエリアの表示) ───
+// 撮影は「中央正方形を切り取り → 円形マスク」なので、送信されるのは
+// 中央正方形の内接円。それを Live 映像の上に重ねて示す。ON/OFF 可。
+let ringOn = true;
+try { if (localStorage.getItem('pl_cam_ring') === '0') ringOn = false; } catch (e) {}
+function updateRing() {
+  const ring = document.getElementById('targetRing');
+  const v = document.getElementById('video');
+  if (!ringOn || !stream || !v.videoWidth || !v.clientWidth) { ring.style.display = 'none'; return; }
+  const W = v.clientWidth, H = v.clientHeight;
+  const d = Math.min(W, H);
+  ring.style.width = d + 'px';
+  ring.style.height = d + 'px';
+  ring.style.left = ((W - d) / 2) + 'px';
+  ring.style.top = ((H - d) / 2) + 'px';
+  ring.style.display = '';
+}
+function renderRingBtn() {
+  const b = document.getElementById('ringBtn');
+  b.textContent = (ja() ? 'ターゲット円: ' : 'Target circle: ') + (ringOn ? 'ON' : 'OFF');
+}
+document.getElementById('ringBtn').addEventListener('click', function () {
+  ringOn = !ringOn;
+  try { localStorage.setItem('pl_cam_ring', ringOn ? '1' : '0'); } catch (e) {}
+  renderRingBtn();
+  updateRing();
+});
+document.getElementById('video').addEventListener('loadedmetadata', updateRing);
+window.addEventListener('resize', updateRing);
+renderRingBtn();
 
 // ─── カメラ + 定期撮影 ───
 let stream = null;
@@ -279,6 +296,7 @@ function stopCamera() {
   document.getElementById('startBtn').style.display = '';
   document.getElementById('stopBtn').style.display = 'none';
   document.getElementById('shotBtn').style.display = 'none';
+  updateRing();
   renderStatus();
 }
 document.getElementById('stopBtn').addEventListener('click', stopCamera);

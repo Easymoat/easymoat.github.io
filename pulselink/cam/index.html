@@ -474,19 +474,21 @@ async function captureAndUpload() {
     const side = Math.min(vw, vh) / z;
     ctx.clearRect(0, 0, 320, 320);
     ctx.drawImage(video, (vw - side) / 2, (vh - side) / 2, side, side, 0, 0, 320, 320);
-    // 黒フレーム検出: 死にかけのストリームは真っ黒な絵を返すことがある。
-    // 平均輝度がほぼゼロならカメラ停止とみなし、取り直して 60秒後に再試行する
-    // (真っ暗な部屋でも通常は 6/255 を下回らない)。黒画像をウォッチに送ると
-    // 「画像が消えた」ように見えるため、アップロードしないことが重要。
+    // 死亡ストリーム検出: 死にかけのストリームは「全画素が正確に 0 の純粋な黒」を返す。
+    // 一方、真っ暗な部屋の正常な映像はセンサーの高 ISO ノイズが必ず乗り、値が 0 で
+    // 揃うことはない。そこで判定は「サンプルの最大値がほぼ 0」の時だけ = 完全黒のみ
+    // (平均輝度のしきい値だと暗室の夜間撮影を誤って捨て、朝まで再起動ループになる)。
+    // 暗くてもノイズがあれば正常としてそのまま送信する (夜の見守りは低輝度でも続く)。
     const px = ctx.getImageData(0, 0, 320, 320).data;
-    let luma = 0;
+    let maxV = 0;
     for (let i = 0; i < px.length; i += 64) { // 16画素ごとにサンプリング
-      luma += 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+      if (px[i] > maxV) { maxV = px[i]; }
+      if (px[i + 1] > maxV) { maxV = px[i + 1]; }
+      if (px[i + 2] > maxV) { maxV = px[i + 2]; }
     }
-    luma /= (px.length / 64);
-    if (luma < 6) {
+    if (maxV <= 2) {
       await openStream();
-      throw new Error(ja() ? 'カメラ映像が真っ黒 (取り直します)' : 'black frame — restarting camera');
+      throw new Error(ja() ? 'カメラ映像が完全な黒 (取り直します)' : 'dead black frame — restarting camera');
     }
     // 明るさ補正 (リモート設定 -2..+2)。量子化の前に画素を補正する = パレットも補正後の
     // 色から作られる。後処理なので実露出の変更ではない (暗所はノイズも一緒に持ち上がる)。

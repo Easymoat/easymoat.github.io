@@ -55,7 +55,7 @@
 </div>
 <div class="wrap">
   <h1>PulseLink Cam</h1>
-  <p class="sub" data-en="Turn a spare iPhone into a watch-face camera. A photo is taken and sent to your watch every 3 minutes." data-ja="余った iPhone を文字盤カメラに。3分ごとに撮影してウォッチに送ります。">Turn a spare iPhone into a watch-face camera. A photo is taken and sent to your watch every 3 minutes.</p>
+  <p class="sub" data-en="Turn a spare iPhone into a watch-face camera. A photo is taken and sent to your watch every minute." data-ja="余った iPhone を文字盤カメラに。1分ごとに撮影してウォッチに送ります。">Turn a spare iPhone into a watch-face camera. A photo is taken and sent to your watch every minute.</p>
 
   <div class="card" id="loginCard">
     <h2 data-en="1. Sign in" data-ja="1. サインイン">1. Sign in</h2>
@@ -113,7 +113,7 @@
 <script>
 const API = 'https://mlbwatch-server.onrender.com/api/pulselink';
 const CAM_SLOT = 6;
-const INTERVAL_MS = 3 * 60 * 1000;    // ★テスト期間: 3分間隔 (本番は 10分 = 10 * 60 * 1000 に戻す)
+const INTERVAL_MS = 60 * 1000;        // ★テスト期間: 1分間隔 (本番は 10分 = 10 * 60 * 1000 に戻す)
 const RETRY_MS = 60 * 1000;           // 失敗時は 60秒後に再試行
 
 // ─── 言語 ───

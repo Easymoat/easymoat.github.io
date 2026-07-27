@@ -105,6 +105,13 @@
       <button data-v="32">32</button>
       <button data-v="64" data-en="64 — best" data-ja="64 — 高画質">64 — best</button>
     </div>
+    <label data-en="Night vision (server-side)" data-ja="ナイトビジョン（サーバ処理）">Night vision (server-side)</label>
+    <div class="seg" id="nightSeg">
+      <button data-v="off" data-en="Off" data-ja="オフ">Off</button>
+      <button data-v="auto" class="active" data-en="Auto" data-ja="自動">Auto</button>
+      <button data-v="on" data-en="Always" data-ja="常時">Always</button>
+    </div>
+    <p class="hint" data-en="Dark photos are auto-enhanced on the server: boosted, denoised and rendered in night-vision green (16 shades = the fastest transfer tier). Auto decides per photo by its brightness. Total darkness still shows black — a small night light works wonders." data-ja="暗い写真はサーバが自動で増感・ノイズ抑制し、暗視スコープ風の緑モノクロ（16階調＝最速の転送ティア）に変換します。Auto は写真ごとの明るさで自動判定。完全な暗闇は増感しても黒のままなので、常夜灯がひとつあると効果的です。">Dark photos are auto-enhanced on the server: boosted, denoised and rendered in night-vision green (16 shades = the fastest transfer tier). Auto decides per photo by its brightness. Total darkness still shows black — a small night light works wonders.</p>
     <p class="hint" data-en="16 colors reaches the watch about twice as fast. 32 and 64 cost the same, so choose 64 if you want the best looking image. This page always shows full quality." data-ja="16色はウォッチへの到着が約2倍速くなります。32色と64色は転送量が同じなので、画質を求めるなら64色を。このページの表示は色数に関わらず常に元画質です。">16 colors reaches the watch about twice as fast. 32 and 64 cost the same, so choose 64 if you want the best looking image. This page always shows full quality.</p>
     <p class="hint" data-en="Changes reach the camera within about 10-30 seconds, and a fresh photo is taken right away. While you are adjusting, this page refreshes every 5 seconds for about 3 minutes (adjustment mode)." data-ja="変更は約10〜30秒でカメラに届き、すぐに撮り直されます。操作すると約3分間は「調整モード」になり、このページは5秒ごとに自動更新されます。">Changes reach the camera within about 10-30 seconds, and a fresh photo is taken right away. While you are adjusting, this page refreshes every 5 seconds for about 3 minutes (adjustment mode).</p>
     <div id="ctrlAlert"></div>
@@ -196,7 +203,8 @@ let mode = null;
 let camUid = '';
 let camVer = '0';
 let cfg = { paused: false, zoom: 100, brightness: 0, colors: 16,
-            screen_off: false, torch: false, torch_supported: null, shoot_seq: 0, boost_until: 0 };
+            screen_off: false, torch: false, torch_supported: null,
+            night_mode: 'auto', night_active: false, shoot_seq: 0, boost_until: 0 };
 let nextPollAt = 0;
 let pollTimer = null;
 
@@ -318,6 +326,9 @@ document.getElementById('torchBtn').addEventListener('click', function () {
   if (cfg.torch_supported === false) { return; }
   sendCfg({ torch: !cfg.torch });
 });
+document.querySelectorAll('#nightSeg button').forEach(function (b) {
+  b.addEventListener('click', function () { sendCfg({ night_mode: b.getAttribute('data-v') }); });
+});
 
 function renderControls() {
   if (mode !== 'own') { return; }
@@ -346,6 +357,10 @@ function renderControls() {
                  : (cfg.torch ? (ja() ? 'ライト OFF' : 'Torch off')
                               : (ja() ? 'ライト ON' : 'Torch on'));
   document.getElementById('torchHint').style.display = noTorch ? '' : 'none';
+  // ナイトビジョンモード (off/auto/on)
+  document.querySelectorAll('#nightSeg button').forEach(function (x) {
+    x.classList.toggle('active', x.getAttribute('data-v') === (cfg.night_mode || 'auto'));
+  });
   const badge = document.getElementById('srcBadge');
   if (cfg.paused) {
     badge.textContent = ja() ? '一時停止中' : 'Paused';
@@ -368,6 +383,9 @@ function renderMeta() {
   else if (s < 3600) { ago = j ? Math.floor(s / 60) + '分前' : Math.floor(s / 60) + 'm ago'; }
   else { ago = j ? Math.floor(s / 3600) + '時間前' : Math.floor(s / 3600) + 'h ago'; }
   el.innerHTML = (j ? '最終更新: ' : 'Updated: ') + '<b>' + ago + '</b>'
+    + (mode === 'own' && cfg.night_active
+        ? ' · <span style="color:#16A34A;">🌙 ' + (j ? 'ナイトビジョン適用中' : 'night vision') + '</span>'
+        : '')
     + (cfg.boost_until && cfg.boost_until > Date.now()
         ? ' · <span style="color:#0891B2;">' + (j ? '調整モード (5秒更新)' : 'adjusting (5s refresh)') + '</span>'
         : '');

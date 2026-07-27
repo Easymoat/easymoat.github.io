@@ -382,7 +382,13 @@ function renderMeta() {
   if (s < 60) { ago = j ? s + '秒前' : s + 's ago'; }
   else if (s < 3600) { ago = j ? Math.floor(s / 60) + '分前' : Math.floor(s / 60) + 'm ago'; }
   else { ago = j ? Math.floor(s / 3600) + '時間前' : Math.floor(s / 3600) + 'h ago'; }
-  el.innerHTML = (j ? '最終更新: ' : 'Updated: ') + '<b>' + ago + '</b>'
+  // 撮影時刻 (絶対時刻)。相対表示だけだと「古い画像を今の様子」と誤読しやすい。
+  const d = new Date(vms);
+  const clock = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  // 30分以上前は色を変えて注意を促す (ウォッチの刻印と同じしきい値)
+  const stale = s >= 1800;
+  el.innerHTML = (j ? '撮影: ' : 'Taken at ') + '<b style="font-size:18px;'
+    + (stale ? 'color:#B45309;' : '') + '">' + clock + '</b> · ' + '<b>' + ago + '</b>'
     + (mode === 'own' && cfg.night_active
         ? ' · <span style="color:#16A34A;">🌙 ' + (j ? 'ナイトビジョン適用中' : 'night vision') + '</span>'
         : '')

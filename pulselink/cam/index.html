@@ -496,7 +496,12 @@ async function captureAndUpload() {
     const meanLuma = lumaSum / Math.max(1, lumaN);
     let stacked = 0;
     if (meanLuma < 40 && !document.hidden) {
-      const STACK_N = 8, STACK_GAP_MS = 150;   // 約1.2秒
+      // 24枚 = 約3.6秒。実測 (合成シーンで実パイプラインを通した残留ノイズ σ):
+      //   1枚 19.7 / 4枚 11.1 / 8枚 9.8 / 16枚 8.2 / 24枚 7.6 / 32枚 7.1 / 48枚 5.9
+      // 24枚あたりから改善が鈍る。これはセンサーノイズが 16階調の量子化ステップ
+      // (255/16/√12 ≒ 4.6) を下回り、残りがバンディング由来になるため。時間と
+      // 露出変動のリスク (長く撮るほど途中で自動露出が動く) を勘案してここを採用。
+      const STACK_N = 24, STACK_GAP_MS = 150;
       const acc = new Float32Array(320 * 320 * 4);
       const d0 = first.data;
       for (let i = 0; i < acc.length; i++) { acc[i] = d0[i]; }

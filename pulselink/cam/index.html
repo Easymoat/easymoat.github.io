@@ -360,6 +360,7 @@ let shotCount = 0;
 let lastUploadAt = null;
 let nextShotAt = null;
 let lastError = '';
+let lastStacked = 0;   // 直近の撮影で平均したフレーム数 (0/1=スタックなし)
 
 async function acquireWakeLock() {
   // iOS 16.4+ Safari で利用可。失敗しても続行 (自動ロック=なし を併用してもらう)。
@@ -388,7 +389,9 @@ document.addEventListener('visibilitychange', function () {
 async function openStream() {
   if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
   stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+    // 1080p を要求: 320px へ縮小する際の平均化で暗所ノイズがさらに減る (取れなければ
+    // ブラウザが可能な解像度に落とすだけなので害はない)。
+    video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
     audio: false
   });
   document.getElementById('video').srcObject = stream;
@@ -474,8 +477,52 @@ async function captureAndUpload() {
     // デジタルズーム: 切り出す正方形を 1/zoom に縮める (320px 出力なので ~2倍まで実質無劣化)
     const z = Math.max(100, Math.min(250, (camCfg.zoom || 100))) / 100;
     const side = Math.min(vw, vh) / z;
+    const sx = (vw - side) / 2, sy = (vh - side) / 2;
     ctx.clearRect(0, 0, 320, 320);
-    ctx.drawImage(video, (vw - side) / 2, (vh - side) / 2, side, side, 0, 0, 320, 320);
+    ctx.drawImage(video, sx, sy, side, side, 0, 0, 320, 320);
+    // ─── 暗所のフレームスタッキング (ナイトモードの原理) ───
+    // 暗所ノイズはフレームごとにランダムなので、N枚を画素ごとに平均するとノイズは
+    // 1/√N に減り、被写体 (毎フレーム同じ) は残る。増感はサーバ側で行うため、ここでは
+    // 「増感に耐える素材」を作るのが目的。暗い時だけ実行する:
+    //   - 明るい昼間は 1枚のまま (処理時間ゼロ、動きもブレない)
+    //   - 動く被写体は残像になるが、定点カメラで「いるかどうか」を見る用途では許容
+    // 判定は先に描いた1枚目の平均輝度。しきい値はサーバの NIGHT_AUTO_LUMA(40) と同じ。
+    const first = ctx.getImageData(0, 0, 320, 320);
+    let lumaSum = 0, lumaN = 0;
+    for (let i = 0; i < first.data.length; i += 64) {
+      lumaSum += 0.299 * first.data[i] + 0.587 * first.data[i + 1] + 0.114 * first.data[i + 2];
+      lumaN++;
+    }
+    const meanLuma = lumaSum / Math.max(1, lumaN);
+    let stacked = 0;
+    if (meanLuma < 40 && !document.hidden) {
+      const STACK_N = 8, STACK_GAP_MS = 150;   // 約1.2秒
+      const acc = new Float32Array(320 * 320 * 4);
+      const d0 = first.data;
+      for (let i = 0; i < acc.length; i++) { acc[i] = d0[i]; }
+      stacked = 1;
+      const tmp = document.createElement('canvas');
+      tmp.width = 320; tmp.height = 320;
+      const tctx = tmp.getContext('2d');
+      for (let f = 1; f < STACK_N; f++) {
+        await new Promise(function (r) { setTimeout(r, STACK_GAP_MS); });
+        if (!streamAlive()) { break; }
+        tctx.drawImage(video, sx, sy, side, side, 0, 0, 320, 320);
+        const fd = tctx.getImageData(0, 0, 320, 320).data;
+        for (let i = 0; i < acc.length; i++) { acc[i] += fd[i]; }
+        stacked++;
+      }
+      const outImg = ctx.createImageData(320, 320);
+      const od = outImg.data;
+      for (let i = 0; i < acc.length; i += 4) {
+        od[i]     = acc[i]     / stacked;
+        od[i + 1] = acc[i + 1] / stacked;
+        od[i + 2] = acc[i + 2] / stacked;
+        od[i + 3] = 255;
+      }
+      ctx.putImageData(outImg, 0, 0);
+    }
+    lastStacked = stacked;
     // 死亡ストリーム検出: 死にかけのストリームは「全画素が正確に 0 の純粋な黒」を返す。
     // 一方、真っ暗な部屋の正常な映像はセンサーの高 ISO ノイズが必ず乗り、値が 0 で
     // 揃うことはない。そこで判定は「サンプルの最大値がほぼ 0」の時だけ = 完全黒のみ
@@ -574,6 +621,11 @@ function renderStatus() {
   if (zPct !== 100 || bVal !== 0) {
     html += (j ? 'リモート設定: ' : 'Remote: ') + '<b>x' + (zPct / 100).toFixed(2).replace(/\.?0+$/, '')
          + ' / ' + (bVal > 0 ? '+' : '') + bVal + '</b><br>';
+  }
+  // 暗所スタッキングが効いた時だけ表示 (何枚を重ねたか)
+  if (lastStacked > 1) {
+    html += (j ? '暗所合成: ' : 'Night stack: ') + '<b>' + lastStacked
+         + (j ? '枚' : ' frames') + '</b><br>';
   }
   html += (j ? '画面ロック防止: ' : 'Wake lock: ') + (wakeLock ? 'ON' : (j ? 'OFF (自動ロックを「なし」に)' : 'OFF (set Auto-Lock to Never)'));
   el.innerHTML = html;

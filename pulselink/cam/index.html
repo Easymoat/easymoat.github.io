@@ -55,7 +55,7 @@
 </div>
 <div class="wrap">
   <h1>PulseLink Cam</h1>
-  <p class="sub" data-en="Turn a spare iPhone into a watch-face camera. A photo is taken and sent to your watch every 2 minutes." data-ja="余った iPhone を文字盤カメラに。2分ごとに撮影してウォッチに送ります。">Turn a spare iPhone into a watch-face camera. A photo is taken and sent to your watch every 2 minutes.</p>
+  <p class="sub" data-en="Turn a spare iPhone into a watch-face camera. A photo is taken and sent to your watch every 3 minutes." data-ja="余った iPhone を文字盤カメラに。3分ごとに撮影してウォッチに送ります。">Turn a spare iPhone into a watch-face camera. A photo is taken and sent to your watch every 3 minutes.</p>
 
   <div class="card" id="loginCard">
     <h2 data-en="1. Sign in" data-ja="1. サインイン">1. Sign in</h2>
@@ -113,9 +113,10 @@
 <script>
 const API = 'https://mlbwatch-server.onrender.com/api/pulselink';
 const CAM_SLOT = 6;
-// 撮影間隔 2分。実測 (2026-07-28): 1分間隔でもウォッチ電池の減りは許容範囲だったが、
-// BLE 転送が律速で文字盤への到着は約3分間隔だったため、撮影と版チェックを 2分で揃える。
-const INTERVAL_MS = 2 * 60 * 1000;
+// 撮影間隔 3分 (2026-07-29 にウォッチ電池の負荷軽減で 2分→3分)。
+// 経緯: 1分では BLE 転送が律速で到着は約3分間隔 → 2分に統一 → 実使用で電池優先に。
+// ウォッチ側の版チェックも同じ 3分に揃える (片方だけ短くしても到着は速くならない)。
+const INTERVAL_MS = 3 * 60 * 1000;
 const RETRY_MS = 60 * 1000;           // 失敗時は 60秒後に再試行
 
 // ─── 言語 ───

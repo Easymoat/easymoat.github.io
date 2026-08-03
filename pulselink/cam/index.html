@@ -117,6 +117,9 @@ const CAM_SLOT = 6;
 // 経緯: 1分では BLE 転送が律速で到着は約3分間隔 → 2分に統一 → 実使用で電池優先に。
 // ウォッチ側の版チェックも同じ 3分に揃える (片方だけ短くしても到着は速くならない)。
 const INTERVAL_MS = 3 * 60 * 1000;
+// 調整モード (Viewer の Setup mode) 中の撮影間隔。サーバが fast_sec で通知するので
+// それを使い、未取得時のみこの既定値。時限式なので放置しても通常間隔に戻る。
+let fastSec = 30;
 const RETRY_MS = 60 * 1000;           // 失敗時は 60秒後に再試行
 
 // ─── 言語 ───
@@ -321,8 +324,17 @@ async function pollCamConfig() {
     if (!j || !j.config) return;
     const prev = camCfg;
     camCfg = j.config;
+    if (j.fast_sec) { fastSec = j.fast_sec; }   // 最短間隔はサーバが決める
     if (lastShootSeq === null) { lastShootSeq = camCfg.shoot_seq || 0; }
     if (timerId == null) { return; }  // Start 前は表示だけ更新して適用しない
+    // 調整モードに入った瞬間: 次の撮影を最短間隔まで前倒しする (3分待たせない)。
+    // 抜けた時は現在予約されている撮影をそのまま使い、その後は通常間隔に戻る。
+    const wasBoost = prev.boost_until && prev.boost_until > Date.now();
+    const nowBoost = camCfg.boost_until && camCfg.boost_until > Date.now();
+    if (nowBoost && !wasBoost && !camCfg.paused) {
+      const soon = Date.now() + 2000;
+      if (nextShotAt == null || nextShotAt > soon) { nextShotAt = soon; }
+    }
     // 一時停止/再開 (リモート)
     if (camCfg.paused && !remotePaused) {
       remotePaused = true;
@@ -462,7 +474,10 @@ function tick() {
 async function captureAndUpload() {
   if (!jwt || remotePaused) return;
   inFlight = true;
-  nextShotAt = Date.now() + INTERVAL_MS; // 成功/失敗に関わらず次回を先に予約 (失敗時は下で前倒し)
+  // 成功/失敗に関わらず次回を先に予約 (失敗時は下で前倒し)。
+  // 調整モード (Viewer の Setup mode) 中は最短間隔で回し、期限が切れれば自動で通常間隔へ。
+  const boostNow = camCfg.boost_until && camCfg.boost_until > Date.now();
+  nextShotAt = Date.now() + (boostNow ? fastSec * 1000 : INTERVAL_MS);
   const box = document.getElementById('camAlert');
   try {
     // ストリームが死んでいたら取り直し、露出が安定するまで 2秒待つ。
@@ -627,6 +642,13 @@ function renderStatus() {
   if (zPct !== 100 || bVal !== 0) {
     html += (j ? 'リモート設定: ' : 'Remote: ') + '<b>x' + (zPct / 100).toFixed(2).replace(/\.?0+$/, '')
          + ' / ' + (bVal > 0 ? '+' : '') + bVal + '</b><br>';
+  }
+  // 調整モード中は残り時間と最短間隔を明示 (時限式だと分かるように)
+  if (camCfg.boost_until && camCfg.boost_until > Date.now()) {
+    const rem = Math.round((camCfg.boost_until - Date.now()) / 1000);
+    html += '<b style="color:#0891B2;">' + (j ? 'セットアップモード: ' : 'Setup mode: ')
+         + fastSec + (j ? '秒間隔 (残り ' : 's interval (') + Math.floor(rem / 60) + ':'
+         + ('0' + (rem % 60)).slice(-2) + (j ? ')' : ' left)') + '</b><br>';
   }
   // 暗所スタッキングが効いた時だけ表示 (何枚を重ねたか)
   if (lastStacked > 1) {

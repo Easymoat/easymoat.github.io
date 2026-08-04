@@ -64,6 +64,13 @@
   .app-card.pulselink .app-tag { color: #0891B2; }
   .app-card.pulselink .app-badge { background: #CFFAFE; color: #0891B2; }
 
+  /* MWM + WebMemo: 2 アプリの組み合わせなのでアイコンを 2 つ重ねて置く */
+  .app-card.portfolio:hover { border-color: #117A3A; }
+  .app-card.portfolio .app-tag { color: #117A3A; }
+  .app-card.portfolio .app-badge { background: #E5F5EC; color: #117A3A; }
+  .icon-pair { display: flex; align-items: center; flex-shrink: 0; }
+  .icon-pair .icon + .icon { margin-left: -22px; }
+
   .app-tag { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; margin-bottom: 4px; }
   .app-name { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.1; }
   .app-desc { font-size: 14px; color: #6B7280; line-height: 1.65; margin-bottom: 20px; }
@@ -119,6 +126,20 @@
     </div>
     <div class="app-desc" data-en="Keep your group together with a GPS compass radar — see each Crew member's direction and distance, share waypoints, and get an alert if someone drifts too far. Live heart rate, steps and distance too. Members join free — only the Leader subscribes." data-ja="GPSコンパス・レーダーで仲間とはぐれない。Crewの一人ひとりの方向と距離を表示し、地点を共有、離れすぎたらアラート。心拍数・歩数・距離のライブ共有も。メンバーは無料、リーダーのみ課金。">Keep your group together with a GPS compass radar — see each Crew member's direction and distance, share waypoints, and get an alert if someone drifts too far. Live heart rate, steps and distance too. Members join free — only the Leader subscribes.</div>
     <span class="app-badge" data-en="Available Now — Leader $9.99/yr (14-day trial) · Member Free" data-ja="販売中 — リーダー $9.99/年（14日トライアル）· メンバー無料">Available Now — Leader $9.99/yr (14-day trial) · Member Free</span>
+  </a>
+  <a href="./portfolio/" class="app-card portfolio">
+    <div class="app-header">
+      <span class="icon-pair">
+        <img class="icon" src="Marketwatch_Max_icon.png" alt="MarketWatch Max">
+        <img class="icon" src="webmemo_icon.png" alt="WebMemo">
+      </span>
+      <div class="app-title">
+        <div class="app-tag" data-en="GARMIN APP + WEB" data-ja="GARMIN アプリ + WEB">GARMIN APP + WEB</div>
+        <div class="app-name">MWM + WebMemo</div>
+      </div>
+    </div>
+    <div class="app-desc" data-en="Build your portfolios on the web with WebMemo — holdings, allocation, dividends, analysis and an economic calendar — then glance at them on your Garmin with MarketWatch Max (up to 7 portfolios / 140 symbols). Free for MarketWatch owners." data-ja="WebMemo でポートフォリオを組み立て — 保有・資産配分・配当・分析・経済カレンダーまで。それを MarketWatch Max で手首に（最大7ポートフォリオ・140銘柄）。MarketWatch ユーザーは無料。">Build your portfolios on the web with WebMemo — holdings, allocation, dividends, analysis and an economic calendar — then glance at them on your Garmin with MarketWatch Max (up to 7 portfolios / 140 symbols). Free for MarketWatch owners.</div>
+    <span class="app-badge" data-en="Free for MarketWatch owners" data-ja="MarketWatch ユーザーは無料">Free for MarketWatch owners</span>
   </a>
 </div>
 <footer>

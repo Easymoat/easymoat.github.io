@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio — Web + Garmin | Easymoat</title>
+<meta name="description" content="Build your portfolio on the web with WebMemo, then glance at it on your Garmin wrist with MarketWatch and MarketWatch Max. One purchase unlocks all three.">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FC;
+    --white: #FFFFFF;
+    --border: #E2E6EF;
+    --accent: #117A3A;        /* markets green */
+    --accent-light: #E5F5EC;
+    --accent2: #CC0022;       /* down red */
+    --web: #4F46E5;           /* WebMemo indigo */
+    --web-light: #EEF0FE;
+    --max: #B45309;           /* Max amber */
+    --max-light: #FCF2E4;
+    --text: #111827;
+    --text2: #374151;
+    --muted: #6B7280;
+    --muted2: #9CA3AF;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.6; overflow-x: hidden; }
+
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 40px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); position: sticky; top: 0; z-index: 200; }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; color: var(--muted); transition: all 0.15s; }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+
+  nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 40px; display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: var(--accent); letter-spacing: -0.01em; }
+  .logo span { color: var(--muted2); font-weight: 700; }
+  .nav-badge { background: var(--accent-light); color: var(--accent); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; padding: 4px 10px; border-radius: 20px; }
+
+  main { max-width: 980px; margin: 0 auto; padding: 0 40px 80px; }
+
+  .hero { padding: 64px 0 48px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 44px; align-items: center; }
+  .hero-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; padding: 5px 12px; border-radius: 20px; margin-bottom: 20px; }
+  .hero-tag::before { content: ''; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
+  h1 { font-family: 'Syne', sans-serif; font-size: clamp(34px, 5vw, 52px); font-weight: 800; line-height: 1.06; letter-spacing: -0.02em; color: var(--text); margin-bottom: 16px; }
+  h1 em { font-style: normal; color: var(--accent); }
+  .hero-desc { font-size: 16px; line-height: 1.7; color: var(--muted); margin-bottom: 28px; }
+  .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  .btn-primary { display: inline-flex; align-items: center; gap: 8px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 8px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(17,122,58,0.3); }
+  .btn-primary:hover { background: #0E6531; transform: translateY(-1px); }
+  .btn-secondary { display: inline-flex; align-items: center; gap: 8px; background: var(--white); color: var(--text); font-size: 14px; font-weight: 500; text-decoration: none; padding: 12px 24px; border-radius: 8px; border: 1px solid var(--border); transition: all 0.2s; }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .hero-fine { font-size: 13px; color: var(--muted); margin-top: 12px; }
+
+  /* ── WebMemo browser mockup ── */
+  .mock-wrap { display: flex; align-items: center; justify-content: center; gap: 18px; }
+  .browser { background: var(--white); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-lg); overflow: hidden; width: 100%; max-width: 380px; }
+  .browser-bar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: #F1F3F9; border-bottom: 1px solid var(--border); }
+  .browser-dot { width: 10px; height: 10px; border-radius: 50%; background: #D3D8E3; }
+  .browser-url { flex: 1; margin-left: 8px; background: var(--white); border: 1px solid var(--border); border-radius: 6px; font-size: 10px; color: var(--muted); padding: 4px 10px; text-align: center; font-family: 'Inter', sans-serif; }
+  .mock-body { padding: 18px 16px 16px; }
+  .mock-net-label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted2); font-weight: 600; }
+  .mock-net { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; color: var(--text); line-height: 1.1; }
+  .mock-net-chg { font-size: 12px; font-weight: 600; color: var(--accent); margin-bottom: 14px; }
+  .mock-alloc { display: flex; height: 8px; border-radius: 5px; overflow: hidden; margin-bottom: 16px; }
+  .mock-alloc span { display: block; height: 100%; }
+  .mock-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--border); }
+  .mock-row .tk { font-weight: 700; font-size: 13px; color: var(--text); }
+  .mock-row .nm { font-size: 10px; color: var(--muted2); }
+  .mock-row .pr { font-size: 13px; font-weight: 600; color: var(--text); text-align: right; }
+  .mock-row .cg { font-size: 11px; font-weight: 600; text-align: right; }
+  .up { color: var(--accent); }
+  .dn { color: var(--accent2); }
+  .mock-tag { display:inline-block; margin-top: 12px; font-size: 10px; color: var(--muted2); background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; }
+  .hero-watch { width: 132px; flex-shrink: 0; filter: drop-shadow(0 8px 20px rgba(0,30,80,0.18)); }
+
+  .section { padding: 60px 0; border-top: 1px solid var(--border); }
+  .section-header { margin-bottom: 32px; }
+  .section-tag { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  h2 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.01em; color: var(--text); margin-bottom: 8px; }
+  .section-desc { font-size: 15px; color: var(--muted); max-width: 620px; }
+
+  /* ── Three surfaces ── */
+  .surfaces { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .surface { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 26px; transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s; }
+  .surface:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+  .surface-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; min-height: 52px; }
+  .surface-head > div { padding-top: 2px; }
+  .surface-head img { width: 52px; height: 52px; border-radius: 12px; box-shadow: 0 3px 8px rgba(0,0,0,0.08); }
+  .surface-role { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .surface-name { font-family: 'Syne', sans-serif; font-size: 19px; font-weight: 800; color: var(--text); line-height: 1.1; }
+  .surface p { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
+  .surface-price { font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 20px; display: inline-block; }
+  .s-web .surface-role { color: var(--web); }
+  .s-web .surface-price { background: var(--web-light); color: var(--web); }
+  .s-mw .surface-role { color: var(--accent); }
+  .s-mw .surface-price { background: var(--accent-light); color: var(--accent); }
+  .s-max .surface-role { color: var(--max); }
+  .s-max .surface-price { background: var(--max-light); color: var(--max); }
+
+  /* ── Sync flow ── */
+  .flow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center; }
+  .flow-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 24px; text-align: center; }
+  .flow-card .fc-icon { font-size: 30px; margin-bottom: 8px; }
+  .flow-card .fc-img { width: 46px; height: 46px; border-radius: 11px; display: block; margin: 0 auto 8px; box-shadow: 0 3px 8px rgba(0,0,0,0.10); }
+  .flow-card h4 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+  .flow-card p { font-size: 12px; color: var(--muted); }
+  .flow-arrow { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--accent); }
+  .flow-arrow .fa-line { font-size: 22px; font-weight: 700; }
+  .flow-arrow .fa-label { font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  .flow-right { display: grid; gap: 12px; }
+  .flow-mini { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 12px; }
+  .flow-mini img { width: 38px; height: 38px; border-radius: 9px; }
+  .flow-mini .fm-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 14px; }
+  .flow-mini .fm-note { font-size: 11px; color: var(--muted); }
+
+  /* ── WebMemo features ── */
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .feature { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 22px; transition: box-shadow 0.2s, border-color 0.2s; }
+  .feature:hover { box-shadow: var(--shadow); border-color: #C7CCFB; }
+  .feature-icon { font-size: 26px; margin-bottom: 10px; }
+  .feature h3 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .feature p { font-size: 13px; line-height: 1.6; color: var(--muted); }
+
+  /* ── 無料開放の注記 (添付不可) ── */
+  .free-note { margin-top: 24px; background: #FFFBEB; border: 1px solid #FDE9B5; border-left: 4px solid #D97706; border-radius: 10px; padding: 18px 22px; }
+  .free-note-title { font-weight: 700; font-size: 14px; color: #92400E; margin-bottom: 6px; }
+  .free-note p { font-size: 13px; line-height: 1.75; color: #7C4A08; margin: 0; }
+
+  /* ── Market coverage ── */
+  .mkt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .mkt-item { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .mkt-ico { font-size: 22px; margin-bottom: 6px; }
+  .mkt-name { font-weight: 700; font-size: 14px; color: var(--text); margin-bottom: 3px; }
+  .mkt-eg { font-size: 11px; color: var(--muted2); font-family: 'Inter', monospace; }
+  .mkt-note { font-size: 13px; color: var(--muted); margin-top: 16px; line-height: 1.6; }
+
+  /* ── Compare table ── */
+  .cmp-table { width: 100%; border-collapse: collapse; background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .cmp-table th, .cmp-table td { padding: 14px 18px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .cmp-table thead th { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); background: var(--bg); }
+  .cmp-table thead th.c-mw { color: var(--accent); }
+  .cmp-table thead th.c-max { color: var(--max); }
+  .cmp-table td:first-child { color: var(--muted); font-weight: 500; }
+  .cmp-table td.val { font-weight: 700; color: var(--text); }
+  .cmp-table tr:last-child td { border-bottom: none; }
+
+  /* ── Coming soon ── */
+  .soon { background: linear-gradient(135deg, #FFFFFF 0%, #F4F6FF 100%); border: 1px solid var(--border); border-radius: 16px; padding: 32px; display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: center; }
+  .soon-badge { display: inline-block; background: #FFF3D6; color: var(--max); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; padding: 4px 12px; border-radius: 20px; margin-bottom: 10px; }
+  .soon-icon { font-size: 52px; }
+  .soon h3 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+  .soon p { font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+  /* ── Pricing summary ── */
+  .price-hero { background: var(--white); border: 2px solid var(--accent); border-radius: 18px; padding: 36px; text-align: center; box-shadow: 0 0 0 4px rgba(17,122,58,0.07); max-width: 560px; margin: 0 auto; }
+  .price-hero .ph-big { font-family: 'Syne', sans-serif; font-size: 44px; font-weight: 800; line-height: 1.1; margin-bottom: 6px; }
+  .price-hero .ph-big em { font-style: normal; color: var(--accent); }
+  .price-hero .ph-sub { font-size: 14px; color: var(--muted); margin-bottom: 22px; }
+  .price-unlocks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
+  .unlock { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 10px; }
+  .unlock .u-name { font-weight: 700; font-size: 13px; }
+  .unlock .u-price { font-size: 11px; font-weight: 700; margin-top: 3px; }
+  .u-web .u-price { color: var(--web); }
+  .u-mw .u-price { color: var(--accent); }
+  .u-max .u-price { color: var(--max); }
+
+  footer { background: var(--white); border-top: 1px solid var(--border); padding: 32px 40px; text-align: center; font-size: 13px; color: var(--muted); }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer .footer-links { margin-top: 8px; display: flex; justify-content: center; align-items: center; gap: 16px; flex-wrap: wrap; }
+  footer .footer-links a { color: var(--muted); font-size: 12px; }
+  footer .footer-links a:hover { color: var(--accent); }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; gap: 32px; }
+    .hero-watch { display: none; }
+    .surfaces { grid-template-columns: 1fr; }
+    .features { grid-template-columns: 1fr 1fr; }
+    .flow { grid-template-columns: 1fr; }
+    .flow-arrow { transform: rotate(90deg); margin: 4px 0; }
+    .price-unlocks { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 768px) { nav, .lang-bar { padding: 12px 20px; } main { padding: 0 20px 60px; } .soon { grid-template-columns: 1fr; text-align: center; } .mkt-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 480px) { .features { grid-template-columns: 1fr; } .mkt-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="lang-bar">
+  <span>🌐</span>
+  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+  <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+</div>
+
+<nav>
+  <div class="logo">
+    <a href="../" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;">
+      <img src="../easymoat_logo.png" alt="Easymoat" style="height:36px; width:36px; border-radius:8px; object-fit:cover;">
+      <span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:800;">Easymoat</span><span>.com</span>
+    </a>
+  </div>
+  <div class="nav-badge" data-en="Investing Suite" data-ja="投資スイート">Investing Suite</div>
+</nav>
+
+<main>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-tag" data-en="Web + Garmin — one workflow" data-ja="Web × Garmin — ひとつの流れ">Web + Garmin — one workflow</div>
+      <h1 data-en="Build on the web.<br>Glance on your <em>wrist</em>." data-ja="作るのはWeb。<br>見るのは<em>手首</em>。">Build on the web.<br>Glance on your <em>wrist</em>.</h1>
+      <p class="hero-desc" data-en="Organize your portfolios on the big screen with WebMemo — allocation, rebalancing, dividends and analysis — then see them live on your Garmin watch with MarketWatch and MarketWatch Max. One purchase unlocks all three." data-ja="大画面の WebMemo でポートフォリオを組み立て — 資産配分・リバランス・配当・分析まで。それを MarketWatch と MarketWatch Max で、Garmin ウォッチにライブ表示。$7.99 の一度の購入で、3つすべてが使えます。">Organize your portfolios on the big screen with WebMemo — allocation, rebalancing, dividends and analysis — then see them live on your Garmin watch with MarketWatch and MarketWatch Max. One purchase unlocks all three.</p>
+      <div class="hero-cta">
+        <a href="https://apps.garmin.com/en-US/apps/c65e1a35-e34e-4763-8c67-85e52da733bb" data-en-href="https://apps.garmin.com/en-US/apps/c65e1a35-e34e-4763-8c67-85e52da733bb" data-ja-href="https://apps.garmin.com/ja-JP/apps/c65e1a35-e34e-4763-8c67-85e52da733bb" class="btn-primary" data-en="Get MarketWatch — $7.99" data-ja="MarketWatch を入手 — $7.99">Get MarketWatch — $7.99</a>
+        <a href="https://app.easymoat.com/webmemo/" class="btn-secondary" data-en="Open WebMemo (free)" data-ja="WebMemo を開く（無料）">Open WebMemo (free)</a>
+      </div>
+      <p class="hero-fine" data-en="MarketWatch has a 14-day free trial. MarketWatch Max and WebMemo are free for MarketWatch owners." data-ja="MarketWatch は14日間の無料トライアル付き。MarketWatch Max と WebMemo は MarketWatch ユーザーは無料です。">MarketWatch has a 14-day free trial. MarketWatch Max and WebMemo are free for MarketWatch owners.</p>
+    </div>
+
+    <div class="mock-wrap">
+      <div class="browser" aria-label="WebMemo web app preview">
+        <div class="browser-bar">
+          <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+          <span class="browser-url">app.easymoat.com/webmemo</span>
+        </div>
+        <div class="mock-body">
+          <div class="mock-net-label" data-en="Net worth" data-ja="純資産">Net worth</div>
+          <div class="mock-net">¥12,486,300</div>
+          <div class="mock-net-chg up">+¥84,200 &nbsp;(+0.68%)</div>
+          <div class="mock-alloc">
+            <span style="width:58%; background:#117A3A;"></span>
+            <span style="width:16%; background:#4F46E5;"></span>
+            <span style="width:11%; background:#B45309;"></span>
+            <span style="width:8%; background:#0891B2;"></span>
+            <span style="width:7%; background:#9CA3AF;"></span>
+          </div>
+          <div class="mock-row"><div><div class="tk">AAPL</div><div class="nm">Apple Inc.</div></div><div><div class="pr">340.08</div><div class="cg up">+1.24%</div></div></div>
+          <div class="mock-row"><div><div class="tk">7203.T</div><div class="nm" data-en="Toyota Motor" data-ja="トヨタ自動車">Toyota Motor</div></div><div><div class="pr">3,224</div><div class="cg up">+0.81%</div></div></div>
+          <div class="mock-row"><div><div class="tk">VOO</div><div class="nm">Vanguard S&amp;P 500</div></div><div><div class="pr">612.40</div><div class="cg up">+0.33%</div></div></div>
+          <div class="mock-row"><div><div class="tk">BTC-USD</div><div class="nm">Bitcoin</div></div><div><div class="pr">64,191</div><div class="cg dn">−0.42%</div></div></div>
+          <span class="mock-tag" data-en="Sample data" data-ja="サンプルデータ">Sample data</span>
+        </div>
+      </div>
+      <img class="hero-watch" src="../markets_list.jpg" alt="MarketWatch on a Garmin watch">
+    </div>
+  </div>
+
+  <!-- THREE SURFACES -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="One portfolio, three surfaces" data-ja="ひとつのポートフォリオ、3つの面">One portfolio, three surfaces</div>
+      <h2 data-en="Manage on the web, glance on the wrist" data-ja="Webで管理し、手首で見る">Manage on the web, glance on the wrist</h2>
+      <p class="section-desc" data-en="Each surface does what it does best — a spacious web workspace to build and analyze, and a fast wrist view to check anytime." data-ja="それぞれの面が得意なことに専念します — じっくり組み立てて分析する広い Web、いつでもサッと確認できる手首。">Each surface does what it does best — a spacious web workspace to build and analyze, and a fast wrist view to check anytime.</p>
+    </div>
+    <div class="surfaces">
+      <div class="surface s-web">
+        <div class="surface-head">
+          <img src="../webmemo_icon.png" alt="WebMemo">
+          <div>
+            <div class="surface-role" data-en="Web · The hub" data-ja="Web · 母艦">Web · The hub</div>
+            <div class="surface-name">WebMemo</div>
+          </div>
+        </div>
+        <p data-en="The big-screen workspace — up to 20 portfolios (20 symbols each). Track holdings and P&amp;L, set target allocation and rebalance, review dividends, and run analysis — all in your browser." data-ja="大画面のワークスペース — 最大20ポートフォリオ（各20銘柄）。保有と損益を管理、目標配分とリバランス、配当の確認、分析まで、すべてブラウザで。">The big-screen workspace — up to 20 portfolios (20 symbols each). Track holdings and P&amp;L, set target allocation and rebalance, review dividends, and run analysis — all in your browser.</p>
+        <span class="surface-price" data-en="Free" data-ja="無料">Free</span>
+      </div>
+      <div class="surface s-mw">
+        <div class="surface-head">
+          <img src="../marketwatch_icon.png" alt="MarketWatch">
+          <div>
+            <div class="surface-role" data-en="Garmin · Glance" data-ja="Garmin · グランス">Garmin · Glance</div>
+            <div class="surface-name">MarketWatch</div>
+          </div>
+        </div>
+        <p data-en="Your watchlist on your wrist. Up to 20 symbols with auto-refreshing prices, intraday charts, price alerts and a watch-face home. The paid app that unlocks everything." data-ja="ウォッチリストを手首に。最大20銘柄を自動更新、日中チャート、価格アラート、ウォッチフェイスホーム。すべてを解放する有料アプリ。">Your watchlist on your wrist. Up to 20 symbols with auto-refreshing prices, intraday charts, price alerts and a watch-face home. The paid app that unlocks everything.</p>
+        <span class="surface-price" data-en="$7.99 · 14-day trial" data-ja="$7.99 · 14日トライアル">$7.99 · 14-day trial</span>
+      </div>
+      <div class="surface s-max">
+        <div class="surface-head">
+          <img src="../Marketwatch_Max_icon.png" alt="MarketWatch Max">
+          <div>
+            <div class="surface-role" data-en="Garmin · Power view" data-ja="Garmin · パワービュー">Garmin · Power view</div>
+            <div class="surface-name">MarketWatch Max</div>
+          </div>
+        </div>
+        <p data-en="For bigger portfolios. Up to 7 portfolios and 140 symbols on your watch, with the same rich detail and charts. A free companion app for MarketWatch owners." data-ja="大きなポートフォリオ向け。最大7ポートフォリオ・140銘柄をウォッチで、同じリッチな詳細とチャート。MarketWatch ユーザー向けの無料コンパニオン。">For bigger portfolios. Up to 7 portfolios and 140 symbols on your watch, with the same rich detail and charts. A free companion app for MarketWatch owners.</p>
+        <span class="surface-price" data-en="Free for MarketWatch owners" data-ja="MarketWatch ユーザーは無料">Free for MarketWatch owners</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SYNC FLOW -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="How it connects" data-ja="連携のしくみ">How it connects</div>
+      <h2 data-en="Set it up once — it syncs to your watch" data-ja="一度作れば、そのままウォッチへ同期">Set it up once — it syncs to your watch</h2>
+      <p class="section-desc" data-en="Enter and organize everything in WebMemo. Your portfolios sync straight to the watch apps — no re-typing tickers on a tiny screen." data-ja="登録も整理も WebMemo で。作ったポートフォリオはウォッチアプリへそのまま同期 — 小さな画面でティッカーを打ち直す必要はありません。">Enter and organize everything in WebMemo. Your portfolios sync straight to the watch apps — no re-typing tickers on a tiny screen.</p>
+    </div>
+    <div class="flow">
+      <div class="flow-card">
+        <img class="fc-img" src="../webmemo_icon.png" alt="WebMemo">
+        <h4>WebMemo</h4>
+        <p data-en="Build &amp; organize on the web — up to 20 portfolios" data-ja="Webで作成・整理 — 最大20ポートフォリオ">Build &amp; organize on the web — up to 20 portfolios</p>
+      </div>
+      <div class="flow-arrow">
+        <span class="fa-line">→</span>
+        <span class="fa-label" data-en="Auto-sync" data-ja="自動同期">Auto-sync</span>
+      </div>
+      <div class="flow-right">
+        <div class="flow-mini">
+          <img src="../marketwatch_icon.png" alt="MarketWatch">
+          <div>
+            <div class="fm-name">MarketWatch</div>
+            <div class="fm-note" data-en="Mirrors 1 portfolio (up to 20 symbols)" data-ja="1ポートフォリオをミラー（最大20銘柄）">Mirrors 1 portfolio (up to 20 symbols)</div>
+          </div>
+        </div>
+        <div class="flow-mini">
+          <img src="../Marketwatch_Max_icon.png" alt="MarketWatch Max">
+          <div>
+            <div class="fm-name">MarketWatch Max</div>
+            <div class="fm-note" data-en="Syncs up to 7 portfolios (up to 140 symbols)" data-ja="最大7ポートフォリオを同期（最大140銘柄）">Syncs up to 7 portfolios (up to 140 symbols)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MARKET COVERAGE -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="What you can track" data-ja="対応マーケット">What you can track</div>
+      <h2 data-en="Any market, worldwide" data-ja="世界のあらゆるマーケット">Any market, worldwide</h2>
+      <p class="section-desc" data-en="Stocks and ETFs from 30+ exchanges, plus FX, crypto, indices, commodities and bond yields — the same market data on the web and on your wrist, powered by Yahoo Finance." data-ja="30以上の取引所の株式・ETF に加え、為替・暗号資産・指数・商品先物・国債利回りまで。Web でも手首でも同じ市場データを、Yahoo Finance で。">Stocks and ETFs from 30+ exchanges, plus FX, crypto, indices, commodities and bond yields — the same market data on the web and on your wrist, powered by Yahoo Finance.</p>
+    </div>
+    <div class="mkt-grid">
+      <div class="mkt-item">
+        <div class="mkt-ico">📈</div>
+        <div class="mkt-name" data-en="Stocks &amp; ETFs" data-ja="株式・ETF">Stocks &amp; ETFs</div>
+        <div class="mkt-eg">AAPL · 7203.T · ASML.AS</div>
+      </div>
+      <div class="mkt-item">
+        <div class="mkt-ico">🌐</div>
+        <div class="mkt-name" data-en="Indices" data-ja="指数">Indices</div>
+        <div class="mkt-eg">^GSPC · ^N225 · ^FTSE</div>
+      </div>
+      <div class="mkt-item">
+        <div class="mkt-ico">💱</div>
+        <div class="mkt-name" data-en="FX" data-ja="為替">FX</div>
+        <div class="mkt-eg">USDJPY=X · EURUSD=X</div>
+      </div>
+      <div class="mkt-item">
+        <div class="mkt-ico">🪙</div>
+        <div class="mkt-name" data-en="Crypto" data-ja="暗号資産">Crypto</div>
+        <div class="mkt-eg">BTC-USD · ETH-USD</div>
+      </div>
+      <div class="mkt-item">
+        <div class="mkt-ico">🛢️</div>
+        <div class="mkt-name" data-en="Commodities" data-ja="商品先物">Commodities</div>
+        <div class="mkt-eg">GC=F · CL=F · HG=F</div>
+      </div>
+      <div class="mkt-item">
+        <div class="mkt-ico">🏦</div>
+        <div class="mkt-name" data-en="Bond yields" data-ja="国債利回り">Bond yields</div>
+        <div class="mkt-eg">^TNX · ^TYX · JP/US</div>
+      </div>
+    </div>
+    <p class="mkt-note" data-en="Coverage spans developed markets plus ASEAN and most BRICS. Find any Yahoo Finance ticker with the symbol lookup on the MarketWatch page." data-ja="カバレッジは主要先進国に加え ASEAN・BRICS の大半。正確な Yahoo Finance ティッカーは MarketWatch ページの銘柄検索で調べられます。">Coverage spans developed markets plus ASEAN and most BRICS. Find any Yahoo Finance ticker with the symbol lookup on the <a href="../marketwatch/" style="color:var(--accent); text-decoration:none; font-weight:600;">MarketWatch page</a>.</p>
+  </div>
+
+  <!-- WEBMEMO DEEP DIVE -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="WebMemo" data-ja="WebMemo">WebMemo</div>
+      <h2 data-en="Your portfolio workspace on the web" data-ja="Webのポートフォリオ・ワークスペース">Your portfolio workspace on the web</h2>
+      <p class="section-desc" data-en="More room to think than a watch screen. WebMemo turns your holdings into a clear picture — and it's free for MarketWatch owners." data-ja="ウォッチの画面よりずっと広く考えられる場所。WebMemo は保有をひと目で分かる形に。MarketWatch ユーザーは無料です。">More room to think than a watch screen. WebMemo turns your holdings into a clear picture — and it's free for MarketWatch owners.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🗂️</div>
+        <h3 data-en="Multiple portfolios" data-ja="複数ポートフォリオ">Multiple portfolios</h3>
+        <p data-en="Organize by account, strategy or theme — up to 20 portfolios, each with its own symbols and cash." data-ja="口座・戦略・テーマ別に整理 — 最大20ポートフォリオ、それぞれに銘柄と現金。">Organize by account, strategy or theme — up to 20 portfolios, each with its own symbols and cash.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📈</div>
+        <h3 data-en="Live quotes &amp; charts" data-ja="ライブ価格＆チャート">Live quotes &amp; charts</h3>
+        <p data-en="Auto-refreshing prices for stocks, ETFs, FX, crypto and indices, with multi-period charts from 5-minute to monthly." data-ja="株式・ETF・為替・暗号資産・指数を自動更新。5分足〜月足のマルチ期間チャート付き。">Auto-refreshing prices for stocks, ETFs, FX, crypto and indices, with multi-period charts from 5-minute to monthly.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">💰</div>
+        <h3 data-en="Holdings &amp; P&amp;L" data-ja="保有・損益">Holdings &amp; P&amp;L</h3>
+        <p data-en="Record cost basis and quantity per symbol, add cash positions, and see evaluation value and profit/loss in your home currency." data-ja="銘柄ごとに取得単価と保有数を記録、現金ポジションも追加、評価額と損益を自国通貨で表示。">Record cost basis and quantity per symbol, add cash positions, and see evaluation value and profit/loss in your home currency.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🎯</div>
+        <h3 data-en="Allocation &amp; rebalance" data-ja="資産配分・リバランス">Allocation &amp; rebalance</h3>
+        <p data-en="Set a target allocation across asset classes and see how far your holdings drift — a calculator for your own plan." data-ja="資産クラス別の目標配分を設定し、保有がどれだけ乖離しているかを表示 — あなた自身の計画のための計算ツール。">Set a target allocation across asset classes and see how far your holdings drift — a calculator for your own plan.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🪙</div>
+        <h3 data-en="Dividends" data-ja="配当">Dividends</h3>
+        <p data-en="Trailing-12-month dividend income per symbol and across the portfolio, so you can see your yield at a glance." data-ja="銘柄ごと・ポートフォリオ全体の直近12ヶ月の配当収入。利回りをひと目で。">Trailing-12-month dividend income per symbol and across the portfolio, so you can see your yield at a glance.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🔬</div>
+        <h3 data-en="Analysis" data-ja="分析">Analysis</h3>
+        <p data-en="Correlation matrix, benchmark comparison and index sensitivity (beta) — educational tools to understand your mix." data-ja="相関マトリクス、ベンチマーク比較、指数感応度（β）— 自分の構成を理解するための学習ツール。">Correlation matrix, benchmark comparison and index sensitivity (beta) — educational tools to understand your mix.</p>
+      </div>
+    </div>
+    <div class="free-note">
+      <div class="free-note-title" data-en="Free while in open access" data-ja="無料開放中のご案内">Free while in open access</div>
+      <p data-en="WebMemo is currently open to all MarketWatch owners at no charge. Because server storage is limited during this period, file attachments in memos are unavailable — the attach button stays visible, but files cannot be uploaded. Text memos, portfolios, quotes, charts and analysis all work normally. Attachments may return as part of a future paid plan." data-ja="WebMemo は現在、MarketWatch をお持ちの方に無料で開放しています。この期間はサーバー容量に限りがあるため、メモへのファイル添付はご利用いただけません（添付ボタンは表示されますが、アップロードはできません）。テキストのメモ・ポートフォリオ・価格・チャート・分析は通常どおりご利用いただけます。添付機能は将来の有料プランで提供する可能性があります。">WebMemo is currently open to all MarketWatch owners at no charge. Because server storage is limited during this period, file attachments in memos are unavailable — the attach button stays visible, but files cannot be uploaded. Text memos, portfolios, quotes, charts and analysis all work normally. Attachments may return as part of a future paid plan.</p>
+    </div>
+    <div style="text-align:center; margin-top:28px;">
+      <a href="https://app.easymoat.com/webmemo/?demo=1" style="display:inline-block; padding:13px 26px; background:var(--web); color:#fff; border-radius:8px; text-decoration:none; font-weight:600; font-size:15px; box-shadow:0 2px 8px rgba(79,70,229,0.3);"
+         data-en="Try the live demo — no sign-in →" data-ja="デモを触ってみる — ログイン不要 →">Try the live demo — no sign-in →</a>
+      <a href="https://app.easymoat.com/webmemo/" style="display:inline-block; margin-left:10px; padding:13px 26px; background:var(--white); color:var(--text); border:1px solid var(--border); border-radius:8px; text-decoration:none; font-weight:600; font-size:15px;"
+         data-en="Open WebMemo" data-ja="WebMemo を開く">Open WebMemo</a>
+      <div style="font-size:12px; color:var(--muted2); margin-top:10px;" data-en="The demo runs on sample data. To use your own, sign in with your MarketWatch license key and Device ID." data-ja="デモはサンプルデータで動作します。ご自身のデータを使うには、MarketWatch のライセンスキーと Device ID でサインインしてください。">The demo runs on sample data. To use your own, sign in with your MarketWatch license key and Device ID.</div>
+    </div>
+  </div>
+
+  <!-- MW vs MWM -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="On the watch" data-ja="ウォッチでは">On the watch</div>
+      <h2 data-en="MarketWatch vs. MarketWatch Max" data-ja="MarketWatch と MarketWatch Max">MarketWatch vs. MarketWatch Max</h2>
+      <p class="section-desc" data-en="Same clean Garmin experience — Max simply carries more. Start with MarketWatch; add Max for free when your portfolio grows." data-ja="同じクリーンな Garmin 体験 — Max はより多くを持ち運べるだけ。まず MarketWatch、ポートフォリオが増えたら Max を無料で追加。">Same clean Garmin experience — Max simply carries more. Start with MarketWatch; add Max for free when your portfolio grows.</p>
+    </div>
+    <table class="cmp-table">
+      <thead>
+        <tr>
+          <th data-en="Feature" data-ja="項目">Feature</th>
+          <th class="c-mw">MarketWatch</th>
+          <th class="c-max">MarketWatch Max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td data-en="Symbols" data-ja="銘柄数">Symbols</td><td class="val" data-en="Up to 20" data-ja="最大20">Up to 20</td><td class="val" data-en="Up to 140" data-ja="最大140">Up to 140</td></tr>
+        <tr><td data-en="Portfolios on watch" data-ja="ウォッチのポートフォリオ">Portfolios on watch</td><td class="val" data-en="1 (mirrored)" data-ja="1（ミラー）">1 (mirrored)</td><td class="val" data-en="Up to 7" data-ja="最大7">Up to 7</td></tr>
+        <tr><td data-en="Charts, alerts, watch-face home" data-ja="チャート・アラート・フェイスホーム">Charts, alerts, watch-face home</td><td class="val">✓</td><td class="val">✓</td></tr>
+        <tr><td data-en="WebMemo sync" data-ja="WebMemo 同期">WebMemo sync</td><td class="val">✓</td><td class="val">✓</td></tr>
+        <tr><td data-en="Price" data-ja="価格">Price</td><td class="val" data-en="$7.99 (14-day trial)" data-ja="$7.99（14日トライアル）">$7.99 (14-day trial)</td><td class="val" data-en="Free for MW owners" data-ja="MWユーザーは無料">Free for MW owners</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- COMING SOON: ECONOMIC CALENDAR -->
+  <div class="section">
+    <div class="soon">
+      <div class="soon-icon">🗓️</div>
+      <div>
+        <span class="soon-badge" data-en="Included" data-ja="標準搭載">Included</span>
+        <h3 data-en="Economic Calendar" data-ja="経済カレンダー">Economic Calendar</h3>
+        <p data-en="A schedule of the market-moving events that matter — central bank decisions (the Fed, BOJ, ECB), inflation and jobs releases, GDP and more. Grouped by day with importance markers, consensus and previous values, plus the actual result once a figure is released. Available in English, Japanese and Chinese." data-ja="相場を動かす重要イベントの日程表 — 中央銀行の政策決定（FRB・日銀・ECB）、物価・雇用統計、GDP など。日付ごとに重要度・予想・前回値を表示し、発表後は実績値も確認できます。英語・日本語・中国語に対応。">A schedule of the market-moving events that matter — central bank decisions (the Fed, BOJ, ECB), inflation and jobs releases, GDP and more. Grouped by day with importance markers, consensus and previous values, plus the actual result once a figure is released. Available in English, Japanese and Chinese.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRICING SUMMARY -->
+  <div class="section">
+    <div class="section-header" style="text-align:center;">
+      <div class="section-tag" data-en="Pricing" data-ja="料金">Pricing</div>
+      <h2 data-en="One purchase unlocks all three" data-ja="一度の購入で、3つすべて">One purchase unlocks all three</h2>
+    </div>
+    <div class="price-hero">
+      <div class="ph-big" data-en="MarketWatch <em>$7.99</em>" data-ja="MarketWatch <em>$7.99</em>">MarketWatch <em>$7.99</em></div>
+      <div class="ph-sub" data-en="14-day free trial · one-time purchase · lifetime license, no subscription" data-ja="14日間無料トライアル · 買い切り · 生涯ライセンス、サブスクなし">14-day free trial · one-time purchase · lifetime license, no subscription</div>
+      <div class="price-unlocks">
+        <div class="unlock u-web"><div class="u-name">WebMemo</div><div class="u-price" data-en="Included · Free" data-ja="付属 · 無料">Included · Free</div></div>
+        <div class="unlock u-mw"><div class="u-name">MarketWatch</div><div class="u-price">$7.99</div></div>
+        <div class="unlock u-max"><div class="u-name">MarketWatch Max</div><div class="u-price" data-en="Included · Free" data-ja="付属 · 無料">Included · Free</div></div>
+      </div>
+      <a href="https://apps.garmin.com/en-US/apps/c65e1a35-e34e-4763-8c67-85e52da733bb" data-en-href="https://apps.garmin.com/en-US/apps/c65e1a35-e34e-4763-8c67-85e52da733bb" data-ja-href="https://apps.garmin.com/ja-JP/apps/c65e1a35-e34e-4763-8c67-85e52da733bb" class="btn-primary" style="font-size:15px;" data-en="Start 14-Day Free Trial" data-ja="14日間の無料トライアルを開始">Start 14-Day Free Trial</a>
+      <div style="margin-top:14px;"><a href="../marketwatch/" style="font-size:13px; color:var(--muted); text-decoration:none;" data-en="See MarketWatch details →" data-ja="MarketWatch の詳細を見る →">See MarketWatch details →</a></div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>© 2026 Easymoat. All rights reserved.</p>
+  <div class="footer-links">
+    <span class="em-footer"></span>
+    <span style="color:var(--border)">|</span>
+    <a href="../marketwatch/" data-en="MarketWatch" data-ja="MarketWatch">MarketWatch</a>
+    <span style="color:var(--border)">|</span>
+    <a href="https://app.easymoat.com/webmemo/" data-en="WebMemo" data-ja="WebMemo">WebMemo</a>
+    <span style="color:var(--border)">|</span>
+    <a href="../tokutei.html" data-en="Specified Commercial Transactions Act" data-ja="特定商取引法に基づく表記">Specified Commercial Transactions Act</a>
+  </div>
+</footer>
+
+<script>
+var _e = 'easymoat' + '@' + 'gmail.com';
+function injectEmails() {
+  document.querySelectorAll('.em').forEach(function(el) { el.innerHTML = '<a href="mailto:' + _e + '">' + _e + '</a>'; });
+  document.querySelectorAll('.em-footer').forEach(function(el) { el.textContent = _e; });
+}
+function setLang(lang) {
+  var L = (lang === 'ja') ? 'ja' : 'en';
+  document.querySelectorAll('[data-en]').forEach(function(el) {
+    var t = el.getAttribute('data-' + L);
+    if (t == null) return;
+    if (t.indexOf('<') !== -1) { el.innerHTML = t; }          // 翻訳にHTML(<br>/<em>)を含む場合
+    else if (el.children.length === 0) { el.textContent = t; } // 子要素が無いプレーンテキストのみ差し替え
+  });
+  document.getElementById('btn-en').classList.toggle('active', L === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', L === 'ja');
+  document.documentElement.lang = L;
+  document.querySelectorAll('[data-en-href]').forEach(function(el) {
+    var href = el.getAttribute('data-' + L + '-href');
+    if (href) el.setAttribute('href', href);
+  });
+  try { localStorage.setItem('pl_lang', L); } catch (e) {}
+  injectEmails();
+}
+document.addEventListener('DOMContentLoaded', function() {
+  var saved = null;
+  try { saved = localStorage.getItem('pl_lang'); } catch (e) {}
+  if (!saved) { var nav = (navigator.language || 'en').toLowerCase(); saved = (nav.indexOf('ja') === 0) ? 'ja' : 'en'; }
+  setLang(saved);
+});
+</script>
+</body>
+</html>

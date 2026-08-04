@@ -77,6 +77,15 @@
   .shot figcaption { margin-top: 8px; font-size: 12px; color: var(--muted2); text-align: center; }
 
   .hero-phone { width: 100%; max-width: 300px; border-radius: 18px; border: 1px solid var(--border); box-shadow: var(--shadow-lg); }
+  /* 2 カラム時: iPhone 実寸は縦長すぎて右列だけ伸び、左下に大きな空白ができる。
+     上部を残して高さを詰め、説明文ブロックを縦中央に置いて釣り合わせる。 */
+  @media (min-width: 861px) {
+    .hero-phone { height: 470px; object-fit: cover; object-position: top;
+      /* 切り口が唐突に見えないよう下端をフェードさせる (枠線ごと消える) */
+      -webkit-mask-image: linear-gradient(to bottom, #000 90%, transparent 100%);
+              mask-image: linear-gradient(to bottom, #000 90%, transparent 100%); }
+    .hero-body { align-self: center; }
+  }
   .hero-watch { width: 150px; flex-shrink: 0; filter: drop-shadow(0 8px 20px rgba(0,30,80,0.18)); }
 
   .section { padding: 60px 0; border-top: 1px solid var(--border); }
@@ -219,7 +228,7 @@
       <div class="hero-tag" data-en="Web + Garmin — one workflow" data-ja="Web × Garmin — ひとつの流れ">Web + Garmin — one workflow</div>
       <div class="hero-head">
         <h1 data-en="Build on the web.<br>Glance on your <em>wrist</em>." data-ja="作るのはWeb。<br>見るのは<em>手首</em>。">Build on the web.<br>Glance on your <em>wrist</em>.</h1>
-        <img class="hero-watch" src="../markets_list.jpg" alt="MarketWatch on a Garmin watch">
+        <img class="hero-watch" src="watch_markets.png" alt="MarketWatch on a Garmin watch">
       </div>
     </div>
 

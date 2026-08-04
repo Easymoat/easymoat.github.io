@@ -58,24 +58,14 @@
 
   /* ── WebMemo browser mockup ── */
   .mock-wrap { display: flex; align-items: center; justify-content: center; gap: 18px; }
-  .browser { background: var(--white); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-lg); overflow: hidden; width: 100%; max-width: 380px; }
-  .browser-bar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: #F1F3F9; border-bottom: 1px solid var(--border); }
-  .browser-dot { width: 10px; height: 10px; border-radius: 50%; background: #D3D8E3; }
-  .browser-url { flex: 1; margin-left: 8px; background: var(--white); border: 1px solid var(--border); border-radius: 6px; font-size: 10px; color: var(--muted); padding: 4px 10px; text-align: center; font-family: 'Inter', sans-serif; }
-  .mock-body { padding: 18px 16px 16px; }
-  .mock-net-label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted2); font-weight: 600; }
-  .mock-net { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; color: var(--text); line-height: 1.1; }
-  .mock-net-chg { font-size: 12px; font-weight: 600; color: var(--accent); margin-bottom: 14px; }
-  .mock-alloc { display: flex; height: 8px; border-radius: 5px; overflow: hidden; margin-bottom: 16px; }
-  .mock-alloc span { display: block; height: 100%; }
-  .mock-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--border); }
-  .mock-row .tk { font-weight: 700; font-size: 13px; color: var(--text); }
-  .mock-row .nm { font-size: 10px; color: var(--muted2); }
-  .mock-row .pr { font-size: 13px; font-weight: 600; color: var(--text); text-align: right; }
-  .mock-row .cg { font-size: 11px; font-weight: 600; text-align: right; }
   .up { color: var(--accent); }
   .dn { color: var(--accent2); }
-  .mock-tag { display:inline-block; margin-top: 12px; font-size: 10px; color: var(--muted2); background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; }
+  /* 実画面のスクリーンショット (機能一覧の下) */
+  .shot { margin: 28px 0 0; }
+  .shot img { width: 100%; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); display: block; }
+  .shot figcaption { margin-top: 8px; font-size: 12px; color: var(--muted2); text-align: center; }
+
+  .hero-phone { width: 100%; max-width: 300px; border-radius: 18px; border: 1px solid var(--border); box-shadow: var(--shadow-lg); }
   .hero-watch { width: 132px; flex-shrink: 0; filter: drop-shadow(0 8px 20px rgba(0,30,80,0.18)); }
 
   .section { padding: 60px 0; border-top: 1px solid var(--border); }
@@ -138,6 +128,8 @@
   .mkt-name { font-weight: 700; font-size: 14px; color: var(--text); margin-bottom: 3px; }
   .mkt-eg { font-size: 11px; color: var(--muted2); font-family: 'Inter', monospace; }
   .mkt-note { font-size: 13px; color: var(--muted); margin-top: 16px; line-height: 1.6; }
+  .em a { color: var(--accent); text-decoration: none; }
+  .em a:hover { text-decoration: underline; }
 
   /* ── Compare table ── */
   .cmp-table { width: 100%; border-collapse: collapse; background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
@@ -222,29 +214,7 @@
     </div>
 
     <div class="mock-wrap">
-      <div class="browser" aria-label="WebMemo web app preview">
-        <div class="browser-bar">
-          <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
-          <span class="browser-url">app.easymoat.com/webmemo</span>
-        </div>
-        <div class="mock-body">
-          <div class="mock-net-label" data-en="Net worth" data-ja="純資産">Net worth</div>
-          <div class="mock-net">¥12,486,300</div>
-          <div class="mock-net-chg up">+¥84,200 &nbsp;(+0.68%)</div>
-          <div class="mock-alloc">
-            <span style="width:58%; background:#117A3A;"></span>
-            <span style="width:16%; background:#4F46E5;"></span>
-            <span style="width:11%; background:#B45309;"></span>
-            <span style="width:8%; background:#0891B2;"></span>
-            <span style="width:7%; background:#9CA3AF;"></span>
-          </div>
-          <div class="mock-row"><div><div class="tk">AAPL</div><div class="nm">Apple Inc.</div></div><div><div class="pr">340.08</div><div class="cg up">+1.24%</div></div></div>
-          <div class="mock-row"><div><div class="tk">7203.T</div><div class="nm" data-en="Toyota Motor" data-ja="トヨタ自動車">Toyota Motor</div></div><div><div class="pr">3,224</div><div class="cg up">+0.81%</div></div></div>
-          <div class="mock-row"><div><div class="tk">VOO</div><div class="nm">Vanguard S&amp;P 500</div></div><div><div class="pr">612.40</div><div class="cg up">+0.33%</div></div></div>
-          <div class="mock-row"><div><div class="tk">BTC-USD</div><div class="nm">Bitcoin</div></div><div><div class="pr">64,191</div><div class="cg dn">−0.42%</div></div></div>
-          <span class="mock-tag" data-en="Sample data" data-ja="サンプルデータ">Sample data</span>
-        </div>
-      </div>
+      <img class="hero-phone" src="webmemo_phone.jpg" alt="WebMemo on iPhone">
       <img class="hero-watch" src="../markets_list.jpg" alt="MarketWatch on a Garmin watch">
     </div>
   </div>
@@ -334,7 +304,7 @@
     <div class="section-header">
       <div class="section-tag" data-en="What you can track" data-ja="対応マーケット">What you can track</div>
       <h2 data-en="Any market, worldwide" data-ja="世界のあらゆるマーケット">Any market, worldwide</h2>
-      <p class="section-desc" data-en="Stocks and ETFs from 30+ exchanges, plus FX, crypto, indices, commodities and bond yields — the same market data on the web and on your wrist, powered by Yahoo Finance." data-ja="30以上の取引所の株式・ETF に加え、為替・暗号資産・指数・商品先物・国債利回りまで。Web でも手首でも同じ市場データを、Yahoo Finance で。">Stocks and ETFs from 30+ exchanges, plus FX, crypto, indices, commodities and bond yields — the same market data on the web and on your wrist, powered by Yahoo Finance.</p>
+      <p class="section-desc" data-en="Stocks and ETFs from 30+ exchanges, plus FX, crypto, indices and commodities via Yahoo Finance — with government bond yields straight from Japan&#39;s Ministry of Finance and the U.S. Federal Reserve (FRED). The same market data on the web and on your wrist." data-ja="30以上の取引所の株式・ETF に加え、為替・暗号資産・指数・商品先物を Yahoo Finance から。国債利回りは日本の財務省と米国 FRED（セントルイス連銀）から直接取得しています。Web でも手首でも同じ市場データを。">Stocks and ETFs from 30+ exchanges, plus FX, crypto, indices and commodities via Yahoo Finance — with government bond yields straight from Japan's Ministry of Finance and the U.S. Federal Reserve (FRED). The same market data on the web and on your wrist.</p>
     </div>
     <div class="mkt-grid">
       <div class="mkt-item">
@@ -368,7 +338,8 @@
         <div class="mkt-eg">^TNX · ^TYX · JP/US</div>
       </div>
     </div>
-    <p class="mkt-note" data-en="Coverage spans developed markets plus ASEAN and most BRICS. Find any Yahoo Finance ticker with the symbol lookup on the MarketWatch page." data-ja="カバレッジは主要先進国に加え ASEAN・BRICS の大半。正確な Yahoo Finance ティッカーは MarketWatch ページの銘柄検索で調べられます。">Coverage spans developed markets plus ASEAN and most BRICS. Find any Yahoo Finance ticker with the symbol lookup on the <a href="../marketwatch/" style="color:var(--accent); text-decoration:none; font-weight:600;">MarketWatch page</a>.</p>
+    <p class="mkt-note"><span data-en="Coverage spans developed markets plus ASEAN and most BRICS. Find any Yahoo Finance ticker with the symbol lookup on the " data-ja="カバレッジは主要先進国に加え ASEAN・BRICS の大半。正確な Yahoo Finance ティッカーは ">Coverage spans developed markets plus ASEAN and most BRICS. Find any Yahoo Finance ticker with the symbol lookup on the </span><a href="../marketwatch/" style="color:var(--accent); text-decoration:none; font-weight:600;"><span data-en="MarketWatch page" data-ja="MarketWatch ページ">MarketWatch page</span></a><span data-en="." data-ja="の銘柄検索で調べられます。">.</span></p>
+    <p class="mkt-note"><span data-en="Missing something you follow? Tell us what you&#39;d like to see in Markets — " data-ja="Markets に追加してほしい銘柄・指標のご要望があればご連絡ください — ">Missing something you follow? Tell us what you&#39;d like to see in Markets — </span><span class="em" data-subject="Markets request" style="font-weight:600;"></span></p>
   </div>
 
   <!-- WEBMEMO DEEP DIVE -->
@@ -410,6 +381,10 @@
         <p data-en="Correlation matrix, benchmark comparison and index sensitivity (beta) — educational tools to understand your mix." data-ja="相関マトリクス、ベンチマーク比較、指数感応度（β）— 自分の構成を理解するための学習ツール。">Correlation matrix, benchmark comparison and index sensitivity (beta) — educational tools to understand your mix.</p>
       </div>
     </div>
+    <figure class="shot">
+      <img src="webmemo_wide.jpg" alt="WebMemo portfolio view">
+      <figcaption data-en="Portfolios, net worth and live prices — on the phone in your pocket or the browser on your desk." data-ja="ポートフォリオ・純資産・ライブ価格を、手元のスマートフォンでもデスクのブラウザでも。">Portfolios, net worth and live prices — on the phone in your pocket or the browser on your desk.</figcaption>
+    </figure>
     <div class="free-note">
       <div class="free-note-title" data-en="Free while in open access" data-ja="無料開放中のご案内">Free while in open access</div>
       <p data-en="WebMemo is currently open to all MarketWatch owners at no charge. Because server storage is limited during this period, file attachments in memos are unavailable — the attach button stays visible, but files cannot be uploaded. Text memos, portfolios, quotes, charts and analysis all work normally. Attachments may return as part of a future paid plan." data-ja="WebMemo は現在、MarketWatch をお持ちの方に無料で開放しています。この期間はサーバー容量に限りがあるため、メモへのファイル添付はご利用いただけません（添付ボタンは表示されますが、アップロードはできません）。テキストのメモ・ポートフォリオ・価格・チャート・分析は通常どおりご利用いただけます。添付機能は将来の有料プランで提供する可能性があります。">WebMemo is currently open to all MarketWatch owners at no charge. Because server storage is limited during this period, file attachments in memos are unavailable — the attach button stays visible, but files cannot be uploaded. Text memos, portfolios, quotes, charts and analysis all work normally. Attachments may return as part of a future paid plan.</p>
@@ -497,7 +472,10 @@
 <script>
 var _e = 'easymoat' + '@' + 'gmail.com';
 function injectEmails() {
-  document.querySelectorAll('.em').forEach(function(el) { el.innerHTML = '<a href="mailto:' + _e + '">' + _e + '</a>'; });
+  document.querySelectorAll('.em').forEach(function(el) {
+    var s = el.getAttribute('data-subject');
+    el.innerHTML = '<a href="mailto:' + _e + (s ? '?subject=' + encodeURIComponent(s) : '') + '">' + _e + '</a>';
+  });
   document.querySelectorAll('.em-footer').forEach(function(el) { el.textContent = _e; });
 }
 function setLang(lang) {

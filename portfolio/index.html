@@ -41,22 +41,20 @@
 
   main { max-width: 980px; margin: 0 auto; padding: 0 40px 80px; }
 
-  /* 見出し+時計は全幅の 1 行目に置く (列幅に縛られないので両方を大きく出せる)。
-     2 行目が 説明・CTA | iPhone の 2 カラム。 */
-  .hero { padding: 64px 0 48px; display: grid; grid-template-columns: 1.15fr 1fr; gap: 24px 36px; align-items: center; }
-  .hero-top { grid-column: 1 / -1; }
-  /* 2 行目は iPhone 画像の高さで決まるため、説明文は中央寄せにせず見出し直下から始める */
-  .hero-body { align-self: start; }
+  /* 文章列 | 時計+iPhone の 2 カラム 1 段。右列は画像の実寸ぶんだけ取る (auto)。 */
+  .hero { padding: 64px 0 48px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 36px; align-items: center; }
+  /* main の 900px 枠だと 見出し・時計・iPhone を 1 段に並べるには狭いので、
+     大画面ではヒーローだけ左右にはみ出させて広く使う。 */
+  @media (min-width: 1024px) {
+    .hero { margin-inline: calc(-1 * clamp(0px, (100vw - 980px) / 2, 160px)); }
+  }
   .hero-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; padding: 5px 12px; border-radius: 20px; margin-bottom: 20px; }
   .hero-tag::before { content: ''; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
   h1 { font-family: 'Syne', sans-serif; font-size: clamp(34px, 5vw, 52px); font-weight: 800; line-height: 1.06; letter-spacing: -0.02em; color: var(--text); margin-bottom: 16px; }
-  /* 見出しの横に時計を並べる (右カラムは iPhone 単独) */
-  .hero-head { display: flex; align-items: center; gap: 28px; }
-  /* 時計と横並びになるぶん、見出しは単独時よりやや小さめに詰める */
   /* keep-all: 日本語が「作るのは/Web。」のように文節の途中で割れるのを防ぐ
      (英語は空白位置で従来どおり折り返す) */
-  .hero-head h1 { margin-bottom: 0; min-width: 0; font-size: clamp(26px, 4.2vw, 44px); line-height: 1.65; word-break: keep-all; }
+  .hero-body h1 { min-width: 0; font-size: clamp(26px, 3.7vw, 42px); line-height: 1.65; word-break: keep-all; }
   h1 em { font-style: normal; color: var(--accent); white-space: nowrap; }
   .hero-desc { font-size: 16px; line-height: 1.7; color: var(--muted); margin-bottom: 28px; }
   .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -77,17 +75,24 @@
   .shot figcaption { margin-top: 8px; font-size: 12px; color: var(--muted2); text-align: center; }
   .shot figcaption strong { color: var(--muted); font-weight: 700; }
 
-  .hero-phone { width: 100%; max-width: 300px; border-radius: 18px; border: 1px solid var(--border); box-shadow: var(--shadow-lg); }
-  /* 2 カラム時: iPhone 実寸は縦長すぎて右列だけ伸び、左下に大きな空白ができる。
-     上部を残して高さを詰め、説明文ブロックを縦中央に置いて釣り合わせる。 */
+  .hero-phone { width: 100%; max-width: 260px; border-radius: 18px; border: 1px solid var(--border); box-shadow: var(--shadow-lg); }
+  /* 2 カラム時: iPhone 実寸は縦長すぎて右列だけ伸びるので、上部を残して高さを詰める。 */
   @media (min-width: 861px) {
-    .hero-phone { height: 470px; object-fit: cover; object-position: top;
+    .hero-phone { height: 450px; width: 260px; flex-shrink: 0; object-fit: cover; object-position: top;
       /* 切り口が唐突に見えないよう下端をフェードさせる (枠線ごと消える) */
       -webkit-mask-image: linear-gradient(to bottom, #000 90%, transparent 100%);
               mask-image: linear-gradient(to bottom, #000 90%, transparent 100%); }
-    .hero-body { align-self: center; }
   }
   .hero-watch { width: 150px; flex-shrink: 0; filter: drop-shadow(0 8px 20px rgba(0,30,80,0.18)); }
+  /* ヒーローのはみ出し拡張が効かない幅では、画像を詰めて見出しの行数を抑える */
+  @media (max-width: 1100px) {
+    .hero-watch { width: 124px; }
+    .hero-phone { width: 224px; max-width: 224px; }
+  }
+  @media (max-width: 960px) {
+    .hero-watch { width: 110px; }
+    .hero-phone { width: 200px; max-width: 200px; }
+  }
 
   .section { padding: 60px 0; border-top: 1px solid var(--border); }
   .section-header { margin-bottom: 32px; }
@@ -100,11 +105,16 @@
   .surfaces { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
   .surface { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 26px; transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s; }
   .surface:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
-  .surface-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; min-height: 52px; }
-  .surface-head > div { padding-top: 2px; }
+  /* アイコン横並びだと 3 カラム時の文字領域が 171px しか無く、"MarketWatch" (168px)
+     が入りきらず枠からはみ出す。アイコンを上に置いてカード全幅を名前に使う。 */
+  .surface-head { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+  .surface-head > div { min-width: 0; }
+  /* "MarketWatch Max" だけ 2 行になるのでカード間の本文開始位置を揃える */
+  .surface-name-box { min-height: 60px; }
   .surface-head img { width: 52px; height: 52px; border-radius: 12px; box-shadow: 0 3px 8px rgba(0,0,0,0.08); }
   .surface-role { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-  .surface-name { font-family: 'Syne', sans-serif; font-size: 19px; font-weight: 800; color: var(--text); line-height: 1.1; }
+  /* 3 カラムが狭まる幅でも "MarketWatch" が 1 行で収まるよう可変に */
+  .surface-name { font-family: 'Syne', sans-serif; font-size: clamp(16px, 2vw, 19px); font-weight: 800; color: var(--text); line-height: 1.1; }
   .surface p { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
   .surface-price { font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 20px; display: inline-block; }
   .s-web .surface-role { color: var(--web); }
@@ -198,7 +208,7 @@
     .price-unlocks { grid-template-columns: 1fr; }
   }
   @media (max-width: 768px) { nav, .lang-bar { padding: 12px 20px; } main { padding: 0 20px 60px; } .soon { grid-template-columns: 1fr; text-align: center; } .mkt-grid { grid-template-columns: 1fr 1fr; } }
-  @media (max-width: 480px) { .features { grid-template-columns: 1fr; } .mkt-grid { grid-template-columns: 1fr; } .hero-head { gap: 12px; } .hero-watch { width: 104px; }
+  @media (max-width: 480px) { .features { grid-template-columns: 1fr; } .mkt-grid { grid-template-columns: 1fr; } .mock-wrap { gap: 10px; } .hero-watch { width: 104px; }
     /* 比較表はスマホ幅で数 px はみ出すのでセル余白を詰める (ページ全体の横スクロール防止) */
     .cmp-table th, .cmp-table td { padding: 12px 10px; font-size: 13px; } }
 </style>
@@ -225,15 +235,9 @@
 
   <!-- HERO -->
   <div class="hero">
-    <div class="hero-top">
-      <div class="hero-tag" data-en="Web + Garmin — one workflow" data-ja="Web × Garmin — ひとつの流れ">Web + Garmin — one workflow</div>
-      <div class="hero-head">
-        <h1 data-en="Build on the web.<br>Glance on your <em>wrist</em>." data-ja="作るのはWeb。<br>見るのは<em>手首</em>。">Build on the web.<br>Glance on your <em>wrist</em>.</h1>
-        <img class="hero-watch" src="watch_markets.png" alt="MarketWatch on a Garmin watch">
-      </div>
-    </div>
-
     <div class="hero-body">
+      <div class="hero-tag" data-en="Web + Garmin — one workflow" data-ja="Web × Garmin — ひとつの流れ">Web + Garmin — one workflow</div>
+      <h1 data-en="Build on the web.<br>Glance on your <em>wrist</em>." data-ja="作るのはWeb。<br>見るのは<em>手首</em>。">Build on the web.<br>Glance on your <em>wrist</em>.</h1>
       <p class="hero-desc" data-en="Organize your portfolios on the big screen with WebMemo — allocation, rebalancing, dividends and analysis — then see them live on your Garmin watch with MarketWatch and MarketWatch Max. One purchase unlocks all three." data-ja="大画面の WebMemo でポートフォリオを組み立て — 資産配分・リバランス・配当・分析まで。それを MarketWatch と MarketWatch Max で、Garmin ウォッチにライブ表示。$7.99 の一度の購入で、3つすべてが使えます。">Organize your portfolios on the big screen with WebMemo — allocation, rebalancing, dividends and analysis — then see them live on your Garmin watch with MarketWatch and MarketWatch Max. One purchase unlocks all three.</p>
       <div class="hero-cta">
         <a href="https://apps.garmin.com/en-US/apps/c65e1a35-e34e-4763-8c67-85e52da733bb" data-en-href="https://apps.garmin.com/en-US/apps/c65e1a35-e34e-4763-8c67-85e52da733bb" data-ja-href="https://apps.garmin.com/ja-JP/apps/c65e1a35-e34e-4763-8c67-85e52da733bb" class="btn-primary" data-en="Get MarketWatch — $7.99" data-ja="MarketWatch を入手 — $7.99">Get MarketWatch — $7.99</a>
@@ -243,6 +247,7 @@
     </div>
 
     <div class="mock-wrap">
+      <img class="hero-watch" src="watch_markets.png" alt="MarketWatch on a Garmin watch">
       <img class="hero-phone" src="webmemo_phone.jpg" alt="WebMemo on iPhone">
     </div>
   </div>
@@ -258,7 +263,7 @@
       <div class="surface s-web">
         <div class="surface-head">
           <img src="../webmemo_icon.png" alt="WebMemo">
-          <div>
+          <div class="surface-name-box">
             <div class="surface-role" data-en="Web · The hub" data-ja="Web · 母艦">Web · The hub</div>
             <div class="surface-name">WebMemo</div>
           </div>
@@ -269,7 +274,7 @@
       <div class="surface s-mw">
         <div class="surface-head">
           <img src="../marketwatch_icon.png" alt="MarketWatch">
-          <div>
+          <div class="surface-name-box">
             <div class="surface-role" data-en="Garmin · Glance" data-ja="Garmin · グランス">Garmin · Glance</div>
             <div class="surface-name">MarketWatch</div>
           </div>
@@ -280,7 +285,7 @@
       <div class="surface s-max">
         <div class="surface-head">
           <img src="../Marketwatch_Max_icon.png" alt="MarketWatch Max">
-          <div>
+          <div class="surface-name-box">
             <div class="surface-role" data-en="Garmin · Power view" data-ja="Garmin · パワービュー">Garmin · Power view</div>
             <div class="surface-name">MarketWatch Max</div>
           </div>

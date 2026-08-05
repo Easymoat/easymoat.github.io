@@ -68,9 +68,13 @@
   .app-card.portfolio:hover { border-color: #117A3A; }
   .app-card.portfolio .app-tag { color: #117A3A; }
   .app-card.portfolio .app-badge { background: #E5F5EC; color: #117A3A; }
-  /* 2 アプリのカードはアイコンでタイトルを挟む (左=WebMemo / 右=MarketWatch Max) */
-  .app-card.portfolio .app-title { flex: 1; min-width: 0; }
-  .app-card.portfolio .icon { width: 68px; height: 68px; }
+  /* 2 アプリのカードはアイコンでタイトルを挟む (左=WebMemo / 右=MarketWatch Max)。
+     タイトルを中央寄せにして、左右のアイコンとの余白を均等にする。 */
+  .app-card.portfolio .app-header { gap: 12px; }
+  .app-card.portfolio .app-title { flex: 1; min-width: 0; align-items: center; text-align: center; }
+  /* カードが細くなると 24px では "WebMemo" がアイコンに接触するので可変に */
+  .app-card.portfolio .app-name { font-size: clamp(16px, 4.6vw, 24px); }
+  @media (max-width: 480px) { .app-card.portfolio .app-header { gap: 8px; } }
 
   .app-tag { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; margin-bottom: 4px; }
   .app-name { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.1; }

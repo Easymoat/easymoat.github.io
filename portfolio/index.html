@@ -43,18 +43,13 @@
 
   /* 文章列 | 時計+iPhone の 2 カラム 1 段。右列は画像の実寸ぶんだけ取る (auto)。 */
   .hero { padding: 64px 0 48px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 36px; align-items: center; }
-  /* main の 900px 枠だと 見出し・時計・iPhone を 1 段に並べるには狭いので、
-     大画面ではヒーローだけ左右にはみ出させて広く使う。 */
-  @media (min-width: 1024px) {
-    .hero { margin-inline: calc(-1 * clamp(0px, (100vw - 980px) / 2, 160px)); }
-  }
   .hero-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; padding: 5px 12px; border-radius: 20px; margin-bottom: 20px; }
   .hero-tag::before { content: ''; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
   h1 { font-family: 'Syne', sans-serif; font-size: clamp(34px, 5vw, 52px); font-weight: 800; line-height: 1.06; letter-spacing: -0.02em; color: var(--text); margin-bottom: 16px; }
   /* keep-all: 日本語が「作るのは/Web。」のように文節の途中で割れるのを防ぐ
      (英語は空白位置で従来どおり折り返す) */
-  .hero-body h1 { min-width: 0; font-size: clamp(26px, 3.7vw, 42px); line-height: 1.65; word-break: keep-all; }
+  .hero-body h1 { min-width: 0; font-size: clamp(26px, 3.4vw, 36px); line-height: 1.65; word-break: keep-all; }
   h1 em { font-style: normal; color: var(--accent); white-space: nowrap; }
   .hero-desc { font-size: 16px; line-height: 1.7; color: var(--muted); margin-bottom: 28px; }
   .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -75,20 +70,16 @@
   .shot figcaption { margin-top: 8px; font-size: 12px; color: var(--muted2); text-align: center; }
   .shot figcaption strong { color: var(--muted); font-weight: 700; }
 
-  .hero-phone { width: 100%; max-width: 260px; border-radius: 18px; border: 1px solid var(--border); box-shadow: var(--shadow-lg); }
+  .hero-phone { width: 100%; max-width: 230px; border-radius: 18px; border: 1px solid var(--border); box-shadow: var(--shadow-lg); }
   /* 2 カラム時: iPhone 実寸は縦長すぎて右列だけ伸びるので、上部を残して高さを詰める。 */
   @media (min-width: 861px) {
-    .hero-phone { height: 450px; width: 260px; flex-shrink: 0; object-fit: cover; object-position: top;
+    .hero-phone { height: 420px; width: 230px; flex-shrink: 0; object-fit: cover; object-position: top;
       /* 切り口が唐突に見えないよう下端をフェードさせる (枠線ごと消える) */
       -webkit-mask-image: linear-gradient(to bottom, #000 90%, transparent 100%);
               mask-image: linear-gradient(to bottom, #000 90%, transparent 100%); }
   }
-  .hero-watch { width: 150px; flex-shrink: 0; filter: drop-shadow(0 8px 20px rgba(0,30,80,0.18)); }
-  /* ヒーローのはみ出し拡張が効かない幅では、画像を詰めて見出しの行数を抑える */
-  @media (max-width: 1100px) {
-    .hero-watch { width: 124px; }
-    .hero-phone { width: 224px; max-width: 224px; }
-  }
+  .hero-watch { width: 132px; flex-shrink: 0; filter: drop-shadow(0 8px 20px rgba(0,30,80,0.18)); }
+  /* main が縮み始める幅では画像も詰めて、見出しの行数が増えないようにする */
   @media (max-width: 960px) {
     .hero-watch { width: 110px; }
     .hero-phone { width: 200px; max-width: 200px; }

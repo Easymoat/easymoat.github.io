@@ -56,7 +56,7 @@
   /* 時計と横並びになるぶん、見出しは単独時よりやや小さめに詰める */
   /* keep-all: 日本語が「作るのは/Web。」のように文節の途中で割れるのを防ぐ
      (英語は空白位置で従来どおり折り返す) */
-  .hero-head h1 { margin-bottom: 0; min-width: 0; font-size: clamp(26px, 4.2vw, 44px); word-break: keep-all; }
+  .hero-head h1 { margin-bottom: 0; min-width: 0; font-size: clamp(26px, 4.2vw, 44px); line-height: 1.34; word-break: keep-all; }
   h1 em { font-style: normal; color: var(--accent); white-space: nowrap; }
   .hero-desc { font-size: 16px; line-height: 1.7; color: var(--muted); margin-bottom: 28px; }
   .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -75,6 +75,7 @@
   .shot { margin: 28px 0 0; }
   .shot img { width: 100%; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); display: block; }
   .shot figcaption { margin-top: 8px; font-size: 12px; color: var(--muted2); text-align: center; }
+  .shot figcaption strong { color: var(--muted); font-weight: 700; }
 
   .hero-phone { width: 100%; max-width: 300px; border-radius: 18px; border: 1px solid var(--border); box-shadow: var(--shadow-lg); }
   /* 2 カラム時: iPhone 実寸は縦長すぎて右列だけ伸び、左下に大きな空白ができる。
@@ -410,7 +411,7 @@
     </div>
     <figure class="shot">
       <img src="webmemo_wide.jpg" alt="WebMemo portfolio view">
-      <figcaption data-en="Portfolios, net worth and live prices — on the phone in your pocket or the browser on your desk." data-ja="ポートフォリオ・純資産・ライブ価格を、手元のスマートフォンでもデスクのブラウザでも。">Portfolios, net worth and live prices — on the phone in your pocket or the browser on your desk.</figcaption>
+      <figcaption data-en="<strong>iPhone in landscape</strong> — portfolios, net worth and live prices, on the phone in your pocket or the browser on your desk." data-ja="<strong>iPhone 横向きの画面</strong> — ポートフォリオ・純資産・ライブ価格を、手元のスマートフォンでもデスクのブラウザでも。"><strong>iPhone in landscape</strong> — portfolios, net worth and live prices, on the phone in your pocket or the browser on your desk.</figcaption>
     </figure>
     <div class="free-note">
       <div class="free-note-title" data-en="Free while in open access" data-ja="無料開放中のご案内">Free while in open access</div>

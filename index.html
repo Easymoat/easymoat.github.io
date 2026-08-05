@@ -68,8 +68,9 @@
   .app-card.portfolio:hover { border-color: #117A3A; }
   .app-card.portfolio .app-tag { color: #117A3A; }
   .app-card.portfolio .app-badge { background: #E5F5EC; color: #117A3A; }
-  .icon-pair { display: flex; align-items: center; flex-shrink: 0; }
-  .icon-pair .icon + .icon { margin-left: -22px; }
+  /* 2 アプリのカードはアイコンでタイトルを挟む (左=WebMemo / 右=MarketWatch Max) */
+  .app-card.portfolio .app-title { flex: 1; min-width: 0; }
+  .app-card.portfolio .icon { width: 68px; height: 68px; }
 
   .app-tag { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; margin-bottom: 4px; }
   .app-name { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.1; }
@@ -129,14 +130,12 @@
   </a>
   <a href="./portfolio/" class="app-card portfolio">
     <div class="app-header">
-      <span class="icon-pair">
-        <img class="icon" src="Marketwatch_Max_icon.png" alt="MarketWatch Max">
-        <img class="icon" src="webmemo_icon.png" alt="WebMemo">
-      </span>
+      <img class="icon" src="webmemo_icon.png" alt="WebMemo">
       <div class="app-title">
         <div class="app-tag" data-en="GARMIN APP + WEB" data-ja="GARMIN アプリ + WEB">GARMIN APP + WEB</div>
         <div class="app-name">MWM + WebMemo</div>
       </div>
+      <img class="icon" src="Marketwatch_Max_icon.png" alt="MarketWatch Max">
     </div>
     <div class="app-desc" data-en="Build your portfolios on the web with WebMemo — holdings, allocation, dividends, analysis and an economic calendar — then glance at them on your Garmin with MarketWatch Max (up to 7 portfolios / 140 symbols). Free for MarketWatch owners." data-ja="WebMemo でポートフォリオを組み立て — 保有・資産配分・配当・分析・経済カレンダーまで。それを MarketWatch Max で手首に（最大7ポートフォリオ・140銘柄）。MarketWatch ユーザーは無料。">Build your portfolios on the web with WebMemo — holdings, allocation, dividends, analysis and an economic calendar — then glance at them on your Garmin with MarketWatch Max (up to 7 portfolios / 140 symbols). Free for MarketWatch owners.</div>
     <span class="app-badge" data-en="Free for MarketWatch owners" data-ja="MarketWatch ユーザーは無料">Free for MarketWatch owners</span>

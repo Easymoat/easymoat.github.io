@@ -80,6 +80,7 @@
       <div id="targetRing"></div>
     </div>
     <button class="btn ghost" id="ringBtn">Target circle: ON</button>
+    <button class="btn ghost" id="facingBtn">Camera: Back</button>
     <label data-en="Colors (watch memory load)" data-ja="色数（ウォッチの負担）">Colors (watch memory load)</label>
     <div class="seg" id="colorSeg">
       <button data-v="16" class="active" data-en="16 — light" data-ja="16 — 軽い">16 — light</button>
@@ -134,6 +135,7 @@ function setLang(lang) {
   try { localStorage.setItem('pl_lang', lang); } catch (e) {}
   renderStatus();
   if (typeof renderRingBtn === 'function') { renderRingBtn(); }
+  if (typeof renderFacingBtn === 'function') { renderFacingBtn(); }
 }
 try { if (localStorage.getItem('pl_lang') === 'ja') setLang('ja'); } catch (e) {}
 function ja() { return document.documentElement.lang === 'ja'; }
@@ -259,11 +261,56 @@ document.getElementById('video').addEventListener('loadedmetadata', updateRing);
 window.addEventListener('resize', updateRing);
 renderRingBtn();
 
+// ─── 使用カメラ (背面 / 画面側) ───
+// 設置の向きによっては画面側カメラの方が構図を取りやすい (立てかけ・スタンド等)。
+// ローカルのボタンと Viewer からのリモート、どちらでも切り替えられるステート方式。
+function renderFacingBtn() {
+  const b = document.getElementById('facingBtn');
+  if (!b) return;
+  // 起動時の言語適用 (setLang) はこの下の camCfg 宣言より先に走るため、未初期化 (TDZ) の
+  // まま呼ばれ得る。既定 (背面) にフォールバックして初期化を止めない。
+  let front = false;
+  try { front = (camCfg.facing === 'user'); } catch (e) { front = false; }
+  b.textContent = (ja() ? 'カメラ: ' : 'Camera: ')
+    + (front ? (ja() ? '画面側' : 'Front') : (ja() ? '背面' : 'Back'));
+}
+// facing を適用 (ストリームを取り直す)。撮影中なら直後に1枚撮って構図をすぐ確認できる。
+async function applyFacing() {
+  if (!stream && timerId == null) { renderFacingBtn(); return; }
+  try {
+    await openStream();
+    if (timerId != null && !remotePaused) {
+      const soon = Date.now() + 1500;
+      if (nextShotAt == null || nextShotAt > soon) { nextShotAt = soon; }
+    }
+  } catch (e) {
+    document.getElementById('camAlert').innerHTML = '<div class="alert error">'
+      + (ja() ? 'カメラを切り替えられません: ' : 'Cannot switch camera: ') + e.message + '</div>';
+  }
+  updateRing();
+  renderFacingBtn();
+}
+document.getElementById('facingBtn').addEventListener('click', function () {
+  camCfg.facing = (camCfg.facing === 'user') ? 'environment' : 'user';
+  renderFacingBtn();
+  nextCfgPollAt = Date.now() + 5000;   // 直後の stale なポーリングで巻き戻らないように
+  if (jwt) {
+    fetch(API + '/user/cam-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
+      body: JSON.stringify({ facing: camCfg.facing })
+    }).catch(function () {});
+  }
+  applyFacing();
+});
+
 // ─── リモート制御 (Viewer → サーバ → ここ、のステートリレー) ───
 // 30秒 (調整モード中は10秒) ごとに /user/cam-config をポーリングし、最終値を適用する。
 // paused はストリーム停止のみ (Wake Lock とポーリングは維持 = リモート再開が効く)。
 let camCfg = { paused: false, zoom: 100, brightness: 0, colors: 16,
-               screen_off: false, torch: false, shoot_seq: 0, boost_until: 0 };
+               screen_off: false, torch: false, facing: 'environment',
+               shoot_seq: 0, boost_until: 0 };
+renderFacingBtn();   // 初期ラベル (既定=背面)。以後は操作/ポーリングで更新。
 
 // ─── 画面スリープ (黒画面)。ローカル操作と Viewer からのリモート操作の両対応。 ───
 function applyScreenOff(on) {
@@ -326,6 +373,7 @@ async function pollCamConfig() {
     camCfg = j.config;
     if (j.fast_sec) { fastSec = j.fast_sec; }   // 最短間隔はサーバが決める
     if (lastShootSeq === null) { lastShootSeq = camCfg.shoot_seq || 0; }
+    renderFacingBtn();                // 停止中でもラベルはサーバの状態に追随させる
     if (timerId == null) { return; }  // Start 前は表示だけ更新して適用しない
     // 調整モードに入った瞬間: 次の撮影を最短間隔まで前倒しする (3分待たせない)。
     // 抜けた時は現在予約されている撮影をそのまま使い、その後は通常間隔に戻る。
@@ -347,6 +395,12 @@ async function pollCamConfig() {
     }
     // 色数は Viewer からも変えられる (サーバのステートが正)。ローカル選択を追随させる。
     if (camCfg.colors && camCfg.colors !== mColors) { setColors(camCfg.colors); }
+    // 使用カメラ (背面/画面側) のリモート切替。変わった時だけストリームを取り直す。
+    if ((prev.facing || 'environment') !== (camCfg.facing || 'environment')) {
+      applyFacing();
+    } else {
+      renderFacingBtn();
+    }
     // 画面スリープ (リモート ON/OFF、ステートが正)
     applyScreenOff(camCfg.screen_off === true);
     // ライト (対応端末のみ実際に点灯。変化した時だけ適用)
@@ -404,7 +458,8 @@ async function openStream() {
   stream = await navigator.mediaDevices.getUserMedia({
     // 1080p を要求: 320px へ縮小する際の平均化で暗所ノイズがさらに減る (取れなければ
     // ブラウザが可能な解像度に落とすだけなので害はない)。
-    video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
+    video: { facingMode: (camCfg.facing === 'user') ? 'user' : 'environment',
+             width: { ideal: 1920 }, height: { ideal: 1080 } },
     audio: false
   });
   document.getElementById('video').srcObject = stream;
@@ -658,6 +713,11 @@ function renderStatus() {
   html += (j ? '画面ロック防止: ' : 'Wake lock: ') + (wakeLock ? 'ON' : (j ? 'OFF (自動ロックを「なし」に)' : 'OFF (set Auto-Lock to Never)'));
   el.innerHTML = html;
 }
+
+// 言語の再適用。冒頭の setLang は state (ringOn / camCfg) の宣言より前に走るため、
+// JS が文言を組み立てるボタン (ターゲット円・カメラ切替) だけ英語のまま残ってしまう。
+// 全ての宣言が済んだここで一度やり直して、初回表示から日本語に揃える。
+try { if (localStorage.getItem('pl_lang') === 'ja') { setLang('ja'); } } catch (e) {}
 </script>
 </body>
 </html>

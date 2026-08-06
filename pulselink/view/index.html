@@ -82,6 +82,7 @@
       <button class="btn ghost" id="screenBtn">Screen off</button>
       <button class="btn ghost" id="torchBtn">Torch</button>
     </div>
+    <button class="btn ghost" id="facingBtn">Camera: Back</button>
     <button class="btn" id="setupBtn" style="background:#0E7490;">Setup mode</button>
     <p class="hint" data-en="Setting the camera up? Setup mode shoots every 30 seconds for 5 minutes so you can check framing and brightness quickly on this page. It ends by itself and goes back to the normal 3-minute interval — press it again to extend." data-ja="カメラの設置中に。セットアップモードにすると5分間だけ30秒ごとに撮影するので、構図や明るさをこのページで素早く確認できます。時間が来れば自動で通常の3分間隔に戻ります（もう一度押せば延長）。">Setting the camera up? Setup mode shoots every 30 seconds for 5 minutes so you can check framing and brightness quickly on this page. It ends by itself and goes back to the normal 3-minute interval — press it again to extend.</p>
     <p class="hint" id="torchHint" style="display:none;" data-en="Torch is not available on this camera phone — the web torch API needs iOS 17.5+ or Android." data-ja="このカメラ端末ではライトを点けられません — Web のライト API は iOS 17.5 以降か Android が必要です。">Torch is not available on this camera phone — the web torch API needs iOS 17.5+ or Android.</p>
@@ -206,7 +207,8 @@ let camUid = '';
 let camVer = '0';
 let cfg = { paused: false, zoom: 100, brightness: 0, colors: 16,
             screen_off: false, torch: false, torch_supported: null,
-            night_mode: 'auto', night_active: false, shoot_seq: 0, boost_until: 0 };
+            night_mode: 'auto', night_active: false, facing: 'environment',
+            shoot_seq: 0, boost_until: 0 };
 let nextPollAt = 0;
 let pollTimer = null;
 
@@ -342,6 +344,11 @@ document.getElementById('torchBtn').addEventListener('click', function () {
 document.querySelectorAll('#nightSeg button').forEach(function (b) {
   b.addEventListener('click', function () { sendCfg({ night_mode: b.getAttribute('data-v') }); });
 });
+// 使用カメラの切替 (背面 ↔ 画面側)。切替と同時に1枚撮らせて、新しい向きの構図をすぐ確認する。
+document.getElementById('facingBtn').addEventListener('click', function () {
+  const next = (cfg.facing === 'user') ? 'environment' : 'user';
+  sendCfg({ facing: next, shoot: true });
+});
 
 function renderControls() {
   if (mode !== 'own') { return; }
@@ -370,6 +377,12 @@ function renderControls() {
                  : (cfg.torch ? (ja() ? 'ライト OFF' : 'Torch off')
                               : (ja() ? 'ライト ON' : 'Torch on'));
   document.getElementById('torchHint').style.display = noTorch ? '' : 'none';
+  // 使用カメラ (背面/画面側)。現在どちらを使っているかをラベルに出す。
+  const fb = document.getElementById('facingBtn');
+  const front = (cfg.facing === 'user');
+  fb.textContent = (ja() ? 'カメラ: ' : 'Camera: ')
+    + (front ? (ja() ? '画面側' : 'Front') : (ja() ? '背面' : 'Back'))
+    + (ja() ? ' — 押して切替' : ' — tap to switch');
   // ナイトビジョンモード (off/auto/on)
   document.querySelectorAll('#nightSeg button').forEach(function (x) {
     x.classList.toggle('active', x.getAttribute('data-v') === (cfg.night_mode || 'auto'));
@@ -429,6 +442,10 @@ function renderMeta() {
         ? ' · <span style="color:#0891B2;">' + (j ? '調整モード (5秒更新)' : 'adjusting (5s refresh)') + '</span>'
         : '');
 }
+
+// 言語の再適用 (cam ページと同じ理由)。冒頭の setLang は cfg / mode の宣言より前に走り、
+// renderControls が途中で止まるため、JS が文言を作るボタンだけ英語で残ってしまう。
+try { if (localStorage.getItem('pl_lang') === 'ja') { setLang('ja'); } } catch (e) {}
 </script>
 </body>
 </html>

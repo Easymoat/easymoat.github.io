@@ -116,7 +116,7 @@
     </div>
     <p class="hint" data-en="Dark photos are auto-enhanced on the server: boosted, denoised and rendered in night-vision green (16 shades = the fastest transfer tier). Auto decides per photo by its brightness. Total darkness still shows black — a small night light works wonders." data-ja="暗い写真はサーバが自動で増感・ノイズ抑制し、暗視スコープ風の緑モノクロ（16階調＝最速の転送ティア）に変換します。Auto は写真ごとの明るさで自動判定。完全な暗闇は増感しても黒のままなので、常夜灯がひとつあると効果的です。">Dark photos are auto-enhanced on the server: boosted, denoised and rendered in night-vision green (16 shades = the fastest transfer tier). Auto decides per photo by its brightness. Total darkness still shows black — a small night light works wonders.</p>
     <p class="hint" data-en="16 colors reaches the watch about twice as fast. 32 and 64 cost the same, so choose 64 if you want the best looking image. This page always shows full quality." data-ja="16色はウォッチへの到着が約2倍速くなります。32色と64色は転送量が同じなので、画質を求めるなら64色を。このページの表示は色数に関わらず常に元画質です。">16 colors reaches the watch about twice as fast. 32 and 64 cost the same, so choose 64 if you want the best looking image. This page always shows full quality.</p>
-    <p class="hint" data-en="Changes reach the camera within about 10-30 seconds, and a fresh photo is taken right away. While you are adjusting, this page refreshes every 5 seconds for about 3 minutes (adjustment mode)." data-ja="変更は約10〜30秒でカメラに届き、すぐに撮り直されます。操作すると約3分間は「調整モード」になり、このページは5秒ごとに自動更新されます。">Changes reach the camera within about 10-30 seconds, and a fresh photo is taken right away. While you are adjusting, this page refreshes every 5 seconds for about 3 minutes (adjustment mode).</p>
+    <p class="hint" data-en="Changes reach the camera within about 10-30 seconds, and a fresh photo is taken right away. For rapid framing checks, use Setup mode — it is the only control that changes the shooting interval." data-ja="変更は約10〜30秒でカメラに届き、すぐに撮り直されます。構図を素早く確認したい時はセットアップモードを使ってください（撮影間隔が変わるのはセットアップモードだけです）。">Changes reach the camera within about 10-30 seconds, and a fresh photo is taken right away. For rapid framing checks, use Setup mode — it is the only control that changes the shooting interval.</p>
     <div id="ctrlAlert"></div>
   </div>
 
@@ -289,14 +289,14 @@ document.addEventListener('visibilitychange', function () {
 });
 
 // ─── リモート制御 (own のみ) ───
-// 操作のたびに boost:true を添えて3分間の調整モードに入る (Cam のポーリングも高速化)。
+// 設定の部分更新。boost (セットアップモード) は Setup mode ボタンだけが明示的に送る —
+// 以前は全操作に boost:true を自動付与していて「カメラ切替でセットアップモードが始まる」
+// という連動になっていた (2026-08-07 修正)。設定変更の反映自体は Cam 側が変更検知で
+// すぐ1枚撮るので、boost が無くても新しい画像は届く。
 async function sendCfg(body) {
   const box = document.getElementById('ctrlAlert');
   box.innerHTML = '';
   try {
-    // 何か操作したら調整モードを延長する (画像をすぐ確認したいはずなので)。
-    // ただし boost を明示指定した呼び出し (Setup mode の開始/終了) は尊重する。
-    if (body.boost === undefined) { body.boost = true; }
     const r = await fetch(API + '/user/cam-config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
@@ -305,7 +305,7 @@ async function sendCfg(body) {
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || 'failed');
     cfg = j.config;
-    nextPollAt = 0;  // 調整モードの5秒ポーリングを即開始
+    nextPollAt = 0;  // 新しい状態と画像版をすぐ取りに行く
     renderControls();
   } catch (e) {
     box.innerHTML = '<div class="alert error">' + (ja() ? '送信に失敗しました: ' : 'Failed: ') + e.message + '</div>';

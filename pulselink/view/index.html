@@ -251,7 +251,8 @@ function updateImg() {
 // crew: /user/me (Leader の版)。30秒固定。タブ非表示中は停止。
 async function pollOwn() {
   try {
-    const r = await fetch(API + '/user/cam-config', { headers: { 'Authorization': 'Bearer ' + jwt } });
+    // view=1 = このページが開いている (見ている) 印。サーバの自動停止タイマーを止める。
+    const r = await fetch(API + '/user/cam-config?view=1', { headers: { 'Authorization': 'Bearer ' + jwt } });
     if (!r.ok) return;
     const j = await r.json();
     if (j.config) { cfg = j.config; renderControls(); }

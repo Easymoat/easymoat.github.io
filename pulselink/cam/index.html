@@ -387,12 +387,15 @@ async function pollCamConfig() {
     // 一時停止/再開 (リモート)
     if (camCfg.paused && !remotePaused) {
       remotePaused = true;
-      if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
-      document.getElementById('video').srcObject = null;
+      // ★ストリームは解放しない (2026-08-22)。ここで stop すると再開時に getUserMedia を
+      //   やり直すことになり、iOS は権限を永続化しないため毎回ダイアログが出て撮影が
+      //   止まる。「PL のバージョンアップごとに聞かれる」の正体がこれ (更新 → ウォッチが
+      //   見なくなる → 自動停止 → 解放 → 起動 → 自動再開 → ダイアログ)。
+      //   一時停止の目的は撮影と送信を止めることなので、カメラは掴んだままでよい。
       updateRing();
     } else if (!camCfg.paused && remotePaused) {
       remotePaused = false;
-      nextShotAt = Date.now() + 2000;  // 再開 → 即撮影 (ストリームは capture 内で取り直される)
+      nextShotAt = Date.now() + 2000;  // 再開 → 即撮影 (掴んだままなので取り直し不要)
     }
     // 色数は Viewer からも変えられる (サーバのステートが正)。ローカル選択を追随させる。
     if (camCfg.colors && camCfg.colors !== mColors) { setColors(camCfg.colors); }

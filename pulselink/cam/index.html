@@ -143,6 +143,39 @@ function ja() { return document.documentElement.lang === 'ja'; }
 
 // ─── サインイン (画像ページと同じ pl_jwt を共有) ───
 let jwt = null;
+// トークンを取得した時刻。サーバの JWT は 7日で失効するが、Cam ページは定点カメラとして
+// 何週間もつけっぱなしにするため必ずぶつかる。期限切れになるとアップロードだけが 401 で
+// 落ち続け、プレビューは動いたまま画像が届かない状態になる (2026-08-23 の実障害)。
+// 12時間ごとに /auth/refresh で差し替え、ページが動いている限り失効させない。
+let jwtAt = 0;
+const JWT_REFRESH_MS = 12 * 60 * 60 * 1000;
+async function refreshJwtIfNeeded() {
+  if (!jwt) { return; }
+  if (jwtAt && (Date.now() - jwtAt) < JWT_REFRESH_MS) { return; }
+  try {
+    const r = await fetch(API + '/auth/refresh', {
+      method: 'POST', headers: { 'Authorization': 'Bearer ' + jwt }
+    });
+    if (r.status === 401) { onAuthLost(); return; }
+    if (!r.ok) { return; }
+    const j = await r.json();
+    if (j && j.token) {
+      jwt = j.token; jwtAt = Date.now();
+      try { localStorage.setItem('pl_jwt', jwt); localStorage.setItem('pl_jwt_at', String(jwtAt)); } catch (e) {}
+    }
+  } catch (e) {}
+}
+// 認証が切れた時は、動いているように見せかけない。撮影を止めてはっきり知らせる。
+function onAuthLost() {
+  const box = document.getElementById('camAlert');
+  if (box) {
+    box.innerHTML = '<div class="alert error"><b>'
+      + (ja() ? 'サインインが切れました。撮影を停止します。もう一度サインインしてください。'
+              : 'Your sign-in expired. Capture has stopped. Please sign in again.')
+      + '</b></div>';
+  }
+  enterSignedOut();
+}
 function enterSignedIn(email) {
   document.getElementById('loginForm').style.display = 'none';
   document.getElementById('loginDone').style.display = '';
@@ -164,7 +197,11 @@ function enterSignedOut() {
   if (!saved) return;
   try {
     const r = await fetch(API + '/user/me', { headers: { 'Authorization': 'Bearer ' + saved } });
-    if (r.ok) { const j = await r.json(); jwt = saved; enterSignedIn(j.email || ''); }
+    if (r.ok) {
+      const j = await r.json(); jwt = saved;
+      try { jwtAt = Number(localStorage.getItem('pl_jwt_at')) || 0; } catch (e2) { jwtAt = 0; }
+      enterSignedIn(j.email || '');
+    }
     else { try { localStorage.removeItem('pl_jwt'); } catch (e) {} }
   } catch (e) {}
 })();
@@ -184,7 +221,8 @@ document.getElementById('loginBtn').addEventListener('click', async function () 
     const j = await r.json();
     if (!r.ok || !j.token) throw new Error(j.error || 'login_failed');
     jwt = j.token;
-    try { localStorage.setItem('pl_jwt', jwt); } catch (e2) {}
+    jwtAt = Date.now();
+    try { localStorage.setItem('pl_jwt', jwt); localStorage.setItem('pl_jwt_at', String(jwtAt)); } catch (e2) {}
     enterSignedIn(document.getElementById('email').value.trim());
   } catch (e) {
     box.innerHTML = '<div class="alert error">' + (ja() ? 'サインインに失敗しました: ' : 'Sign-in failed: ') + e.message + '</div>';
@@ -367,6 +405,7 @@ async function pollCamConfig() {
   if (!jwt) return;
   try {
     const r = await fetch(API + '/user/cam-config', { headers: { 'Authorization': 'Bearer ' + jwt } });
+    if (r.status === 401) { onAuthLost(); return; }
     if (!r.ok) return;
     const j = await r.json();
     if (!j || !j.config) return;
@@ -533,6 +572,7 @@ let inFlight = false;
 function tick() {
   renderStatus();
   const now = Date.now();
+  refreshJwtIfNeeded();   // 12時間ごとにトークンを差し替える (長期稼働で失効させない)
   // リモート制御のポーリング (30秒、調整モード中は10秒)
   if (jwt && now >= nextCfgPollAt) {
     const boost = camCfg.boost_until && camCfg.boost_until > now;
@@ -675,6 +715,7 @@ async function captureAndUpload() {
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
       body: JSON.stringify({ image: png, size: sizeMode, colors: mColors, palette: palette, slot: CAM_SLOT })
     });
+    if (r.status === 401) { onAuthLost(); return; }
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || 'upload_failed');
     shotCount++;

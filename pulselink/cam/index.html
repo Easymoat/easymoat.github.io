@@ -79,6 +79,7 @@
       <video id="video" autoplay playsinline muted></video>
       <div id="targetRing"></div>
     </div>
+    <p class="sub" data-en="iPhone: if iOS keeps asking for camera access, open Settings &gt; Apps &gt; Safari &gt; Camera and choose Allow. Otherwise Safari asks again every time and capture stops until you tap OK." data-ja="iPhone: カメラの許可を何度も聞かれる場合は、設定 &gt; アプリ &gt; Safari &gt; カメラ を「許可」にしてください。「確認」のままだと聞かれるたびに撮影が止まります。">iPhone: if iOS keeps asking for camera access, open Settings &gt; Apps &gt; Safari &gt; Camera and choose Allow. Otherwise Safari asks again every time and capture stops until you tap OK.</p>
     <button class="btn ghost" id="ringBtn">Target circle: ON</button>
     <button class="btn ghost" id="facingBtn">Camera: Back</button>
     <label data-en="Colors (watch memory load)" data-ja="色数（ウォッチの負担）">Colors (watch memory load)</label>
@@ -471,6 +472,22 @@ function streamAlive() {
   const t = stream.getVideoTracks()[0];
   return !!t && t.readyState === 'live' && !t.muted;
 }
+// iOS Safari は画面ロックやアプリ切替でトラックを一時的に muted にするが、戻ると自力で
+// 解除される。muted を即「死亡」と判定して openStream() を呼ぶと getUserMedia のやり直しに
+// なり、そのたびにカメラ権限のダイアログが出て撮影が止まる (iOS は権限を永続化しないため)。
+// readyState が live のうちは最大 3 秒待ち、それでも解けない時だけ取り直す。
+async function ensureStream() {
+  if (streamAlive()) { return; }
+  const t = stream ? stream.getVideoTracks()[0] : null;
+  if (t && t.readyState === 'live') {
+    for (let i = 0; i < 6; i++) {
+      await new Promise(function (r) { setTimeout(r, 500); });
+      if (streamAlive()) { return; }
+    }
+  }
+  await openStream();
+  await new Promise(function (r) { setTimeout(r, 2000); });   // 露出が安定するまで
+}
 
 document.getElementById('startBtn').addEventListener('click', async function () {
   const box = document.getElementById('camAlert');
@@ -535,11 +552,8 @@ async function captureAndUpload() {
   nextShotAt = Date.now() + (boostNow ? fastSec * 1000 : INTERVAL_MS);
   const box = document.getElementById('camAlert');
   try {
-    // ストリームが死んでいたら取り直し、露出が安定するまで 2秒待つ。
-    if (!streamAlive()) {
-      await openStream();
-      await new Promise(function (r) { setTimeout(r, 2000); });
-    }
+    // ストリームが死んでいたら取り直す (muted は一時的なことが多いので少し待つ)。
+    await ensureStream();
     const video = document.getElementById('video');
     const vw = video.videoWidth, vh = video.videoHeight;
     if (!vw || !vh) throw new Error('camera not ready');

@@ -171,7 +171,11 @@ function enterSignedOut() {
   if (!saved) return;
   try {
     const r = await fetch(API + '/user/me', { headers: { 'Authorization': 'Bearer ' + saved } });
-    if (r.ok) { const j = await r.json(); jwt = saved; enterSignedIn(j.email || ''); }
+    if (r.ok) {
+      const j = await r.json(); jwt = saved;
+      try { jwtAt = Number(localStorage.getItem('pl_jwt_at')) || 0; } catch (e2) { jwtAt = 0; }
+      enterSignedIn(j.email || '');
+    }
     else { try { localStorage.removeItem('pl_jwt'); } catch (e) {} }
   } catch (e) {}
 })();
@@ -191,7 +195,8 @@ document.getElementById('loginBtn').addEventListener('click', async function () 
     const j = await r.json();
     if (!r.ok || !j.token) throw new Error(j.error || 'login_failed');
     jwt = j.token;
-    try { localStorage.setItem('pl_jwt', jwt); } catch (e2) {}
+    jwtAt = Date.now();
+    try { localStorage.setItem('pl_jwt', jwt); localStorage.setItem('pl_jwt_at', String(jwtAt)); } catch (e2) {}
     enterSignedIn(document.getElementById('email').value.trim());
   } catch (e) {
     box.innerHTML = '<div class="alert error">' + (ja() ? 'サインインに失敗しました: ' : 'Sign-in failed: ') + e.message + '</div>';
@@ -211,10 +216,40 @@ let cfg = { paused: false, zoom: 100, brightness: 0, colors: 16,
             shoot_seq: 0, boost_until: 0 };
 let nextPollAt = 0;
 let pollTimer = null;
+let lastTickAt = 0;
+// サーバの JWT は 7日で失効する。Viewer も開きっぱなしにする使い方なのでぶつかる。
+// 失効すると poll が 401 を握りつぶして静かに更新が止まるため、更新と明示を入れる。
+let jwtAt = 0;
+const JWT_REFRESH_MS = 12 * 60 * 60 * 1000;
+async function refreshJwtIfNeeded() {
+  if (!jwt) { return; }
+  if (jwtAt && (Date.now() - jwtAt) < JWT_REFRESH_MS) { return; }
+  try {
+    const r = await fetch(API + '/auth/refresh', { method: 'POST', headers: { 'Authorization': 'Bearer ' + jwt } });
+    if (r.status === 401) { onAuthLost(); return; }
+    if (!r.ok) { return; }
+    const j = await r.json();
+    if (j && j.token) {
+      jwt = j.token; jwtAt = Date.now();
+      try { localStorage.setItem('pl_jwt', jwt); localStorage.setItem('pl_jwt_at', String(jwtAt)); } catch (e) {}
+    }
+  } catch (e) {}
+}
+function onAuthLost() {
+  if (pollTimer) { try { clearInterval(pollTimer); } catch (e) {} pollTimer = null; }
+  const el = document.getElementById('metaLine');
+  if (el) {
+    el.innerHTML = '<b style="color:#DC2626;">'
+      + (ja() ? 'サインインが切れました。もう一度サインインしてください。'
+              : 'Your sign-in expired. Please sign in again.') + '</b>';
+  }
+  enterSignedOut();
+}
 
 async function initSource() {
   try {
     const r = await fetch(API + '/user/me', { headers: { 'Authorization': 'Bearer ' + jwt } });
+    if (r.status === 401) { onAuthLost(); return; }
     if (!r.ok) return;
     const j = await r.json();
     if (j.image_slots && j.image_slots['6'] === true) {
@@ -253,6 +288,7 @@ async function pollOwn() {
   try {
     // view=1 = このページが開いている (見ている) 印。サーバの自動停止タイマーを止める。
     const r = await fetch(API + '/user/cam-config?view=1', { headers: { 'Authorization': 'Bearer ' + jwt } });
+    if (r.status === 401) { onAuthLost(); return; }
     if (!r.ok) return;
     const j = await r.json();
     if (j.config) { cfg = j.config; renderControls(); }
@@ -271,9 +307,11 @@ async function pollCrew() {
   } catch (e) {}
 }
 function tick() {
+  lastTickAt = Date.now();   // タイマー生存の印 (ensurePolling が見る)
   renderMeta();
   renderSetupBtn();   // 残り時間のカウントダウン
   if (document.visibilityState !== 'visible') { return; }
+  refreshJwtIfNeeded();   // 12時間ごとにトークンを差し替える (7日で失効するため)
   const now = Date.now();
   if (now < nextPollAt) { return; }
   if (mode === 'own') {
@@ -285,9 +323,29 @@ function tick() {
     pollCrew();
   }
 }
+// タブに戻った時: 次回ポーリング時刻を戻すだけでは足りない。iOS Safari は背面のタブの
+// setInterval ごと止める (あるいはページを破棄する) ことがあり、その場合 tick が二度と
+// 走らないので画像が固まったままになる (2026-08-23、再読み込みでだけ復旧した実障害)。
+// タイマーの生存を確かめ、死んでいたら張り直したうえで即座に取りに行く。
 document.addEventListener('visibilitychange', function () {
-  if (document.visibilityState === 'visible') { nextPollAt = 0; }
+  if (document.visibilityState !== 'visible') { return; }
+  nextPollAt = 0;
+  ensurePolling();
+  tick();
 });
+// 復帰契機は visibilitychange だけに頼らない (機種やバージョンで発火しないことがある)。
+window.addEventListener('pageshow', function () { nextPollAt = 0; ensurePolling(); tick(); });
+window.addEventListener('focus',   function () { nextPollAt = 0; ensurePolling(); });
+
+function ensurePolling() {
+  if (mode == null) { return; }
+  if (pollTimer == null) { pollTimer = setInterval(tick, 1000); }
+  // 生存監視: tick は毎秒 lastTickAt を更新する。5秒以上途切れていたら張り直す。
+  if (lastTickAt && (Date.now() - lastTickAt) > 5000) {
+    try { clearInterval(pollTimer); } catch (e) {}
+    pollTimer = setInterval(tick, 1000);
+  }
+}
 
 // ─── リモート制御 (own のみ) ───
 // 設定の部分更新。boost (セットアップモード) は Setup mode ボタンだけが明示的に送る —

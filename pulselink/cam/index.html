@@ -465,6 +465,22 @@ async function pollCamConfig() {
 // ─── カメラ + 定期撮影 ───
 let stream = null;
 let timerId = null;
+// タイマーの生存印。timerId は clearInterval されない限り数値のまま残るので、
+// 「null でない = 動いている」は成り立たない。iOS Safari は背面のタブや画面ロック中に
+// setInterval ごと止める (あるいはページを凍結する) ことがあり、その場合 tick が二度と
+// 走らず、撮影もポーリングも止まったまま映像だけが生きて見える。再読み込みでのみ
+// 復旧する状態になる (2026-08-23 の実障害)。tick が毎秒ここを更新し、途切れていたら
+// ensureCapturing() が張り直す。
+let lastTickAt = 0;
+function ensureCapturing() {
+  if (timerId == null) { return; }   // Stop 済み = 何もしない
+  if (lastTickAt && (Date.now() - lastTickAt) > 5000) {
+    try { clearInterval(timerId); } catch (e) {}
+    lastTickAt = Date.now();
+    timerId = setInterval(tick, 1000);
+    lastTickAt = Date.now();
+  }
+}
 let wakeLock = null;
 let shotCount = 0;
 let lastUploadAt = null;
@@ -481,9 +497,18 @@ async function acquireWakeLock() {
     }
   } catch (e) { wakeLock = null; }
 }
+function onResume() {
+  if (document.visibilityState !== 'visible') { return; }
+  ensureCapturing();                 // 止められていたタイマーを張り直す
+  if (stream && !wakeLock) { acquireWakeLock(); }
+  if (timerId != null) { nextCfgPollAt = 0; tick(); }   // 設定を取り直して即座に再開
+}
+// 復帰の契機は1つに頼らない (機種やバージョンで発火するものが違う)。
+window.addEventListener('pageshow', onResume);
+window.addEventListener('focus',    onResume);
 document.addEventListener('visibilitychange', function () {
   if (document.visibilityState !== 'visible') { return; }
-  if (stream && !wakeLock) { acquireWakeLock(); }
+  onResume();
   // 中断からの復帰: ストリームは死んでいることが多い。5秒後に撮影を前倒しして
   // (captureAndUpload 内の健全性チェックが取り直す)、新鮮な実画像をすぐ送る。
   // リモート一時停止中は撮影しない (ポーリングは tick が継続)。
@@ -570,6 +595,7 @@ document.getElementById('shotBtn').addEventListener('click', function () { captu
 
 let inFlight = false;
 function tick() {
+  lastTickAt = Date.now();   // タイマー生存の印 (ensureCapturing が見る)
   renderStatus();
   const now = Date.now();
   refreshJwtIfNeeded();   // 12時間ごとにトークンを差し替える (長期稼働で失効させない)

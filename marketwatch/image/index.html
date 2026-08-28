@@ -43,8 +43,7 @@
   /* プレビュー */
   .preview-wrap { display: flex; justify-content: center; margin: 20px 0; }
   .preview-stage { position: relative; width: 320px; max-width: 100%; aspect-ratio: 1 / 1; flex: 0 0 auto; border-radius: 50%; background: #000; overflow: hidden; }
-  /* ウォッチ実物に合わせ、画像は円形ステージの中央 66% に表示 (fr965: 300px/454px)。
-     「リングあり」= 周りに黒い縁が残る小さめ表示 / 「全画面」= ステージいっぱい。 */
+  /* プレビューは常に全画面 (2026-08-29 にリング/全画面の選択を廃止)。 */
   canvas#previewCanvas { position: absolute; left: 17%; top: 17%; width: 66%; height: 66%; border-radius: 50%; cursor: grab; touch-action: none; }
   canvas#previewCanvas:active { cursor: grabbing; }
   .preview-stage.full canvas#previewCanvas { left: 0; top: 0; width: 100%; height: 100%; }
@@ -54,10 +53,6 @@
   .zoom-ctl input[type=range] { flex: 1; }
   .zoom-ico { font-size: 18px; font-weight: 700; color: var(--text2); width: 14px; text-align: center; }
   .btn-link { background: none; border: none; color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer; padding: 4px 6px; }
-  .size-toggle { display: flex; gap: 10px; margin-bottom: 14px; }
-  .size-toggle label { flex: 1; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 0; }
-  .size-toggle label:has(input:checked) { border-color: var(--accent); background: var(--accent-light); color: var(--accent-dark); }
-  .size-toggle input { width: auto; }
   .preview-note { text-align: center; font-size: 12px; color: var(--muted); margin-top: -8px; margin-bottom: 16px; }
   .footer-links { text-align: center; margin-top: 20px; font-size: 13px; color: var(--muted); }
   .footer-links a { color: var(--accent); text-decoration: none; margin: 0 8px; }
@@ -122,7 +117,7 @@
     <h2 data-en="What makes an ideal image" data-ja="理想的な画像とは">What makes an ideal image</h2>
     <ul class="guide">
       <li><strong data-en="Match your background color." data-ja="背景色を合わせる。">Match your background color.</strong> <span data-en="The image blends in seamlessly when its background matches your watchface background color. The default is black, but you can change it in the watch's Background setting." data-ja="画像の背景色がウォッチフェイスの背景色と同じだと、境界が見えず一体化します。既定は黒ですが、ウォッチの Background 設定で変更できます。">The image blends in seamlessly when its background matches your watchface background color. The default is black, but you can change it in the watch's Background setting.</span></li>
-      <li><strong data-en="Square, 400×400 px or larger." data-ja="正方形、400×400px 以上。">Square, 400×400 px or larger.</strong> <span data-en="It's scaled to fit your watch — smaller in &quot;With ring&quot; mode, full-screen in &quot;Full screen&quot; mode (the exact size depends on your watch model). Non-square images are center-cropped." data-ja="ウォッチの画面に合わせて拡縮されます（「リングあり」は小さめ、「全画面」は画面いっぱい。実際のサイズは機種により異なります）。正方形でない画像は中央が切り抜かれます。">It's scaled to fit your watch — smaller in "With ring" mode, full-screen in "Full screen" mode (the exact size depends on your watch model). Non-square images are center-cropped.</span></li>
+      <li><strong data-en="Square, 400×400 px or larger." data-ja="正方形、400×400px 以上。">Square, 400×400 px or larger.</strong> <span data-en="It's scaled to fit your watch. How it is placed is set on the watch itself (Watch Face menu → Image: Auto or Full). Non-square images are center-cropped." data-ja="ウォッチの画面に合わせて拡縮されます。どう配置するかはウォッチ側の設定で決まります（Watch Face メニュー → Image: Auto / Full）。正方形でない画像は中央が切り抜かれます。">It's scaled to fit your watch. How it is placed is set on the watch itself (Watch Face menu → Image: Auto or Full). Non-square images are center-cropped.</span></li>
       <li><strong data-en="High-contrast colors." data-ja="高コントラストの色。">High-contrast colors.</strong> <span data-en="Use colors that contrast with your background. On a dark background, bright colors (white, yellow, cyan, red) stand out; on a light background, darker colors read better." data-ja="背景と対照的な色を使うと映えます。暗い背景なら白・黄・シアン・赤などの明るい色、明るい背景なら濃いめの色がよく見えます。">Use colors that contrast with your background. On a dark background, bright colors (white, yellow, cyan, red) stand out; on a light background, darker colors read better.</span></li>
       <li><strong data-en="Photos work too." data-ja="写真も使えます。">Photos work too.</strong> <span data-en="To fit the watch's memory the image is reduced to a limited color palette, so very subtle shades and smooth gradients may shift slightly. With enough colors, photos can still come through well. Logos, crests and bold shapes with flat colors are the most forgiving." data-ja="ウォッチのメモリに収めるため画像は限られた色数（パレット）に減色されるので、ごく微妙な色合いや滑らかなグラデーションは多少変わることがあります。色数を十分に取れば、写真もきれいに表示できます。フラットな色のロゴ・紋・大胆な図形は特に再現しやすいです。">To fit the watch's memory the image is reduced to a limited color palette, so very subtle shades and smooth gradients may shift slightly. With enough colors, photos can still come through well. Logos, crests and bold shapes with flat colors are the most forgiving.</span></li>
     </ul>
@@ -150,12 +145,8 @@
     <div class="field">
       <input id="file" type="file" accept="image/png,image/jpeg,image/webp">
     </div>
-    <div class="size-toggle">
-      <label><input type="radio" name="imgsize" value="standard" checked onchange="setSizeMode(this.value)"><span data-en="With ring" data-ja="リングあり">With ring</span></label>
-      <label><input type="radio" name="imgsize" value="full" onchange="setSizeMode(this.value)"><span data-en="Full screen" data-ja="全画面">Full screen</span></label>
-    </div>
     <div class="preview-wrap">
-      <div class="preview-stage" id="previewStage">
+      <div class="preview-stage full" id="previewStage">
         <canvas id="previewCanvas" width="320" height="320"></canvas>
       </div>
     </div>
@@ -168,10 +159,10 @@
         <button type="button" class="btn-link" id="resetAdjust" data-en="Reset" data-ja="リセット">Reset</button>
       </div>
     </div>
-    <p class="preview-note" style="text-align:left;" data-en="True-to-watch preview. With ring: the image is shown smaller, with a black margin around it. Full screen: the image fills the entire watchface." data-ja="実機どおりのプレビュー。リングあり: 画像が小さめに表示され、周りに黒い縁が残ります。全画面: 画像が画面いっぱいに広がります。">True-to-watch preview. With ring: the image is shown smaller, with a black margin around it. Full screen: the image fills the entire watchface.</p>
+    <p class="preview-note" style="text-align:left;" data-en="True-to-watch preview, shown full screen. On the watch, Image: Full fills the screen; Image: Auto shows it smaller, sized to the space left by your rows." data-ja="実機どおりのプレビュー（全画面表示）。ウォッチ側で Image: Full なら画面いっぱい、Image: Auto なら行の空きに合わせて小さめに表示されます。">True-to-watch preview, shown full screen.</p>
     <!-- キャッシュ容量の実測 (プレビューと融合)。現在の 標準/全画面・色数 に連動して自動更新。 -->
     <p style="font-weight:600; margin: 22px 0 4px;" data-en="Will it show on your watch?" data-ja="ウォッチに表示できる？">Will it show on your watch?</p>
-    <p class="preview-note" style="margin-top:0; text-align:left;" data-en="Pick a color count and size below. The result box then tells you whether the image will show on the watch. (More colors and a bigger image are harder to show.)" data-ja="下で色数と表示サイズを選ぶと、その組み合わせでウォッチに表示できるかどうかを下の枠に表示します。（色数が多く画像が大きいほど、表示が難しくなります。）">Pick a color count and size below; the result box tells you whether it will show on the watch.</p>
+    <p class="preview-note" style="margin-top:0; text-align:left;" data-en="Pick your watch model and color count below. The result box tells you whether the image will show, judged at full screen — the hardest case. If it passes there, it also works with Image: Auto. (More colors are harder to show.)" data-ja="下で機種と色数を選ぶと、ウォッチに表示できるかどうかを下の枠に表示します。判定は最も条件の厳しい全画面で行うので、ここで大丈夫なら Image: Auto でも表示できます。（色数が多いほど表示が難しくなります。）">Pick your watch model and color count below; the result box tells you whether it will show.</p>
     <div class="field">
       <label data-en="Target device (screen px) — hover a button for models" data-ja="対象機種（画面px）— ボタンにカーソルを重ねると機種名">Target device (screen px) — hover a button for models</label>
       <div id="deviceBtns" class="color-btns">
@@ -211,12 +202,12 @@
       </div>
     </div>
 
-    <p class="preview-note" style="text-align:left; margin-top:1em;" data-en="Rule: With ring (a smaller image) works with any number of colors. For Full screen, 16 colors or fewer is the safe choice. Fewer colors always displays more reliably." data-ja="ルール: 「リングあり」（小さめの画像）なら、何色を選んでも大丈夫です。「全画面」にするときは、16色までが安心です。色数を抑えるほど、確実に表示されます。">Rule: With ring works with any colors; for Full screen, 16 colors or fewer is the safe choice.</p>
+    <p class="preview-note" style="text-align:left; margin-top:1em;" data-en="Rule: 16 colors or fewer is the safe choice for full screen. Fewer colors always displays more reliably." data-ja="ルール: 全画面では16色までが安心です。色数を抑えるほど、確実に表示されます。">Rule: 16 colors or fewer is the safe choice for full screen.</p>
 
     <div id="uploadAlert"></div>
     <button class="btn" id="uploadBtn" disabled data-en="Upload to my watch" data-ja="ウォッチにアップロード">Upload to my watch</button>
     <button class="btn secondary" id="removeBtn" data-en="Remove custom image (back to default)" data-ja="カスタム画像を削除（デフォルトに戻す）">Remove custom image (back to default)</button>
-    <p class="preview-note" style="margin-top:14px; text-align:left;" data-en="After uploading, restart MarketWatch. The image downloads via your phone and appears automatically. A larger file can take 10 seconds or more to appear — give it time. If it still doesn't show after waiting, it's too large and failed; reduce colors or switch to With ring." data-ja="アップロード後、MarketWatch を再起動して下さい。スマホ経由で画像がダウンロードされ、自動で表示されます。容量の大きいファイルほど届くのに時間がかかり、反映まで10秒以上かかることがあるので少し待ってください。しばらく待っても表示されない場合は容量が大きすぎて読み込みに失敗しています — 色数を減らすか「リングあり」にして、もう一度アップロードしてください。">After uploading, restart MarketWatch. The image downloads via your phone and appears automatically. A larger file can take 10 seconds or more to appear — give it time. If it still doesn't show after waiting, it's too large and failed; reduce colors or switch to With ring.</p>
+    <p class="preview-note" style="margin-top:14px; text-align:left;" data-en="After uploading, restart MarketWatch. The image downloads via your phone and appears automatically. A larger file can take 10 seconds or more to appear — give it time. If it still doesn't show after waiting, it's too large and failed; upload again with fewer colors, or set Image to Auto in the watch's Watch Face menu (a smaller image is easier to show)." data-ja="アップロード後、MarketWatch を再起動して下さい。スマホ経由で画像がダウンロードされ、自動で表示されます。容量の大きいファイルほど届くのに時間がかかり、反映まで10秒以上かかることがあるので少し待ってください。しばらく待っても表示されない場合は容量が大きすぎて読み込みに失敗しています — 色数を減らして再アップロードするか、ウォッチの Watch Face メニューで Image を Auto にしてください（小さく表示されるぶん読み込みやすくなります）。">After uploading, restart MarketWatch. The image downloads via your phone and appears automatically. A larger file can take 10 seconds or more to appear — give it time. If it still doesn't show after waiting, upload again with fewer colors, or set Image to Auto on the watch.</p>
   </div>
 
   <div class="footer-links">
@@ -232,16 +223,12 @@ const API = 'https://mlbwatch-server.onrender.com/api/marketwatch';
 let deviceId = null;
 const DEV_RE = /^[0-9a-zA-Z-]{4,40}$/;
 let maskedPng = null;   // 320x320 円形マスク済み data URL
-let sizeMode = 'standard';  // 'standard' = リング内側 66% / 'full' = 画面いっぱい
+// 表示サイズは常に 'full' (2026-08-29)。ウォッチ側の配置は Watch Face メニューの
+// Image (Auto / Full) が決めており、このページから送る size は表示に使われない。
+// 確認は最も条件の厳しい Full だけで足りる (Full で表示できれば Auto でも必ず表示できる)。
+const sizeMode = 'full';
 // 位置決め状態: 読み込んだ画像と、ユーザーが調整した移動量(panX/panY px)・拡大率(zoom)
 let curImg = null, panX = 0, panY = 0, zoom = 1;
-
-function setSizeMode(v) {
-  sizeMode = (v === 'full') ? 'full' : 'standard';
-  document.getElementById('previewStage').classList.toggle('full', sizeMode === 'full');
-  if (typeof resetUploadBtn === 'function') { resetUploadBtn(); }
-  if (typeof scheduleMeasure === 'function') { scheduleMeasure(); }
-}
 
 // 現在の curImg + pan/zoom 状態で 320x320 円形マスクを再描画し maskedPng を更新する。
 function redrawPreview() {
@@ -460,7 +447,7 @@ document.getElementById('removeBtn').addEventListener('click', async () => {
 // ウォッチ内のデコード後ビットマップ = width × height × bpp ÷ 8。
 // bpp は色数で 1/2/4/8 の段階 (2色=1, 4色=2, 16色=4, それ以上=8)。
 // fr965 実測: ≤45KB はキャッシュ成功 / 103KB は失敗。
-let mDevStd = 300, mDevFull = 454, mColors = 16;
+let mDevFull = 454, mColors = 16;
 
 function bppFor(colors) {
   if (colors <= 2) return 1;
@@ -483,7 +470,6 @@ function selBtn(group, btn) {
 }
 document.querySelectorAll('#deviceBtns button').forEach(function (b) {
   b.addEventListener('click', function () {
-    mDevStd = parseInt(b.getAttribute('data-std'), 10);
     mDevFull = parseInt(b.getAttribute('data-full'), 10);
     selBtn('deviceBtns', b);
     scheduleMeasure();
@@ -518,12 +504,12 @@ function aText(kb) {
   return ja ? '大きすぎて表示できません' : 'too big — won\'t display';
 }
 
-// 計測: 現在の 標準/全画面(sizeMode)・対象機種・色数 に連動した1結果を表示。
+// 計測: 対象機種・色数に連動した1結果を表示。判定は常に全画面 (最も条件が厳しい)。
 // 表示可否はデコード後ビットマップ容量 (画素数 × bpp) で決まる (画像の中身ではない)。
 function measure() {
   var ja = document.documentElement.lang === 'ja';
-  var px = (sizeMode === 'full') ? mDevFull : mDevStd;
-  var modeLbl = (sizeMode === 'full') ? (ja ? '全画面' : 'Full') : (ja ? 'リングあり' : 'With ring');
+  var px = mDevFull;
+  var modeLbl = ja ? '全画面' : 'Full';
   var kb = kbFor(px, bppFor(mColors));
   var lbl = px + 'px · ' + modeLbl + ' · ' + mColors + (ja ? '色' : ' colors');
   var html = '<div class="measure-res"><div class="cell ' + aClass(kb) + '" style="flex:1;">' +
@@ -597,10 +583,7 @@ function repaintQuality() {
   ctx.clearRect(0, 0, 320, 320);
   ctx.fillStyle = bg; ctx.fillRect(0, 0, 320, 320);
   var srcImg = mReducedCanvas || document.getElementById('previewCanvas');
-  // Full は全画面、それ以外 (リングあり) は約72%で背景色の枠が見える。
-  var sz = (sizeMode === 'full') ? 320 : Math.round(320 * 0.72);
-  var off = (320 - sz) / 2;
-  ctx.drawImage(srcImg, off, off, sz, sz);
+  ctx.drawImage(srcImg, 0, 0, 320, 320);
 }
 
 // 現在のプレビュー画像を mColors 色に減色してキャッシュし、Auto 背景色の上に置いて表示

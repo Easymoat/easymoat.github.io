@@ -535,16 +535,51 @@ document.addEventListener('visibilitychange', function () {
 // 撮影のたびに健全性を確認し、死んでいたらここで取り直す。
 async function openStream() {
   if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
-  stream = await navigator.mediaDevices.getUserMedia({
-    // 1080p を要求: 320px へ縮小する際の平均化で暗所ノイズがさらに減る (取れなければ
-    // ブラウザが可能な解像度に落とすだけなので害はない)。
-    video: { facingMode: (camCfg.facing === 'user') ? 'user' : 'environment',
-             width: { ideal: 1920 }, height: { ideal: 1080 } },
-    audio: false
-  });
+  const want = (camCfg.facing === 'user') ? 'user' : 'environment';
+  // 1080p を要求: 320px へ縮小する際の平均化で暗所ノイズがさらに減る (取れなければ
+  // ブラウザが可能な解像度に落とすだけなので害はない)。
+  const size = { width: { ideal: 1920 }, height: { ideal: 1080 } };
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: Object.assign({ facingMode: want }, size), audio: false
+    });
+  } catch (e) {
+    // 向きの指定が満たせないだけで諦めない。ノート PC や外付け Web カメラには
+    // 背面カメラが無く、ブラウザによっては facingMode:'environment' を
+    // NotFoundError ("Requested device not found") で突き返してくる。定点カメラ用の
+    // ページが「向きが違う」程度で起動しないのは筋が悪いので、指定を外して取り直す。
+    const retryable = (e && (e.name === 'NotFoundError' || e.name === 'OverconstrainedError'
+                          || e.name === 'ConstraintNotSatisfiedError'));
+    if (!retryable) { throw e; }
+    stream = await navigator.mediaDevices.getUserMedia({ video: size, audio: false });
+  }
   document.getElementById('video').srcObject = stream;
   // ストリーム取り直しのたびにライト状態を再適用 + 対応可否を報告
   applyTorch();
+}
+
+// getUserMedia の失敗を、次に何をすればよいか分かる文にする。
+// 素の e.message は "Requested device not found" のように原因も対処も示さない。
+function cameraErrorText(e) {
+  const j = ja();
+  const n = (e && e.name) || '';
+  if (n === 'NotFoundError' || n === 'DevicesNotFoundError') {
+    return j ? 'この端末で使えるカメラが見つかりません。カメラのある端末 (スマホなど) で開いてください。'
+             : 'No camera is available on this device. Open this page on a device that has one, such as a phone.';
+  }
+  if (n === 'NotAllowedError' || n === 'PermissionDeniedError') {
+    return j ? 'カメラの使用が許可されていません。ブラウザのアドレスバーのカメラ表示、または端末の設定から許可してください。'
+             : 'Camera access was denied. Allow it from the camera icon in the address bar, or in your device settings.';
+  }
+  if (n === 'NotReadableError' || n === 'TrackStartError') {
+    return j ? 'カメラを他のアプリかタブが使用中です。そちらを閉じてからもう一度お試しください。'
+             : 'The camera is in use by another app or tab. Close it and try again.';
+  }
+  if (n === 'SecurityError') {
+    return j ? 'この URL ではカメラを使えません。https:// で開いてください。'
+             : 'The camera cannot be used from this URL. Open the page over https://.';
+  }
+  return (e && e.message) ? e.message : String(e);
 }
 function streamAlive() {
   if (!stream) { return false; }
@@ -585,7 +620,7 @@ document.getElementById('startBtn').addEventListener('click', async function () 
     timerId = setInterval(tick, 1000);
     renderStatus();
   } catch (e) {
-    box.innerHTML = '<div class="alert error">' + (ja() ? 'カメラを開始できません: ' : 'Cannot start camera: ') + e.message + '</div>';
+    box.innerHTML = '<div class="alert error">' + (ja() ? 'カメラを開始できません。' : 'Cannot start camera.') + '<br>' + cameraErrorText(e) + '</div>';
   }
 });
 function stopCamera() {

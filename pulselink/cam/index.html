@@ -737,6 +737,9 @@ let pendingMotion = false;   // 次の撮影を「検知のコマ」として送
 // 直近の変化量と検知時刻。画面に出して、置き場所ごとに感度を選べるようにする。
 // 数字が見えないと「反応しない」のか「感度が合っていない」のか切り分けられない。
 let lastMotionRatio = -1, lastMotionAt = 0, motionFireCount = 0;
+// 判定を何回通ったか。これが増えていれば検知ループは生きている。
+// 「変化量 0.0%」と「そもそも止まっている」は、値だけでは区別できない。
+let motionCheckCount = 0, motionSkipReason = '', motionNoFrame = 0;
 
 function motionEnabled() {
   return (camCfg.motion_mode || 'med') !== 'off';
@@ -764,12 +767,27 @@ function grabMotionFrame() {
 }
 
 function checkMotion() {
-  if (!motionEnabled() || remotePaused) { motionPrev = null; return; }
+  motionCheckCount++;
+  if (!motionEnabled()) { motionPrev = null; motionSkipReason = 'off'; return; }
+  if (remotePaused)     { motionPrev = null; motionSkipReason = 'paused'; return; }
   const cur = grabMotionFrame();
-  if (!cur) { return; }
+  // 映像が取れない = ここが止まる原因になりやすいので、理由を残して画面に出す。
+  // 数回続くようならストリームが死んでいるので取り直す (撮影側の ensureStream と
+  // 同じ考え方。検知だけ黙って止まったまま、という状態を作らない)。
+  if (!cur) {
+    motionSkipReason = 'no video';
+    motionNoFrame++;
+    if (motionNoFrame >= 5 && !inFlight) {
+      motionNoFrame = 0;
+      ensureStream().catch(function () {});
+    }
+    return;
+  }
+  motionNoFrame = 0;
   const prev = motionPrev;
   motionPrev = cur;
-  if (!prev) { return; }
+  if (!prev) { motionSkipReason = 'first frame'; return; }
+  motionSkipReason = '';
   // 全体の明るさの差を引いてから比べる = 照明が変わっただけでは反応しない。
   const shift = cur.mean - prev.mean;
   const night = cur.mean < 40;
@@ -991,7 +1009,10 @@ function renderStatus() {
     const hit = (lastMotionRatio >= th);
     html += (j ? '変化量: ' : 'Change: ')
          + '<b style="color:' + (hit ? '#DC2626' : 'inherit') + ';">' + cur + '%</b>'
-         + (j ? ' / 反応は ' : ' / fires at ') + (th * 100).toFixed(1) + '%<br>';
+         + (j ? ' / 反応は ' : ' / fires at ') + (th * 100).toFixed(1) + '%'
+         // 判定回数が毎秒増えていれば生きている。増えなければループが止まっている。
+         + ' <span style="color:#9CA3AF;">[' + motionCheckCount
+         + (motionSkipReason ? ' ' + motionSkipReason : '') + ']</span><br>';
     html += (j ? '検知: ' : 'Motion: ') + '<b>' + motionFireCount + '</b>'
          + (lastMotionAt ? ' (' + hhmm(lastMotionAt) + ')' : '') + '<br>';
   }

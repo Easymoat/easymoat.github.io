@@ -236,7 +236,7 @@ let camUid = '';
 let camVer = '0';
 let cfg = { paused: false, zoom: 100, brightness: 0, colors: 16,
             screen_off: false, torch: false, torch_supported: null,
-            night_mode: 'auto', night_active: false, facing: 'environment',
+            night_mode: 'auto', night_active: false, facing: 'environment', facing_supported: null,
             shoot_seq: 0, boost_until: 0 };
 let nextPollAt = 0;
 let pollTimer = null;
@@ -411,6 +411,7 @@ document.querySelectorAll('#nightSeg button').forEach(function (b) {
 });
 // 使用カメラの切替 (背面 ↔ 画面側)。切替と同時に1枚撮らせて、新しい向きの構図をすぐ確認する。
 document.getElementById('facingBtn').addEventListener('click', function () {
+  if (cfg.facing_supported === false) { return; }
   const next = (cfg.facing === 'user') ? 'environment' : 'user';
   sendCfg({ facing: next, shoot: true });
 });
@@ -443,11 +444,19 @@ function renderControls() {
                               : (ja() ? 'ライト ON' : 'Torch on'));
   document.getElementById('torchHint').style.display = noTorch ? '' : 'none';
   // 使用カメラ (背面/画面側)。現在どちらを使っているかをラベルに出す。
+  // ライトと同じで、カメラが1つしかない端末では Cam ページが facing_supported=false を
+  // 報告してくる。押しても同じ画が返るだけなので、その時は無効にして理由を見せる
+  // (黙って押せると「切り替えたのに変わらない」という不可解な状態になる)。
   const fb = document.getElementById('facingBtn');
+  const noFacing = (cfg.facing_supported === false);
   const front = (cfg.facing === 'user');
-  fb.textContent = (ja() ? 'カメラ: ' : 'Camera: ')
-    + (front ? (ja() ? '画面側' : 'Front') : (ja() ? '背面' : 'Back'))
-    + (ja() ? ' — 押して切替' : ' — tap to switch');
+  fb.disabled = noFacing;
+  fb.style.opacity = noFacing ? '0.4' : '';
+  fb.textContent = noFacing
+    ? (ja() ? 'カメラ: この端末は1つだけ' : 'Camera: only one on this device')
+    : ((ja() ? 'カメラ: ' : 'Camera: ')
+       + (front ? (ja() ? '画面側' : 'Front') : (ja() ? '背面' : 'Back'))
+       + (ja() ? ' — 押して切替' : ' — tap to switch'));
   // ナイトビジョンモード (off/auto/on)
   document.querySelectorAll('#nightSeg button').forEach(function (x) {
     x.classList.toggle('active', x.getAttribute('data-v') === (cfg.night_mode || 'auto'));

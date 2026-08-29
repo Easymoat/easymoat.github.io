@@ -41,6 +41,13 @@
   aside ol li a::before { content: counter(chnum); position: absolute; left: 6px; color: var(--muted2); font-size: 12px; font-weight: 600; }
   aside ol li a:hover { color: var(--accent-dark); border-left-color: var(--accent); }
   @media (max-width: 900px) { aside { position: static; max-height: none; border: 1px solid var(--border); border-radius: 8px; padding: 16px; background: var(--white); } }
+  /* 目次下の Web ツール導線。章リンクと同じ余白感で並べつつ、区切り線で別物と分かるように。 */
+  aside .toc-tools { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+  aside .toc-tools h3 { margin-bottom: 8px; }
+  aside .toc-tools ul { list-style: none; }
+  aside .toc-tools li a { display: block; padding: 5px 0 5px 4px; color: var(--text2); text-decoration: none; font-size: 13.5px; }
+  aside .toc-tools li a:hover { color: var(--accent-dark); }
+  aside .toc-tools .all { margin-top: 6px; font-weight: 600; color: var(--accent); font-size: 13px; }
 
   /* ─── Article ─── */
   article > h1 { font-size: 36px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; }
@@ -157,6 +164,16 @@
       <li><a href="#camera" data-en="Camera (PulseLink Cam)" data-ja="カメラ（PulseLink Cam）">Camera (PulseLink Cam)</a></li>
       <li><a href="#troubleshooting" data-en="Troubleshooting" data-ja="トラブルシューティング">Troubleshooting</a></li>
     </ol>
+    <div class="toc-tools">
+      <h3 data-en="Web tools" data-ja="Web ツール">Web tools</h3>
+      <ul>
+        <li><a href="../image/" data-en="🖼️ Watch face image" data-ja="🖼️ 文字盤画像">🖼️ Watch face image</a></li>
+        <li><a href="../cam/" data-en="📷 Camera" data-ja="📷 カメラ">📷 Camera</a></li>
+        <li><a href="../view/" data-en="🖥️ Viewer" data-ja="🖥️ ビューア">🖥️ Viewer</a></li>
+        <li><a href="../delete/" data-en="🗑️ Delete my data" data-ja="🗑️ データ削除">🗑️ Delete my data</a></li>
+        <li><a class="all" href="../tools/" data-en="All web tools →" data-ja="Web ツール一覧 →">All web tools →</a></li>
+      </ul>
+    </div>
   </aside>
 
   <article>

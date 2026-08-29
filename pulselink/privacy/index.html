@@ -65,7 +65,7 @@
 
     <h2>2. What we collect</h2>
     <ul>
-      <li><strong>Account data</strong> — your email address, a password (stored only as a salted hash, never in plain text), and a nickname you choose.</li>
+      <li><strong>Identity data</strong> — your watch's Device ID (an identifier the watch already carries) and a nickname you choose. We never ask for an email address, a password, or your real name.</li>
       <li><strong>Activity &amp; health data</strong> — heart rate, step count, and distance, read from your Garmin device. These are shared in real time with the other Members of the Crew you join.</li>
       <li><strong>Location data (optional, off by default)</strong> — only if you turn on Location sharing, your current GPS position is read from your Garmin device and shared with the other Members of your Crew, so they can see you on the compass radar. It is used for that purpose only. If you never enable this feature, no position is ever collected.</li>
       <li><strong>Crew data</strong> — which Crew you belong to, invite codes for Crews you lead, join/approval status, and the template messages you send.</li>
@@ -76,7 +76,7 @@
 
     <h2>3. How we use your data</h2>
     <ul>
-      <li>To authenticate you and keep you signed in (email address + password → token).</li>
+      <li>To tell one watch from another, so your data goes to you and not to someone else (Device ID).</li>
       <li>To run the Crew you create or join, and to show your live heart rate, steps and distance to the other Members of that Crew.</li>
       <li>If you enable Location sharing, to show your current position to the other Members of your Crew on the compass radar.</li>
       <li>To deliver template messages between Members.</li>
@@ -99,7 +99,7 @@
       <li><strong>Heart rate, steps, distance</strong> — held only in server memory as the latest value, not written to permanent storage. It is overwritten by your next update (typically within seconds to minutes) and lost entirely if the server restarts.</li>
       <li><strong>Location</strong> — treated the same way: held only in server memory as your latest position, overwritten by your next update and lost if the server restarts. Turning Location sharing off clears your stored position immediately.</li>
       <li><strong>Messages</strong> — stored per Crew and automatically pruned after a retention period.</li>
-      <li><strong>Account data (email address, password hash, nickname)</strong> — kept while your account exists.</li>
+      <li><strong>Identity data (Device ID, nickname)</strong> — kept until you erase it on the Delete my data page.</li>
       <li><strong>On account deletion</strong> — your account, any Crew you own, your memberships, and your messages are <strong>permanently and immediately erased</strong>.</li>
     </ul>
 
@@ -116,9 +116,9 @@
     <p>Depending on your location (including under the GDPR for EU/UK users), you have the right to:</p>
     <ul>
       <li><strong>Access</strong> the personal data we hold about you.</li>
-      <li><strong>Delete</strong> your account and all associated data — at any time, yourself, via the <a href="../delete/">Delete account</a> page.</li>
-      <li><strong>Rectify</strong> your data — change your nickname in-app, or reset your password via the <a href="../forgot/">Forgot password</a> page.</li>
-      <li><strong>Withdraw consent</strong> for health-data or Location processing — use the in-app privacy controls above (including Location off), or delete your account.</li>
+      <li><strong>Delete</strong> all data associated with your watch — at any time, yourself, via the <a href="../delete/">Delete my data</a> page.</li>
+      <li><strong>Rectify</strong> your data — change your nickname in the Connect IQ phone app. There is no password to reset: PulseLink has no accounts.</li>
+      <li><strong>Withdraw consent</strong> for health-data or Location processing — use the in-app privacy controls above (including Location off), or delete your data.</li>
       <li><strong>Data portability</strong> and <strong>object</strong> to processing — contact us at <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a>.</li>
     </ul>
     <p>EU/UK users also have the right to lodge a complaint with their local data protection authority.</p>
@@ -127,7 +127,7 @@
     <p>PulseLink requires a Garmin device and a Garmin account. You must meet the eligibility and age requirements of your Garmin account to use PulseLink.</p>
 
     <h2>9. Security</h2>
-    <p>All communication between the app and our server is <strong>encrypted in transit using HTTPS (TLS)</strong>. Passwords are stored only as salted SHA-256 hashes — never in plain text — and authentication uses signed tokens. Heart-rate, step and distance values are held only transiently in server memory (see Section 5). No method of transmission or storage is perfectly secure, but we apply measures appropriate to the sensitivity of the data.</p>
+    <p>All communication between the app and our server is <strong>encrypted in transit using HTTPS (TLS)</strong>. There are no passwords to protect, because PulseLink has no accounts — a watch identifies itself with its Device ID, which is shown only on the watch itself. Heart-rate, step and distance values are held only transiently in server memory (see Section 5). No method of transmission or storage is perfectly secure, but we apply measures appropriate to the sensitivity of the data.</p>
 
     <p>Watchface images (an optional Leader feature) are uploaded from the website over HTTPS. When a Leader shares an image, it is relayed through our server to each Crew member's watch over HTTPS, and it is visible only within that invite-only Crew; each member can opt out at any time using the "Use Leader's" toggle. On the watch the image is rendered solely as a static bitmap through Garmin's image API — shown as pixels only, it cannot run code or access any other data on your device.</p>
 
@@ -160,7 +160,7 @@
 
     <h2>2. 取得する情報</h2>
     <ul>
-      <li><strong>アカウント情報</strong> — メールアドレス、パスワード（ソルト付きハッシュとしてのみ保存し、平文では保存しません）、お客様が設定するニックネーム。</li>
+      <li><strong>本人識別情報</strong> — ウォッチが元々持っている Device ID と、お客様が設定するニックネーム。メールアドレス・パスワード・お名前は一切お伺いしません。</li>
       <li><strong>アクティビティ・健康データ</strong> — Garmin デバイスから読み取る心拍数・歩数・距離。参加中のCrewの他メンバーとリアルタイムで共有されます。</li>
       <li><strong>位置情報（任意・既定 OFF）</strong> — 位置共有を ON にした場合に限り、Garmin デバイスから現在の GPS 位置を読み取り、Crew の他メンバーと共有します（コンパスレーダーに表示するため）。用途はこれに限られます。本機能を有効にしなければ、位置は一切取得されません。</li>
       <li><strong>Crew情報</strong> — 所属Crew、リーダーになる場合の招待コード、参加・承認状況、送信した定型メッセージ。</li>
@@ -171,13 +171,13 @@
 
     <h2>3. 利用目的</h2>
     <ul>
-      <li>お客様の認証とログイン状態の維持（メールアドレス＋パスワード → トークン）。</li>
+      <li>どのウォッチかを識別し、データが他の方に混ざらないようにするため（Device ID）。</li>
       <li>作成または参加したCrewの運営、および当該Crewの他メンバーへのリアルタイムの心拍数・歩数・距離の表示。</li>
       <li>位置共有を有効にした場合、コンパスレーダー上で現在地を当該Crewの他メンバーに表示すること。</li>
       <li>メンバー間の定型メッセージの送受信。</li>
       <li>Stripe を通じたリーダーサブスクリプションの管理。</li>
     </ul>
-    <p><strong>法的根拠（GDPR）:</strong> 心拍数（健康）データおよび位置共有については<em>明示的な同意</em>、アカウント・Crew機能については<em>契約の履行</em>、サービスの安全維持については<em>正当な利益</em>。</p>
+    <p><strong>法的根拠（GDPR）:</strong> 心拍数（健康）データおよび位置共有については<em>明示的な同意</em>、Crew 機能の提供については<em>契約の履行</em>、サービスの安全維持については<em>正当な利益</em>。</p>
 
     <h2>4. 情報を閲覧できる者</h2>
     <ul>
@@ -194,8 +194,8 @@
       <li><strong>心拍数・歩数・距離</strong> — 最新値としてサーバーのメモリ上にのみ保持し、永続ストレージには書き込みません。次回の更新（通常は数秒〜数分以内）で上書きされ、サーバー再起動時には完全に失われます。</li>
       <li><strong>位置情報</strong> — 上記と同様に、最新の現在地としてサーバーのメモリ上にのみ保持し、次回の更新で上書き、サーバー再起動時に失われます。位置共有を OFF にすると、保存済みの位置は即座に削除されます。</li>
       <li><strong>メッセージ</strong> — Crewごとに保存され、一定の保持期間後に自動削除されます。</li>
-      <li><strong>アカウント情報（メールアドレス・パスワードハッシュ・ニックネーム）</strong> — アカウントが存在する間、保持します。</li>
-      <li><strong>アカウント削除時</strong> — アカウント、所有するCrew、メンバーシップ、メッセージを<strong>恒久的かつ即時に消去</strong>します。</li>
+      <li><strong>本人識別情報（Device ID・ニックネーム）</strong> — データ削除ページで消されるまで保持します。</li>
+      <li><strong>データ削除の実行時</strong> — 記録、アップロードした画像、所有する Crew、メンバーシップ、メッセージを<strong>恒久的かつ即時に消去</strong>します。</li>
     </ul>
 
     <h2>6. プライバシー制御</h2>
@@ -211,9 +211,9 @@
     <p>お客様の所在地（EU/UK ユーザーの GDPR を含む）に応じて、以下の権利があります:</p>
     <ul>
       <li>当社が保持する個人データへの<strong>アクセス</strong>。</li>
-      <li>アカウントと全関連データの<strong>削除</strong> — いつでもご自身で <a href="../delete/">アカウント削除</a>ページから実行できます。</li>
-      <li>データの<strong>訂正</strong> — アプリ内でニックネームを変更、または <a href="../forgot/">パスワード再発行</a>ページからリセットできます。</li>
-      <li>健康データまたは位置情報の処理への<strong>同意の撤回</strong> — 上記アプリ内プライバシー制御（位置オフを含む）の利用、またはアカウント削除によります。</li>
+      <li>ウォッチに紐づく全データの<strong>削除</strong> — いつでもご自身で <a href="../delete/">データ削除</a>ページから実行できます。</li>
+      <li>データの<strong>訂正</strong> — スマホの Connect IQ アプリでニックネームを変更できます。PulseLink にアカウントはないため、リセットするパスワードもありません。</li>
+      <li>健康データまたは位置情報の処理への<strong>同意の撤回</strong> — 上記アプリ内プライバシー制御（位置オフを含む）の利用、またはデータ削除によります。</li>
       <li><strong>データポータビリティ</strong>および処理への<strong>異議申立</strong> — <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a> までご連絡ください。</li>
     </ul>
     <p>EU/UK ユーザーは、所在地のデータ保護監督機関へ苦情を申し立てる権利も有します。</p>
@@ -222,7 +222,7 @@
     <p>PulseLink のご利用には Garmin デバイスおよび Garmin アカウントが必要です。Garmin アカウントの利用要件（年齢を含む）を満たす方が対象です。</p>
 
     <h2>9. セキュリティ</h2>
-    <p>アプリとサーバー間の通信はすべて <strong>HTTPS（TLS）で暗号化</strong>されています。パスワードはソルト付き SHA-256 ハッシュとしてのみ保存し（平文では保存しません）、認証には署名付きトークンを使用します。心拍数・歩数・距離の値はサーバーのメモリ上に一時的に保持されるのみです（第5項参照）。完全に安全な送信・保存方法は存在しませんが、データの機微性に見合った措置を講じています。</p>
+    <p>アプリとサーバー間の通信はすべて <strong>HTTPS（TLS）で暗号化</strong>されています。PulseLink にアカウントはないため、守るべきパスワードもありません。ウォッチは Device ID で自身を示し、この ID はウォッチの画面にしか表示されません。心拍数・歩数・距離の値はサーバーのメモリ上に一時的に保持されるのみです（第5項参照）。完全に安全な送信・保存方法は存在しませんが、データの機微性に見合った措置を講じています。</p>
 
     <p>ウォッチフェイス画像（任意のリーダー機能）は、ウェブから HTTPS でアップロードされます。リーダーが画像を共有すると、当社サーバーを介して HTTPS で各 Crew メンバーのウォッチへ中継され、その招待制 Crew 内でのみ表示されます。各メンバーは「Use Leader's」トグルでいつでも表示をオフにできます。ウォッチ上では Garmin の画像 API を通じて静止画像（ビットマップ）としてのみ描画され、ピクセルとして表示されるだけで、コードの実行や端末内の他データへのアクセスはできません。</p>
 

@@ -65,15 +65,6 @@
       <input type="text" id="devid" placeholder="XXXX-XXXX" autocapitalize="characters" autocomplete="off" spellcheck="false">
       <button class="btn" id="devBtn" data-en="Sign in" data-ja="サインイン">Sign in</button>
       <div id="devAlert"></div>
-      <p class="sub"><a href="#" id="showLogin" data-en="Use an account instead" data-ja="アカウントでサインインする">Use an account instead</a></p>
-    </div>
-    <div id="loginForm" style="display:none;">
-      <label data-en="Email" data-ja="メールアドレス">Email</label>
-      <input type="email" id="email" autocomplete="username">
-      <label data-en="Password" data-ja="パスワード">Password</label>
-      <input type="password" id="password" autocomplete="current-password">
-      <button class="btn" id="loginBtn" data-en="Sign in" data-ja="サインイン">Sign in</button>
-      <div id="loginAlert"></div>
     </div>
     <div id="loginDone" style="display:none;">
       <div class="alert success" id="loginDoneMsg"></div>
@@ -149,20 +140,14 @@ function setLang(lang) {
 try { if (localStorage.getItem('pl_lang') === 'ja') setLang('ja'); } catch (e) {}
 function ja() { return document.documentElement.lang === 'ja'; }
 
-// ─── サインイン (画像ページと同じ pl_jwt を共有) ───
-let jwt = null;
-// ───── 認証方式の抽象化 ─────
-// Device ID 方式 (アカウント不要) とアカウント方式の両方を同じ呼び出し側から使えるようにする。
-// device_id は GET ならクエリ、POST ならボディに載せる。サーバは Authorization が
-// 無ければ device_id で解決する (MW1 の画像機能と同じ方式)。
+// ─── サインイン (Device ID のみ) ───
+// 2026-08-29 にアカウント (email + password) を全廃した。認証はウォッチの Device ID
+// だけで、サーバは device_id を見て本人と権利を解決する (MW1 の画像機能と同じ方式)。
+// device_id は GET ならクエリ、POST ならボディに載せる。
 let devId = null;
 try { devId = localStorage.getItem('pl_devid') || null; } catch (e) { devId = null; }
 
-function authHeaders(extra) {
-  const h = Object.assign({}, extra || {});
-  if (!devId && jwt) { h['Authorization'] = 'Bearer ' + jwt; }
-  return h;
-}
+function authHeaders(extra) { return Object.assign({}, extra || {}); }
 function withDev(url) {
   if (!devId) { return url; }
   return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'device_id=' + encodeURIComponent(devId);
@@ -170,71 +155,40 @@ function withDev(url) {
 function withDevBody(obj) {
   return devId ? Object.assign({ device_id: devId }, obj || {}) : (obj || {});
 }
-// 撮影ループを回してよい状態か (どちらかの方式でつながっている)。
-function connected() { return !!devId || !!jwt; }
-// トークンを取得した時刻。サーバの JWT は 7日で失効するが、Cam ページは定点カメラとして
-// 何週間もつけっぱなしにするため必ずぶつかる。期限切れになるとアップロードだけが 401 で
-// 落ち続け、プレビューは動いたまま画像が届かない状態になる (2026-08-23 の実障害)。
-// 12時間ごとに /auth/refresh で差し替え、ページが動いている限り失効させない。
-let jwtAt = 0;
-const JWT_REFRESH_MS = 12 * 60 * 60 * 1000;
-async function refreshJwtIfNeeded() {
-  if (devId) { return; }   // Device ID 方式にトークンは無い (失効の概念ごと消える)
-  if (!jwt) { return; }
-  if (jwtAt && (Date.now() - jwtAt) < JWT_REFRESH_MS) { return; }
-  try {
-    const r = await fetch(API + '/auth/refresh', {
-      method: 'POST', headers: { 'Authorization': 'Bearer ' + jwt }
-    });
-    if (r.status === 401) { onAuthLost(); return; }
-    if (!r.ok) { return; }
-    const j = await r.json();
-    if (j && j.token) {
-      jwt = j.token; jwtAt = Date.now();
-      try { localStorage.setItem('pl_jwt', jwt); localStorage.setItem('pl_jwt_at', String(jwtAt)); } catch (e) {}
-    }
-  } catch (e) {}
-}
-// 認証が切れた時は、動いているように見せかけない。撮影を止めてはっきり知らせる。
+// 撮影ループを回してよい状態か。
+function connected() { return !!devId; }
+
+// Device ID が弾かれた時は、動いているように見せかけない。撮影を止めてはっきり知らせる。
+// (トークン失効の概念は無くなったので、起きるのは権利切れか ID の打ち間違いだけ)
 function onAuthLost() {
   const box = document.getElementById('camAlert');
   if (box) {
     box.innerHTML = '<div class="alert error"><b>'
-      + (ja() ? 'サインインが切れました。撮影を停止します。もう一度サインインしてください。'
-              : 'Your sign-in expired. Capture has stopped. Please sign in again.')
+      + (ja() ? 'このウォッチではカメラを使えません。撮影を停止します。'
+              : 'This watch is not entitled to the camera. Capture has stopped.')
       + '</b></div>';
   }
-  enterSignedOut();
+  disconnectDevice();
 }
-function enterSignedIn(email) {
-  document.getElementById('devForm').style.display = 'none';
-  document.getElementById('loginForm').style.display = 'none';
-  document.getElementById('loginDone').style.display = '';
-  document.getElementById('loginDoneMsg').textContent =
-    (ja() ? 'サインイン済み: ' : 'Signed in: ') + email;
-  document.getElementById('camCard').style.display = '';
-}
-// Device ID 方式での接続解除。撮影を止め、入力画面へ戻す。
+
 function disconnectDevice() {
   devId = null;
   try { localStorage.removeItem('pl_devid'); } catch (e) {}
   stopCamera();
   document.getElementById('devForm').style.display = '';
-  document.getElementById('loginForm').style.display = 'none';
   document.getElementById('loginDone').style.display = 'none';
   document.getElementById('camCard').style.display = 'none';
 }
 
-function enterSignedOut() {
-  jwt = null;
-  try { localStorage.removeItem('pl_jwt'); } catch (e) {}
-  stopCamera();
-  document.getElementById('devForm').style.display = '';
-  document.getElementById('loginForm').style.display = 'none';
-  document.getElementById('loginDone').style.display = 'none';
-  document.getElementById('camCard').style.display = 'none';
+function enterConnected() {
+  document.getElementById('devForm').style.display = 'none';
+  document.getElementById('loginDone').style.display = '';
+  document.getElementById('loginDoneMsg').textContent =
+    (ja() ? 'サインイン済み: ' : 'Signed in: ') + devId;
+  document.getElementById('camCard').style.display = '';
 }
-// Device ID が保存されていればそちらを優先して復元する。
+
+// 保存済みの Device ID があれば復元する。
 (async function restoreDevice() {
   if (!devId) { return; }
   try {
@@ -244,63 +198,9 @@ function enterSignedOut() {
   } catch (e) { /* 通信不能時は保存値を残したまま入力画面を出す */ }
 })();
 
-function enterConnected() {
-  document.getElementById('devForm').style.display = 'none';
-  document.getElementById('loginForm').style.display = 'none';
-  document.getElementById('loginDone').style.display = '';
-  document.getElementById('loginDoneMsg').textContent =
-    (ja() ? 'サインイン済み: ' : 'Signed in: ') + devId;
-  document.getElementById('camCard').style.display = '';
-}
+document.getElementById('logoutBtn').addEventListener('click', disconnectDevice);
 
-(async function restoreSession() {
-  if (devId) { return; }   // Device ID 方式で復元済み
-  let saved = null;
-  try { saved = localStorage.getItem('pl_jwt'); } catch (e) {}
-  if (!saved) return;
-  try {
-    const r = await fetch(API + '/user/me', { headers: { 'Authorization': 'Bearer ' + saved } });
-    if (r.ok) {
-      const j = await r.json(); jwt = saved;
-      try { jwtAt = Number(localStorage.getItem('pl_jwt_at')) || 0; } catch (e2) { jwtAt = 0; }
-      enterSignedIn(j.email || '');
-    }
-    else { try { localStorage.removeItem('pl_jwt'); } catch (e) {} }
-  } catch (e) {}
-})();
-document.getElementById('loginBtn').addEventListener('click', async function () {
-  const box = document.getElementById('loginAlert');
-  box.innerHTML = '';
-  const btn = document.getElementById('loginBtn');
-  btn.disabled = true;
-  try {
-    const r = await fetch(API + '/auth/login', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: document.getElementById('email').value.trim(),
-        password: document.getElementById('password').value
-      })
-    });
-    const j = await r.json();
-    if (!r.ok || !j.token) throw new Error(j.error || 'login_failed');
-    jwt = j.token;
-    jwtAt = Date.now();
-    try { localStorage.setItem('pl_jwt', jwt); localStorage.setItem('pl_jwt_at', String(jwtAt)); } catch (e2) {}
-    enterSignedIn(document.getElementById('email').value.trim());
-  } catch (e) {
-    box.innerHTML = '<div class="alert error">' + (ja() ? 'サインインに失敗しました: ' : 'Sign-in failed: ') + e.message + '</div>';
-  } finally { btn.disabled = false; }
-});
-document.getElementById('logoutBtn').addEventListener('click', function () {
-  if (devId) { disconnectDevice(); } else { enterSignedOut(); }
-});
-
-// ─── Device ID でつなぐ (アカウント不要) ───
-document.getElementById('showLogin').addEventListener('click', function (e) {
-  e.preventDefault();
-  document.getElementById('devForm').style.display = 'none';
-  document.getElementById('loginForm').style.display = '';
-});
+// ─── Device ID でつなぐ ───
 document.getElementById('devBtn').addEventListener('click', async function () {
   const box = document.getElementById('devAlert');
   const btn = document.getElementById('devBtn');
@@ -326,7 +226,6 @@ document.getElementById('devBtn').addEventListener('click', async function () {
     if (!r.ok) { throw new Error('http_' + r.status); }
     devId = v;
     try { localStorage.setItem('pl_devid', devId); } catch (e) {}
-    jwt = null;
     enterConnected();
   } catch (e) {
     box.innerHTML = '<div class="alert error">' + (ja() ? 'サインインできません: ' : 'Cannot sign in: ') + e.message + '</div>';
@@ -701,9 +600,8 @@ function tick() {
   lastTickAt = Date.now();   // タイマー生存の印 (ensureCapturing が見る)
   renderStatus();
   const now = Date.now();
-  refreshJwtIfNeeded();   // 12時間ごとにトークンを差し替える (長期稼働で失効させない)
   // リモート制御のポーリング (30秒、調整モード中は10秒)
-  if (jwt && now >= nextCfgPollAt) {
+  if (connected() && now >= nextCfgPollAt) {
     const boost = camCfg.boost_until && camCfg.boost_until > now;
     nextCfgPollAt = now + (boost ? 10000 : 30000);
     pollCamConfig();

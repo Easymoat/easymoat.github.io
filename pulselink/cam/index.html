@@ -63,7 +63,7 @@
       <p class="sub" data-en="Open PulseLink on your watch, then You menu &gt; Link up &gt; Device ID. Enter the code shown there. No account needed." data-ja="ウォッチで PulseLink を開き、You メニュー &gt; Link up &gt; Device ID に出ている番号を入れてください。アカウントは不要です。">Open PulseLink on your watch, then You menu &gt; Link up &gt; Device ID. Enter the code shown there. No account needed.</p>
       <label data-en="Device ID" data-ja="Device ID">Device ID</label>
       <input type="text" id="devid" placeholder="XXXX-XXXX" autocapitalize="characters" autocomplete="off" spellcheck="false">
-      <button class="btn" id="devBtn" data-en="Connect" data-ja="つなぐ">Connect</button>
+      <button class="btn" id="devBtn" data-en="Sign in" data-ja="サインイン">Sign in</button>
       <div id="devAlert"></div>
       <p class="sub"><a href="#" id="showLogin" data-en="Use an account instead" data-ja="アカウントでサインインする">Use an account instead</a></p>
     </div>
@@ -249,7 +249,7 @@ function enterConnected() {
   document.getElementById('loginForm').style.display = 'none';
   document.getElementById('loginDone').style.display = '';
   document.getElementById('loginDoneMsg').textContent =
-    (ja() ? 'つながっています: ' : 'Connected: ') + devId;
+    (ja() ? 'サインイン済み: ' : 'Signed in: ') + devId;
   document.getElementById('camCard').style.display = '';
 }
 
@@ -329,7 +329,7 @@ document.getElementById('devBtn').addEventListener('click', async function () {
     jwt = null;
     enterConnected();
   } catch (e) {
-    box.innerHTML = '<div class="alert error">' + (ja() ? 'つながりません: ' : 'Cannot connect: ') + e.message + '</div>';
+    box.innerHTML = '<div class="alert error">' + (ja() ? 'サインインできません: ' : 'Cannot sign in: ') + e.message + '</div>';
   } finally { btn.disabled = false; }
 });
 

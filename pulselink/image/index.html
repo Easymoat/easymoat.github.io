@@ -565,7 +565,7 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
 
 // ─── 削除 (デフォルトに戻す) ───
 document.getElementById('removeBtn').addEventListener('click', async () => {
-  if (!jwt) return;
+  if (!connected()) return;
   const ja = document.documentElement.lang === 'ja';
   const box = document.getElementById('uploadAlert');
   box.innerHTML = '';
@@ -677,7 +677,7 @@ function renderSlots() {
 }
 
 async function loadSlots() {
-  if (!jwt) return;
+  if (!connected()) return;   // Device ID 方式では jwt が null なので connected() で見る
   try {
     const r = await fetch(withDev(API + '/user/me'), { headers: authHeaders() });
     if (!r.ok) return;
@@ -691,7 +691,7 @@ async function loadSlots() {
 }
 
 document.getElementById('useSlotBtn').addEventListener('click', async () => {
-  if (!jwt) return;
+  if (!connected()) return;
   const ja = document.documentElement.lang === 'ja';
   const box = document.getElementById('uploadAlert');
   box.innerHTML = '';

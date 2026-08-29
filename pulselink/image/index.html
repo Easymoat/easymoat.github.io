@@ -129,9 +129,19 @@
   </div>
 
   <div class="card">
-    <h2 data-en="1. Sign in" data-ja="1. サインイン">1. Sign in</h2>
+    <h2 data-en="1. Connect your watch" data-ja="1. ウォッチをつなぐ">1. Connect your watch</h2>
     <div id="loginAlert"></div>
-    <div id="loginForm">
+    <div id="devForm">
+      <p class="sub" data-en="Open PulseLink on your watch, then You menu &gt; Link up &gt; Device ID. Enter the code shown there. No account needed." data-ja="ウォッチで PulseLink を開き、You メニュー &gt; Link up &gt; Device ID に出ている番号を入れてください。アカウントは不要です。">Open PulseLink on your watch, then You menu &gt; Link up &gt; Device ID. Enter the code shown there. No account needed.</p>
+      <div class="field">
+        <label for="devid" data-en="Device ID" data-ja="Device ID">Device ID</label>
+        <input id="devid" type="text" placeholder="XXXX-XXXX" autocapitalize="characters" autocomplete="off" spellcheck="false">
+      </div>
+      <button class="btn" id="devBtn" data-en="Connect" data-ja="つなぐ">Connect</button>
+      <div id="devAlert"></div>
+      <p class="sub"><a href="#" id="showLogin" data-en="Use an account instead" data-ja="アカウントでサインインする">Use an account instead</a></p>
+    </div>
+    <div id="loginForm" style="display:none;">
       <div class="field">
         <label for="email" data-en="Email" data-ja="メールアドレス">Email</label>
         <input id="email" type="email" autocomplete="email">
@@ -237,6 +247,22 @@
 <script>
 const API = 'https://mlbwatch-server.onrender.com/api/pulselink';
 let jwt = null;
+// ───── 認証方式の抽象化 (cam / view と同一) ─────
+let devId = null;
+try { devId = localStorage.getItem('pl_devid') || null; } catch (e) { devId = null; }
+function authHeaders(extra) {
+  const h = Object.assign({}, extra || {});
+  if (!devId && jwt) { h['Authorization'] = 'Bearer ' + jwt; }
+  return h;
+}
+function withDev(url) {
+  if (!devId) { return url; }
+  return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'device_id=' + encodeURIComponent(devId);
+}
+function withDevBody(obj) {
+  return devId ? Object.assign({ device_id: devId }, obj || {}) : (obj || {});
+}
+function connected() { return !!devId || !!jwt; }
 let maskedPng = null;   // 320x320 円形マスク済み data URL
 let sizeMode = 'standard';  // 'standard' = リング内側 66% / 'full' = 画面いっぱい
 // 位置決め状態: 読み込んだ画像と、ユーザーが調整した移動量(panX/panY px)・拡大率(zoom)
@@ -297,8 +323,29 @@ try { if (localStorage.getItem('pl_lang') === 'ja') setLang('ja'); } catch(e) {}
 
 // サインイン済み状態の表示に切り替える (ログイン成功 / セッション復元の両方で使う)。
 // email を渡すと「どのアカウントでサインイン中か」を表示する (アカウント取り違え防止)。
+function enterConnected() {
+  const ja = document.documentElement.lang === 'ja';
+  document.getElementById('devForm').style.display = 'none';
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('loginDone').style.display = '';
+  document.getElementById('loginDoneMsg').textContent =
+    (ja ? 'つながっています: ' : 'Connected: ') + devId + (ja ? '。下で画像を選んでください。' : '. Choose your image below.');
+  document.getElementById('uploadCard').style.display = '';
+  renderSlots();
+  loadSlots();
+}
+function disconnectDevice() {
+  devId = null;
+  try { localStorage.removeItem('pl_devid'); } catch (e) {}
+  document.getElementById('devForm').style.display = '';
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('loginDone').style.display = 'none';
+  document.getElementById('uploadCard').style.display = 'none';
+  document.getElementById('loginAlert').innerHTML = '';
+}
 function enterSignedIn(email) {
   const ja = document.documentElement.lang === 'ja';
+  document.getElementById('devForm').style.display = 'none';
   document.getElementById('loginForm').style.display = 'none';
   document.getElementById('loginDone').style.display = '';
   const who = email ? (' (' + email + ')') : '';
@@ -314,17 +361,69 @@ function enterSignedIn(email) {
 function enterSignedOut() {
   jwt = null;
   try { localStorage.removeItem('pl_jwt'); } catch (e) {}
-  document.getElementById('loginForm').style.display = '';
+  document.getElementById('devForm').style.display = '';
+  document.getElementById('loginForm').style.display = 'none';
   document.getElementById('loginDone').style.display = 'none';
   document.getElementById('uploadCard').style.display = 'none';
   document.getElementById('loginAlert').innerHTML = '';
   document.getElementById('email').value = '';
   document.getElementById('password').value = '';
 }
-document.getElementById('signoutBtn').addEventListener('click', enterSignedOut);
+document.getElementById('signoutBtn').addEventListener('click', function () {
+  if (devId) { disconnectDevice(); } else { enterSignedOut(); }
+});
+
+// ─── Device ID でつなぐ (アカウント不要) ───
+document.getElementById('showLogin').addEventListener('click', function (e) {
+  e.preventDefault();
+  document.getElementById('devForm').style.display = 'none';
+  document.getElementById('loginForm').style.display = '';
+});
+document.getElementById('devBtn').addEventListener('click', async function () {
+  const jaNow = document.documentElement.lang === 'ja';
+  const box = document.getElementById('devAlert');
+  const btn = document.getElementById('devBtn');
+  box.innerHTML = '';
+  let v = (document.getElementById('devid').value || '').trim().toUpperCase().replace(/\s/g, '');
+  if (/^[0-9A-Z]{8}$/.test(v)) { v = v.slice(0, 4) + '-' + v.slice(4); }
+  if (!/^[0-9A-Z]{4}-[0-9A-Z]{4}$/.test(v)) {
+    box.innerHTML = '<div class="alert error">' + (jaNow
+      ? 'Device ID の形式が違います (XXXX-XXXX)。'
+      : 'Device ID must look like XXXX-XXXX.') + '</div>';
+    return;
+  }
+  btn.disabled = true;
+  try {
+    const r = await fetch(API + '/user/me?device_id=' + encodeURIComponent(v));
+    if (r.status === 403) {
+      box.innerHTML = '<div class="alert error">' + (jaNow
+        ? 'このウォッチでは画像機能を使えません。ウォッチで Link up を開き、トライアルを始めるか購入してください。'
+        : 'This watch is not entitled. Open Link up on the watch to start a trial or purchase.') + '</div>';
+      return;
+    }
+    if (!r.ok) { throw new Error('http_' + r.status); }
+    devId = v;
+    try { localStorage.setItem('pl_devid', devId); } catch (e) {}
+    jwt = null;
+    enterConnected();
+  } catch (e) {
+    box.innerHTML = '<div class="alert error">' + (jaNow ? 'つながりません: ' : 'Cannot connect: ') + e.message + '</div>';
+  } finally { btn.disabled = false; }
+});
 
 // 起動時: 保存済み JWT があれば検証して自動サインイン (リロードでサインイン画面に戻らない)。
+// Device ID が保存されていればそちらを優先。
+(async function restoreDevice() {
+  if (!devId) { return; }
+  try {
+    const r = await fetch(withDev(API + '/user/me'));
+    if (r.ok) { enterConnected(); }
+    else { devId = null; try { localStorage.removeItem('pl_devid'); } catch (e) {} }
+  } catch (e) {}
+})();
+
 (async function restoreSession() {
+  if (devId) { return; }
   let saved = null;
   try { saved = localStorage.getItem('pl_jwt'); } catch (e) {}
   if (!saved) return;
@@ -449,8 +548,8 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
     const palette = computeOptimalPalette(mColors);
     const r = await fetch(API + '/user/compass-image', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
-      body: JSON.stringify({ image: maskedPng, size: sizeMode, colors: mColors, palette: palette, slot: selSlot, bg_auto: mBgAuto })
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(withDevBody({ image: maskedPng, size: sizeMode, colors: mColors, palette: palette, slot: selSlot, bg_auto: mBgAuto }))
     });
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || 'upload_failed');
@@ -473,8 +572,8 @@ document.getElementById('removeBtn').addEventListener('click', async () => {
   try {
     const r = await fetch(API + '/user/compass-image', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
-      body: JSON.stringify({ remove: true, slot: selSlot })
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(withDevBody({ remove: true, slot: selSlot }))
     });
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || 'remove_failed');
@@ -580,7 +679,7 @@ function renderSlots() {
 async function loadSlots() {
   if (!jwt) return;
   try {
-    const r = await fetch(API + '/user/me', { headers: { 'Authorization': 'Bearer ' + jwt } });
+    const r = await fetch(withDev(API + '/user/me'), { headers: authHeaders() });
     if (!r.ok) return;
     const me = await r.json();
     slotState.slots = me.image_slots || {};
@@ -599,8 +698,8 @@ document.getElementById('useSlotBtn').addEventListener('click', async () => {
   try {
     const r = await fetch(API + '/user/image-slot', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
-      body: JSON.stringify({ slot: selSlot })
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(withDevBody({ slot: selSlot }))
     });
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || 'switch_failed');

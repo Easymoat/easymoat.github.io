@@ -17,7 +17,7 @@
   .card { background: #FFF; border: 1px solid #E2E6EF; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
   .card h2 { font-size: 16px; margin-bottom: 12px; }
   label { font-size: 13px; color: #6B7280; display: block; margin: 10px 0 4px; }
-  input[type=email], input[type=password] { width: 100%; padding: 10px 12px; border: 1px solid #E2E6EF; border-radius: 8px; font-size: 15px; }
+  input[type=email], input[type=password], input[type=text] { width: 100%; padding: 10px 12px; border: 1px solid #E2E6EF; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
   .btn { display: inline-block; width: 100%; padding: 12px; margin-top: 14px; border: none; border-radius: 10px; background: #0891B2; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
   .btn:disabled { background: #9CA3AF; }
   .btn.ghost { background: #FFF; color: #0891B2; border: 1px solid #0891B2; }
@@ -51,8 +51,16 @@
   <p class="sub" data-en="Watch your PulseLink camera from any phone or PC — and adjust it remotely." data-ja="PulseLink カメラをスマホや PC から見る・リモートで調整する。">Watch your PulseLink camera from any phone or PC — and adjust it remotely.</p>
 
   <div class="card" id="loginCard">
-    <h2 data-en="Sign in" data-ja="サインイン">Sign in</h2>
-    <div id="loginForm">
+    <h2 data-en="Connect your watch" data-ja="ウォッチをつなぐ">Connect your watch</h2>
+    <div id="devForm">
+      <p class="sub" data-en="Open PulseLink on your watch, then You menu &gt; Link up &gt; Device ID. Enter the code shown there. No account needed." data-ja="ウォッチで PulseLink を開き、You メニュー &gt; Link up &gt; Device ID に出ている番号を入れてください。アカウントは不要です。">Open PulseLink on your watch, then You menu &gt; Link up &gt; Device ID. Enter the code shown there. No account needed.</p>
+      <label data-en="Device ID" data-ja="Device ID">Device ID</label>
+      <input type="text" id="devid" placeholder="XXXX-XXXX" autocapitalize="characters" autocomplete="off" spellcheck="false">
+      <button class="btn" id="devBtn" data-en="Connect" data-ja="つなぐ">Connect</button>
+      <div id="devAlert"></div>
+      <p class="sub"><a href="#" id="showLogin" data-en="Use an account instead" data-ja="アカウントでサインインする">Use an account instead</a></p>
+    </div>
+    <div id="loginForm" style="display:none;">
       <label data-en="Email" data-ja="メールアドレス">Email</label>
       <input type="email" id="email" autocomplete="username">
       <label data-en="Password" data-ja="パスワード">Password</label>
@@ -148,7 +156,45 @@ function ja() { return document.documentElement.lang === 'ja'; }
 
 // ─── サインイン (cam/image ページと pl_jwt を共有) ───
 let jwt = null;
+// ───── 認証方式の抽象化 (cam ページと同一) ─────
+// Device ID 方式 (アカウント不要) とアカウント方式を同じ呼び出し側から使う。
+let devId = null;
+try { devId = localStorage.getItem('pl_devid') || null; } catch (e) { devId = null; }
+function authHeaders(extra) {
+  const h = Object.assign({}, extra || {});
+  if (!devId && jwt) { h['Authorization'] = 'Bearer ' + jwt; }
+  return h;
+}
+function withDev(url) {
+  if (!devId) { return url; }
+  return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'device_id=' + encodeURIComponent(devId);
+}
+function withDevBody(obj) {
+  return devId ? Object.assign({ device_id: devId }, obj || {}) : (obj || {});
+}
+function connected() { return !!devId || !!jwt; }
+function enterConnected() {
+  document.getElementById('devForm').style.display = 'none';
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('loginDone').style.display = '';
+  document.getElementById('loginDoneMsg').textContent =
+    (ja() ? 'つながっています: ' : 'Connected: ') + devId;
+  initSource();
+}
+function disconnectDevice() {
+  devId = null;
+  try { localStorage.removeItem('pl_devid'); } catch (e) {}
+  mode = null;
+  if (pollTimer) { try { clearInterval(pollTimer); } catch (e) {} pollTimer = null; }
+  document.getElementById('devForm').style.display = '';
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('loginDone').style.display = 'none';
+  document.getElementById('viewCard').style.display = 'none';
+  document.getElementById('ctrlCard').style.display = 'none';
+  document.getElementById('noneCard').style.display = 'none';
+}
 function enterSignedIn(email) {
+  document.getElementById('devForm').style.display = 'none';
   document.getElementById('loginForm').style.display = 'none';
   document.getElementById('loginDone').style.display = '';
   document.getElementById('loginDoneMsg').textContent =
@@ -159,13 +205,25 @@ function enterSignedOut() {
   jwt = null;
   try { localStorage.removeItem('pl_jwt'); } catch (e) {}
   mode = null;
-  document.getElementById('loginForm').style.display = '';
+  document.getElementById('devForm').style.display = '';
+  document.getElementById('loginForm').style.display = 'none';
   document.getElementById('loginDone').style.display = 'none';
   document.getElementById('viewCard').style.display = 'none';
   document.getElementById('ctrlCard').style.display = 'none';
   document.getElementById('noneCard').style.display = 'none';
 }
+// Device ID が保存されていればそちらを優先。
+(async function restoreDevice() {
+  if (!devId) { return; }
+  try {
+    const r = await fetch(withDev(API + '/user/me'));
+    if (r.ok) { enterConnected(); }
+    else { devId = null; try { localStorage.removeItem('pl_devid'); } catch (e) {} }
+  } catch (e) {}
+})();
+
 (async function restoreSession() {
+  if (devId) { return; }
   let saved = null;
   try { saved = localStorage.getItem('pl_jwt'); } catch (e) {}
   if (!saved) return;
@@ -202,7 +260,46 @@ document.getElementById('loginBtn').addEventListener('click', async function () 
     box.innerHTML = '<div class="alert error">' + (ja() ? 'サインインに失敗しました: ' : 'Sign-in failed: ') + e.message + '</div>';
   } finally { btn.disabled = false; }
 });
-document.getElementById('logoutBtn').addEventListener('click', enterSignedOut);
+document.getElementById('logoutBtn').addEventListener('click', function () {
+  if (devId) { disconnectDevice(); } else { enterSignedOut(); }
+});
+
+// ─── Device ID でつなぐ (アカウント不要) ───
+document.getElementById('showLogin').addEventListener('click', function (e) {
+  e.preventDefault();
+  document.getElementById('devForm').style.display = 'none';
+  document.getElementById('loginForm').style.display = '';
+});
+document.getElementById('devBtn').addEventListener('click', async function () {
+  const box = document.getElementById('devAlert');
+  const btn = document.getElementById('devBtn');
+  box.innerHTML = '';
+  let v = (document.getElementById('devid').value || '').trim().toUpperCase().replace(/\s/g, '');
+  if (/^[0-9A-Z]{8}$/.test(v)) { v = v.slice(0, 4) + '-' + v.slice(4); }
+  if (!/^[0-9A-Z]{4}-[0-9A-Z]{4}$/.test(v)) {
+    box.innerHTML = '<div class="alert error">' + (ja()
+      ? 'Device ID の形式が違います (XXXX-XXXX)。'
+      : 'Device ID must look like XXXX-XXXX.') + '</div>';
+    return;
+  }
+  btn.disabled = true;
+  try {
+    const r = await fetch(API + '/user/me?device_id=' + encodeURIComponent(v));
+    if (r.status === 403) {
+      box.innerHTML = '<div class="alert error">' + (ja()
+        ? 'このウォッチではカメラを使えません。ウォッチで Link up を開き、トライアルを始めるか購入してください。'
+        : 'This watch is not entitled to the camera. Open Link up on the watch to start a trial or purchase.') + '</div>';
+      return;
+    }
+    if (!r.ok) { throw new Error('http_' + r.status); }
+    devId = v;
+    try { localStorage.setItem('pl_devid', devId); } catch (e) {}
+    jwt = null;
+    enterConnected();
+  } catch (e) {
+    box.innerHTML = '<div class="alert error">' + (ja() ? 'つながりません: ' : 'Cannot connect: ') + e.message + '</div>';
+  } finally { btn.disabled = false; }
+});
 
 // ─── 表示ソースの決定 ───
 // 'own'  = 自分のカメラ (slot6 占有) → 表示 + リモート制御
@@ -222,6 +319,7 @@ let lastTickAt = 0;
 let jwtAt = 0;
 const JWT_REFRESH_MS = 12 * 60 * 60 * 1000;
 async function refreshJwtIfNeeded() {
+  if (devId) { return; }   // Device ID 方式にトークンは無い
   if (!jwt) { return; }
   if (jwtAt && (Date.now() - jwtAt) < JWT_REFRESH_MS) { return; }
   try {
@@ -248,7 +346,7 @@ function onAuthLost() {
 
 async function initSource() {
   try {
-    const r = await fetch(API + '/user/me', { headers: { 'Authorization': 'Bearer ' + jwt } });
+    const r = await fetch(withDev(API + '/user/me'), { headers: authHeaders() });
     if (r.status === 401) { onAuthLost(); return; }
     if (!r.ok) return;
     const j = await r.json();
@@ -287,7 +385,7 @@ function updateImg() {
 async function pollOwn() {
   try {
     // view=1 = このページが開いている (見ている) 印。サーバの自動停止タイマーを止める。
-    const r = await fetch(API + '/user/cam-config?view=1', { headers: { 'Authorization': 'Bearer ' + jwt } });
+    const r = await fetch(withDev(API + '/user/cam-config?view=1'), { headers: authHeaders() });
     if (r.status === 401) { onAuthLost(); return; }
     if (!r.ok) return;
     const j = await r.json();
@@ -297,7 +395,7 @@ async function pollOwn() {
 }
 async function pollCrew() {
   try {
-    const r = await fetch(API + '/user/me', { headers: { 'Authorization': 'Bearer ' + jwt } });
+    const r = await fetch(withDev(API + '/user/me'), { headers: authHeaders() });
     if (!r.ok) return;
     const j = await r.json();
     if (j.crew_camera === true && j.crew_camera_version !== camVer) {
@@ -358,8 +456,8 @@ async function sendCfg(body) {
   try {
     const r = await fetch(API + '/user/cam-config', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
-      body: JSON.stringify(body)
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(withDevBody(body))
     });
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || 'failed');

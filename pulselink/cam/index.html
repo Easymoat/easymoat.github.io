@@ -227,13 +227,15 @@ document.getElementById('devBtn').addEventListener('click', async function () {
   btn.disabled = true;
   try {
     const r = await fetch(API + '/user/me?device_id=' + encodeURIComponent(v));
-    if (r.status === 403) {
+    if (!r.ok) { throw new Error('http_' + r.status); }
+    // カメラは有料機能。無料のウォッチはここで止める (撮り始めてから弾かれる方が不親切)。
+    const me = await r.json();
+    if (me.entitled === false) {
       box.innerHTML = '<div class="alert error">' + (ja()
-        ? 'このウォッチではカメラを使えません。ウォッチで Link up を開き、トライアルを始めるか購入してください。'
-        : 'This watch is not entitled to the camera. Open Link up on the watch to start a trial or purchase.') + '</div>';
+        ? 'このウォッチではカメラを使えません。カメラは有料機能です。ウォッチで You メニュー → Link up を開き、トライアルを始めるか購入してください。'
+        : 'The camera is a paid feature and this watch is not entitled to it. On the watch, open You → Link up to start a trial or purchase.') + '</div>';
       return;
     }
-    if (!r.ok) { throw new Error('http_' + r.status); }
     devId = v;
     try { localStorage.setItem('pl_devid', devId); } catch (e) {}
     enterConnected();

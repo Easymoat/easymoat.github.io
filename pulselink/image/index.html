@@ -487,6 +487,8 @@ document.getElementById('removeBtn').addEventListener('click', async () => {
 // サーバーに slot 1-5 で保存し、ウォッチが使う1枚 (アクティブ) を選ぶ。
 // ● = 画像あり / ★ = ウォッチで使用中。選択中スロットがアップロード/削除/切替の対象。
 let selSlot = 1;
+let entitled = true;   // 有料か (未確定のうちは true 扱い = ちらつき防止)
+let freeSlotMax = 1;   // 無料で使えるスロット数 (サーバーが返す)
 let slotState = { slots: {}, active: 1, meta: {}, uid: '' };
 
 // 選択スロットに保存済みの画像をサーバーから読み込み、プレビュー (と品質プレビュー) に表示する。
@@ -548,9 +550,13 @@ function renderSlots() {
     b.type = 'button';
     const occ = slotState.slots[String(n)] === true;
     const act = (slotState.active === n);
-    b.textContent = String(n) + (act ? ' ★' : (occ ? ' ●' : ''));
+    // 無料はスロット1だけ。押しても断られるので、最初から押せなくして理由を見せる。
+    const locked = !entitled && n > freeSlotMax;
+    b.textContent = locked ? (String(n) + ' 🔒') : (String(n) + (act ? ' ★' : (occ ? ' ●' : '')));
+    if (locked) { b.disabled = true; b.style.opacity = '0.45'; }
     if (n === selSlot) b.classList.add('active');
     b.addEventListener('click', () => {
+      if (locked) { return; }
       selSlot = n;
       renderSlots();
       if (typeof resetUploadBtn === 'function') resetUploadBtn();
@@ -561,9 +567,13 @@ function renderSlots() {
   }
   const occSel = slotState.slots[String(selSlot)] === true;
   const actSel = (slotState.active === selSlot);
+  const lockNote = entitled ? ''
+    : (ja ? '　｜　🔒 スロット2〜5 は有料です'
+          : '  |  🔒 Slots 2-5 are a paid feature');
   document.getElementById('slotNote').textContent = ja
     ? ('スロット ' + selSlot + ': ' + (occSel ? '画像あり' : '空（選ぶとデフォルト画像に戻ります）') + (actSel ? '（ウォッチで使用中）' : '') + ' ｜ ● = 画像あり / ★ = 使用中')
     : ('Slot ' + selSlot + ': ' + (occSel ? 'has an image' : 'empty (selecting it shows the default image)') + (actSel ? ' (active on watch)' : '') + ' | ● = has image / ★ = active');
+  document.getElementById('slotNote').textContent += lockNote;
   // 空スロットも選べる (カスタム画像を使わず既定の画像に戻す)
   const useBtn = document.getElementById('useSlotBtn');
   useBtn.style.display = actSel ? 'none' : '';
@@ -578,6 +588,8 @@ async function loadSlots() {
     const r = await fetch(withDev(API + '/user/me'), { headers: authHeaders() });
     if (!r.ok) return;
     const me = await r.json();
+    entitled = (me.entitled !== false);
+    if (typeof me.free_slot_max === 'number') { freeSlotMax = me.free_slot_max; }
     slotState.slots = me.image_slots || {};
     slotState.active = Number(me.image_active_slot || 1);
     slotState.meta = me.image_slot_meta || {};

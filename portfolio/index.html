@@ -195,7 +195,10 @@
     .surfaces { grid-template-columns: 1fr; }
     .features { grid-template-columns: 1fr 1fr; }
     .flow { grid-template-columns: 1fr; }
-    .flow-arrow { transform: rotate(90deg); margin: 4px 0; }
+    /* 縦並びでは矢印だけ 90 度回す。以前はラベルごと回っていて横倒しになり
+       読めなかった (2026-08-29 修正)。 */
+    .flow-arrow { margin: 4px 0; }
+    .flow-arrow .fa-line { transform: rotate(90deg); display: inline-block; }
     .price-unlocks { grid-template-columns: 1fr; }
   }
   @media (max-width: 768px) { nav, .lang-bar { padding: 12px 20px; } main { padding: 0 20px 60px; } .soon { grid-template-columns: 1fr; text-align: center; } .mkt-grid { grid-template-columns: 1fr 1fr; } }
@@ -291,8 +294,8 @@
   <div class="section">
     <div class="section-header">
       <div class="section-tag" data-en="How it connects" data-ja="連携のしくみ">How it connects</div>
-      <h2 data-en="Set it up once — then pull it to your watch" data-ja="一度作れば、あとはウォッチに読み込むだけ">Set it up once — then pull it to your watch</h2>
-      <p class="section-desc" data-en="Enter and organize everything in WebMemo, then pull it in from the watch's menu whenever you want — no re-typing tickers on a tiny screen." data-ja="登録も整理も WebMemo で。あとはウォッチのメニューから読み込むだけ — 小さな画面でティッカーを打ち直す必要はありません。">Enter and organize everything in WebMemo, then pull it in from the watch's menu whenever you want — no re-typing tickers on a tiny screen.</p>
+      <h2 data-en="Edit on either side — sync both ways" data-ja="Web でもウォッチでも編集でき、どちらの向きにも同期">Edit on either side — sync both ways</h2>
+      <p class="section-desc" data-en="Build your portfolios in WebMemo and pull them to the watch — no re-typing tickers on a tiny screen. Edits you make on the watch can be sent back to WebMemo just as easily. Both directions are run from the watch's menu, so you choose when each side is updated." data-ja="ポートフォリオは WebMemo で作ってウォッチに読み込み — 小さな画面でティッカーを打ち直す必要はありません。ウォッチで編集した内容を WebMemo へ送り返すこともできます。どちらの向きもウォッチのメニューから実行するので、どちらを更新するかは自分で選べます。">Build your portfolios in WebMemo and pull them to the watch. Edits you make on the watch can be sent back to WebMemo just as easily.</p>
     </div>
     <div class="flow">
       <div class="flow-card">
@@ -301,8 +304,8 @@
         <p data-en="Build &amp; organize on the web — up to 20 portfolios" data-ja="Webで作成・整理 — 最大20ポートフォリオ">Build &amp; organize on the web — up to 20 portfolios</p>
       </div>
       <div class="flow-arrow">
-        <span class="fa-line">→</span>
-        <span class="fa-label" data-en="Sync from the watch" data-ja="ウォッチから同期">Sync from the watch</span>
+        <span class="fa-line">⇄</span>
+        <span class="fa-label" data-en="Two-way sync" data-ja="双方向同期">Two-way sync</span>
       </div>
       <div class="flow-right">
         <div class="flow-mini">

@@ -57,7 +57,7 @@
   <div class="card" id="loginCard">
     <h2 data-en="Connect your watch" data-ja="ウォッチをつなぐ">Connect your watch</h2>
     <div id="devForm">
-      <p class="sub" data-en="Open PulseLink on your watch, then You menu &gt; Link up &gt; Device ID. Enter the code shown there." data-ja="ウォッチで PulseLink を開き、You メニュー &gt; Link up &gt; Device ID に出ている番号を入れてください。">Open PulseLink on your watch, then You menu &gt; Link up &gt; Device ID. Enter the code shown there.</p>
+      <p class="sub" data-en="Open PulseLink on your watch, then open the You menu — your Device ID is on the bottom line. Enter the code shown there." data-ja="ウォッチで PulseLink を開き、You メニューの最下段 に出ている番号を入れてください。">Open PulseLink on your watch, then open the You menu — your Device ID is on the bottom line. Enter the code shown there.</p>
       <label data-en="Device ID" data-ja="Device ID">Device ID</label>
       <input type="text" id="devid" placeholder="XXXX-XXXX" autocapitalize="characters" autocomplete="off" spellcheck="false">
       <button class="btn" id="devBtn" data-en="Sign in" data-ja="サインイン">Sign in</button>
@@ -214,12 +214,40 @@ document.getElementById('devBtn').addEventListener('click', async function () {
   try {
     const r = await fetch(API + '/user/me?device_id=' + encodeURIComponent(v));
     if (!r.ok) { throw new Error('http_' + r.status); }
-    // Viewer はカメラを見るためのページなので、カメラと同じく有料のみ。
+    // カメラは有料機能。ただしトライアル未使用ならここから始められる。
+    // 以前は「ウォッチで Link up を開いてトライアルを始めてください」と案内していたが、
+    // ウォッチ側の入口は Create a Crew しかなく、1人で使いたい人には意味が通らなかった。
     const me = await r.json();
     if (me.entitled === false) {
-      box.innerHTML = '<div class="alert error">' + (ja()
-        ? 'このウォッチではカメラを使えません。カメラは有料機能です。ウォッチで You メニュー → Link up を開き、トライアルを始めるか購入してください。'
-        : 'The camera is a paid feature and this watch is not entitled to it. On the watch, open You → Link up to start a trial or purchase.') + '</div>';
+      if (me.trial_available) {
+        box.innerHTML = '<div class="alert error">'
+          + (ja() ? '<b>カメラは有料機能です。</b><br>14日間の無料トライアルを、ここから始められます。カード登録は不要です。'
+                  : '<b>The camera is a paid feature.</b><br>You can start a 14-day free trial right here — no card needed.')
+          + '<br><button class="btn" id="trialBtn" style="margin-top:10px;">'
+          + (ja() ? '無料トライアルを始める' : 'Start the free trial')
+          + '</button></div>';
+        document.getElementById('trialBtn').addEventListener('click', async function () {
+          this.disabled = true;
+          try {
+            const t = await fetch(API + '/trial/start', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ device_id: v })
+            });
+            if (!t.ok) { throw new Error('http_' + t.status); }
+            box.innerHTML = '';
+            devId = v;
+            try { localStorage.setItem('pl_devid', devId); } catch (e) {}
+            enterConnected();
+          } catch (e) {
+            box.innerHTML = '<div class="alert error">'
+              + (ja() ? 'トライアルを開始できませんでした: ' : 'Could not start the trial: ') + e.message + '</div>';
+          }
+        });
+      } else {
+        box.innerHTML = '<div class="alert error">' + (ja()
+          ? 'このウォッチのトライアルは終了しています。カメラを使うには easymoat.com/pulselink から購入してください。'
+          : 'The trial for this watch has ended. Purchase from easymoat.com/pulselink to use the camera.') + '</div>';
+      }
       return;
     }
     devId = v;

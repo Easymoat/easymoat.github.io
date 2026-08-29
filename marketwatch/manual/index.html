@@ -40,6 +40,12 @@
   }
   aside ol li a::before { content: counter(chnum); position: absolute; left: 6px; color: var(--muted2); font-size: 12px; font-weight: 600; }
   aside ol li a:hover { color: var(--accent-dark); border-left-color: var(--accent); }
+  /* 目次下の Web ツール導線。章リンクと同じ余白感で並べつつ、区切り線で別物と分かるように。 */
+  aside .toc-tools { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+  aside .toc-tools h3 { margin-bottom: 8px; }
+  aside .toc-tools ul { list-style: none; }
+  aside .toc-tools li a { display: block; padding: 5px 0 5px 4px; color: var(--text2); text-decoration: none; font-size: 13.5px; }
+  aside .toc-tools li a:hover { color: var(--accent-dark); }
   @media (max-width: 900px) { aside { position: static; max-height: none; border: 1px solid var(--border); border-radius: 8px; padding: 16px; background: var(--white); } }
 
   /* ─── Article ─── */
@@ -148,8 +154,16 @@
       <li><a href="#settings" data-en="Settings" data-ja="設定">Settings</a></li>
       <li><a href="#complications" data-en="Complications &amp; Glance" data-ja="コンプリケーションと Glance">Complications &amp; Glance</a></li>
       <li><a href="#battery-saver" data-en="Battery Saver" data-ja="バッテリーセーバー">Battery Saver</a></li>
+      <li><a href="#webmemo" data-en="WebMemo Sync" data-ja="WebMemo 連携">WebMemo Sync</a></li>
       <li><a href="#troubleshooting" data-en="Troubleshooting" data-ja="トラブルシューティング">Troubleshooting</a></li>
     </ol>
+    <div class="toc-tools">
+      <h3 data-en="Web tools" data-ja="Web ツール">Web tools</h3>
+      <ul>
+        <li><a href="../image/" data-en="🖼️ Watch face image" data-ja="🖼️ 文字盤画像">🖼️ Watch face image</a></li>
+        <li><a href="https://app.easymoat.com/webmemo/" data-en="📝 WebMemo" data-ja="📝 WebMemo">📝 WebMemo</a></li>
+      </ul>
+    </div>
   </aside>
 
   <article>
@@ -502,9 +516,36 @@
       <div class="callout" data-en="Dimming does not start while a menu or picker is open, and the first tap after dimming only wakes the screen — it will not open a symbol by mistake." data-ja="メニューやピッカーを開いている間は減光しません。また減光からの最初のタップは画面を起こすだけに使われ、誤って銘柄が開くことはありません。">Dimming does not start while a menu or picker is open, and the first tap after dimming only wakes the screen — it will not open a symbol by mistake.</div>
     </section>
 
-    <!-- ─── 14. Troubleshooting ─── -->
+    <!-- ─── 14. WebMemo Sync ─── -->
+    <section class="chapter" id="webmemo">
+      <h2 data-en="14. WebMemo Sync" data-ja="14. WebMemo 連携">14. WebMemo Sync</h2>
+      <p data-en="WebMemo is a free web workspace for MarketWatch owners. Build and organize your portfolio on a full-size screen, then send it to the watch — no typing tickers on a tiny display. The watch can also send its own list back, so you can add a symbol on your wrist and have it appear on the web." data-ja="WebMemo は MarketWatch をお持ちの方が使える Web のワークスペースです。大きな画面でポートフォリオを作り込み、そのままウォッチへ送れます。小さな画面でティッカーを打つ必要はありません。逆にウォッチ側のリストを送り返すこともできるので、外出先で追加した銘柄を Web に反映できます。">WebMemo is a free web workspace for MarketWatch owners. Build your portfolio on a full-size screen, then send it to the watch — and send the watch’s list back when you edit on your wrist.</p>
+
+      <p><a href="https://app.easymoat.com/webmemo/" target="_blank" rel="noopener">app.easymoat.com/webmemo</a></p>
+
+      <h3 data-en="Two directions, both run from the watch" data-ja="2 つの向き — どちらもウォッチから実行">Two directions, both run from the watch</h3>
+      <p data-en="Open the menu by tapping the date area at the bottom of the list screen. Two entries handle the sync:" data-ja="リスト画面下部の日付エリアをタップしてメニューを開きます。同期はこの 2 項目です:">Open the menu by tapping the date area at the bottom of the list screen. Two entries handle the sync:</p>
+      <table class="ops">
+        <tr><th data-en="Menu item" data-ja="メニュー項目">Menu item</th><th data-en="What it does" data-ja="動作">What it does</th></tr>
+        <tr><td><strong>WebMemo Load</strong><br><span style="font-size:12px; color:var(--muted);">web to watch</span></td><td data-en="Receives the portfolio you marked <strong>Mirror to MW1</strong> on the web into the watch’s 20 slots, then refreshes prices. Your 20 slots are replaced." data-ja="Web で <strong>Mirror to MW1</strong> を付けたポートフォリオを、ウォッチの 20 スロットへ受信し、価格を取り直します。ウォッチの 20 スロットは置き換わります。">Receives the portfolio you marked <strong>Mirror to MW1</strong> on the web into the watch’s 20 slots, then refreshes prices. Your 20 slots are replaced.</td></tr>
+        <tr><td><strong>WebMemo Save</strong><br><span style="font-size:12px; color:var(--muted);">watch to web</span></td><td data-en="Sends the watch’s 20 slots (ticker, name and memo) to your <strong>first</strong> portfolio on the web, replacing its contents. Your other portfolios are untouched." data-ja="ウォッチの 20 スロット (ティッカー・銘柄名・メモ) を Web の<strong>先頭のポートフォリオ</strong>へ送り、その中身を置き換えます。2 番目以降のポートフォリオには触れません。">Sends the watch’s 20 slots (ticker, name and memo) to your <strong>first</strong> portfolio on the web, replacing its contents. Your other portfolios are untouched.</td></tr>
+      </table>
+      <div class="callout warn" data-en="<strong>Both directions overwrite.</strong> Load replaces the watch’s 20 slots; Save replaces the first web portfolio. Nothing is merged, so run the direction you want and check the other side has what you expect before running the opposite one." data-ja="<strong>どちらの向きも上書きです。</strong> Load はウォッチの 20 スロットを、Save は Web の先頭ポートフォリオを置き換えます。内容が統合されることはないので、実行したい向きを選び、反対向きを走らせる前に相手側の中身を確かめてください。"><strong>Both directions overwrite.</strong> Load replaces the watch’s 20 slots; Save replaces the first web portfolio. Nothing is merged, so run the direction you want and check the other side before running the opposite one.</div>
+
+      <h3 data-en="While it runs" data-ja="実行中の表示">While it runs</h3>
+      <p data-en="Progress appears on the menu row itself (Auth… → Loading… → the result), so you can leave the menu open and watch it finish. Keep your phone connected — the sync goes through Garmin Connect Mobile like price updates do." data-ja="進捗はメニューの行そのものに表示されます (Auth… → Loading… → 結果)。メニューを開いたまま完了を待てます。同期は価格取得と同じくスマートフォン経由なので、Garmin Connect Mobile に接続したままにしてください。">Progress appears on the menu row itself (Auth… → Loading… → the result), so you can leave the menu open and watch it finish. Keep your phone connected — the sync goes through Garmin Connect Mobile like price updates do.</p>
+
+      <h3 data-en="If it doesn’t work" data-ja="うまくいかないとき">If it doesn’t work</h3>
+      <ul>
+        <li><span data-en="<strong>No license key</strong> — the sync needs your purchased key. Enter it in the app settings first." data-ja="<strong>No license key</strong> — 同期には購入時のライセンスキーが必要です。先にアプリの設定で入力してください。"><strong>No license key</strong> — the sync needs your purchased key.</span></li>
+        <li><span data-en="<strong>Nothing arrives on Load</strong> — check that one portfolio on the web is marked <strong>Mirror to MW1</strong>. Without that mark there is nothing for the watch to receive." data-ja="<strong>Load しても何も来ない</strong> — Web 側でいずれかのポートフォリオに <strong>Mirror to MW1</strong> が付いているか確認してください。付いていないと受信するものがありません。"><strong>Nothing arrives on Load</strong> — check that one portfolio on the web is marked <strong>Mirror to MW1</strong>.</span></li>
+        <li><span data-en="<strong>Save went to the wrong portfolio</strong> — Save always writes to the first portfolio in your web list. Reorder your portfolios so the one you want is first." data-ja="<strong>Save が別のポートフォリオに入った</strong> — Save は必ず Web の一覧で先頭のポートフォリオに書き込みます。目的のものが先頭に来るよう並べ替えてください。"><strong>Save went to the wrong portfolio</strong> — Save always writes to the first portfolio in your web list.</span></li>
+      </ul>
+    </section>
+
+    <!-- ─── 15. Troubleshooting ─── -->
     <section class="chapter" id="troubleshooting">
-      <h2 data-en="14. Troubleshooting" data-ja="14. トラブルシューティング">14. Troubleshooting</h2>
+      <h2 data-en="15. Troubleshooting" data-ja="15. トラブルシューティング">15. Troubleshooting</h2>
 
       <h3 data-en="Prices show “--” or stop updating" data-ja="価格が「--」のまま / 更新されない">Prices show “--” or stop updating</h3>
       <p data-en="Check that your watch is connected to Garmin Connect Mobile and the phone has internet. With many symbols and a 30-second interval, some fetches can lag — reduce the symbol count or lengthen the Refresh Interval." data-ja="ウォッチが Garmin Connect Mobile と接続され、スマホがインターネットに繋がっているか確認してください。銘柄数が多く更新間隔が 30 秒の場合は取得が遅れることがあります。銘柄数を減らすか Refresh Interval を長くしてください。">Check that your watch is connected to Garmin Connect Mobile and the phone has internet. With many symbols and a 30-second interval, some fetches can lag — reduce the symbol count or lengthen the Refresh Interval.</p>

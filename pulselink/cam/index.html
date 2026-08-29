@@ -91,6 +91,14 @@
       <button data-v="32" data-en="32 — medium" data-ja="32 — 中">32 — medium</button>
       <button data-v="64" data-en="64 — heavy" data-ja="64 — 重い">64 — heavy</button>
     </div>
+    <label data-en="Motion detection" data-ja="動体検知">Motion detection</label>
+    <div class="seg" id="motionSeg">
+      <button data-v="off" data-en="Off" data-ja="オフ">Off</button>
+      <button data-v="low" data-en="Low" data-ja="低">Low</button>
+      <button data-v="med" class="active" data-en="Medium" data-ja="中">Medium</button>
+      <button data-v="high" data-en="High" data-ja="高">High</button>
+    </div>
+    <p class="hint" data-en="When something moves, the photo is taken at that moment instead of waiting for the next 3-minute shot — so what reaches your watch is the event, not an empty room. Detection runs on this phone and uses no data. Overall lighting changes are ignored, and it will not fire twice within 90 seconds." data-ja="動きがあると、次の3分を待たずにその瞬間を撮ります。ウォッチに届くのが「無人の部屋」ではなく「起きたこと」になります。判定はこのスマホの中だけで行い、通信は使いません。全体の明るさの変化は無視し、90秒以内に続けて反応することはありません。">When something moves, the photo is taken at that moment instead of waiting for the next 3-minute shot.</p>
     <p class="hint" data-en="16 colors transfers to the watch about twice as fast. 32 and 64 cost the same (both use 8 bits per pixel) — so pick 16 for speed, or 64 for looks. If the image doesn't show on the watch, choose 16." data-ja="16色はウォッチへの転送が約2倍速くなります。32色と64色は転送量が同じ (どちらも1画素8ビット) なので、速さ重視なら16、画質重視なら64がおすすめ。ウォッチに表示されない時は16に。">16 colors transfers to the watch about twice as fast. 32 and 64 cost the same (both use 8 bits per pixel) — so pick 16 for speed, or 64 for looks. If the image doesn't show on the watch, choose 16.</p>
     <div class="row">
       <button class="btn" id="startBtn" data-en="Start camera" data-ja="カメラ開始">Start camera</button>
@@ -280,7 +288,30 @@ const sizeMode = 'full';
 let mColors = 16;
 function setColors(n) {
   mColors = n;
-  document.querySelectorAll('#colorSeg button').forEach(function (x) {
+  // 感度はサーバー (cam_config) が正。Viewer からも変えられるようにしておく。
+function renderMotionSeg() {
+  const cur = camCfg.motion_mode || 'med';
+  document.querySelectorAll('#motionSeg button').forEach(function (b) {
+    b.classList.toggle('active', b.getAttribute('data-v') === cur);
+  });
+}
+document.querySelectorAll('#motionSeg button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    camCfg.motion_mode = b.getAttribute('data-v');
+    motionPrev = null;            // 感度を変えたら基準を取り直す
+    renderMotionSeg();
+    nextCfgPollAt = Date.now() + 5000;   // 直後の stale なポーリングで巻き戻らないように
+    if (connected()) {
+      fetch(API + '/user/cam-config', {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(withDevBody({ motion_mode: camCfg.motion_mode }))
+      }).catch(function () {});
+    }
+  });
+});
+
+document.querySelectorAll('#colorSeg button').forEach(function (x) {
     x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === n);
   });
 }
@@ -480,6 +511,8 @@ async function pollCamConfig() {
     }
     // 色数は Viewer からも変えられる (サーバのステートが正)。ローカル選択を追随させる。
     if (camCfg.colors && camCfg.colors !== mColors) { setColors(camCfg.colors); }
+  if ((prev.motion_mode || 'med') !== (camCfg.motion_mode || 'med')) { motionPrev = null; }
+  renderMotionSeg();
     // 使用カメラ (背面/画面側) のリモート切替。変わった時だけストリームを取り直す。
     // 選べない端末で取り直しても同じカメラが返るだけなので、無駄に撮影を止めない。
     if (facingSupported !== false
@@ -672,6 +705,82 @@ function stopCamera() {
 document.getElementById('stopBtn').addEventListener('click', stopCamera);
 document.getElementById('shotBtn').addEventListener('click', function () { captureAndUpload(); });
 
+// ─── 動体検知 ────────────────────────────────────────────────
+// 撮影は3分間隔だが、検知はそれとは無関係にできる。ライブ映像は常に流れていて、
+// 縮小したグレースケールを1.5秒ごとに比べるだけなら通信も帯域も使わない。
+//
+// これで「3分ごとに無人の玄関を撮る」から「何か起きた瞬間を撮る」に変わる。
+// 転送量は同じまま、届く写真の意味が変わるのが主目的。
+const MOTION_W = 48, MOTION_H = 48;   // 比較用の縮小サイズ (小さいほどノイズに強い)
+const MOTION_CHECK_MS = 1500;
+const MOTION_COOLDOWN_MS = 90 * 1000; // 一度鳴らしたらしばらく鳴らさない (狼少年防止)
+// 感度 = 「画面の何割が変われば反応するか」。差分の割合はほぼそのまま
+// 「動いたものが画面に占める割合」になるので、数字の意味が直感と一致する。
+//   low 10% … 近くで大きく動いた時だけ / med 5% … 人が入ってくる程度 / high 2.5% … ペットや遠くの人
+const MOTION_RATIO = { low: 0.10, med: 0.05, high: 0.025 };
+// 画素ごとの差のしきい値。これを下回る明暗差の動きは拾わない。
+// 合成フレームで測って決めた値 (2026-08-30):
+//   26 だと昼のセンサーノイズ (振幅20) だけで 7.5%、夜 (振幅28) で 24% が「変化」に化け、
+//   感度 med (5%) を軽く超えてしまう。狼少年になる。
+//   40 / 54 まで上げるとノイズ由来は 0% になり、実際の動きは明暗差 45 以上 (夜は 60 以上) で
+//   確実に拾える。暗い服で暗い背景の前を通るような低コントラストは落とすが、
+//   誤報を出さないことを優先した。
+const MOTION_PIXEL = 40, MOTION_PIXEL_NIGHT = 54;
+let motionCanvas = null, motionPrev = null;
+let nextMotionCheckAt = 0, lastMotionFiredAt = 0;
+let pendingMotion = false;   // 次の撮影を「検知のコマ」として送るか
+
+function motionEnabled() {
+  return (camCfg.motion_mode || 'med') !== 'off';
+}
+
+// 1フレームを縮小グレースケールで取り出す。平均輝度も返す
+// (照明の変化や日照の移り変わりを「動き」と誤判定しないよう、後で正規化に使う)。
+function grabMotionFrame() {
+  const video = document.getElementById('video');
+  if (!video || !video.videoWidth) { return null; }
+  if (!motionCanvas) {
+    motionCanvas = document.createElement('canvas');
+    motionCanvas.width = MOTION_W; motionCanvas.height = MOTION_H;
+  }
+  const c = motionCanvas.getContext('2d', { willReadFrequently: true });
+  c.drawImage(video, 0, 0, MOTION_W, MOTION_H);
+  const d = c.getImageData(0, 0, MOTION_W, MOTION_H).data;
+  const g = new Uint8Array(MOTION_W * MOTION_H);
+  let sum = 0;
+  for (let i = 0, j = 0; i < d.length; i += 4, j++) {
+    const v = (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) | 0;
+    g[j] = v; sum += v;
+  }
+  return { g: g, mean: sum / g.length };
+}
+
+function checkMotion() {
+  if (!motionEnabled() || remotePaused) { motionPrev = null; return; }
+  const cur = grabMotionFrame();
+  if (!cur) { return; }
+  const prev = motionPrev;
+  motionPrev = cur;
+  if (!prev) { return; }
+  // 全体の明るさの差を引いてから比べる = 照明が変わっただけでは反応しない。
+  const shift = cur.mean - prev.mean;
+  const night = cur.mean < 40;
+  const pxTh = night ? MOTION_PIXEL_NIGHT : MOTION_PIXEL;
+  let changed = 0;
+  for (let i = 0; i < cur.g.length; i++) {
+    if (Math.abs((cur.g[i] - shift) - prev.g[i]) > pxTh) { changed++; }
+  }
+  const ratio = changed / cur.g.length;
+  const th = MOTION_RATIO[camCfg.motion_mode] || MOTION_RATIO.med;
+  if (ratio < th) { return; }
+  const now = Date.now();
+  if (now - lastMotionFiredAt < MOTION_COOLDOWN_MS) { return; }
+  lastMotionFiredAt = now;
+  pendingMotion = true;
+  // 検知したその場で撮る。次の定期撮影を待つと、その頃には何も写っていない。
+  if (!inFlight) { nextShotAt = now; }
+}
+
 let inFlight = false;
 function tick() {
   lastTickAt = Date.now();   // タイマー生存の印 (ensureCapturing が見る)
@@ -683,6 +792,11 @@ function tick() {
     nextCfgPollAt = now + (boost ? 10000 : 30000);
     pollCamConfig();
   }
+  // 動体検知は撮影周期とは別に回す (1.5秒ごと、スマホ内で完結)。
+  if (timerId != null && now >= nextMotionCheckAt) {
+    nextMotionCheckAt = now + MOTION_CHECK_MS;
+    try { checkMotion(); } catch (e) {}
+  }
   if (!remotePaused && nextShotAt != null && now >= nextShotAt && !inFlight) {
     captureAndUpload();
   }
@@ -692,6 +806,9 @@ function tick() {
 // 減色済み PNG を送る = ファイルが小さく (300KB 上限対策)、ウォッチの見た目と一致する。
 async function captureAndUpload() {
   if (!connected() || remotePaused) return;
+  // このコマが「検知で撮ったもの」か。送信中に次の検知が来ても混ざらないよう先に確定する。
+  const wasMotion = pendingMotion;
+  pendingMotion = false;
   inFlight = true;
   // 成功/失敗に関わらず次回を先に予約 (失敗時は下で前倒し)。
   // 調整モード (Viewer の Setup mode) 中は最短間隔で回し、期限が切れれば自動で通常間隔へ。
@@ -817,7 +934,8 @@ async function captureAndUpload() {
     const r = await fetch(API + '/user/compass-image', {
       method: 'POST',
       headers: authHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify(withDevBody({ image: png, size: sizeMode, colors: mColors, palette: palette, slot: CAM_SLOT }))
+      body: JSON.stringify(withDevBody({ image: png, size: sizeMode, colors: mColors,
+        palette: palette, slot: CAM_SLOT, motion: wasMotion }))
     });
     if (r.status === 401) { onAuthLost(); return; }
     const j = await r.json();

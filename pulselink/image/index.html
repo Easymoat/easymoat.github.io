@@ -137,7 +137,7 @@
         <label for="devid" data-en="Device ID" data-ja="Device ID">Device ID</label>
         <input id="devid" type="text" placeholder="XXXX-XXXX" autocapitalize="characters" autocomplete="off" spellcheck="false">
       </div>
-      <button class="btn" id="devBtn" data-en="Connect" data-ja="つなぐ">Connect</button>
+      <button class="btn" id="devBtn" data-en="Sign in" data-ja="サインイン">Sign in</button>
       <div id="devAlert"></div>
       <p class="sub"><a href="#" id="showLogin" data-en="Use an account instead" data-ja="アカウントでサインインする">Use an account instead</a></p>
     </div>
@@ -329,7 +329,7 @@ function enterConnected() {
   document.getElementById('loginForm').style.display = 'none';
   document.getElementById('loginDone').style.display = '';
   document.getElementById('loginDoneMsg').textContent =
-    (ja ? 'つながっています: ' : 'Connected: ') + devId + (ja ? '。下で画像を選んでください。' : '. Choose your image below.');
+    (ja ? 'サインイン済み: ' : 'Signed in: ') + devId + (ja ? '。下で画像を選んでください。' : '. Choose your image below.');
   document.getElementById('uploadCard').style.display = '';
   renderSlots();
   loadSlots();
@@ -407,7 +407,7 @@ document.getElementById('devBtn').addEventListener('click', async function () {
     jwt = null;
     enterConnected();
   } catch (e) {
-    box.innerHTML = '<div class="alert error">' + (jaNow ? 'つながりません: ' : 'Cannot connect: ') + e.message + '</div>';
+    box.innerHTML = '<div class="alert error">' + (jaNow ? 'サインインできません: ' : 'Cannot sign in: ') + e.message + '</div>';
   } finally { btn.disabled = false; }
 });
 

@@ -111,6 +111,15 @@
       <button data-v="32">32</button>
       <button data-v="64" data-en="64 — best" data-ja="64 — 高画質">64 — best</button>
     </div>
+    <label data-en="Motion detection" data-ja="動体検知">Motion detection</label>
+    <div class="seg" id="motionSeg">
+      <button data-v="off" data-en="Off" data-ja="オフ">Off</button>
+      <button data-v="low" data-en="Low" data-ja="低">Low</button>
+      <button data-v="med" class="active" data-en="Medium" data-ja="中">Medium</button>
+      <button data-v="high" data-en="High" data-ja="高">High</button>
+    </div>
+    <p class="hint" id="motionInfo"></p>
+    <p class="hint" data-en="The camera phone compares its live view a few times a second and takes the photo the moment something moves, instead of waiting for the next 3-minute shot — so the picture that reaches the watch is the event, not an empty room. Sensitivity is roughly how much of the view must change: Low about a tenth, Medium a twentieth, High a fortieth. Overall lighting changes are ignored, and it will not fire twice within 90 seconds." data-ja="カメラ側のスマホがライブ映像を毎秒数回比べ、動きがあった瞬間に撮ります。次の3分を待たないので、ウォッチに届くのが「無人の部屋」ではなく「起きたこと」になります。感度は「画面のどれくらいが変われば反応するか」の目安で、低=約1割、中=約20分の1、高=約40分の1です。全体の明るさの変化は無視し、90秒以内に続けて反応することはありません。">The camera phone takes the photo the moment something moves, instead of waiting for the next 3-minute shot.</p>
     <label data-en="Night vision (server-side)" data-ja="ナイトビジョン（サーバ処理）">Night vision (server-side)</label>
     <div class="seg" id="nightSeg">
       <button data-v="off" data-en="Off" data-ja="オフ">Off</button>
@@ -267,6 +276,7 @@ let camVer = '0';
 let cfg = { paused: false, zoom: 100, brightness: 0, colors: 16,
             screen_off: false, torch: false, torch_supported: null,
             night_mode: 'auto', night_active: false, facing: 'environment', facing_supported: null,
+            motion_mode: 'med', motion_count: 0, motion_at: 0,
             shoot_seq: 0, boost_until: 0 };
 let nextPollAt = 0;
 let pollTimer = null;
@@ -440,6 +450,11 @@ document.querySelectorAll('#nightSeg button').forEach(function (b) {
   b.addEventListener('click', function () { sendCfg({ night_mode: b.getAttribute('data-v') }); });
 });
 // 使用カメラの切替 (背面 ↔ 画面側)。切替と同時に1枚撮らせて、新しい向きの構図をすぐ確認する。
+document.querySelectorAll('#motionSeg button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    sendCfg({ motion_mode: b.getAttribute('data-v') });
+  });
+});
 document.getElementById('facingBtn').addEventListener('click', function () {
   if (cfg.facing_supported === false) { return; }
   const next = (cfg.facing === 'user') ? 'environment' : 'user';
@@ -487,6 +502,22 @@ function renderControls() {
     : ((ja() ? 'カメラ: ' : 'Camera: ')
        + (front ? (ja() ? '画面側' : 'Front') : (ja() ? '背面' : 'Back'))
        + (ja() ? ' — 押して切替' : ' — tap to switch'));
+  // 動体検知の感度 (off/low/med/high)
+  document.querySelectorAll('#motionSeg button').forEach(function (x) {
+    x.classList.toggle('active', x.getAttribute('data-v') === (cfg.motion_mode || 'med'));
+  });
+  // 直近の検知時刻。カメラを見ていない間に何かあったかが分かる。
+  const mv = document.getElementById('motionInfo');
+  if (mv) {
+    if (cfg.motion_at) {
+      const d = new Date(Number(cfg.motion_at));
+      const hhmm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+      mv.textContent = (ja() ? '直近の検知: ' : 'Last motion: ') + hhmm
+        + '  (' + (ja() ? '通算 ' : 'total ') + (cfg.motion_count || 0) + ')';
+    } else {
+      mv.textContent = ja() ? 'まだ検知はありません' : 'No motion detected yet';
+    }
+  }
   // ナイトビジョンモード (off/auto/on)
   document.querySelectorAll('#nightSeg button').forEach(function (x) {
     x.classList.toggle('active', x.getAttribute('data-v') === (cfg.night_mode || 'auto'));

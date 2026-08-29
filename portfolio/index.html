@@ -70,6 +70,17 @@
   .shot figcaption { margin-top: 8px; font-size: 12px; color: var(--muted2); text-align: center; }
   .shot figcaption strong { color: var(--muted); font-weight: 700; }
 
+  /* プライバシー要約 (全文は portfolio/privacy/) */
+  .privacy-card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 26px 28px; margin-top: 28px; }
+  .privacy-card h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 14px; letter-spacing: -0.01em; }
+  .privacy-points { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+  .privacy-point { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .privacy-point strong { display: block; color: var(--text); font-weight: 600; margin-bottom: 2px; }
+  .privacy-more { font-size: 13px; color: var(--muted); }
+  .privacy-more a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .privacy-more a:hover { text-decoration: underline; }
+  @media (max-width: 640px) { .privacy-points { grid-template-columns: 1fr; gap: 12px; } }
+
   .hero-phone { width: 100%; max-width: 230px; border-radius: 18px; border: 1px solid var(--border); box-shadow: var(--shadow-lg); }
   /* 2 カラム時: iPhone 実寸は縦長すぎて右列だけ伸びるので、上部を残して高さを詰める。 */
   @media (min-width: 861px) {
@@ -407,7 +418,24 @@
       <img src="webmemo_wide.jpg" alt="WebMemo portfolio view">
       <figcaption data-en="<strong>iPhone in landscape</strong> — portfolios, net worth and live prices, on the phone in your pocket or the browser on your desk." data-ja="<strong>iPhone 横向きの画面</strong> — ポートフォリオ・純資産・ライブ価格を、手元のスマートフォンでもデスクのブラウザでも。"><strong>iPhone in landscape</strong> — portfolios, net worth and live prices, on the phone in your pocket or the browser on your desk.</figcaption>
     </figure>
-    <p class="mkt-note" style="margin-top:20px;"><span data-en="Privacy: your account is just your watch&#39;s Device ID — no email, no name. Entering amounts is optional; without them WebMemo is simply a watchlist. " data-ja="プライバシー: アカウントはウォッチの Device ID のみで、メールアドレスも氏名も不要です。金額の入力は任意 — 入れなければウォッチリストとして使えます。">Privacy: your account is just your watch&#39;s Device ID — no email, no name. Entering amounts is optional; without them WebMemo is simply a watchlist. </span><a href="./privacy/" style="color:var(--accent); text-decoration:none; font-weight:600;"><span data-en="Privacy Policy" data-ja="プライバシーポリシー">Privacy Policy</span></a></p>
+    <div class="privacy-card">
+      <h3 data-en="Privacy, in short" data-ja="プライバシーについて（要約）">Privacy, in short</h3>
+      <div class="privacy-points">
+        <div class="privacy-point">
+          <strong data-en="No email, no name" data-ja="メールも氏名も不要">No email, no name</strong>
+          <span data-en="Your account is simply your watch&#39;s Device ID. We cannot tell who you are from what we store." data-ja="アカウントはウォッチの Device ID だけ。保存しているデータから個人を特定することはできません。">Your account is simply your watch&#39;s Device ID. We cannot tell who you are from what we store.</span>
+        </div>
+        <div class="privacy-point">
+          <strong data-en="No ads, no trackers" data-ja="広告もトラッカーもなし">No ads, no trackers</strong>
+          <span data-en="No advertising identifiers and no analytics SDKs. We never sell or share your data." data-ja="広告識別子もアクセス解析もありません。データを第三者に販売・共有することもありません。">No advertising identifiers and no analytics SDKs. We never sell or share your data.</span>
+        </div>
+        <div class="privacy-point">
+          <strong data-en="Yours to delete" data-ja="いつでも自分で削除">Yours to delete</strong>
+          <span data-en="Entering amounts is optional, and Delete all my data at the bottom of WebMemo erases everything at once." data-ja="金額の入力は任意。WebMemo 最下部の「全データを削除」でいつでも一括消去できます。">Entering amounts is optional, and Delete all my data at the bottom of WebMemo erases everything at once.</span>
+        </div>
+      </div>
+      <p class="privacy-more"><span data-en="What is kept and for how long is listed in the " data-ja="保持するデータと期間の一覧は">What is kept and for how long is listed in the </span><a href="./privacy/"><span data-en="full Privacy Policy" data-ja="プライバシーポリシー全文">full Privacy Policy</span></a><span data-en="." data-ja="をご覧ください。">.</span></p>
+    </div>
     <div style="text-align:center; margin-top:28px;">
       <a href="https://app.easymoat.com/webmemo/?demo=1" style="display:inline-block; padding:13px 26px; background:var(--web); color:#fff; border-radius:8px; text-decoration:none; font-weight:600; font-size:15px; box-shadow:0 2px 8px rgba(79,70,229,0.3);"
          data-en="Try the live demo — no sign-in →" data-ja="デモを触ってみる — ログイン不要 →">Try the live demo — no sign-in →</a>

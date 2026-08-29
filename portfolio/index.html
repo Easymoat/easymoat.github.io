@@ -59,6 +59,11 @@
   .btn-secondary { display: inline-flex; align-items: center; gap: 8px; background: var(--white); color: var(--text); font-size: 14px; font-weight: 500; text-decoration: none; padding: 12px 24px; border-radius: 8px; border: 1px solid var(--border); transition: all 0.2s; }
   .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
   .hero-fine { font-size: 13px; color: var(--muted); margin-top: 12px; }
+  /* 既に持っている人向けの導線。主役のボタンと張り合わないよう文字リンクに */
+  .hero-owned { font-size: 13px; color: var(--muted2); margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .hero-owned a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .hero-owned a:hover { text-decoration: underline; }
+  .hero-owned .sep { color: var(--border); }
 
   /* ── WebMemo browser mockup ── */
   .mock-wrap { display: flex; align-items: center; justify-content: center; gap: 18px; }
@@ -237,13 +242,18 @@
       <div class="hero-tag" data-en="Web + Garmin — one workflow" data-ja="Web × Garmin — ひとつの流れ">Web + Garmin — one workflow</div>
       <h1 data-en="Build on the web.<br>Glance on your <em>wrist</em>." data-ja="作るのはWeb。<br>見るのは<em>手首</em>。">Build on the web.<br>Glance on your <em>wrist</em>.</h1>
       <p class="hero-desc" data-en="Organize your portfolios on the big screen with WebMemo — allocation, rebalancing, dividends and analysis — then see them live on your Garmin watch with MarketWatch and MarketWatch Max. One purchase unlocks all three." data-ja="大画面の WebMemo でポートフォリオを組み立て — 資産配分・リバランス・配当・分析まで。それを MarketWatch と MarketWatch Max で、Garmin ウォッチにライブ表示。$7.99 の一度の購入で、3つすべてが使えます。">Organize your portfolios on the big screen with WebMemo — allocation, rebalancing, dividends and analysis — then see them live on your Garmin watch with MarketWatch and MarketWatch Max. One purchase unlocks all three.</p>
+      <!-- 新規の人がやること (購入 / まず試す) を主役に。既に持っている人向けの
+           2 つは下の行へ落とし、4 つが等価に並ばないようにする。 -->
       <div class="hero-cta">
         <a href="https://apps.garmin.com/en-US/apps/c65e1a35-e34e-4763-8c67-85e52da733bb" data-en-href="https://apps.garmin.com/en-US/apps/c65e1a35-e34e-4763-8c67-85e52da733bb" data-ja-href="https://apps.garmin.com/ja-JP/apps/c65e1a35-e34e-4763-8c67-85e52da733bb" class="btn-primary" data-en="Get MarketWatch — $7.99" data-ja="MarketWatch を入手 — $7.99">Get MarketWatch — $7.99</a>
-        <a href="https://app.easymoat.com/webmemo/" class="btn-secondary" data-en="Open WebMemo (free)" data-ja="WebMemo を開く（無料）">Open WebMemo (free)</a>
-        <a href="https://app.easymoat.com/webmemo/stocks?demo=1" class="btn-secondary" data-en="Try the demo (no sign-in)" data-ja="デモを触ってみる（ログイン不要）">Try the demo (no sign-in)</a>
-        <a href="https://apps.garmin.com/en-US/apps/5904ad1d-01b1-4f0c-9fab-0d2c12a75f84" data-en-href="https://apps.garmin.com/en-US/apps/5904ad1d-01b1-4f0c-9fab-0d2c12a75f84" data-ja-href="https://apps.garmin.com/ja-JP/apps/5904ad1d-01b1-4f0c-9fab-0d2c12a75f84" class="btn-secondary" data-en="Get MarketWatch Max (free)" data-ja="MarketWatch Max を入手（無料）">Get MarketWatch Max (free)</a>
+        <a href="https://app.easymoat.com/webmemo/stocks?demo=1" class="btn-secondary" data-en="Try the demo" data-ja="デモを触ってみる">Try the demo</a>
       </div>
-      <p class="hero-fine" data-en="MarketWatch has a 14-day free trial." data-ja="MarketWatch は14日間の無料トライアル付き。">MarketWatch has a 14-day free trial.</p>
+      <p class="hero-fine" data-en="MarketWatch has a 14-day free trial. The demo needs no sign-in." data-ja="MarketWatch は14日間の無料トライアル付き。デモはログイン不要です。">MarketWatch has a 14-day free trial. The demo needs no sign-in.</p>
+      <p class="hero-owned"><span data-en="Already have MarketWatch?" data-ja="すでにお持ちの方:">Already have MarketWatch?</span>
+        <a href="https://app.easymoat.com/webmemo/" data-en="Open WebMemo" data-ja="WebMemo を開く">Open WebMemo</a>
+        <span class="sep">·</span>
+        <a href="https://apps.garmin.com/en-US/apps/5904ad1d-01b1-4f0c-9fab-0d2c12a75f84" data-en-href="https://apps.garmin.com/en-US/apps/5904ad1d-01b1-4f0c-9fab-0d2c12a75f84" data-ja-href="https://apps.garmin.com/ja-JP/apps/5904ad1d-01b1-4f0c-9fab-0d2c12a75f84" data-en="Get MarketWatch Max" data-ja="MarketWatch Max を入手">Get MarketWatch Max</a>
+      </p>
     </div>
 
     <div class="mock-wrap">

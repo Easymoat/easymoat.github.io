@@ -795,7 +795,9 @@ function checkMotion() {
 let inFlight = false;
 function tick() {
   lastTickAt = Date.now();   // タイマー生存の印 (ensureCapturing が見る)
-  renderStatus();
+  // 表示の失敗で撮影と検知まで巻き添えにしない。tick の先頭で throw すると
+  // 以降が丸ごと止まり、カメラが動かなくなる (2026-08-30 に実際に起きた)。
+  try { renderStatus(); } catch (e) {}
   const now = Date.now();
   // リモート制御のポーリング (30秒、調整モード中は10秒)
   if (connected() && now >= nextCfgPollAt) {
@@ -965,8 +967,11 @@ async function captureAndUpload() {
   }
 }
 
+// Date でもミリ秒でも受ける。呼ぶ側で new Date を忘れると renderStatus ごと
+// 落ちて tick が止まる (= 撮影も検知も止まる) ので、ここで吸収しておく。
 function hhmm(d) {
-  return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ':' + ('0' + d.getSeconds()).slice(-2);
+  const t = (d instanceof Date) ? d : new Date(d);
+  return ('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2) + ':' + ('0' + t.getSeconds()).slice(-2);
 }
 function renderStatus() {
   const el = document.getElementById('status');

@@ -284,6 +284,65 @@ function enterSignedIn(id) {
   document.getElementById('loginDoneMsg').textContent =
     (ja ? '端末: ' : 'Device: ') + id + (ja ? '。下で画像を選んでください。' : '. Choose your image below.');
   document.getElementById('uploadCard').style.display = '';
+  loadExistingImage();     // 保存済み画像があれば編集状態に復元
+}
+
+// ─── 保存済みの画像を読み戻す (PL の loadSlotImage 相当、2026-08-29) ───
+// これが無いと、既にアップロード済みでもファイルを選び直すまで編集欄が出ず、
+// 「背景色の濃淡だけ調整したい」ができなかった。色数と Auto 背景の強度も
+// 保存値から復元して、実機と同じ条件でプレビューできるようにする。
+async function loadExistingImage() {
+  if (!deviceId) { return; }
+  const ja = document.documentElement.lang === 'ja';
+  const msg = document.getElementById('loginDoneMsg');
+  const base = msg.textContent;
+  try {
+    const r = await fetch(API + '/image-info?device_id=' + encodeURIComponent(deviceId));
+    if (!r.ok) { return; }
+    const meta = await r.json();
+    if (!meta || !meta.exists) { return; }
+
+    msg.textContent = ja ? '保存済みの画像を読み込み中…' : 'Loading your saved image…';
+    const ir = await fetch(API + '/image/' + encodeURIComponent(deviceId) + '.png?v=' +
+                           encodeURIComponent(meta.version || Date.now()));
+    if (!ir.ok) { throw new Error('http_' + ir.status); }
+    const blob = await ir.blob();
+    const objUrl = URL.createObjectURL(blob);
+
+    await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        curImg = img;
+        // 保存済み画像は 320x320 のマスク済み = 等倍中央でぴったり合う
+        panX = 0; panY = 0; zoom = 1;
+        const z = document.getElementById('zoom');
+        if (z) { z.value = '1'; }
+        document.getElementById('adjustRow').style.display = '';
+        // 保存時の色数を復元 (品質プレビューを実機の条件に合わせる)
+        if (meta.colors) {
+          const cb = document.querySelector('#colorBtns button[data-c="' + meta.colors + '"]');
+          if (cb) { mColors = Number(meta.colors); selBtn('colorBtns', cb); updateBppHint(); }
+        }
+        // Auto 背景色の強度を復元
+        mBgAuto = (meta.bg_auto != null) ? Number(meta.bg_auto) : 33;
+        const bgSlider = document.getElementById('bgAuto');
+        if (bgSlider) { bgSlider.value = mBgAuto; }
+        redrawPreview();      // maskedPng 更新 + scheduleMeasure で計測/プレビュー再描画
+        document.getElementById('uploadBtn').disabled = false;
+        URL.revokeObjectURL(objUrl);
+        resolve();
+      };
+      img.onerror = () => { URL.revokeObjectURL(objUrl); reject(new Error('decode_failed')); };
+      img.src = objUrl;
+    });
+
+    msg.textContent = ja
+      ? ('端末: ' + deviceId + '。現在の画像を読み込みました。調整して再アップロードするか、別の画像を選べます。')
+      : ('Device: ' + deviceId + '. Your current image is loaded — adjust and re-upload, or pick a different one.');
+  } catch (e) {
+    // 読み戻しは補助機能。失敗しても新規アップロードは従来どおり使えるので黙って戻す。
+    msg.textContent = base;
+  }
 }
 
 // 端末変更: 保存した Device ID を消して入力フォームに戻す。

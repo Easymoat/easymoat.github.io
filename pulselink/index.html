@@ -326,7 +326,7 @@
 
   <div class="section">
     <div class="section-header">
-      <div class="section-tag" data-en="Account" data-ja="アカウント">Account</div>
+      <div class="section-tag" data-en="Device ID" data-ja="Device ID">Device ID</div>
       <h2 data-en="Your watch is your identity" data-ja="ウォッチが本人確認になります">Your watch is your identity</h2>
       <p class="section-desc" data-en="Every Garmin watch carries a Device ID, and PulseLink uses it to tell one watch from another. Install the app and you can start straight away. The same ID is what links your phone camera and your watch face images to your watch." data-ja="Garmin のウォッチはそれぞれ Device ID を持っており、PulseLink はこれで端末を識別します。インストールすればそのまま使い始められます。スマホのカメラや文字盤画像をウォッチに結びつけるのも、この同じ ID です。">Every Garmin watch carries a Device ID, and PulseLink uses it to tell one watch from another. Install the app and you can start straight away. The same ID is what links your phone camera and your watch face images to your watch.</p>
     </div>
@@ -347,6 +347,12 @@
         <h3 data-en="Phone camera" data-ja="スマホカメラ">Phone camera</h3>
         <p data-en="The same Device ID turns a spare phone into a fixed camera that feeds your watch face." data-ja="同じ Device ID で、余ったスマホを文字盤へ映す定点カメラにできます。">The same Device ID turns a spare phone into a fixed camera that feeds your watch face.</p>
         <span class="cta" data-en="Open camera page →" data-ja="カメラページを開く →">Open camera page →</span>
+      </a>
+      <a href="tools/" class="feature">
+        <div class="feature-icon">🧰</div>
+        <h3 data-en="All web tools" data-ja="Web ツール一覧">All web tools</h3>
+        <p data-en="One page listing every companion page — image, camera, viewer, and data deletion — with where to find your Device ID." data-ja="画像・カメラ・ビューア・データ削除の各ページを1枚にまとめてあります。Device ID の確認方法も載せています。">One page listing every companion page — image, camera, viewer, and data deletion — with where to find your Device ID.</p>
+        <span class="cta" data-en="See all tools →" data-ja="一覧を見る →">See all tools →</span>
       </a>
     </div>
   </div>
@@ -535,7 +541,7 @@
     </div>
     <div class="privacy-box">
       <p id="cancellation-policy">Cancellation Policy: PulseLink Leader is an annual subscription that renews automatically. You can cancel anytime via the Stripe Customer Portal — link is included in your activation email and Stripe receipt. Your Leadering access continues until the end of the current billing period.</p>
-      <p class="accent-callout" id="downgrade-note">After cancellation or trial expiry, your account is downgraded to a free Member account. Your owned Crew is deleted, but your account, settings and Member memberships remain — you can re-subscribe anytime to Leader again.</p>
+      <p class="accent-callout" id="downgrade-note">After cancellation or trial expiry, your watch is downgraded to Member access. The Crew you led is deleted, but your settings and any Crew you have joined as a Member remain — purchase again at any time to lead a Crew once more.</p>
       <p id="refund-policy">Refund Policy: As PulseLink is a digital service activated by a license key, refunds are not provided once the activation email has been sent. If you experience activation issues, please contact <span class="em"></span> and we'll resolve them promptly.</p>
       <p id="questions-line">For any questions: <span class="em"></span></p>
     </div>
@@ -578,7 +584,7 @@
     </div>
     <div class="privacy-box">
       <p data-en="PulseLink processes heart rate data, which is treated as a special category of personal data under GDPR. We collect only what is necessary: your watch's Device ID, a nickname, and the metrics you choose to share within your Crew." data-ja="PulseLinkは心拍数データを処理します。心拍数はGDPRで特別カテゴリの個人データとして扱われます。当社が収集するのは必要最小限：ウォッチの Device ID、ニックネーム、Crew内で共有を選択した指標のみです。">PulseLink processes heart rate data, which is treated as a special category of personal data under GDPR. We collect only what is necessary: your watch's Device ID, a nickname, and the metrics you choose to share within your Crew.</p>
-      <p data-en="You can stop sharing at any time using the in-app Pause toggle, switch to Manual interval (no auto-send), or turn off just heart rate sharing while keeping steps/distance active. You can delete your account and all associated data from this page at any time." data-ja="アプリ内の Pause トグル、Manual インターバル（自動送信なし）、心拍だけOFF — 3層のプライバシー制御でいつでも共有を停止できます。アカウントと全関連データは本ページからいつでも削除可能です。">You can stop sharing at any time using the in-app Pause toggle, switch to Manual interval (no auto-send), or turn off just heart rate sharing while keeping steps/distance active. You can delete your account and all associated data from this page at any time.</p>
+      <p data-en="You can stop sharing at any time using the in-app Pause toggle, switch to Manual interval (no auto-send), or turn off just heart rate sharing while keeping steps/distance active. You can erase everything stored for your watch at any time from the Delete my data page." data-ja="アプリ内の Pause トグル、Manual インターバル（自動送信なし）、心拍だけOFF — 3層のプライバシー制御でいつでも共有を停止できます。ウォッチに紐づくデータは、データ削除ページからいつでも消せます。">You can stop sharing at any time using the in-app Pause toggle, switch to Manual interval (no auto-send), or turn off just heart rate sharing while keeping steps/distance active. You can erase everything stored for your watch at any time from the Delete my data page.</p>
       <p><span data-en="For full details, please read our " data-ja="詳細は">For full details, please read our </span><a href="privacy/" data-en="Privacy Policy" data-ja="プライバシーポリシー">Privacy Policy</a><span data-en=" and " data-ja="および"> and </span><a href="terms/" data-en="Terms of Service" data-ja="利用規約">Terms of Service</a><span data-en="." data-ja="をご覧ください。">.</span></p>
     </div>
   </div>
@@ -635,9 +641,9 @@ function setLang(lang) {
   var downgrade = document.getElementById('downgrade-note');
   if (downgrade) {
     if (lang === 'ja') {
-      downgrade.textContent = '解約後またはトライアル切れ後は、無料のメンバーアカウントに自動的にダウングレードされます。所有していたCrewは削除されますが、アカウント・設定・メンバーとしてのメンバーシップは残ります。再度サブスクすればいつでもリーダーに復帰できます。';
+      downgrade.textContent = '解約後またはトライアル切れ後は、そのウォッチはメンバーとしての利用に戻ります。率いていた Crew は削除されますが、設定と、メンバーとして参加している Crew はそのまま残ります。再度購入すれば、いつでもまた Crew を率いられます。';
     } else {
-      downgrade.textContent = 'After cancellation or trial expiry, your account is downgraded to a free Member account. Your owned Crew is deleted, but your account, settings and Member memberships remain — you can re-subscribe anytime to Leader again.';
+      downgrade.textContent = 'After cancellation or trial expiry, your watch is downgraded to Member access. The Crew you led is deleted, but your settings and any Crew you have joined as a Member remain — purchase again at any time to lead a Crew once more.';
     }
   }
 

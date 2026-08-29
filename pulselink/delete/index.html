@@ -36,6 +36,10 @@
   .sub { font-size: 13px; color: var(--muted); margin-top: 12px; }
   a { color: var(--accent); }
   footer { background: var(--white); border-top: 1px solid var(--border); padding: 20px 40px; text-align: center; font-size: 12px; color: var(--muted2); }
+  .tool-nav { margin: 28px auto 32px; max-width: 560px; text-align: center; font-size: 13px; color: var(--muted); }
+  .tool-nav a { color: var(--accent); text-decoration: none; margin: 0 8px; white-space: nowrap; }
+  .tool-nav a:hover { text-decoration: underline; }
+  .tool-nav .all { display: block; margin-top: 8px; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -79,6 +83,12 @@
 
   <p class="sub" style="text-align:center;"><a href="../" data-en="← PulseLink home" data-ja="← PulseLink ホーム">← PulseLink home</a></p>
 </main>
+<div class="tool-nav">
+  <a href="../image/" data-en="🖼️ Watch face image" data-ja="🖼️ 文字盤画像">🖼️ Watch face image</a>
+  <a href="../cam/" data-en="📷 Camera" data-ja="📷 カメラ">📷 Camera</a>
+  <a href="../view/" data-en="🖥️ Viewer" data-ja="🖥️ ビューア">🖥️ Viewer</a>
+  <a class="all" href="../tools/" data-en="All web tools →" data-ja="Web ツール一覧 →">All web tools →</a>
+</div>
 <footer>© 2026 Easymoat</footer>
 
 <script>

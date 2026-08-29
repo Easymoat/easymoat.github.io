@@ -96,6 +96,10 @@
   .btn.done { background: #16A34A; }
   .btn.done:hover { background: #128A3E; }
   footer { background: var(--white); border-top: 1px solid var(--border); padding: 20px 40px; text-align: center; font-size: 12px; color: var(--muted2); }
+  .tool-nav { margin: 28px auto 0; max-width: 560px; text-align: center; font-size: 13px; color: var(--muted); }
+  .tool-nav a { color: var(--accent); text-decoration: none; margin: 0 8px; white-space: nowrap; }
+  .tool-nav a:hover { text-decoration: underline; }
+  .tool-nav .all { display: block; margin-top: 8px; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -142,7 +146,7 @@
     </div>
     <div id="loginDone" style="display:none;">
       <div class="alert success" id="loginDoneMsg"></div>
-      <button class="btn" id="signoutBtn" data-en="Sign out / switch account" data-ja="サインアウト / アカウント切替" style="margin-top:10px;">Sign out / switch account</button>
+      <button class="btn" id="signoutBtn" data-en="Sign out / switch watch" data-ja="サインアウト / ウォッチ切替" style="margin-top:10px;">Sign out / switch watch</button>
     </div>
   </div>
 
@@ -227,6 +231,12 @@
   <div class="footer-links">
     <a href="../" data-en="← PulseLink home" data-ja="← PulseLink ホーム">← PulseLink home</a>
     <a href="../manual/" data-en="User manual" data-ja="ユーザーマニュアル">User manual</a>
+  </div>
+  <div class="tool-nav">
+    <a href="../cam/" data-en="📷 Camera" data-ja="📷 カメラ">📷 Camera</a>
+    <a href="../view/" data-en="🖥️ Viewer" data-ja="🖥️ ビューア">🖥️ Viewer</a>
+    <a href="../delete/" data-en="🗑️ Delete my data" data-ja="🗑️ データ削除">🗑️ Delete my data</a>
+    <a class="all" href="../tools/" data-en="All web tools →" data-ja="Web ツール一覧 →">All web tools →</a>
   </div>
 </main>
 <footer>© 2026 Easymoat</footer>

@@ -38,6 +38,10 @@
   .hint { font-size: 12px; color: #9CA3AF; margin-top: 8px; line-height: 1.6; }
   .badge { display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 12px; background: #CFFAFE; color: #0891B2; font-weight: 600; margin-bottom: 8px; }
   .badge.paused { background: #FEE2E2; color: #B91C1C; }
+  .tool-nav { margin: 28px auto 32px; max-width: 560px; text-align: center; font-size: 13px; color: var(--muted); }
+  .tool-nav a { color: var(--accent); text-decoration: none; margin: 0 8px; white-space: nowrap; }
+  .tool-nav a:hover { text-decoration: underline; }
+  .tool-nav .all { display: block; margin-top: 8px; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -120,11 +124,17 @@
   </div>
 
   <div class="card" id="noneCard" style="display:none;">
-    <p class="hint" data-en="No camera found on this account. Start the camera on the Cam page first — or, if you are a Crew member, ask your Leader to turn on camera sharing." data-ja="このアカウントにカメラがありません。先に Cam ページでカメラを開始してください。Crew の Member の方は、Leader にカメラ共有を ON にしてもらってください。">No camera found on this account. Start the camera on the Cam page first — or, if you are a Crew member, ask your Leader to turn on camera sharing.</p>
+    <p class="hint" data-en="No camera found for this watch. Start the camera on the Cam page first — or, if you are a Crew member, ask your Leader to turn on camera sharing." data-ja="このウォッチにカメラがありません。先に Cam ページでカメラを開始してください。Crew の Member の方は、Leader にカメラ共有を ON にしてもらってください。">No camera found for this watch. Start the camera on the Cam page first — or, if you are a Crew member, ask your Leader to turn on camera sharing.</p>
     <button class="btn ghost" onclick="location.href='../cam/'" data-en="Open the Cam page" data-ja="Cam ページを開く">Open the Cam page</button>
   </div>
 </div>
 
+<div class="tool-nav">
+  <a href="../image/" data-en="🖼️ Watch face image" data-ja="🖼️ 文字盤画像">🖼️ Watch face image</a>
+  <a href="../cam/" data-en="📷 Camera" data-ja="📷 カメラ">📷 Camera</a>
+  <a href="../delete/" data-en="🗑️ Delete my data" data-ja="🗑️ データ削除">🗑️ Delete my data</a>
+  <a class="all" href="../tools/" data-en="All web tools →" data-ja="Web ツール一覧 →">All web tools →</a>
+</div>
 <script>
 const API = 'https://mlbwatch-server.onrender.com/api/pulselink';
 const CAM_SLOT = 6;

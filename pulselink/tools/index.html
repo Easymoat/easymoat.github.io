@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web Tools — PulseLink | Easymoat</title>
+<link rel="icon" type="image/png" href="../../favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FC; --white: #FFFFFF; --border: #E2E6EF;
+    --accent: #0891B2; --accent-light: #CFFAFE; --accent-dark: #0E7490;
+    --text: #111827; --text2: #374151; --muted: #6B7280; --muted2: #9CA3AF;
+    --danger: #DC2626;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 40px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; color: var(--muted); transition: all 0.15s; }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 40px; display: flex; align-items: center; justify-content: space-between; }
+  main { flex: 1; max-width: 720px; margin: 0 auto; padding: 48px 24px; width: 100%; }
+  h1 { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; margin-bottom: 10px; }
+  .subtitle { font-size: 15px; color: var(--muted); margin-bottom: 28px; }
+  .idcard { background: var(--accent-light); border: 1px solid #A5E8F2; border-radius: 12px; padding: 18px 20px; margin-bottom: 28px; }
+  .idcard h2 { font-size: 15px; font-weight: 700; color: var(--accent-dark); margin-bottom: 6px; }
+  .idcard p { font-size: 14px; color: var(--text2); }
+  .path { display: inline-block; background: var(--white); border: 1px solid #A5E8F2; border-radius: 6px; padding: 1px 8px; font-size: 13px; font-weight: 600; color: var(--accent-dark); white-space: nowrap; }
+  .tools { display: grid; gap: 14px; }
+  .tool { display: flex; gap: 16px; align-items: flex-start; background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-decoration: none; color: inherit; transition: border-color 0.15s, transform 0.15s; }
+  .tool:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .tool .ico { font-size: 26px; line-height: 1; flex: 0 0 auto; }
+  .tool h3 { font-size: 16px; font-weight: 700; margin-bottom: 3px; }
+  .tool p { font-size: 13.5px; color: var(--muted); }
+  .tool .url { display: block; font-size: 12px; color: var(--accent); margin-top: 7px; font-weight: 600; word-break: break-all; }
+  .tool.danger:hover { border-color: var(--danger); }
+  .tool.danger .url { color: var(--danger); }
+  .back { display: block; text-align: center; font-size: 13px; color: var(--accent); margin-top: 32px; text-decoration: none; }
+  footer { background: var(--white); border-top: 1px solid var(--border); padding: 20px 40px; text-align: center; font-size: 12px; color: var(--muted2); }
+</style>
+</head>
+<body>
+<div class="lang-bar">
+  <span>🌐</span>
+  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+  <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+</div>
+<nav>
+  <div class="logo" style="display:flex; align-items:center; gap:10px;">
+    <a href="../" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;">
+      <img src="../../easymoat_logo.png" alt="Easymoat" style="height:32px; width:32px; border-radius:6px; object-fit:cover;">
+      <span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:800;">PulseLink</span>
+    </a>
+  </div>
+</nav>
+<main>
+
+  <h1 data-en="Web Tools" data-ja="Web ツール">Web Tools</h1>
+  <p class="subtitle" data-en="Four pages work alongside the watch. All of them open with the same Device ID." data-ja="ウォッチと組み合わせて使うページが4つあります。どれも同じ Device ID で開きます。">Four pages work alongside the watch. All of them open with the same Device ID.</p>
+
+  <div class="idcard">
+    <h2 data-en="Where to find your Device ID" data-ja="Device ID の確認方法">Where to find your Device ID</h2>
+    <p data-en="On the watch, open the You menu and go to Link up. Your ID is on the bottom line, in the form XXXX-XXXX. It stays the same even if you reinstall the app." data-ja="ウォッチで You メニューを開き、Link up へ進みます。最下段に XXXX-XXXX の形式で出ています。アプリを入れ直しても変わりません。">On the watch, open the You menu and go to Link up. Your ID is on the bottom line, in the form XXXX-XXXX. It stays the same even if you reinstall the app.</p>
+  </div>
+
+  <div class="tools">
+
+    <a href="../image/" class="tool">
+      <div class="ico">🖼️</div>
+      <div>
+        <h3 data-en="Watch Face Image" data-ja="文字盤画像">Watch Face Image</h3>
+        <p data-en="Send a picture to your watch face — a photo, a team logo, any symbol you like. Five slots to switch between." data-ja="文字盤に画像を送ります。写真、チームロゴ、好きな図柄など。5つのスロットを切り替えて使えます。">Send a picture to your watch face — a photo, a team logo, any symbol you like. Five slots to switch between.</p>
+        <span class="url">easymoat.com/pulselink/image/</span>
+      </div>
+    </a>
+
+    <a href="../cam/" class="tool">
+      <div class="ico">📷</div>
+      <div>
+        <h3 data-en="Camera" data-ja="カメラ">Camera</h3>
+        <p data-en="Turn a spare phone into a fixed camera. Keep this page open on it and the picture becomes your watch face." data-ja="余ったスマホを定点カメラにします。このページを開いたままにしておくと、映像が文字盤になります。">Turn a spare phone into a fixed camera. Keep this page open on it and the picture becomes your watch face.</p>
+        <span class="url">easymoat.com/pulselink/cam/</span>
+      </div>
+    </a>
+
+    <a href="../view/" class="tool">
+      <div class="ico">🖥️</div>
+      <div>
+        <h3 data-en="Viewer" data-ja="ビューア">Viewer</h3>
+        <p data-en="Watch the same camera on any phone, tablet or PC — full quality, far larger than a watch face. Also where you control the camera remotely." data-ja="同じカメラをスマホ・タブレット・PC の大きな画面で、元の画質のまま見られます。カメラの遠隔操作もここから。">Watch the same camera on any phone, tablet or PC — full quality, far larger than a watch face. Also where you control the camera remotely.</p>
+        <span class="url">easymoat.com/pulselink/view/</span>
+      </div>
+    </a>
+
+    <a href="../delete/" class="tool danger">
+      <div class="ico">🗑️</div>
+      <div>
+        <h3 data-en="Delete My Data" data-ja="データ削除">Delete My Data</h3>
+        <p data-en="Erase everything stored for your watch: images, Crew, messages. Your license and trial are held separately and are not affected." data-ja="ウォッチに紐づくデータ（画像・Crew・メッセージ）をすべて消します。ライセンスとトライアルは別管理なので影響しません。">Erase everything stored for your watch: images, Crew, messages. Your license and trial are held separately and are not affected.</p>
+        <span class="url">easymoat.com/pulselink/delete/</span>
+      </div>
+    </a>
+
+  </div>
+
+  <a href="../" class="back" data-en="← PulseLink home" data-ja="← PulseLink ホーム">← PulseLink home</a>
+</main>
+<footer>© 2026 Easymoat</footer>
+
+<script>
+function setLang(lang) {
+  document.documentElement.lang = lang === 'ja' ? 'ja' : 'en';
+  document.querySelectorAll('[data-en]').forEach(el => {
+    if (el.children.length > 0) return;
+    const t = el.getAttribute('data-' + lang);
+    if (t) el.textContent = t;
+  });
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+  try { localStorage.setItem('pl_lang', lang); } catch (e) {}
+}
+try { if (localStorage.getItem('pl_lang') === 'ja') setLang('ja'); } catch (e) {}
+</script>
+</body>
+</html>

@@ -45,6 +45,10 @@
   .thumbwrap { display: flex; gap: 14px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
   .thumbwrap canvas { width: 200px; height: 200px; border-radius: 50%; border: 1px solid #E2E6EF; }
   .note { font-size: 12px; color: #6B7280; background: #F3F4F6; border-radius: 8px; padding: 10px 12px; margin-top: 12px; line-height: 1.6; }
+  .tool-nav { margin: 28px auto 32px; max-width: 560px; text-align: center; font-size: 13px; color: var(--muted); }
+  .tool-nav a { color: var(--accent); text-decoration: none; margin: 0 8px; white-space: nowrap; }
+  .tool-nav a:hover { text-decoration: underline; }
+  .tool-nav .all { display: block; margin-top: 8px; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -99,7 +103,7 @@
       <div class="status" id="status"></div>
     </div>
     <div id="camAlert"></div>
-    <div class="note" data-en="Keep this page open in Safari with the iPhone plugged in. The page keeps the screen awake. Photos go only to your own PulseLink account; on the watch, choose You menu → Image slot → Camera." data-ja="iPhone を電源につなぎ、この Safari ページを開いたままにしてください。ページが画面消灯を防ぎます。写真は自分の PulseLink アカウントだけに送られます。ウォッチ側は You メニュー → Image slot → Camera を選択してください。">Keep this page open in Safari with the iPhone plugged in. The page keeps the screen awake. Photos go only to your own PulseLink account; on the watch, choose You menu → Image slot → Camera.</div>
+    <div class="note" data-en="Keep this page open in Safari with the iPhone plugged in. The page keeps the screen awake. Photos go only to your own watch; on it, choose You menu → Image slot → Camera." data-ja="iPhone を電源につなぎ、この Safari ページを開いたままにしてください。ページが画面消灯を防ぎます。写真は自分のウォッチにだけ送られます。ウォッチ側は You メニュー → Image slot → Camera を選択してください。">Keep this page open in Safari with the iPhone plugged in. The page keeps the screen awake. Photos go only to your own watch; on it, choose You menu → Image slot → Camera.</div>
   </div>
 </div>
 <canvas id="shot" width="320" height="320"></canvas>
@@ -111,6 +115,12 @@
        data-en="tap to wake" data-ja="タップで解除">tap to wake</div>
 </div>
 
+<div class="tool-nav">
+  <a href="../image/" data-en="🖼️ Watch face image" data-ja="🖼️ 文字盤画像">🖼️ Watch face image</a>
+  <a href="../view/" data-en="🖥️ Viewer" data-ja="🖥️ ビューア">🖥️ Viewer</a>
+  <a href="../delete/" data-en="🗑️ Delete my data" data-ja="🗑️ データ削除">🗑️ Delete my data</a>
+  <a class="all" href="../tools/" data-en="All web tools →" data-ja="Web ツール一覧 →">All web tools →</a>
+</div>
 <script>
 const API = 'https://mlbwatch-server.onrender.com/api/pulselink';
 const CAM_SLOT = 6;

@@ -719,16 +719,21 @@ const MOTION_COOLDOWN_MS = 90 * 1000; // 一度鳴らしたらしばらく鳴ら
 //   low 10% … 近くで大きく動いた時だけ / med 5% … 人が入ってくる程度 / high 2.5% … ペットや遠くの人
 const MOTION_RATIO = { low: 0.10, med: 0.05, high: 0.025 };
 // 画素ごとの差のしきい値。これを下回る明暗差の動きは拾わない。
-// 合成フレームで測って決めた値 (2026-08-30):
-//   26 だと昼のセンサーノイズ (振幅20) だけで 7.5%、夜 (振幅28) で 24% が「変化」に化け、
-//   感度 med (5%) を軽く超えてしまう。狼少年になる。
-//   40 / 54 まで上げるとノイズ由来は 0% になり、実際の動きは明暗差 45 以上 (夜は 60 以上) で
-//   確実に拾える。暗い服で暗い背景の前を通るような低コントラストは落とすが、
-//   誤報を出さないことを優先した。
-const MOTION_PIXEL = 40, MOTION_PIXEL_NIGHT = 54;
+//
+// 【重要】48x48 への縮小は 1画素が元映像の約900画素の平均になる。平均を取ると
+// ノイズは 1/√N に減るが、実際の変化も同じだけ薄まる。最初 40/54 にしていたのは
+// 「縮小後の48x48にノイズを乗せた」合成データで測ったためで、現実より遥かに強い
+// ノイズを想定していた。実映像ではテレビを写しても平均化後の差が40を超えず、
+// 一度も反応しなかった (2026-08-30 に実機で判明)。
+//
+// 縮小がノイズを潰してくれる前提で、しきい値は低くてよい。
+const MOTION_PIXEL = 12, MOTION_PIXEL_NIGHT = 20;
 let motionCanvas = null, motionPrev = null;
 let nextMotionCheckAt = 0, lastMotionFiredAt = 0;
 let pendingMotion = false;   // 次の撮影を「検知のコマ」として送るか
+// 直近の変化量と検知時刻。画面に出して、置き場所ごとに感度を選べるようにする。
+// 数字が見えないと「反応しない」のか「感度が合っていない」のか切り分けられない。
+let lastMotionRatio = -1, lastMotionAt = 0, motionFireCount = 0;
 
 function motionEnabled() {
   return (camCfg.motion_mode || 'med') !== 'off';
@@ -771,11 +776,14 @@ function checkMotion() {
     if (Math.abs((cur.g[i] - shift) - prev.g[i]) > pxTh) { changed++; }
   }
   const ratio = changed / cur.g.length;
+  lastMotionRatio = ratio;
   const th = MOTION_RATIO[camCfg.motion_mode] || MOTION_RATIO.med;
   if (ratio < th) { return; }
   const now = Date.now();
   if (now - lastMotionFiredAt < MOTION_COOLDOWN_MS) { return; }
   lastMotionFiredAt = now;
+  lastMotionAt = now;
+  motionFireCount++;
   pendingMotion = true;
   // 検知したその場で撮る。次の定期撮影を待つと、その頃には何も写っていない。
   if (!inFlight) { nextShotAt = now; }
@@ -967,6 +975,18 @@ function renderStatus() {
   }
   html += (j ? '送信回数: ' : 'Uploads: ') + '<b>' + shotCount + '</b><br>';
   html += (j ? '最終送信: ' : 'Last: ') + '<b>' + (lastUploadAt ? hhmm(lastUploadAt) : '—') + '</b><br>';
+  // 動体検知の実測値。いま画面の何割が変化しているかと、反応するしきい値を並べて出す。
+  // これが見えないと「反応しない」のか「感度が合っていない」のか切り分けられない。
+  if (motionEnabled() && timerId != null) {
+    const th = MOTION_RATIO[camCfg.motion_mode] || MOTION_RATIO.med;
+    const cur = (lastMotionRatio >= 0) ? (lastMotionRatio * 100).toFixed(1) : '—';
+    const hit = (lastMotionRatio >= th);
+    html += (j ? '変化量: ' : 'Change: ')
+         + '<b style="color:' + (hit ? '#DC2626' : 'inherit') + ';">' + cur + '%</b>'
+         + (j ? ' / 反応は ' : ' / fires at ') + (th * 100).toFixed(1) + '%<br>';
+    html += (j ? '検知: ' : 'Motion: ') + '<b>' + motionFireCount + '</b>'
+         + (lastMotionAt ? ' (' + hhmm(lastMotionAt) + ')' : '') + '<br>';
+  }
   if (!remotePaused && nextShotAt != null) {
     const s = Math.max(0, Math.round((nextShotAt - Date.now()) / 1000));
     html += (j ? '次回まで: ' : 'Next in: ') + '<b>' + Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2) + '</b><br>';

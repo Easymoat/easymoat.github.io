@@ -1054,7 +1054,7 @@ function renderStatus() {
          + (motionSkipReason ? ' ' + motionSkipReason : '') + ']</span><br>';
     // 切り分け用: 画素差の最大値 / しきい値 / 平均輝度。
     html += '<span style="color:#9CA3AF;">'
-         + (j ? '　差の最大: ' : '  max diff: ') + (lastMaxDiff >= 0 ? lastMaxDiff : '—')
+         + (j ? '　差の最大: ' : '  max diff: ') + (lastMaxDiff >= 0 ? Math.round(lastMaxDiff) : '—')
          + ' / ' + (lastMean >= 0 && lastMean < 40 ? MOTION_PIXEL_NIGHT : MOTION_PIXEL)
          + (j ? '　明るさ: ' : '  luma: ') + (lastMean >= 0 ? lastMean.toFixed(0) : '—')
          + '</span><br>';

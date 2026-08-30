@@ -740,6 +740,11 @@ let lastMotionRatio = -1, lastMotionAt = 0, motionFireCount = 0;
 // 判定を何回通ったか。これが増えていれば検知ループは生きている。
 // 「変化量 0.0%」と「そもそも止まっている」は、値だけでは区別できない。
 let motionCheckCount = 0, motionSkipReason = '', motionNoFrame = 0;
+// 画素差の最大値と平均輝度。0.0% が「本当に変化なし」なのか「しきい値が高すぎる」のか、
+// あるいは「フレームが同一 (映像が固まっている)」のかは、割合だけでは区別できない。
+//   maxDiff が 0     → 2枚が完全に同一 = 映像が更新されていない
+//   maxDiff が 1〜11 → 変化はあるが しきい値 12 に届いていない
+let lastMaxDiff = -1, lastMean = -1;
 
 function motionEnabled() {
   return (camCfg.motion_mode || 'med') !== 'off';
@@ -792,10 +797,14 @@ function checkMotion() {
   const shift = cur.mean - prev.mean;
   const night = cur.mean < 40;
   const pxTh = night ? MOTION_PIXEL_NIGHT : MOTION_PIXEL;
-  let changed = 0;
+  let changed = 0, maxDiff = 0;
   for (let i = 0; i < cur.g.length; i++) {
-    if (Math.abs((cur.g[i] - shift) - prev.g[i]) > pxTh) { changed++; }
+    const d = Math.abs((cur.g[i] - shift) - prev.g[i]);
+    if (d > maxDiff) { maxDiff = d; }
+    if (d > pxTh) { changed++; }
   }
+  lastMaxDiff = maxDiff;
+  lastMean = cur.mean;
   const ratio = changed / cur.g.length;
   lastMotionRatio = ratio;
   const th = MOTION_RATIO[camCfg.motion_mode] || MOTION_RATIO.med;
@@ -1013,6 +1022,12 @@ function renderStatus() {
          // 判定回数が毎秒増えていれば生きている。増えなければループが止まっている。
          + ' <span style="color:#9CA3AF;">[' + motionCheckCount
          + (motionSkipReason ? ' ' + motionSkipReason : '') + ']</span><br>';
+    // 切り分け用: 画素差の最大値 / しきい値 / 平均輝度。
+    html += '<span style="color:#9CA3AF;">'
+         + (j ? '　差の最大: ' : '  max diff: ') + (lastMaxDiff >= 0 ? lastMaxDiff : '—')
+         + ' / ' + (lastMean >= 0 && lastMean < 40 ? MOTION_PIXEL_NIGHT : MOTION_PIXEL)
+         + (j ? '　明るさ: ' : '  luma: ') + (lastMean >= 0 ? lastMean.toFixed(0) : '—')
+         + '</span><br>';
     html += (j ? '検知: ' : 'Motion: ') + '<b>' + motionFireCount + '</b>'
          + (lastMotionAt ? ' (' + hhmm(lastMotionAt) + ')' : '') + '<br>';
   }

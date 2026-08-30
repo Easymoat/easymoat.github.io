@@ -757,6 +757,11 @@ let lastMaxDiff = -1, lastMean = -1;
 // 凍結を見抜けない — 実際に「起動直後だけ動いてすぐ 0 のまま」という形で起きた
 // (2026-08-30)。内容で判定するのが確実。
 let motionSameCount = 0;
+// 検知後の連写。イベントの前後を残すため、検知から3分間は25秒間隔で撮る。
+// 履歴は5枚あるので、25秒間隔なら約2分ぶんの流れが「出来事の連続記録」になる。
+// 3分ごとの1枚では、次のコマの頃には全てが終わっている。
+const MOTION_BURST_MS = 3 * 60 * 1000, MOTION_BURST_INTERVAL_MS = 25 * 1000;
+let motionBurstUntil = 0;
 
 function motionEnabled() {
   return (camCfg.motion_mode || 'med') !== 'off';
@@ -845,6 +850,7 @@ function checkMotion() {
   lastMotionAt = now;
   motionFireCount++;
   pendingMotion = true;
+  motionBurstUntil = now + MOTION_BURST_MS;
   // 検知したその場で撮る。次の定期撮影を待つと、その頃には何も写っていない。
   if (!inFlight) { nextShotAt = now; }
 }
@@ -883,7 +889,10 @@ async function captureAndUpload() {
   // 成功/失敗に関わらず次回を先に予約 (失敗時は下で前倒し)。
   // 調整モード (Viewer の Setup mode) 中は最短間隔で回し、期限が切れれば自動で通常間隔へ。
   const boostNow = camCfg.boost_until && camCfg.boost_until > Date.now();
-  nextShotAt = Date.now() + (boostNow ? fastSec * 1000 : INTERVAL_MS);
+  // 検知後3分は25秒間隔 (セットアップモードの boost が最優先)。
+  const burstNow = motionBurstUntil > Date.now();
+  nextShotAt = Date.now() + (boostNow ? fastSec * 1000
+                          : (burstNow ? MOTION_BURST_INTERVAL_MS : INTERVAL_MS));
   const box = document.getElementById('camAlert');
   try {
     // ストリームが死んでいたら取り直す (muted は一時的なことが多いので少し待つ)。

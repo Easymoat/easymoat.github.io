@@ -595,6 +595,12 @@ document.addEventListener('visibilitychange', function () {
   }
 });
 
+// video 要素が何かの拍子に pause すると、track は live のまま映像だけが凍る。
+// プレビューも最後のフレームで止まるので気づきにくい。pause されたら即座に戻す。
+document.getElementById('video').addEventListener('pause', function () {
+  if (timerId != null) { this.play().catch(function () {}); }
+});
+
 // カメラストリームの取得。iOS Safari はロック/アプリ切替で復帰後もストリームが
 // 死んだままになる (track.readyState='ended' や muted、あるいは黒フレームを返す)。
 // 撮影のたびに健全性を確認し、死んでいたらここで取り直す。
@@ -745,6 +751,12 @@ let motionCheckCount = 0, motionSkipReason = '', motionNoFrame = 0;
 //   maxDiff が 0     → 2枚が完全に同一 = 映像が更新されていない
 //   maxDiff が 1〜11 → 変化はあるが しきい値 12 に届いていない
 let lastMaxDiff = -1, lastMean = -1;
+// 完全同一フレームの連続数。実カメラの映像ならセンサーノイズで必ず 1-2 の差が出るので、
+// maxDiff=0 が続く = 映像が凍っている (video 要素の pause や、track が live のまま
+// フレーム供給だけ止まる型)。streamAlive() は track の状態しか見ないため、この型の
+// 凍結を見抜けない — 実際に「起動直後だけ動いてすぐ 0 のまま」という形で起きた
+// (2026-08-30)。内容で判定するのが確実。
+let motionSameCount = 0;
 
 function motionEnabled() {
   return (camCfg.motion_mode || 'med') !== 'off';
@@ -805,6 +817,24 @@ function checkMotion() {
   }
   lastMaxDiff = maxDiff;
   lastMean = cur.mean;
+  // ── 凍結の検出と復帰 ──
+  // 8秒同一なら video.play() (要素が pause しただけなら これで戻る)。
+  // さらに8秒同一なら openStream() で作り直す。ensureStream は streamAlive() が
+  // 「生きている」と答えるこの型では素通りするので、直接 openStream を呼ぶ。
+  // 凍結中は 3分ごとの送信も同じ写真を送り続けるので、動体検知に限らない修復。
+  if (maxDiff === 0) {
+    motionSameCount++;
+    motionSkipReason = 'frozen ' + motionSameCount;
+    const video = document.getElementById('video');
+    if (motionSameCount === 8 && video && video.paused) {
+      video.play().catch(function () {});
+    } else if (motionSameCount >= 16 && !inFlight) {
+      motionSameCount = -10;   // 再取得と露出安定の猶予 (10秒) を置いてから再判定
+      openStream().catch(function () {});
+    }
+    return;
+  }
+  motionSameCount = 0;
   const ratio = changed / cur.g.length;
   lastMotionRatio = ratio;
   const th = MOTION_RATIO[camCfg.motion_mode] || MOTION_RATIO.med;

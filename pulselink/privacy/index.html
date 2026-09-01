@@ -80,7 +80,7 @@
       <li>To run the Crew you create or join, and to show your live heart rate, steps and distance to the other Members of that Crew.</li>
       <li>If you enable Location sharing, to show your current position to the other Members of your Crew on the compass radar.</li>
       <li>To deliver template messages between Members.</li>
-      <li>To manage Leader subscriptions via Stripe.</li>
+      <li>To manage full-version subscriptions via Stripe.</li>
     </ul>
     <p><strong>Legal bases (GDPR):</strong> your <em>explicit consent</em> for heart-rate (health) data and for Location sharing; <em>performance of a contract</em> for account and Crew features; and our <em>legitimate interest</em> in keeping the service secure.</p>
 
@@ -88,7 +88,7 @@
     <ul>
       <li><strong>Other Crew Members.</strong> When you join a Crew, the Members of that Crew can see your nickname and the data you choose to share — heart rate, steps, distance, weather and location — while you are active. Each of these can be switched on or off individually, and location is off by default. You control what you share at any time (see Section 6).</li>
       <li><strong>A shared image (Leaders).</strong> If you are a Leader and share a watchface image, it is delivered to your Crew members' watches; each member can choose whether to display it (the "Use Leader's" toggle).</li>
-      <li><strong>Stripe</strong> — our payment processor, for Leader subscriptions only.</li>
+      <li><strong>Stripe</strong> — our payment processor, for full-version subscriptions only.</li>
       <li><strong>Garmin</strong> — your data travels over the Garmin Connect IQ platform between your watch and your phone.</li>
     </ul>
     <p>We never sell your data, and we never share it with advertisers or data brokers.</p>
@@ -129,7 +129,7 @@
     <h2>9. Security</h2>
     <p>All communication between the app and our server is <strong>encrypted in transit using HTTPS (TLS)</strong>. A watch identifies itself with its Device ID, which is displayed only on the watch itself and is therefore known to its owner alone. Heart-rate, step and distance values are held only transiently in server memory (see Section 5). No method of transmission or storage is perfectly secure, but we apply measures appropriate to the sensitivity of the data.</p>
 
-    <p>Watchface images (an optional Leader feature) are uploaded from the website over HTTPS. When a Leader shares an image, it is relayed through our server to each Crew member's watch over HTTPS, and it is visible only within that invite-only Crew; each member can opt out at any time using the "Use Leader's" toggle. On the watch the image is rendered solely as a static bitmap through Garmin's image API — shown as pixels only, it cannot run code or access any other data on your device.</p>
+    <p>Watchface images (an optional feature) are uploaded from the website over HTTPS. When a Leader shares an image, it is relayed through our server to each Crew member's watch over HTTPS, and it is visible only within that invite-only Crew; each member can opt out at any time using the "Use Leader's" toggle. On the watch the image is rendered solely as a static bitmap through Garmin's image API — shown as pixels only, it cannot run code or access any other data on your device.</p>
 
     <h2>10. International transfers</h2>
     <p>Our server is hosted on Render. Depending on region, your data may be processed on servers located outside your country. We rely on appropriate safeguards for such transfers.</p>
@@ -175,7 +175,7 @@
       <li>作成または参加したCrewの運営、および当該Crewの他メンバーへのリアルタイムの心拍数・歩数・距離の表示。</li>
       <li>位置共有を有効にした場合、コンパスレーダー上で現在地を当該Crewの他メンバーに表示すること。</li>
       <li>メンバー間の定型メッセージの送受信。</li>
-      <li>Stripe を通じたリーダーサブスクリプションの管理。</li>
+      <li>Stripe を通じた有料版サブスクリプションの管理。</li>
     </ul>
     <p><strong>法的根拠（GDPR）:</strong> 心拍数（健康）データおよび位置共有については<em>明示的な同意</em>、Crew 機能の提供については<em>契約の履行</em>、サービスの安全維持については<em>正当な利益</em>。</p>
 
@@ -183,7 +183,7 @@
     <ul>
       <li><strong>同じCrewのメンバー</strong>。Crewに参加すると、アクティブな間、ニックネームと共有を選択したデータ（心拍数・歩数・距離・気象・現在地）が当該Crewのメンバーに表示されます。これらはそれぞれ個別に ON/OFF でき、位置は既定で OFF です。共有内容はいつでもお客様が制御できます（第6項参照）。</li>
       <li><strong>共有画像（リーダー）</strong>。リーダーが watchface 画像を共有した場合、その画像は Crew メンバーのウォッチへ配信されます。各メンバーは「Use Leader's」トグルで表示するかどうかを選べます。</li>
-      <li><strong>Stripe</strong> — 決済代行（リーダーサブスクリプションのみ）。</li>
+      <li><strong>Stripe</strong> — 決済代行（有料版サブスクリプションのみ）。</li>
       <li><strong>Garmin</strong> — データはウォッチとスマートフォン間で Garmin Connect IQ プラットフォームを経由します。</li>
     </ul>
     <p>当社はデータを販売せず、広告事業者やデータブローカーに共有することもありません。</p>
@@ -224,7 +224,7 @@
     <h2>9. セキュリティ</h2>
     <p>アプリとサーバー間の通信はすべて <strong>HTTPS（TLS）で暗号化</strong>されています。ウォッチは Device ID で自身を示します。この ID はウォッチの画面にしか表示されないため、所有者だけが知り得ます。心拍数・歩数・距離の値はサーバーのメモリ上に一時的に保持されるのみです（第5項参照）。完全に安全な送信・保存方法は存在しませんが、データの機微性に見合った措置を講じています。</p>
 
-    <p>ウォッチフェイス画像（任意のリーダー機能）は、ウェブから HTTPS でアップロードされます。リーダーが画像を共有すると、当社サーバーを介して HTTPS で各 Crew メンバーのウォッチへ中継され、その招待制 Crew 内でのみ表示されます。各メンバーは「Use Leader's」トグルでいつでも表示をオフにできます。ウォッチ上では Garmin の画像 API を通じて静止画像（ビットマップ）としてのみ描画され、ピクセルとして表示されるだけで、コードの実行や端末内の他データへのアクセスはできません。</p>
+    <p>ウォッチフェイス画像（任意の機能）は、ウェブから HTTPS でアップロードされます。リーダーが画像を共有すると、当社サーバーを介して HTTPS で各 Crew メンバーのウォッチへ中継され、その招待制 Crew 内でのみ表示されます。各メンバーは「Use Leader's」トグルでいつでも表示をオフにできます。ウォッチ上では Garmin の画像 API を通じて静止画像（ビットマップ）としてのみ描画され、ピクセルとして表示されるだけで、コードの実行や端末内の他データへのアクセスはできません。</p>
 
     <h2>10. 国際的なデータ移転</h2>
     <p>当社のサーバーは Render 上でホスティングされています。地域によっては、お客様の国外に所在するサーバーでデータが処理される場合があります。当社はそのような移転に適切な保護措置を講じます。</p>

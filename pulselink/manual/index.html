@@ -257,9 +257,9 @@
             <rect class="box" x="102" y="56" width="244" height="36"/>
             <line x1="91" y1="60" x2="12" y2="12"/>
             <text x="-57" y="4" data-en="Crew name" data-ja="Crew名">Crew name</text>
-            <!-- Status sub-row -->
-            <line x1="342" y1="109" x2="522" y2="13"/>
-            <text x="354" y="19" data-en="Leader mode + interval" data-ja="リーダーモード + 更新間隔">Leader mode + interval</text>
+            <!-- Status sub-row (update interval; the Observe label is gone) -->
+            <line x1="292" y1="104" x2="522" y2="13"/>
+            <text x="354" y="19" data-en="Update interval" data-ja="更新間隔">Update interval</text>
             <!-- Member rows -->
             <rect class="box" x="50" y="132" width="331" height="193"/>
             <line x1="383" y1="168" x2="536" y2="132"/>
@@ -456,6 +456,27 @@
       <h3 data-en="How to open" data-ja="開き方">How to open</h3>
       <p data-en="Tap the date row at the bottom of the screen. The three main screens cycle in one direction — Watch Face Home → Crew screen → Compass → back to the home — so tapping the same spot always moves you on. From the compass, tap the bottom of the screen to return to the home." data-ja="画面最下部の日付行をタップします。主要3画面は一方向に循環します — ウォッチフェイスホーム → Crew 画面 → コンパス → ホームに戻る — 同じ場所をタップし続ければ次へ進みます。コンパスからは画面下部をタップするとホームへ戻ります。">Tap the date row at the bottom of the screen. The three main screens cycle in one direction — Watch Face Home → Crew screen → Compass → back to the home — so tapping the same spot always moves you on. From the compass, tap the bottom of the screen to return to the home.</p>
       <p class="note" data-en="Changed in this version: the compass used to open with a long-press on the right half of the weather bar. That shortcut has been removed in favour of the screen cycle above." data-ja="このバージョンでの変更点: 以前は気象バー右半分の長押しでコンパスを開いていました。このショートカットは廃止し、上記の画面循環に一本化しました。">Changed in this version: the compass used to open with a long-press on the right half of the weather bar. That shortcut has been removed in favour of the screen cycle above.</p>
+
+      <figure class="annotated">
+        <div class="stage">
+          <img src="screens/compass.png?v=1" alt="Compass screen">
+          <svg class="overlay" viewBox="0 0 454 454" preserveAspectRatio="xMidYMid meet">
+            <!-- Member marker -->
+            <line x1="296" y1="150" x2="520" y2="60"/>
+            <text x="354" y="52" data-en="Crew member: distance + altitude difference" data-ja="メンバー: 距離 + 高度差">Crew member: distance + altitude difference</text>
+            <!-- Saved place -->
+            <line x1="318" y1="266" x2="520" y2="300"/>
+            <text x="354" y="322" data-en="Saved place" data-ja="登録地点">Saved place</text>
+            <!-- Range ring -->
+            <line x1="380" y1="378" x2="470" y2="430"/>
+            <text x="322" y="452" data-en="Range ring (auto scale)" data-ja="距離リング（自動）">Range ring (auto scale)</text>
+            <!-- You -->
+            <line x1="227" y1="227" x2="40" y2="330"/>
+            <text x="-96" y="352" data-en="You (center)" data-ja="自分（中心）">You (center)</text>
+          </svg>
+        </div>
+        <figcaption data-en="Compass radar — three Crew members and one saved place, heading-up (N up when there is no heading)." data-ja="コンパス・レーダー — Crew メンバー 3 人と登録地点 1 つ。ヘディングアップ（方位が取れないときは N up）。">Compass radar — three Crew members and one saved place, heading-up (N up when there is no heading).</figcaption>
+      </figure>
 
       <h3 data-en="Buttons on the compass" data-ja="コンパスでの操作">Buttons on the compass</h3>
       <ul>

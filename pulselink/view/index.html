@@ -512,8 +512,7 @@ function renderControls() {
   fb.textContent = noFacing
     ? (ja() ? 'カメラ: この端末は1つだけ' : 'Camera: only one on this device')
     : ((ja() ? 'カメラ: ' : 'Camera: ')
-       + (front ? (ja() ? '画面側' : 'Front') : (ja() ? '背面' : 'Back'))
-       + (ja() ? ' — 押して切替' : ' — tap to switch'));
+       + (front ? (ja() ? '画面側' : 'Front') : (ja() ? '背面' : 'Back')));
   // 動体検知の感度 (off/low/med/high)
   document.querySelectorAll('#motionSeg button').forEach(function (x) {
     x.classList.toggle('active', x.getAttribute('data-v') === (cfg.motion_mode || 'med'));

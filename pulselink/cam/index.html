@@ -60,7 +60,7 @@
 <div class="wrap">
   <h1>PulseLink Cam</h1>
   <p class="sub" data-en="Turn a spare iPhone into a watch-face camera. A photo is taken and sent to your watch every 3 minutes." data-ja="余った iPhone を文字盤カメラに。3分ごとに撮影してウォッチに送ります。">Turn a spare iPhone into a watch-face camera. A photo is taken and sent to your watch every 3 minutes.</p>
-  <p id="pageVer" style="color:#9CA3AF; font-size:11px; margin:-14px 0 16px;">v2026-09-05b</p>
+  <p id="pageVer" style="color:#9CA3AF; font-size:11px; margin:-14px 0 16px;">v2026-09-05c</p>
 
   <div class="card" id="loginCard">
     <h2 data-en="1. Connect your watch" data-ja="1. ウォッチをつなぐ">1. Connect your watch</h2>
@@ -513,6 +513,10 @@ async function applyTorch() {
   }
 }
 let remotePaused = false;
+// 背面/画面側の切替に対応しているか (null=未確認)。false の時だけリモート切替を無視する。
+// (2026-09-05 修正: 宣言が無いまま参照されていて ReferenceError → ポーリング適用の後段
+//  (カメラ切替・画面消灯・ライト・今すぐ撮影) が丸ごと止まっていた)
+let facingSupported = null;
 let lastShootSeq = null;   // 初回ポーリングは現在値を採用 (過去の shoot で発火しない)
 let nextCfgPollAt = 0;
 

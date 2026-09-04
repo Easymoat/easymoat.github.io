@@ -60,7 +60,7 @@
 <div class="wrap">
   <h1>PulseLink Cam</h1>
   <p class="sub" data-en="Turn a spare iPhone into a watch-face camera. A photo is taken and sent to your watch every 3 minutes." data-ja="余った iPhone を文字盤カメラに。3分ごとに撮影してウォッチに送ります。">Turn a spare iPhone into a watch-face camera. A photo is taken and sent to your watch every 3 minutes.</p>
-  <p id="pageVer" style="color:#9CA3AF; font-size:11px; margin:-14px 0 16px;">v2026-09-05e</p>
+  <p id="pageVer" style="color:#9CA3AF; font-size:11px; margin:-14px 0 16px;">v2026-09-05f</p>
 
   <div class="card" id="loginCard">
     <h2 data-en="1. Connect your watch" data-ja="1. ウォッチをつなぐ">1. Connect your watch</h2>
@@ -808,7 +808,9 @@ let motionSameCount = 0;
 // 検知後の連写。イベントの前後を残すため、検知から3分間は25秒間隔で撮る。
 // 履歴は5枚あるので、25秒間隔なら約2分ぶんの流れが「出来事の連続記録」になる。
 // 3分ごとの1枚では、次のコマの頃には全てが終わっている。
-const MOTION_BURST_MS = 3 * 60 * 1000, MOTION_BURST_INTERVAL_MS = 25 * 1000;
+// 検知の後しばらくは短い間隔で撮る。窓はクールダウン (90秒) より短くする —
+// 長いと 90秒ごとの発火で窓が延長され続け、実質ずっと短間隔のままになる (2026-09-05 修正: 3分 → 1分)。
+const MOTION_BURST_MS = 60 * 1000, MOTION_BURST_INTERVAL_MS = 25 * 1000;
 let motionBurstUntil = 0;
 
 function motionEnabled() {
@@ -937,7 +939,7 @@ async function captureAndUpload() {
   // 成功/失敗に関わらず次回を先に予約 (失敗時は下で前倒し)。
   // 調整モード (Viewer の Setup mode) 中は最短間隔で回し、期限が切れれば自動で通常間隔へ。
   const boostNow = camCfg.boost_until && camCfg.boost_until > Date.now();
-  // 検知後3分は25秒間隔 (セットアップモードの boost が最優先)。
+  // 検知後1分は25秒間隔。
   const burstNow = motionBurstUntil > Date.now();
   // 該当する条件のうち最も短い間隔を採る。セットアップモード中に動体検知バーストが
   // 走っていても、遅いほうに引きずられない (2026-09-05 修正)。

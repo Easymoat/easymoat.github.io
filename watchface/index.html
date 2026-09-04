@@ -168,6 +168,12 @@
   const PALETTE = ['#FFFFFF','#AAAAAA','#FF5555','#FF9900','#FFFF00','#55FF55','#00FFFF','#55AAFF','#FF55FF'];
   const PALETTE_NAMES = ['White','Gray','Red','Orange','Yellow','Green','Cyan','Blue','Magenta'];
   const BGS = [0x000000, 0x0A1A2A, 0x1A0A1A, 0x101010, 0x0A2010];
+  // Moon age in days (reference new moon 2000-01-06 18:14 UTC, synodic month 29.530588853 d) —
+  // same formula as WfData.moonAge / moonPhase. Phase 0 new … 4 full (northern hemisphere, lit from the right).
+  const SYNODIC = 29.530588853;
+  function moonAge() { const d = (Date.now() / 1000 - 947182440) / 86400; return ((d % SYNODIC) + SYNODIC) % SYNODIC; }
+  function moonAgeStr() { return moonAge().toFixed(1); }
+  function moonPhase() { const f = moonAge() / SYNODIC; return (f < 0.04 || f > 0.96) ? 0 : f < 0.21 ? 1 : f < 0.29 ? 2 : f < 0.46 ? 3 : f < 0.54 ? 4 : f < 0.71 ? 5 : f < 0.79 ? 6 : 7; }
   const TYPES = {
     1:  { name: 'Time',      grp: 'clock', sample: '10:08',  icon: null,        iw: 0 },
     2:  { name: 'Date',      grp: 'clock', sample: 'Fri Sep 4', icon: null,     iw: 0 },
@@ -177,11 +183,17 @@
     12: { name: 'Floors',    grp: 'body',  sample: '12',     icon: 'floors',    iw: 24 },
     13: { name: 'Calories',  grp: 'body',  sample: '1,850',  icon: 'cal',       iw: 20 },
     14: { name: 'Weight',    grp: 'body',  sample: '68.5',   icon: 'weight',    iw: 26 },
+    15: { name: 'Body Battery', grp: 'body', sample: '75',    icon: 'bodybat',   iw: 14 },
+    16: { name: 'Stress',    grp: 'body',  sample: '32',     icon: 'stress',    iw: 26 },
+    17: { name: 'Respiration', grp: 'body', sample: '14',    icon: 'lungs',     iw: 26 },
     20: { name: 'Weather',   grp: 'wx',    sample: '23°',    icon: 'weather',   iw: 34 },
     21: { name: 'Humidity',  grp: 'wx',    sample: '55%',    icon: 'humidity',  iw: 20 },
     22: { name: 'Wind km/h', grp: 'wx',    sample: '12',     icon: 'wind',      iw: 26 },
     23: { name: 'Pressure',  grp: 'wx',    sample: '1013',   icon: 'pressure',  iw: 26 },
     24: { name: 'Altitude',  grp: 'wx',    sample: '45m',    icon: 'altitude',  iw: 32 },
+    25: { name: 'Precip %',  grp: 'wx',    sample: '40%',    icon: 'umbrella',  iw: 26 },
+    26: { name: 'Moon age',  grp: 'wx',    sample: moonAgeStr(), icon: 'moon',  iw: 26 },
+    40: { name: 'Notifications', grp: 'clock', sample: '3',  icon: 'bell',      iw: 22 },
     30: { name: 'Stock 1',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
     31: { name: 'Stock 2',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
   };
@@ -236,6 +248,14 @@
     wind:     () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><polygon points="${arrow(0,0,225)}" fill="currentColor"/></svg>`,
     pressure: () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="3"/><g stroke="currentColor" stroke-width="3"><line x1="0" y1="-10" x2="0" y2="-7"/><line x1="0" y1="0" x2="5" y2="-5"/></g><circle cx="0" cy="0" r="2" fill="currentColor"/></svg>`,
     altitude: () => `<svg width="32" height="26" viewBox="-16 -14 32 26"><polygon points="-16,12 -6,-14 1,2 8,-9 16,12" fill="currentColor"/></svg>`,
+    bodybat:  () => `<svg width="14" height="26" viewBox="-7 -13 14 26"><rect x="-6" y="-10" width="12" height="22" ${sw} stroke-width="2"/><rect x="-3" y="-13" width="6" height="2" fill="currentColor"/><rect x="-5" y="-4" width="10" height="15" fill="currentColor"/></svg>`,
+    stress:   () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="2"/><polygon points="4,-10 -5,1 0,1 -4,10 5,-1 0,-1" fill="currentColor"/></svg>`,
+    lungs:    () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><g fill="currentColor"><rect x="-12" y="-5" width="10" height="18" rx="4"/><rect x="2" y="-5" width="10" height="18" rx="4"/><rect x="-1" y="-13" width="2" height="9"/></g></svg>`,
+    umbrella: () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><path d="M-12,-1 A12,12 0 0 1 12,-1 Z" fill="currentColor"/><g stroke="currentColor" stroke-width="2"><line x1="0" y1="-1" x2="0" y2="12"/><line x1="0" y1="12" x2="-4" y2="12"/></g></svg>`,
+    moon:     (bg) => { const p = moonPhase(); if (p === 0) return `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="2"/></svg>`;
+                        const dark = p === 4 ? '' : p === 1 ? `<circle cx="-6" cy="0" r="12" fill="${bg}"/>` : p === 2 ? `<rect x="-13" y="-13" width="13" height="26" fill="${bg}"/>` : p === 3 ? `<circle cx="-18" cy="0" r="12" fill="${bg}"/>` : p === 5 ? `<circle cx="18" cy="0" r="12" fill="${bg}"/>` : p === 6 ? `<rect x="0" y="-13" width="13" height="26" fill="${bg}"/>` : `<circle cx="6" cy="0" r="12" fill="${bg}"/>`;
+                        return `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="12" fill="currentColor"/>${dark}</svg>`; },
+    bell:     () => `<svg width="22" height="26" viewBox="-11 -13 22 26"><g fill="currentColor"><rect x="-8" y="-13" width="16" height="19" rx="7"/><rect x="-11" y="5" width="22" height="3"/><circle cx="0" cy="11" r="3"/></g></svg>`,
     stock:    () => `$`,
   };
   function arrow(cx, cy, bearing) {

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<style>html,body{margin:0;background:#0E1116;color-scheme:dark}</style>
+<title>Face Composer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Barlow+Semi+Condensed:wght@500;600&display=swap">
+<style>
+  :root {
+    --ground: #0E1116; --panel: #161A21; --panel-2: #1D222B; --line: #2A3140; --line-2: #3A4356;
+    --ink: #E7EAF0; --ink-2: #A3ACBC; --ink-3: #6E7889;
+    --accent: #F2B441; --accent-ink: #1A1200; --danger: #E5484D; --ok: #4CC38A;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --watch: "Barlow Semi Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font: 14px/1.45 var(--sans); min-height: 100vh; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  header { display: flex; align-items: baseline; gap: 16px; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 17px; font-weight: 600; margin: 0; letter-spacing: .01em; }
+  header .sub { color: var(--ink-2); font-size: 13px; }
+  header .spacer { flex: 1; }
+  .lbl { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
+  main { display: grid; grid-template-columns: 232px minmax(0, 1fr) 300px; gap: 0; min-height: calc(100vh - 52px); }
+  aside { background: var(--panel); border-right: 1px solid var(--line); padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  aside.right { border-right: 0; border-left: 1px solid var(--line); }
+  .group { display: flex; flex-direction: column; gap: 6px; }
+  .parts { display: grid; grid-template-columns: 1fr; gap: 4px; }
+  .part { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); cursor: grab; user-select: none; touch-action: none; }
+  .part:hover { border-color: var(--line-2); }
+  .part:active { cursor: grabbing; }
+  .part .ico { width: 34px; display: flex; justify-content: center; color: var(--ink-2); }
+  .part .ico svg { max-height: 26px; }
+  .part .nm { flex: 1; }
+  .part .hint { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+  .stagewrap { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 22px 18px; }
+  .stagebar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: center; }
+  .stagebar label { display: flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 13px; }
+  select, input[type=text], input[type=number] { background: var(--panel-2); border: 1px solid var(--line); border-radius: 5px; padding: 5px 8px; color: var(--ink); }
+  select:focus, input:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .stage-outer { position: relative; }
+  #stage { position: relative; overflow: hidden; background: #000; box-shadow: 0 0 0 10px #05070A, 0 0 0 12px var(--line-2), 0 30px 60px rgba(0,0,0,.6); touch-action: none; user-select: none; }
+  #stage.round { border-radius: 50%; }
+  #stage svg.grid { position: absolute; inset: 0; pointer-events: none; }
+  .el { position: absolute; display: flex; align-items: center; gap: 4px; white-space: nowrap; cursor: grab; padding: 2px; margin: -2px; border-radius: 3px; touch-action: none; font-family: var(--watch); font-weight: 600; line-height: 1; }
+  .el:active { cursor: grabbing; }
+  .el .ico { display: flex; align-items: center; }
+  .el.sel { outline: 1.5px dashed var(--accent); outline-offset: 2px; }
+  .el.oob { outline: 1.5px solid var(--danger); outline-offset: 2px; }
+  .el .anchor { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); border: 1px solid #000; display: none; }
+  .el.sel .anchor { display: block; }
+  .el.ghost { opacity: .85; pointer-events: none; }
+  .empty { color: var(--ink-3); font-size: 13px; text-align: center; max-width: 34ch; }
+  .drawer { width: 100%; max-width: 760px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .box { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+  textarea { width: 100%; min-height: 96px; background: var(--ground); border: 1px solid var(--line); border-radius: 5px; padding: 8px; font: 12px/1.5 var(--mono); color: var(--ink); resize: vertical; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .btn { background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 5px; padding: 6px 12px; cursor: pointer; }
+  .btn:hover { border-color: var(--ink-3); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  .btn.danger { color: var(--danger); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .status { font-family: var(--mono); font-size: 12px; color: var(--ink-2); min-height: 1.4em; }
+  .status.ok { color: var(--ok); } .status.err { color: var(--danger); }
+  .field { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 8px; }
+  .field input[type=number] { width: 100%; font-family: var(--mono); }
+  .seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 5px; overflow: hidden; }
+  .seg button { background: transparent; border: 0; padding: 5px 10px; cursor: pointer; color: var(--ink-2); border-right: 1px solid var(--line-2); }
+  .seg button:last-child { border-right: 0; }
+  .seg button.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+  .sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+  .sw.on { border-color: var(--ink); box-shadow: 0 0 0 2px var(--panel); }
+  .kbd { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+  .list { display: flex; flex-direction: column; gap: 3px; max-height: 220px; overflow: auto; }
+  .li { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+  .li:hover { background: var(--panel-2); } .li.on { background: var(--panel-2); outline: 1px solid var(--line-2); }
+  .li .xy { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .muted { color: var(--ink-3); font-size: 12px; }
+  @media (max-width: 980px) {
+    main { grid-template-columns: 1fr; }
+    aside { border: 0; border-bottom: 1px solid var(--line); }
+    aside.right { border-top: 1px solid var(--line); }
+    .parts { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    .drawer { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: no-preference) { .el { transition: outline-color .12s; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Face Composer</h1>
+  <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
+  <span class="spacer"></span>
+  <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
+</header>
+
+<main>
+  <aside class="left">
+    <div class="group"><span class="lbl">Parts</span><span class="muted">Drag onto the dial, or click to drop at center.</span></div>
+    <div class="group"><span class="lbl">Clock</span><div class="parts" id="parts-clock"></div></div>
+    <div class="group"><span class="lbl">Body</span><div class="parts" id="parts-body"></div></div>
+    <div class="group"><span class="lbl">Weather</span><div class="parts" id="parts-wx"></div></div>
+    <div class="group"><span class="lbl">Markets</span><div class="parts" id="parts-mkt"></div><span class="muted">Values come from MarketWatch complications (next step).</span></div>
+  </aside>
+
+  <section class="stagewrap">
+    <div class="stagebar">
+      <label>Device <select id="dev"></select></label>
+      <label>Grid <select id="grid"><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select></label>
+      <label><input type="checkbox" id="showgrid" checked> show grid</label>
+      <label>Background <span class="swatches" id="bgsw"></span></label>
+    </div>
+    <div class="stage-outer"><div id="stage"></div></div>
+    <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
+    <div class="drawer">
+      <div class="box">
+        <span class="lbl">Layout JSON</span>
+        <textarea id="json" spellcheck="false"></textarea>
+        <div class="row">
+          <button class="btn" id="copy">Copy</button>
+          <button class="btn" id="apply">Apply edited JSON</button>
+          <span class="spacer"></span>
+          <button class="btn" id="preset-lobby">Preset: Lobby</button>
+          <button class="btn" id="preset-min">Minimal</button>
+          <button class="btn danger" id="clear">Clear</button>
+        </div>
+        <div class="status" id="jsonstatus"></div>
+      </div>
+      <div class="box">
+        <span class="lbl">Sync to watch</span>
+        <div class="field"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX" maxlength="40" autocomplete="off"></div>
+        <div class="field"><span>API</span><input type="text" id="api" value="https://mlbwatch-server.onrender.com/api/wf"></div>
+        <div class="row">
+          <button class="btn primary" id="save">Save to server</button>
+          <button class="btn" id="load">Load from server</button>
+          <button class="btn danger" id="remove">Remove</button>
+        </div>
+        <div class="status" id="syncstatus"></div>
+        <span class="muted">The watch face picks up a saved layout on its next background sync (every 5 min, or long-press the face to sync now).</span>
+      </div>
+    </div>
+  </section>
+
+  <aside class="right">
+    <div class="group"><span class="lbl">Selected</span><div id="insp"><span class="muted">Click an element on the dial.</span></div></div>
+    <div class="group"><span class="lbl">Elements</span><div class="list" id="list"></div></div>
+  </aside>
+</main>
+
+<script>
+(() => {
+  // ── Shared definitions (must match WfLayout.mc / wf_layout.js) ──────────────
+  const PALETTE = ['#FFFFFF','#AAAAAA','#FF5555','#FF9900','#FFFF00','#55FF55','#00FFFF','#55AAFF','#FF55FF'];
+  const PALETTE_NAMES = ['White','Gray','Red','Orange','Yellow','Green','Cyan','Blue','Magenta'];
+  const BGS = [0x000000, 0x0A1A2A, 0x1A0A1A, 0x101010, 0x0A2010];
+  const TYPES = {
+    1:  { name: 'Time',      grp: 'clock', sample: '10:08',  icon: null,        iw: 0 },
+    2:  { name: 'Date',      grp: 'clock', sample: 'Fri Sep 4', icon: null,     iw: 0 },
+    3:  { name: 'Battery',   grp: 'clock', sample: '85%',    icon: 'battery',   iw: 30 },
+    10: { name: 'Heart rate',grp: 'body',  sample: '72',     icon: 'heart',     iw: 32 },
+    11: { name: 'Steps',     grp: 'body',  sample: '8,421',  icon: 'steps',     iw: 28 },
+    12: { name: 'Floors',    grp: 'body',  sample: '12',     icon: 'floors',    iw: 32 },
+    13: { name: 'Calories',  grp: 'body',  sample: '1,850',  icon: 'cal',       iw: 22 },
+    14: { name: 'Weight',    grp: 'body',  sample: '68.5',   icon: 'weight',    iw: 26 },
+    20: { name: 'Weather',   grp: 'wx',    sample: '23°',    icon: 'weather',   iw: 42 },
+    21: { name: 'Humidity',  grp: 'wx',    sample: '55%',    icon: 'humidity',  iw: 24 },
+    22: { name: 'Wind km/h', grp: 'wx',    sample: '12',     icon: 'wind',      iw: 32 },
+    23: { name: 'Pressure',  grp: 'wx',    sample: '1013',   icon: 'pressure',  iw: 30 },
+    24: { name: 'Altitude',  grp: 'wx',    sample: '45m',    icon: 'altitude',  iw: 36 },
+    30: { name: 'Stock 1',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 16 },
+    31: { name: 'Stock 2',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 16 },
+  };
+  const DEVICES = {
+    fr965:  { name: 'fr965 · venu3 · fr970 (454)', w: 454, h: 454, round: true },
+    fr265:  { name: 'fr265 · epix2pro47 (416)',    w: 416, h: 416, round: true },
+    venu3s: { name: 'venu3s · vívoactive5 (390)',  w: 390, h: 390, round: true },
+    venux1: { name: 'venu X1 (448×486)',           w: 448, h: 486, round: false },
+  };
+  // Font px on a 454 dial: text S/M/L ≈ FONT_XTINY/SMALL/MEDIUM, time ≈ NUMBER_MILD/MEDIUM/HOT.
+  const TEXT_PX = [20, 27, 34], TIME_PX = [44, 66, 96];
+  const PRESET_LOBBY = [[3,500,150,0,0,5,1],[1,500,330,0,2,0,0],[2,500,445,0,0,1,0],[10,130,560,1,1,2,1],[13,870,560,2,1,3,1],[11,130,650,1,1,0,1],[12,870,650,2,1,0,1],[20,130,760,1,1,4,1],[22,870,760,2,1,6,1]];
+  const PRESET_MIN   = [[1,500,420,0,2,0,0],[2,500,540,0,0,1,0],[3,500,700,0,0,5,1]];
+
+  // ── Icons (SVG approximations of the Monkey C primitives in WfIcons.mc) ────
+  const ICONS = {
+    battery:  (bg) => `<svg width="30" height="14" viewBox="0 0 30 14"><rect x="1" y="1" width="24" height="12" fill="none" stroke="currentColor" stroke-width="2"/><rect x="26" y="4" width="3" height="6" fill="currentColor"/><rect x="4" y="4" width="15" height="6" fill="currentColor"/></svg>`,
+    heart:    () => `<svg width="26" height="28" viewBox="0 0 26 28"><circle cx="7" cy="8" r="7" fill="currentColor"/><circle cx="19" cy="8" r="7" fill="currentColor"/><polygon points="0,11 26,11 13,26" fill="currentColor"/></svg>`,
+    steps:    () => `<svg width="24" height="28" viewBox="0 0 24 28"><g fill="currentColor"><circle cx="4" cy="12" r="4"/><rect x="1" y="12" width="8" height="6"/><circle cx="6" cy="22" r="3"/><rect x="3" y="20" width="6" height="4"/><circle cx="20" cy="6" r="4"/><rect x="15" y="6" width="8" height="6"/><circle cx="18" cy="16" r="3"/><rect x="15" y="14" width="6" height="4"/></g></svg>`,
+    floors:   () => `<svg width="32" height="30" viewBox="0 0 32 30"><g fill="currentColor"><rect x="2" y="23" width="8" height="6"/><rect x="10" y="17" width="8" height="12"/><rect x="18" y="11" width="8" height="18"/></g><g stroke="currentColor" stroke-width="2" fill="none"><line x1="3" y1="14" x2="23" y2="0"/><line x1="23" y1="0" x2="17" y2="1"/><line x1="23" y1="0" x2="21" y2="6"/></g></svg>`,
+    cal:      () => `<svg width="20" height="28" viewBox="0 0 20 28"><polygon points="10,1 12,4 15,9 13,12 11,13 14,16 18,19 19,22 15,25 10,26 5,25 1,22 2,19 5,15 6,9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`,
+    weight:   () => `<svg width="24" height="24" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="12" cy="9" r="5" fill="none" stroke="currentColor" stroke-width="3"/><line x1="12" y1="9" x2="12" y2="6" stroke="currentColor" stroke-width="2"/></svg>`,
+    weather:  () => `<svg width="42" height="33" viewBox="0 0 42 33"><circle cx="21" cy="16.5" r="8" fill="currentColor"/><g stroke="currentColor" stroke-width="2"><line x1="21" y1="0" x2="21" y2="4"/><line x1="21" y1="33" x2="21" y2="29"/><line x1="5" y1="16.5" x2="9" y2="16.5"/><line x1="37" y1="16.5" x2="33" y2="16.5"/><line x1="9" y1="4" x2="13" y2="8"/><line x1="33" y1="4" x2="29" y2="8"/><line x1="9" y1="29" x2="13" y2="25"/><line x1="33" y1="29" x2="29" y2="25"/></g></svg>`,
+    humidity: (bg) => `<svg width="24" height="26" viewBox="0 0 24 26"><polygon points="12,0 3,14 21,14" fill="currentColor"/><circle cx="12" cy="16" r="9" fill="currentColor"/><line x1="8" y1="21" x2="16" y2="11" stroke="${bg}" stroke-width="1.5"/><circle cx="8" cy="12" r="2" fill="${bg}"/><circle cx="16" cy="20" r="2" fill="${bg}"/></svg>`,
+    wind:     () => `<svg width="32" height="32" viewBox="0 0 32 32"><polygon points="${arrow(16,16,225)}" fill="currentColor"/></svg>`,
+    pressure: () => `<svg width="30" height="30" viewBox="0 0 30 30"><circle cx="15" cy="15" r="12" fill="none" stroke="currentColor" stroke-width="3"/><line x1="15" y1="4" x2="15" y2="7" stroke="currentColor" stroke-width="3"/><line x1="15" y1="15" x2="20.7" y2="9.3" stroke="currentColor" stroke-width="3"/><circle cx="15" cy="15" r="2" fill="currentColor"/></svg>`,
+    altitude: () => `<svg width="36" height="28" viewBox="0 0 36 28"><polygon points="2,26 12,0 19,16 26,5 34,26" fill="currentColor"/></svg>`,
+    stock:    () => `<svg width="16" height="24" viewBox="0 0 16 24"><text x="8" y="18" text-anchor="middle" font-size="18" font-family="Barlow Semi Condensed, sans-serif" font-weight="600" fill="currentColor">$</text></svg>`,
+  };
+  function arrow(cx, cy, bearing) {
+    const r = (bearing * Math.PI) / 180, s = Math.sin(r), c = Math.cos(r);
+    const p = (dx, dy) => `${(cx + dx).toFixed(1)},${(cy + dy).toFixed(1)}`;
+    return [p(15*s, -15*c), p(-11*s + 10*c, 11*c + 10*s), p(-7*s, 7*c), p(-11*s - 10*c, 11*c - 10*s)].join(' ');
+  }
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  let st = { dev: 'fr965', grid: 50, showGrid: true, bg: 0, el: PRESET_LOBBY.map(e => e.slice()) };
+  let sel = -1;
+  try { const s = JSON.parse(localStorage.getItem('faceComposer') || 'null'); if (s && Array.isArray(s.el)) st = Object.assign(st, s); } catch (e) {}
+  const $ = (id) => document.getElementById(id);
+  const stage = $('stage');
+  const hex = (n) => '#' + n.toString(16).padStart(6, '0').toUpperCase();
+  const dev = () => DEVICES[st.dev] || DEVICES.fr965;
+
+  // ── Palette ────────────────────────────────────────────────────────────────
+  for (const [t, d] of Object.entries(TYPES)) {
+    const p = document.createElement('div');
+    p.className = 'part'; p.dataset.t = t;
+    p.innerHTML = `<span class="ico">${d.icon ? ICONS[d.icon]('#1D222B') : `<span style="font:600 16px var(--watch)">${d.sample}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
+    p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +t));
+    $('parts-' + d.grp).appendChild(p);
+  }
+  for (const [k, d] of Object.entries(DEVICES)) { const o = document.createElement('option'); o.value = k; o.textContent = d.name; $('dev').appendChild(o); }
+  $('dev').value = st.dev; $('grid').value = String(st.grid); $('showgrid').checked = st.showGrid;
+  BGS.forEach((c) => { const b = document.createElement('button'); b.className = 'sw'; b.style.background = hex(c); b.title = hex(c); b.dataset.bg = c; b.addEventListener('click', () => { st.bg = c; commit(); }); $('bgsw').appendChild(b); });
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+  function render() {
+    const d = dev(), k = d.w / 454;
+    stage.style.width = d.w + 'px'; stage.style.height = d.h + 'px';
+    stage.classList.toggle('round', d.round);
+    stage.style.background = hex(st.bg);
+    stage.innerHTML = '';
+    if (st.showGrid) {
+      const step = st.grid, sx = d.w / 1000, sy = d.h / 1000;
+      let g = `<svg class="grid" width="${d.w}" height="${d.h}">`;
+      for (let u = step; u < 1000; u += step) {
+        const major = u === 500;
+        g += `<line x1="${u*sx}" y1="0" x2="${u*sx}" y2="${d.h}" stroke="${major ? '#3A4356' : '#1E2430'}" stroke-width="1"/>`;
+        g += `<line x1="0" y1="${u*sy}" x2="${d.w}" y2="${u*sy}" stroke="${major ? '#3A4356' : '#1E2430'}" stroke-width="1"/>`;
+      }
+      g += '</svg>';
+      stage.insertAdjacentHTML('beforeend', g);
+    }
+    st.el.forEach((e, i) => stage.appendChild(makeEl(e, i, k)));
+    positionAll();
+    $('empty').hidden = st.el.length > 0;
+    document.querySelectorAll('#bgsw .sw').forEach((b) => b.classList.toggle('on', +b.dataset.bg === st.bg));
+    renderInspector(); renderList(); renderJson();
+  }
+  function makeEl(e, i, k) {
+    const [t, x, y, a, s, c, f] = e, def = TYPES[t] || TYPES[1];
+    const div = document.createElement('div');
+    div.className = 'el' + (i === sel ? ' sel' : '');
+    div.dataset.i = i;
+    div.style.color = PALETTE[c] || PALETTE[0];
+    const px = (t === 1 ? TIME_PX : TEXT_PX)[s] * k;
+    div.style.fontSize = px + 'px';
+    const icon = (f & 1) && def.icon ? `<span class="ico" style="width:${def.iw*k}px;justify-content:center;transform:scale(${k});">${ICONS[def.icon](hex(st.bg))}</span>` : '';
+    div.innerHTML = icon + `<span class="val">${def.sample}</span><span class="anchor"></span>`;
+    div.addEventListener('pointerdown', (ev) => startMove(ev, i));
+    return div;
+  }
+  function positionAll() {
+    const d = dev();
+    stage.querySelectorAll('.el').forEach((div) => {
+      const e = st.el[+div.dataset.i]; if (!e) return;
+      const [, x, y, a] = e;
+      const px = x * d.w / 1000, py = y * d.h / 1000;
+      const w = div.offsetWidth, h = div.offsetHeight;
+      const left = a === 1 ? px : a === 2 ? px - w : px - w / 2;
+      div.style.left = left + 'px'; div.style.top = (py - h / 2) + 'px';
+      const an = div.querySelector('.anchor');
+      an.style.left = (px - left - 3.5) + 'px'; an.style.top = (h / 2 - 3.5) + 'px';
+      let oob = false;
+      if (d.round) {
+        const r = d.w / 2, cx = d.w / 2, cy = d.h / 2;
+        for (const [qx, qy] of [[left, py - h/2], [left + w, py - h/2], [left, py + h/2], [left + w, py + h/2]]) {
+          if (Math.hypot(qx - cx, qy - cy) > r) oob = true;
+        }
+      } else { oob = left < 0 || py - h/2 < 0 || left + w > d.w || py + h/2 > d.h; }
+      div.classList.toggle('oob', oob);
+    });
+  }
+  function renderJson() { $('json').value = JSON.stringify({ bg: st.bg, el: st.el }).replace(/\],\[/g, '],\n     ['); }
+  function renderList() {
+    const l = $('list'); l.innerHTML = '';
+    st.el.forEach((e, i) => {
+      const li = document.createElement('div'); li.className = 'li' + (i === sel ? ' on' : '');
+      li.innerHTML = `<span class="dot" style="background:${PALETTE[e[5]]}"></span>${TYPES[e[0]]?.name || e[0]}<span class="xy">${e[1]},${e[2]}</span>`;
+      li.addEventListener('click', () => { sel = i; render(); });
+      l.appendChild(li);
+    });
+    if (!st.el.length) l.innerHTML = '<span class="muted">None yet.</span>';
+  }
+  function renderInspector() {
+    const box = $('insp'); const e = st.el[sel];
+    if (!e) { box.innerHTML = '<span class="muted">Click an element on the dial.</span>'; return; }
+    const def = TYPES[e[0]];
+    const seg = (label, vals, cur, key) => `<div class="field"><span>${label}</span><span class="seg" data-key="${key}">${vals.map((v, i) => `<button class="${i === cur ? 'on' : ''}" data-v="${i}">${v}</button>`).join('')}</span></div>`;
+    box.innerHTML = `
+      <div style="font-weight:600;margin-bottom:8px">${def.name} <span class="kbd">type ${e[0]}</span></div>
+      <div class="group">
+        <div class="field"><span>X</span><input type="number" id="fx" min="0" max="1000" step="${st.grid}" value="${e[1]}"></div>
+        <div class="field"><span>Y</span><input type="number" id="fy" min="0" max="1000" step="${st.grid}" value="${e[2]}"></div>
+        ${seg('Anchor', ['Center', 'Left', 'Right'], e[3], 3)}
+        ${seg('Size', ['S', 'M', 'L'], e[4], 4)}
+        <div class="field"><span>Color</span><span class="swatches">${PALETTE.map((c, i) => `<button class="sw ${i === e[5] ? 'on' : ''}" data-c="${i}" title="${PALETTE_NAMES[i]}" style="background:${c}"></button>`).join('')}</span></div>
+        ${def.icon ? `<div class="field"><span>Icon</span><label><input type="checkbox" id="ficon" ${(e[6] & 1) ? 'checked' : ''}> show</label></div>` : ''}
+        <div class="row" style="margin-top:6px"><button class="btn" id="dup">Duplicate</button><button class="btn danger" id="del">Remove</button></div>
+      </div>`;
+    $('fx').addEventListener('change', (ev) => { e[1] = clamp(+ev.target.value); commit(); });
+    $('fy').addEventListener('change', (ev) => { e[2] = clamp(+ev.target.value); commit(); });
+    box.querySelectorAll('.seg').forEach((sg) => sg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { e[+sg.dataset.key] = +b.dataset.v; commit(); })));
+    box.querySelectorAll('.sw').forEach((b) => b.addEventListener('click', () => { e[5] = +b.dataset.c; commit(); }));
+    const fi = $('ficon'); if (fi) fi.addEventListener('change', () => { e[6] = fi.checked ? (e[6] | 1) : (e[6] & ~1); commit(); });
+    $('dup').addEventListener('click', () => { const n = e.slice(); n[2] = clamp(n[2] + st.grid); st.el.push(n); sel = st.el.length - 1; commit(); });
+    $('del').addEventListener('click', () => { st.el.splice(sel, 1); sel = -1; commit(); });
+  }
+  const clamp = (v) => Math.max(0, Math.min(1000, Math.round(v)));
+  const snap = (v) => clamp(Math.round(v / st.grid) * st.grid);
+  function commit() { try { localStorage.setItem('faceComposer', JSON.stringify(st)); } catch (e) {} render(); }
+
+  // ── Dragging ───────────────────────────────────────────────────────────────
+  let drag = null;
+  function stagePoint(ev) { const r = stage.getBoundingClientRect(), d = dev(); return { x: (ev.clientX - r.left) * 1000 / d.w, y: (ev.clientY - r.top) * 1000 / d.h, inside: ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom }; }
+  function startMove(ev, i) {
+    ev.preventDefault(); ev.stopPropagation();
+    sel = i; render();
+    const p = stagePoint(ev), e = st.el[i];
+    drag = { i, dx: e[1] - p.x, dy: e[2] - p.y, fromPalette: false, moved: false };
+    ev.target.closest('.el')?.setPointerCapture?.(ev.pointerId);
+  }
+  function startPaletteDrag(ev, t) {
+    ev.preventDefault();
+    const d = TYPES[t];
+    const e = [t, 500, 500, 0, t === 1 ? 2 : 1, 0, d.icon ? 1 : 0];
+    st.el.push(e); sel = st.el.length - 1;
+    const p = stagePoint(ev); e[1] = clamp(p.x); e[2] = clamp(p.y);
+    drag = { i: sel, dx: 0, dy: 0, fromPalette: true, moved: false };
+    render();
+    stage.querySelector('.el.sel')?.classList.add('ghost');
+  }
+  window.addEventListener('pointermove', (ev) => {
+    if (!drag) return;
+    const p = stagePoint(ev), e = st.el[drag.i]; if (!e) return;
+    e[1] = clamp(p.x + drag.dx); e[2] = clamp(p.y + drag.dy); drag.moved = true;
+    const div = stage.querySelector(`.el[data-i="${drag.i}"]`);
+    if (div) { div.style.opacity = p.inside || !drag.fromPalette ? '' : '.35'; }
+    positionAll();
+  });
+  window.addEventListener('pointerup', (ev) => {
+    if (!drag) return;
+    const p = stagePoint(ev), e = st.el[drag.i];
+    if (drag.fromPalette && !p.inside && drag.moved) { st.el.splice(drag.i, 1); sel = -1; }
+    else if (drag.fromPalette && !drag.moved) { e[1] = 500; e[2] = 500; }
+    else if (e) { e[1] = snap(e[1]); e[2] = snap(e[2]); }
+    drag = null; commit();
+  });
+  stage.addEventListener('pointerdown', (ev) => { if (ev.target === stage || ev.target.closest('svg.grid')) { sel = -1; render(); } });
+  window.addEventListener('keydown', (ev) => {
+    if (ev.target.matches('input, textarea, select')) return;
+    const e = st.el[sel]; if (!e) return;
+    const g = st.grid; let h = true;
+    if (ev.key === 'ArrowLeft') e[1] = clamp(e[1] - g); else if (ev.key === 'ArrowRight') e[1] = clamp(e[1] + g);
+    else if (ev.key === 'ArrowUp') e[2] = clamp(e[2] - g); else if (ev.key === 'ArrowDown') e[2] = clamp(e[2] + g);
+    else if (ev.key === 'Delete' || ev.key === 'Backspace') { st.el.splice(sel, 1); sel = -1; }
+    else if (ev.key === 'Escape') sel = -1; else h = false;
+    if (h) { ev.preventDefault(); commit(); }
+  });
+
+  // ── Stage bar ──────────────────────────────────────────────────────────────
+  $('dev').addEventListener('change', (ev) => { st.dev = ev.target.value; commit(); });
+  $('grid').addEventListener('change', (ev) => { st.grid = +ev.target.value; commit(); });
+  $('showgrid').addEventListener('change', (ev) => { st.showGrid = ev.target.checked; commit(); });
+
+  // ── JSON / presets ─────────────────────────────────────────────────────────
+  const setStatus = (id, msg, cls) => { const s = $(id); s.textContent = msg; s.className = 'status ' + (cls || ''); };
+  $('copy').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('json').value); setStatus('jsonstatus', 'Copied.', 'ok'); } catch (e) { $('json').select(); setStatus('jsonstatus', 'Select and copy manually.', ''); } });
+  $('apply').addEventListener('click', () => {
+    try {
+      const j = JSON.parse($('json').value);
+      const clean = sanitize(j); if (!clean) throw new Error('bad');
+      st.bg = clean.bg; st.el = clean.el; sel = -1; commit(); setStatus('jsonstatus', `Applied ${clean.el.length} elements.`, 'ok');
+    } catch (e) { setStatus('jsonstatus', 'Not a valid layout. Expect {"bg":n,"el":[[t,x,y,a,s,c,f],…]} with 0..1000 coordinates.', 'err'); }
+  });
+  $('preset-lobby').addEventListener('click', () => { st.el = PRESET_LOBBY.map(e => e.slice()); sel = -1; commit(); });
+  $('preset-min').addEventListener('click', () => { st.el = PRESET_MIN.map(e => e.slice()); sel = -1; commit(); });
+  $('clear').addEventListener('click', () => { st.el = []; sel = -1; commit(); });
+  function sanitize(j) {
+    if (!j || !Array.isArray(j.el) || j.el.length > 24) return null;
+    const el = [];
+    for (const e of j.el) {
+      if (!Array.isArray(e) || e.length < 7) return null;
+      const n = e.slice(0, 7).map(Number);
+      if (!TYPES[n[0]] || n.some((v) => !Number.isInteger(v))) return null;
+      if (n[1] < 0 || n[1] > 1000 || n[2] < 0 || n[2] > 1000 || n[3] < 0 || n[3] > 2 || n[4] < 0 || n[4] > 2 || n[5] < 0 || n[5] > 8 || n[6] < 0 || n[6] > 3) return null;
+      el.push(n);
+    }
+    const bg = Number.isInteger(j.bg) && j.bg >= 0 && j.bg <= 0xFFFFFF ? j.bg : 0;
+    return { bg, el };
+  }
+
+  // ── Server sync ────────────────────────────────────────────────────────────
+  try { $('devid').value = localStorage.getItem('faceComposer.devid') || ''; } catch (e) {}
+  const devId = () => { const v = $('devid').value.trim(); try { localStorage.setItem('faceComposer.devid', v); } catch (e) {} return v; };
+  $('save').addEventListener('click', async () => {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('syncstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
+    setStatus('syncstatus', 'Saving…');
+    try {
+      const r = await fetch($('api').value + '/layout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, layout: { bg: st.bg, el: st.el } }) });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || r.status);
+      setStatus('syncstatus', `Saved. Version ${j.v}, ${j.count} elements. The watch applies it within 5 minutes.`, 'ok');
+    } catch (e) { setStatus('syncstatus', 'Save failed: ' + e.message, 'err'); }
+  });
+  $('load').addEventListener('click', async () => {
+    const id = devId(); if (!id) return setStatus('syncstatus', 'Enter the Device ID first.', 'err');
+    setStatus('syncstatus', 'Loading…');
+    try {
+      const r = await fetch($('api').value + '/layout?device_id=' + encodeURIComponent(id));
+      const j = await r.json();
+      if (r.status === 404) return setStatus('syncstatus', 'Nothing saved for this Device ID yet.', '');
+      if (!r.ok) throw new Error(j.error || r.status);
+      const clean = sanitize(j); if (!clean) throw new Error('bad layout');
+      st.bg = clean.bg; st.el = clean.el; sel = -1; commit();
+      setStatus('syncstatus', `Loaded version ${j.v}.`, 'ok');
+    } catch (e) { setStatus('syncstatus', 'Load failed: ' + e.message, 'err'); }
+  });
+  $('remove').addEventListener('click', async () => {
+    const id = devId(); if (!id) return setStatus('syncstatus', 'Enter the Device ID first.', 'err');
+    try {
+      const r = await fetch($('api').value + '/layout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, remove: true }) });
+      if (!r.ok) throw new Error(r.status);
+      setStatus('syncstatus', 'Removed from server. The watch keeps its last layout until it is replaced.', 'ok');
+    } catch (e) { setStatus('syncstatus', 'Remove failed: ' + e.message, 'err'); }
+  });
+
+  document.fonts?.ready.then(positionAll);
+  render();
+})();
+</script>
+</body>
+</html>

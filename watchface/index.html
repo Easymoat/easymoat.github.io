@@ -185,7 +185,7 @@
   // vector font "RobotoRegular" at exactly these px, independent of the device language, so
   // Google Fonts Roboto 400 here is the same typeface. Icons are authored for M (44px) and
   // scaled by textPx/44 on both sides.
-  const TEXT_PX = [32, 44, 58], TIME_PX = [64, 80, 96], ICON_BASE = 44;
+  const TEXT_PX = [32, 44, 58], TIME_PX = [64, 80, 96], ICON_BASE = 44, FONT_EM = 1.17;
   const PRESET_LOBBY = [[3,500,150,0,0,5,1],[1,500,330,0,2,0,0],[2,500,445,0,0,1,0],[10,130,560,1,1,2,1],[13,870,560,2,1,3,1],[11,130,650,1,1,0,1],[12,870,650,2,1,0,1],[20,130,760,1,1,4,1],[22,870,760,2,1,6,1]];
   const PRESET_MIN   = [[1,500,420,0,2,0,0],[2,500,540,0,0,1,0],[3,500,700,0,0,5,1]];
 
@@ -262,7 +262,11 @@
     div.dataset.i = i;
     div.style.color = PALETTE[c] || PALETTE[0];
     const px = (t === 1 ? TIME_PX : TEXT_PX)[s] * k;
-    div.style.fontSize = px + 'px';
+    // The watch's vector-font :size is the line height (getFontHeight == size); Roboto's glyphs
+    // at that size equal CSS font-size = size / 1.17 (measured on fr965 sim: "8,421" @44 = 91px
+    // vs 108px for CSS 44px). Keep the box height = px so vertical centering matches VCENTER.
+    div.style.fontSize = (px / FONT_EM) + 'px';
+    div.style.lineHeight = px + 'px';
     const ki = (TEXT_PX[s] / ICON_BASE) * k;   // icon scale: same rule as WfLayout.drawEl
     div.style.gap = (4 * ki) + 'px';
     const icon = (f & 1) && def.icon ? `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:scale(${ki});">${ICONS[def.icon](hex(st.bg))}</span>` : '';

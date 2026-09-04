@@ -117,6 +117,7 @@
       <label>Background <span class="swatches" id="bgsw"></span></label>
       <label title="Text height in px on a 454 dial: S / M / L. Sent to the watch with the layout.">Text <span class="pxs" id="tx"></span></label>
       <label title="Clock height in px on a 454 dial: S / M / L.">Time <span class="pxs" id="tm"></span></label>
+      <label title="Faux bold: text drawn twice with a 1–2 px offset (Roboto has no bold on the watch)."><input type="checkbox" id="bold"> bold</label>
     </div>
     <div class="stage-outer"><div id="stage"></div></div>
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
@@ -164,19 +165,19 @@
   const TYPES = {
     1:  { name: 'Time',      grp: 'clock', sample: '10:08',  icon: null,        iw: 0 },
     2:  { name: 'Date',      grp: 'clock', sample: 'Fri Sep 4', icon: null,     iw: 0 },
-    3:  { name: 'Battery',   grp: 'clock', sample: '85%',    icon: 'battery',   iw: 30 },
-    10: { name: 'Heart rate',grp: 'body',  sample: '72',     icon: 'heart',     iw: 32 },
-    11: { name: 'Steps',     grp: 'body',  sample: '8,421',  icon: 'steps',     iw: 28 },
-    12: { name: 'Floors',    grp: 'body',  sample: '12',     icon: 'floors',    iw: 32 },
-    13: { name: 'Calories',  grp: 'body',  sample: '1,850',  icon: 'cal',       iw: 22 },
+    3:  { name: 'Battery',   grp: 'clock', sample: '85%',    icon: 'battery',   iw: 28 },
+    10: { name: 'Heart rate',grp: 'body',  sample: '72',     icon: 'heart',     iw: 26 },
+    11: { name: 'Steps',     grp: 'body',  sample: '8,421',  icon: 'steps',     iw: 24 },
+    12: { name: 'Floors',    grp: 'body',  sample: '12',     icon: 'floors',    iw: 24 },
+    13: { name: 'Calories',  grp: 'body',  sample: '1,850',  icon: 'cal',       iw: 20 },
     14: { name: 'Weight',    grp: 'body',  sample: '68.5',   icon: 'weight',    iw: 26 },
-    20: { name: 'Weather',   grp: 'wx',    sample: '23°',    icon: 'weather',   iw: 42 },
-    21: { name: 'Humidity',  grp: 'wx',    sample: '55%',    icon: 'humidity',  iw: 24 },
-    22: { name: 'Wind km/h', grp: 'wx',    sample: '12',     icon: 'wind',      iw: 32 },
-    23: { name: 'Pressure',  grp: 'wx',    sample: '1013',   icon: 'pressure',  iw: 30 },
-    24: { name: 'Altitude',  grp: 'wx',    sample: '45m',    icon: 'altitude',  iw: 36 },
-    30: { name: 'Stock 1',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 16 },
-    31: { name: 'Stock 2',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 16 },
+    20: { name: 'Weather',   grp: 'wx',    sample: '23°',    icon: 'weather',   iw: 34 },
+    21: { name: 'Humidity',  grp: 'wx',    sample: '55%',    icon: 'humidity',  iw: 20 },
+    22: { name: 'Wind km/h', grp: 'wx',    sample: '12',     icon: 'wind',      iw: 26 },
+    23: { name: 'Pressure',  grp: 'wx',    sample: '1013',   icon: 'pressure',  iw: 26 },
+    24: { name: 'Altitude',  grp: 'wx',    sample: '45m',    icon: 'altitude',  iw: 32 },
+    30: { name: 'Stock 1',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
+    31: { name: 'Stock 2',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
   };
   const DEVICES = {
     fr965:  { name: 'fr965 · venu3 · fr970 (454)', w: 454, h: 454, round: true },
@@ -190,36 +191,39 @@
   // scaled by textPx/44 on both sides.
   // Defaults (must match WfLayout.mc DEF_TEXT_PX / DEF_TIME_PX). Editable per layout (st.tx / st.tm)
   // and sent to the watch as "tx"/"tm". Icons are authored for M and scale by tx[s]/tx[1].
-  const DEF_TX = [26, 36, 48], DEF_TM = [52, 68, 84], FONT_EM = 1.17;
+  const DEF_TX = [26, 36, 48], DEF_TM = [52, 68, 84], FONT_EM = 1.17, GAP = 6;
+  // Faux bold (layout "b" = 1): the watch draws the text twice, shifted right by round(px/36) (min 1).
+  const boldOff = (px) => Math.max(1, Math.round(px / 36));
   const PRESET_LOBBY = [[3,500,150,0,0,5,1],[1,500,330,0,2,0,0],[2,500,445,0,0,1,0],[10,130,560,1,1,2,1],[13,870,560,2,1,3,1],[11,130,650,1,1,0,1],[12,870,650,2,1,0,1],[20,130,760,1,1,4,1],[22,870,760,2,1,6,1]];
   const PRESET_MIN   = [[1,500,420,0,2,0,0],[2,500,540,0,0,1,0],[3,500,700,0,0,5,1]];
 
-  // ── Icons (SVG approximations of the Monkey C primitives in WfIcons.mc) ────
+  // ── Icons: same geometry as WfIcons.mc (center 0,0, ink box W x H at M; viewBox = ink box) ──
+  const sw = 'stroke="currentColor" fill="none"';
   const ICONS = {
-    battery:  (bg) => `<svg width="30" height="14" viewBox="0 0 30 14"><rect x="1" y="1" width="24" height="12" fill="none" stroke="currentColor" stroke-width="2"/><rect x="26" y="4" width="3" height="6" fill="currentColor"/><rect x="4" y="4" width="15" height="6" fill="currentColor"/></svg>`,
-    heart:    () => `<svg width="26" height="28" viewBox="0 0 26 28"><circle cx="7" cy="8" r="7" fill="currentColor"/><circle cx="19" cy="8" r="7" fill="currentColor"/><polygon points="0,11 26,11 13,26" fill="currentColor"/></svg>`,
-    steps:    () => `<svg width="24" height="28" viewBox="0 0 24 28"><g fill="currentColor"><circle cx="4" cy="12" r="4"/><rect x="1" y="12" width="8" height="6"/><circle cx="6" cy="22" r="3"/><rect x="3" y="20" width="6" height="4"/><circle cx="20" cy="6" r="4"/><rect x="15" y="6" width="8" height="6"/><circle cx="18" cy="16" r="3"/><rect x="15" y="14" width="6" height="4"/></g></svg>`,
-    floors:   () => `<svg width="32" height="30" viewBox="0 0 32 30"><g fill="currentColor"><rect x="2" y="23" width="8" height="6"/><rect x="10" y="17" width="8" height="12"/><rect x="18" y="11" width="8" height="18"/></g><g stroke="currentColor" stroke-width="2" fill="none"><line x1="3" y1="14" x2="23" y2="0"/><line x1="23" y1="0" x2="17" y2="1"/><line x1="23" y1="0" x2="21" y2="6"/></g></svg>`,
-    cal:      () => `<svg width="20" height="28" viewBox="0 0 20 28"><polygon points="10,1 12,4 15,9 13,12 11,13 14,16 18,19 19,22 15,25 10,26 5,25 1,22 2,19 5,15 6,9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`,
-    weight:   () => `<svg width="24" height="24" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="12" cy="9" r="5" fill="none" stroke="currentColor" stroke-width="3"/><line x1="12" y1="9" x2="12" y2="6" stroke="currentColor" stroke-width="2"/></svg>`,
-    weather:  () => `<svg width="42" height="33" viewBox="0 0 42 33"><circle cx="21" cy="16.5" r="8" fill="currentColor"/><g stroke="currentColor" stroke-width="2"><line x1="21" y1="0" x2="21" y2="4"/><line x1="21" y1="33" x2="21" y2="29"/><line x1="5" y1="16.5" x2="9" y2="16.5"/><line x1="37" y1="16.5" x2="33" y2="16.5"/><line x1="9" y1="4" x2="13" y2="8"/><line x1="33" y1="4" x2="29" y2="8"/><line x1="9" y1="29" x2="13" y2="25"/><line x1="33" y1="29" x2="29" y2="25"/></g></svg>`,
-    humidity: (bg) => `<svg width="24" height="26" viewBox="0 0 24 26"><polygon points="12,0 3,14 21,14" fill="currentColor"/><circle cx="12" cy="16" r="9" fill="currentColor"/><line x1="8" y1="21" x2="16" y2="11" stroke="${bg}" stroke-width="1.5"/><circle cx="8" cy="12" r="2" fill="${bg}"/><circle cx="16" cy="20" r="2" fill="${bg}"/></svg>`,
-    wind:     () => `<svg width="32" height="32" viewBox="0 0 32 32"><polygon points="${arrow(16,16,225)}" fill="currentColor"/></svg>`,
-    pressure: () => `<svg width="30" height="30" viewBox="0 0 30 30"><circle cx="15" cy="15" r="12" fill="none" stroke="currentColor" stroke-width="3"/><line x1="15" y1="4" x2="15" y2="7" stroke="currentColor" stroke-width="3"/><line x1="15" y1="15" x2="20.7" y2="9.3" stroke="currentColor" stroke-width="3"/><circle cx="15" cy="15" r="2" fill="currentColor"/></svg>`,
-    altitude: () => `<svg width="36" height="28" viewBox="0 0 36 28"><polygon points="2,26 12,0 19,16 26,5 34,26" fill="currentColor"/></svg>`,
-    stock:    () => `<svg width="16" height="24" viewBox="0 0 16 24"><text x="8" y="18" text-anchor="middle" font-size="18" font-family="Roboto, sans-serif" font-weight="400" fill="currentColor">$</text></svg>`,
+    battery:  () => `<svg width="28" height="14" viewBox="-14 -7 28 14"><rect x="-13" y="-6" width="22" height="12" ${sw} stroke-width="2"/><rect x="11" y="-3" width="3" height="6" fill="currentColor"/><rect x="-11" y="-4" width="15" height="8" fill="currentColor"/></svg>`,
+    heart:    () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><g fill="currentColor"><circle cx="-6" cy="-6" r="7"/><circle cx="6" cy="-6" r="7"/><polygon points="-13,-3 13,-3 0,13"/></g></svg>`,
+    steps:    () => `<svg width="24" height="24" viewBox="-12 -12 24 24"><g fill="currentColor"><circle cx="-8" cy="-2" r="4"/><rect x="-11" y="-2" width="8" height="6"/><circle cx="-6" cy="8" r="3"/><rect x="-9" y="6" width="6" height="4"/><circle cx="8" cy="-8" r="4"/><rect x="3" y="-8" width="8" height="6"/><circle cx="6" cy="2" r="3"/><rect x="3" y="0" width="6" height="4"/></g></svg>`,
+    floors:   () => `<svg width="24" height="26" viewBox="-13 -13 24 26"><g fill="currentColor"><rect x="-13" y="5" width="8" height="7"/><rect x="-5" y="-1" width="8" height="13"/><rect x="3" y="-7" width="8" height="19"/></g><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="-12" y1="-4" x2="7" y2="-13"/><line x1="7" y1="-13" x2="1" y2="-12"/><line x1="7" y1="-13" x2="5" y2="-7"/></g></svg>`,
+    cal:      () => `<svg width="20" height="26" viewBox="-10 -13 20 26"><polygon points="0,-13 2,-10 5,-5 3,-2 1,-1 4,2 8,5 9,8 5,11 0,12 -5,11 -9,8 -8,5 -5,1 -4,-5" ${sw} stroke-width="2" stroke-linejoin="round"/></svg>`,
+    weight:   () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><rect x="-11.5" y="-11.5" width="23" height="23" rx="2" ${sw} stroke-width="3"/><circle cx="0" cy="-3" r="5" ${sw} stroke-width="3"/><line x1="0" y1="-3" x2="0" y2="-6" stroke="currentColor" stroke-width="2"/><circle cx="0" cy="-3" r="1" fill="currentColor"/></svg>`,
+    weather:  () => `<svg width="34" height="30" viewBox="-17 -15 34 30"><circle cx="0" cy="0" r="9" fill="currentColor"/><g stroke="currentColor" stroke-width="2"><line x1="0" y1="-15" x2="0" y2="-11"/><line x1="0" y1="15" x2="0" y2="11"/><line x1="-17" y1="0" x2="-13" y2="0"/><line x1="17" y1="0" x2="13" y2="0"/><line x1="-12" y1="-12" x2="-9" y2="-9"/><line x1="12" y1="-12" x2="9" y2="-9"/><line x1="-12" y1="12" x2="-9" y2="9"/><line x1="12" y1="12" x2="9" y2="9"/></g></svg>`,
+    humidity: (bg) => `<svg width="20" height="26" viewBox="-10 -13 20 26"><polygon points="0,-13 -9,3 9,3" fill="currentColor"/><circle cx="0" cy="4" r="9" fill="currentColor"/><line x1="-4" y1="10" x2="4" y2="-2" stroke="${bg}" stroke-width="2"/><circle cx="-4" cy="0" r="2" fill="${bg}"/><circle cx="4" cy="8" r="2" fill="${bg}"/></svg>`,
+    wind:     () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><polygon points="${arrow(0,0,225)}" fill="currentColor"/></svg>`,
+    pressure: () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="3"/><g stroke="currentColor" stroke-width="3"><line x1="0" y1="-10" x2="0" y2="-7"/><line x1="0" y1="0" x2="5" y2="-5"/></g><circle cx="0" cy="0" r="2" fill="currentColor"/></svg>`,
+    altitude: () => `<svg width="32" height="26" viewBox="-16 -14 32 26"><polygon points="-16,12 -6,-14 1,2 8,-9 16,12" fill="currentColor"/></svg>`,
+    stock:    () => `$`,
   };
   function arrow(cx, cy, bearing) {
     const r = (bearing * Math.PI) / 180, s = Math.sin(r), c = Math.cos(r);
     const p = (dx, dy) => `${(cx + dx).toFixed(1)},${(cy + dy).toFixed(1)}`;
-    return [p(15*s, -15*c), p(-11*s + 10*c, 11*c + 10*s), p(-7*s, 7*c), p(-11*s - 10*c, 11*c - 10*s)].join(' ');
+    return [p(13*s, -13*c), p(-10*s + 9*c, 10*c + 9*s), p(-6*s, 6*c), p(-10*s - 9*c, 10*c - 9*s)].join(' ');
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
-  let st = { dev: 'fr965', grid: 50, showGrid: true, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice() };
+  let st = { dev: 'fr965', grid: 50, showGrid: true, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), b: 0 };
   let sel = -1;
   try { const s = JSON.parse(localStorage.getItem('faceComposer') || 'null'); if (s && Array.isArray(s.el)) st = Object.assign(st, s); } catch (e) {}
-  if (!intArr3(st.tx)) st.tx = DEF_TX.slice(); if (!intArr3(st.tm)) st.tm = DEF_TM.slice();
+  if (!intArr3(st.tx)) st.tx = DEF_TX.slice(); if (!intArr3(st.tm)) st.tm = DEF_TM.slice(); st.b = st.b === 1 ? 1 : 0;
   function intArr3(v) { return Array.isArray(v) && v.length === 3 && v.every((n) => Number.isInteger(n) && n >= 10 && n <= 200) ? v.map(Number) : null; }
   const $ = (id) => document.getElementById(id);
   const stage = $('stage');
@@ -230,7 +234,7 @@
   for (const [t, d] of Object.entries(TYPES)) {
     const p = document.createElement('div');
     p.className = 'part'; p.dataset.t = t;
-    p.innerHTML = `<span class="ico">${d.icon ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${d.sample}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
+    p.innerHTML = `<span class="ico">${d.icon && d.icon !== 'stock' ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${d.icon === 'stock' ? '$' : d.sample}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +t));
     $('parts-' + d.grp).appendChild(p);
   }
@@ -244,7 +248,8 @@
       $(key).appendChild(inp);
     });
   }
-  function renderSizes() { document.querySelectorAll('.pxs input').forEach((inp) => { inp.value = st[inp.dataset.key][+inp.dataset.i]; }); }
+  function renderSizes() { document.querySelectorAll('.pxs input').forEach((inp) => { inp.value = st[inp.dataset.key][+inp.dataset.i]; }); $('bold').checked = st.b === 1; }
+  $('bold').addEventListener('change', (ev) => { st.b = ev.target.checked ? 1 : 0; commit(); });
 
   // ── Render ─────────────────────────────────────────────────────────────────
   function render() {
@@ -282,9 +287,13 @@
     // vs 108px for CSS 44px). Keep the box height = px so vertical centering matches VCENTER.
     div.style.fontSize = (px / FONT_EM) + 'px';
     div.style.lineHeight = px + 'px';
+    const bo = st.b === 1 ? boldOff(px) : 0;
+    if (bo) { div.style.textShadow = `${bo}px 0 0 currentColor`; div.style.paddingRight = (2 + bo) + 'px'; }
     const ki = (st.tx[s] / st.tx[1]) * k;   // icon scale: M = 1.0, S/L relative (same rule as WfLayout.drawEl)
-    div.style.gap = (4 * ki) + 'px';
-    const icon = (f & 1) && def.icon ? `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:scale(${ki});">${ICONS[def.icon](hex(st.bg))}</span>` : '';
+    div.style.gap = (GAP * ki) + 'px';
+    const icon = (f & 1) && def.icon
+      ? (def.icon === 'stock' ? `<span class="ico">$</span>` : `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:scale(${ki});">${ICONS[def.icon](hex(st.bg))}</span>`)
+      : '';
     div.innerHTML = icon + `<span class="val">${def.sample}</span><span class="anchor"></span>`;
     div.addEventListener('pointerdown', (ev) => startMove(ev, i));
     return div;
@@ -310,7 +319,7 @@
       div.classList.toggle('oob', oob);
     });
   }
-  const layoutObj = () => ({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm });
+  const layoutObj = () => ({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, b: st.b });
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   function renderList() {
     const l = $('list'); l.innerHTML = '';
@@ -410,7 +419,7 @@
     try {
       const j = JSON.parse($('json').value);
       const clean = sanitize(j); if (!clean) throw new Error('bad');
-      st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; sel = -1; commit(); setStatus('jsonstatus', `Applied ${clean.el.length} elements.`, 'ok');
+      st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; st.b = clean.b; sel = -1; commit(); setStatus('jsonstatus', `Applied ${clean.el.length} elements.`, 'ok');
     } catch (e) { setStatus('jsonstatus', 'Not a valid layout. Expect {"bg":n,"el":[[t,x,y,a,s,c,f],…]} with 0..1000 coordinates.', 'err'); }
   });
   $('preset-lobby').addEventListener('click', () => { st.el = PRESET_LOBBY.map(e => e.slice()); sel = -1; commit(); });
@@ -427,7 +436,7 @@
       el.push(n);
     }
     const bg = Number.isInteger(j.bg) && j.bg >= 0 && j.bg <= 0xFFFFFF ? j.bg : 0;
-    return { bg, el, tx: intArr3(j.tx) || DEF_TX.slice(), tm: intArr3(j.tm) || DEF_TM.slice() };
+    return { bg, el, tx: intArr3(j.tx) || DEF_TX.slice(), tm: intArr3(j.tm) || DEF_TM.slice(), b: Number(j.b) === 1 ? 1 : 0 };
   }
 
   // ── Server sync ────────────────────────────────────────────────────────────
@@ -452,7 +461,7 @@
       if (r.status === 404) return setStatus('syncstatus', 'Nothing saved for this Device ID yet.', '');
       if (!r.ok) throw new Error(j.error || r.status);
       const clean = sanitize(j); if (!clean) throw new Error('bad layout');
-      st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; sel = -1; commit();
+      st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; st.b = clean.b; sel = -1; commit();
       setStatus('syncstatus', `Loaded version ${j.v}.`, 'ok');
     } catch (e) { setStatus('syncstatus', 'Load failed: ' + e.message, 'err'); }
   });

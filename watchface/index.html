@@ -77,7 +77,13 @@
   .actual-box #actual { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; overflow: hidden; }
   .actual-box #actual .anchor, .actual-box #actual .grid { display: none !important; }
   .actual-box #actual .el { outline: none !important; }
-  .pxs { display: inline-flex; gap: 3px; } .pxs input { width: 44px; padding: 3px 4px; font: 12px var(--mono); text-align: center; }
+  .pxs { display: inline-flex; gap: 8px; }
+  .pxs .stp { display: inline-flex; align-items: center; gap: 2px; }
+  .pxs .stp .sml { font: 500 11px var(--mono); color: var(--ink-3); width: 12px; text-align: center; }
+  .pxs input { width: 40px; height: 26px; padding: 0 2px; font: 13px var(--mono); text-align: center; -moz-appearance: textfield; }
+  .pxs input::-webkit-outer-spin-button, .pxs input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .pxs .step { width: 26px; height: 26px; padding: 0; line-height: 1; font: 600 16px var(--sans); border-radius: 5px; background: var(--panel-2); border: 1px solid var(--line-2); color: var(--ink); cursor: pointer; }
+  .pxs .step:hover { background: var(--line); } .pxs .step:active { background: var(--line-2); }
   .sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
   .sw.on { border-color: var(--ink); box-shadow: 0 0 0 2px var(--panel); }
   .kbd { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
@@ -292,9 +298,14 @@
   BGS.forEach((c) => { const b = document.createElement('button'); b.className = 'sw'; b.style.background = hex(c); b.title = hex(c); b.dataset.bg = c; b.addEventListener('click', () => { st.bg = c; commit(); }); $('bgsw').appendChild(b); });
   for (const key of ['tx', 'tm']) {
     ['S', 'M', 'L'].forEach((lbl, i) => {
+      const wrap = document.createElement('span'); wrap.className = 'stp';
+      const sml = document.createElement('span'); sml.className = 'sml'; sml.textContent = lbl;
       const inp = document.createElement('input'); inp.type = 'number'; inp.min = 10; inp.max = 200; inp.title = lbl; inp.dataset.key = key; inp.dataset.i = i;
-      inp.addEventListener('change', () => { const v = Math.round(+inp.value); if (v >= 10 && v <= 200) { st[key][i] = v; commit(); } else { inp.value = st[key][i]; } });
-      $(key).appendChild(inp);
+      const setv = (v) => { v = Math.round(v); if (v >= 10 && v <= 200) { st[key][i] = v; commit(); } else { inp.value = st[key][i]; } };
+      inp.addEventListener('change', () => setv(+inp.value));
+      const mk = (txt, d) => { const b = document.createElement('button'); b.className = 'step'; b.type = 'button'; b.textContent = txt; b.title = `${lbl} ${d > 0 ? '+' : '−'}1 px`; b.addEventListener('click', () => setv(st[key][i] + d)); return b; };
+      wrap.append(sml, mk('−', -1), inp, mk('+', +1));
+      $(key).appendChild(wrap);
     });
   }
   function renderSizes() { document.querySelectorAll('.pxs input').forEach((inp) => { inp.value = st[inp.dataset.key][+inp.dataset.i]; }); $('bold').checked = st.b === 1; }

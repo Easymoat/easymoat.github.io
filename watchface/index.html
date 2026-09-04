@@ -72,6 +72,7 @@
   .seg button:last-child { border-right: 0; }
   .seg button.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
   .swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pxs { display: inline-flex; gap: 3px; } .pxs input { width: 44px; padding: 3px 4px; font: 12px var(--mono); text-align: center; }
   .sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
   .sw.on { border-color: var(--ink); box-shadow: 0 0 0 2px var(--panel); }
   .kbd { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
@@ -114,6 +115,8 @@
       <label>Grid <select id="grid"><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select></label>
       <label><input type="checkbox" id="showgrid" checked> show grid</label>
       <label>Background <span class="swatches" id="bgsw"></span></label>
+      <label title="Text height in px on a 454 dial: S / M / L. Sent to the watch with the layout.">Text <span class="pxs" id="tx"></span></label>
+      <label title="Clock height in px on a 454 dial: S / M / L.">Time <span class="pxs" id="tm"></span></label>
     </div>
     <div class="stage-outer"><div id="stage"></div></div>
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
@@ -185,7 +188,9 @@
   // vector font "RobotoRegular" at exactly these px, independent of the device language, so
   // Google Fonts Roboto 400 here is the same typeface. Icons are authored for M (44px) and
   // scaled by textPx/44 on both sides.
-  const TEXT_PX = [32, 44, 58], TIME_PX = [64, 80, 96], ICON_BASE = 44, FONT_EM = 1.17;
+  // Defaults (must match WfLayout.mc DEF_TEXT_PX / DEF_TIME_PX). Editable per layout (st.tx / st.tm)
+  // and sent to the watch as "tx"/"tm". Icons are authored for M and scale by tx[s]/tx[1].
+  const DEF_TX = [26, 36, 48], DEF_TM = [52, 68, 84], FONT_EM = 1.17;
   const PRESET_LOBBY = [[3,500,150,0,0,5,1],[1,500,330,0,2,0,0],[2,500,445,0,0,1,0],[10,130,560,1,1,2,1],[13,870,560,2,1,3,1],[11,130,650,1,1,0,1],[12,870,650,2,1,0,1],[20,130,760,1,1,4,1],[22,870,760,2,1,6,1]];
   const PRESET_MIN   = [[1,500,420,0,2,0,0],[2,500,540,0,0,1,0],[3,500,700,0,0,5,1]];
 
@@ -211,9 +216,11 @@
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
-  let st = { dev: 'fr965', grid: 50, showGrid: true, bg: 0, el: PRESET_LOBBY.map(e => e.slice()) };
+  let st = { dev: 'fr965', grid: 50, showGrid: true, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice() };
   let sel = -1;
   try { const s = JSON.parse(localStorage.getItem('faceComposer') || 'null'); if (s && Array.isArray(s.el)) st = Object.assign(st, s); } catch (e) {}
+  if (!intArr3(st.tx)) st.tx = DEF_TX.slice(); if (!intArr3(st.tm)) st.tm = DEF_TM.slice();
+  function intArr3(v) { return Array.isArray(v) && v.length === 3 && v.every((n) => Number.isInteger(n) && n >= 10 && n <= 200) ? v.map(Number) : null; }
   const $ = (id) => document.getElementById(id);
   const stage = $('stage');
   const hex = (n) => '#' + n.toString(16).padStart(6, '0').toUpperCase();
@@ -230,6 +237,14 @@
   for (const [k, d] of Object.entries(DEVICES)) { const o = document.createElement('option'); o.value = k; o.textContent = d.name; $('dev').appendChild(o); }
   $('dev').value = st.dev; $('grid').value = String(st.grid); $('showgrid').checked = st.showGrid;
   BGS.forEach((c) => { const b = document.createElement('button'); b.className = 'sw'; b.style.background = hex(c); b.title = hex(c); b.dataset.bg = c; b.addEventListener('click', () => { st.bg = c; commit(); }); $('bgsw').appendChild(b); });
+  for (const key of ['tx', 'tm']) {
+    ['S', 'M', 'L'].forEach((lbl, i) => {
+      const inp = document.createElement('input'); inp.type = 'number'; inp.min = 10; inp.max = 200; inp.title = lbl; inp.dataset.key = key; inp.dataset.i = i;
+      inp.addEventListener('change', () => { const v = Math.round(+inp.value); if (v >= 10 && v <= 200) { st[key][i] = v; commit(); } else { inp.value = st[key][i]; } });
+      $(key).appendChild(inp);
+    });
+  }
+  function renderSizes() { document.querySelectorAll('.pxs input').forEach((inp) => { inp.value = st[inp.dataset.key][+inp.dataset.i]; }); }
 
   // ── Render ─────────────────────────────────────────────────────────────────
   function render() {
@@ -253,7 +268,7 @@
     positionAll();
     $('empty').hidden = st.el.length > 0;
     document.querySelectorAll('#bgsw .sw').forEach((b) => b.classList.toggle('on', +b.dataset.bg === st.bg));
-    renderInspector(); renderList(); renderJson();
+    renderInspector(); renderList(); renderJson(); renderSizes();
   }
   function makeEl(e, i, k) {
     const [t, x, y, a, s, c, f] = e, def = TYPES[t] || TYPES[1];
@@ -261,13 +276,13 @@
     div.className = 'el' + (i === sel ? ' sel' : '');
     div.dataset.i = i;
     div.style.color = PALETTE[c] || PALETTE[0];
-    const px = (t === 1 ? TIME_PX : TEXT_PX)[s] * k;
+    const px = (t === 1 ? st.tm : st.tx)[s] * k;
     // The watch's vector-font :size is the line height (getFontHeight == size); Roboto's glyphs
     // at that size equal CSS font-size = size / 1.17 (measured on fr965 sim: "8,421" @44 = 91px
     // vs 108px for CSS 44px). Keep the box height = px so vertical centering matches VCENTER.
     div.style.fontSize = (px / FONT_EM) + 'px';
     div.style.lineHeight = px + 'px';
-    const ki = (TEXT_PX[s] / ICON_BASE) * k;   // icon scale: same rule as WfLayout.drawEl
+    const ki = (st.tx[s] / st.tx[1]) * k;   // icon scale: M = 1.0, S/L relative (same rule as WfLayout.drawEl)
     div.style.gap = (4 * ki) + 'px';
     const icon = (f & 1) && def.icon ? `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:scale(${ki});">${ICONS[def.icon](hex(st.bg))}</span>` : '';
     div.innerHTML = icon + `<span class="val">${def.sample}</span><span class="anchor"></span>`;
@@ -295,7 +310,8 @@
       div.classList.toggle('oob', oob);
     });
   }
-  function renderJson() { $('json').value = JSON.stringify({ bg: st.bg, el: st.el }).replace(/\],\[/g, '],\n     ['); }
+  const layoutObj = () => ({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm });
+  function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   function renderList() {
     const l = $('list'); l.innerHTML = '';
     st.el.forEach((e, i) => {
@@ -394,7 +410,7 @@
     try {
       const j = JSON.parse($('json').value);
       const clean = sanitize(j); if (!clean) throw new Error('bad');
-      st.bg = clean.bg; st.el = clean.el; sel = -1; commit(); setStatus('jsonstatus', `Applied ${clean.el.length} elements.`, 'ok');
+      st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; sel = -1; commit(); setStatus('jsonstatus', `Applied ${clean.el.length} elements.`, 'ok');
     } catch (e) { setStatus('jsonstatus', 'Not a valid layout. Expect {"bg":n,"el":[[t,x,y,a,s,c,f],…]} with 0..1000 coordinates.', 'err'); }
   });
   $('preset-lobby').addEventListener('click', () => { st.el = PRESET_LOBBY.map(e => e.slice()); sel = -1; commit(); });
@@ -411,7 +427,7 @@
       el.push(n);
     }
     const bg = Number.isInteger(j.bg) && j.bg >= 0 && j.bg <= 0xFFFFFF ? j.bg : 0;
-    return { bg, el };
+    return { bg, el, tx: intArr3(j.tx) || DEF_TX.slice(), tm: intArr3(j.tm) || DEF_TM.slice() };
   }
 
   // ── Server sync ────────────────────────────────────────────────────────────
@@ -421,7 +437,7 @@
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('syncstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
     setStatus('syncstatus', 'Saving…');
     try {
-      const r = await fetch($('api').value + '/layout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, layout: { bg: st.bg, el: st.el } }) });
+      const r = await fetch($('api').value + '/layout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, layout: layoutObj() }) });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || r.status);
       setStatus('syncstatus', `Saved. Version ${j.v}, ${j.count} elements. The watch applies it within 5 minutes.`, 'ok');
@@ -436,7 +452,7 @@
       if (r.status === 404) return setStatus('syncstatus', 'Nothing saved for this Device ID yet.', '');
       if (!r.ok) throw new Error(j.error || r.status);
       const clean = sanitize(j); if (!clean) throw new Error('bad layout');
-      st.bg = clean.bg; st.el = clean.el; sel = -1; commit();
+      st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; sel = -1; commit();
       setStatus('syncstatus', `Loaded version ${j.v}.`, 'ok');
     } catch (e) { setStatus('syncstatus', 'Load failed: ' + e.message, 'err'); }
   });

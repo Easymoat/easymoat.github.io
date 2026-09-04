@@ -72,6 +72,11 @@
   .seg button:last-child { border-right: 0; }
   .seg button.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
   .swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+  .actual { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+  .actual-box { position: relative; flex: none; overflow: hidden; }
+  .actual-box #actual { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; overflow: hidden; }
+  .actual-box #actual .anchor, .actual-box #actual .grid { display: none !important; }
+  .actual-box #actual .el { outline: none !important; }
   .pxs { display: inline-flex; gap: 3px; } .pxs input { width: 44px; padding: 3px 4px; font: 12px var(--mono); text-align: center; }
   .sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
   .sw.on { border-color: var(--ink); box-shadow: 0 0 0 2px var(--panel); }
@@ -120,6 +125,7 @@
       <label title="Faux bold: text drawn twice with a 1–2 px offset (Roboto has no bold on the watch)."><input type="checkbox" id="bold"> bold</label>
     </div>
     <div class="stage-outer"><div id="stage"></div></div>
+    <div class="actual" id="actualwrap"><div class="actual-box"><div id="actual"></div></div><span class="muted">Actual size (approx. — assumes 96 dpi; the dial is the physical screen diameter)</span></div>
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
     <div class="drawer">
       <div class="box">
@@ -180,10 +186,10 @@
     31: { name: 'Stock 2',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
   };
   const DEVICES = {
-    fr965:  { name: 'fr965 · venu3 · fr970 (454)', w: 454, h: 454, round: true },
-    fr265:  { name: 'fr265 · epix2pro47 (416)',    w: 416, h: 416, round: true },
-    venu3s: { name: 'venu3s · vívoactive5 (390)',  w: 390, h: 390, round: true },
-    venux1: { name: 'venu X1 (448×486)',           w: 448, h: 486, round: false },
+    fr965:  { name: 'fr965 · venu3 · fr970 (454)', w: 454, h: 454, round: true,  mm: 33.0 },
+    fr265:  { name: 'fr265 · epix2pro47 (416)',    w: 416, h: 416, round: true,  mm: 33.0 },
+    venu3s: { name: 'venu3s · vívoactive5 (390)',  w: 390, h: 390, round: true,  mm: 30.5 },
+    venux1: { name: 'venu X1 (448×486)',           w: 448, h: 486, round: false, mm: 51.0 },
   };
   // Font px on a 454 dial (must match WfLayout.mc TEXT_PX / TIME_PX). The watch draws with the
   // vector font "RobotoRegular" at exactly these px, independent of the device language, so
@@ -288,7 +294,17 @@
     positionAll();
     $('empty').hidden = st.el.length > 0;
     document.querySelectorAll('#bgsw .sw').forEach((b) => b.classList.toggle('on', +b.dataset.bg === st.bg));
-    renderInspector(); renderList(); renderJson(); renderSizes();
+    renderInspector(); renderList(); renderJson(); renderSizes(); renderActual();
+  }
+  // Physical-size preview: a non-interactive copy of the stage scaled so the dial is d.mm wide
+  // (at the nominal 96 CSS px per inch). Shows how small the layout really is on the wrist.
+  function renderActual() {
+    const d = dev(), sc = (d.mm / 25.4 * 96) / d.w;
+    const box = $('actualwrap').querySelector('.actual-box'), a = $('actual');
+    box.style.width = Math.round(d.w * sc) + 'px'; box.style.height = Math.round(d.h * sc) + 'px';
+    a.style.width = d.w + 'px'; a.style.height = d.h + 'px'; a.style.transform = `scale(${sc})`;
+    a.style.background = hex(st.bg); a.style.borderRadius = d.round ? '50%' : '8%';
+    a.innerHTML = stage.innerHTML;
   }
   function makeEl(e, i, k) {
     const [t, x, y, a, s, c, f] = e, def = TYPES[t] || TYPES[1];

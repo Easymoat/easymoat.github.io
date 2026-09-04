@@ -88,9 +88,9 @@
     <label data-en="Capture size (pixels sent to the watch)" data-ja="撮影サイズ（ウォッチへ送る画素数）">Capture size (pixels sent to the watch)</label>
     <div class="seg" id="sizeSeg">
       <button data-v="320" class="active" data-en="320 — standard" data-ja="320 — 標準">320 — standard</button>
-      <button data-v="454" data-en="454 — native (fr965 / venu 3)" data-ja="454 — ネイティブ (fr965 / venu 3)">454 — native (fr965 / venu 3)</button>
+      <button data-v="454" data-en="454 — high" data-ja="454 — 高解像度">454 — high</button>
     </div>
-    <p class="hint" data-en="320 is what the PulseLink widget uses. 454 sends the full resolution of 454-pixel watches (about 2× the data per photo); the widget still shows it, and a watch face can use it at native size." data-ja="320 は PulseLink ウィジェットと同じ設定です。454 は 454px 機種の解像度そのままで送ります (1枚あたりのデータ量は約2倍)。ウィジェットでもそのまま表示され、文字盤ではネイティブサイズで使えます。">320 is what the PulseLink widget uses. 454 sends the full resolution of 454-pixel watches (about 2× the data per photo); the widget still shows it, and a watch face can use it at native size.</p>
+    <p class="hint" data-en="320 is the standard setting. 454 sends sharper photos (about 2× the data per photo); how much sharper it looks depends on the watch model and its screen size." data-ja="320 が標準の設定です。454 はより精細な写真を送ります (1枚あたりのデータ量は約2倍)。どの程度精細に見えるかは機種と画面サイズによります。">320 is the standard setting. 454 sends sharper photos (about 2× the data per photo); how much sharper it looks depends on the watch model and its screen size.</p>
     <label data-en="Colors (watch memory load)" data-ja="色数（ウォッチの負担）">Colors (watch memory load)</label>
     <div class="seg" id="colorSeg">
       <button data-v="16" class="active" data-en="16 — light" data-ja="16 — 軽い">16 — light</button>
@@ -321,7 +321,7 @@ document.querySelectorAll('#colorSeg button').forEach(function (x) {
     x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === n);
   });
 }
-// 撮影サイズ (320 = PL ウィジェットと同じ / 454 = 454px 機種のネイティブ)。このページだけの設定 (localStorage)。
+// 撮影サイズ (320 = 標準 / 454 = 高解像度)。ローカル選択はサーバ cam-config と同期する。
 let mPx = 320;
 try { if (parseInt(localStorage.getItem('pl_cam_px'), 10) === 454) mPx = 454; } catch (e) {}
 function renderSizeSeg() {

@@ -524,6 +524,12 @@ async function pollCamConfig() {
     if (j.fast_sec) { fastSec = j.fast_sec; }   // 最短間隔はサーバが決める
     if (lastShootSeq === null) { lastShootSeq = camCfg.shoot_seq || 0; }
     renderFacingBtn();                // 停止中でもラベルはサーバの状態に追随させる
+    // Viewer から変えられる設定 (色数 / 撮影サイズ / 動体検知) はサーバのステートが正。
+    // Start 前でもローカルの選択表示を追随させる (以前は下の return の後にあり、開始前は追従しなかった)。
+    if (camCfg.colors && camCfg.colors !== mColors) { setColors(camCfg.colors); }
+    if (camCfg.px && camCfg.px !== mPx) { setPx(camCfg.px, false); }
+    if ((prev.motion_mode || 'med') !== (camCfg.motion_mode || 'med')) { motionPrev = null; }
+    renderMotionSeg();
     if (timerId == null) { return; }  // Start 前は表示だけ更新して適用しない
     // 調整モードに入った瞬間: 次の撮影を最短間隔まで前倒しする (3分待たせない)。
     // 抜けた時は現在予約されている撮影をそのまま使い、その後は通常間隔に戻る。
@@ -546,12 +552,6 @@ async function pollCamConfig() {
       remotePaused = false;
       nextShotAt = Date.now() + 2000;  // 再開 → 即撮影 (掴んだままなので取り直し不要)
     }
-    // 色数は Viewer からも変えられる (サーバのステートが正)。ローカル選択を追随させる。
-    if (camCfg.colors && camCfg.colors !== mColors) { setColors(camCfg.colors); }
-    // 撮影サイズも Viewer から変えられる (サーバのステートが正)
-    if (camCfg.px && camCfg.px !== mPx) { setPx(camCfg.px, false); }
-  if ((prev.motion_mode || 'med') !== (camCfg.motion_mode || 'med')) { motionPrev = null; }
-  renderMotionSeg();
     // 使用カメラ (背面/画面側) のリモート切替。変わった時だけストリームを取り直す。
     // 選べない端末で取り直しても同じカメラが返るだけなので、無駄に撮影を止めない。
     if (facingSupported !== false

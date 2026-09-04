@@ -192,10 +192,9 @@
   // Defaults (must match WfLayout.mc DEF_TEXT_PX / DEF_TIME_PX). Editable per layout (st.tx / st.tm)
   // and sent to the watch as "tx"/"tm". Icons are authored for M and scale by tx[s]/tx[1].
   const DEF_TX = [26, 36, 48], DEF_TM = [52, 68, 84], FONT_EM = 1.17, GAP = 6;
-  // Icons: the 26px ink box (M artwork) is scaled to the digit height (0.607 × text px), same as
-  // WfLayout.drawEl. Text is centred on the digit ink, not the font box: inkShift() measures the
-  // browser's real Roboto metrics (the watch does the same from Graphics.getFontAscent).
-  const DIGIT_RATIO = 0.607, ICON_BOX = 26;
+  // Icons are authored for M (26px ink box) and scale by tx[s]/tx[1], same as WfLayout.drawEl.
+  // Text is centred on the digit ink, not the font box: inkShift() measures the browser's real
+  // Roboto metrics (the watch does the same from Graphics.getFontAscent).
   const shiftCache = {};
   function inkShift(px) {
     if (px in shiftCache) return shiftCache[px];
@@ -305,7 +304,7 @@
     div.style.lineHeight = px + 'px';
     const bo = st.b === 1 ? boldOff(px) : 0;
     if (bo) { div.style.textShadow = `${bo}px 0 0 currentColor`; div.style.paddingRight = (2 + bo) + 'px'; }
-    const ki = (DIGIT_RATIO * st.tx[s] * k) / ICON_BOX;   // icon box = digit height (same rule as WfLayout.drawEl)
+    const ki = (st.tx[s] / st.tx[1]) * k;   // icon scale: M = 1.0, S/L relative (same rule as WfLayout.drawEl)
     div.style.gap = (GAP * ki) + 'px';
     const icon = (f & 1) && def.icon
       ? (def.icon === 'stock' ? `<span class="ico">$</span>` : `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:scale(${ki});">${ICONS[def.icon](hex(st.bg))}</span>`)

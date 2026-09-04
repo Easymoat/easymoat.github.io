@@ -294,7 +294,15 @@ const sizeMode = 'full';
 let mColors = 16;
 function setColors(n) {
   mColors = n;
-  // 感度はサーバー (cam_config) が正。Viewer からも変えられるようにしておく。
+  document.querySelectorAll('#colorSeg button').forEach(function (x) {
+    x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === n);
+  });
+}
+
+// ─── 動体検知の感度 ───
+// 感度はサーバー (cam_config) が正。Viewer からも変えられるようにしておく。
+// (2026-09-05 修正: 以前はこの関数とハンドラが setColors の内側に紛れ込んでいて、ポーリングからの
+//  renderMotionSeg() が ReferenceError → try/catch に飲まれ、以降のリモート適用が黙って止まっていた)
 function renderMotionSeg() {
   const cur = camCfg.motion_mode || 'med';
   document.querySelectorAll('#motionSeg button').forEach(function (b) {
@@ -317,10 +325,6 @@ document.querySelectorAll('#motionSeg button').forEach(function (b) {
   });
 });
 
-document.querySelectorAll('#colorSeg button').forEach(function (x) {
-    x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === n);
-  });
-}
 // 撮影サイズ (320 = 標準 / 454 = 高解像度)。ローカル選択はサーバ cam-config と同期する。
 let mPx = 320;
 try { if (parseInt(localStorage.getItem('pl_cam_px'), 10) === 454) mPx = 454; } catch (e) {}

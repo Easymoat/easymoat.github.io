@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex">
 <style>html,body{margin:0;background:#0E1116;color-scheme:dark}</style>
 <title>Face Composer</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Barlow+Semi+Condensed:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Roboto:wght@400;500&display=swap">
 <style>
   :root {
     --ground: #0E1116; --panel: #161A21; --panel-2: #1D222B; --line: #2A3140; --line-2: #3A4356;
@@ -14,7 +14,7 @@
     --accent: #F2B441; --accent-ink: #1A1200; --danger: #E5484D; --ok: #4CC38A;
     --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
     --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-    --watch: "Barlow Semi Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
+    --watch: "Roboto", "Helvetica Neue", Arial, sans-serif;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--ground); color: var(--ink); font: 14px/1.45 var(--sans); min-height: 100vh; }
@@ -45,7 +45,7 @@
   #stage { position: relative; overflow: hidden; background: #000; box-shadow: 0 0 0 10px #05070A, 0 0 0 12px var(--line-2), 0 30px 60px rgba(0,0,0,.6); touch-action: none; user-select: none; }
   #stage.round { border-radius: 50%; }
   #stage svg.grid { position: absolute; inset: 0; pointer-events: none; }
-  .el { position: absolute; display: flex; align-items: center; gap: 4px; white-space: nowrap; cursor: grab; padding: 2px; margin: -2px; border-radius: 3px; touch-action: none; font-family: var(--watch); font-weight: 600; line-height: 1; }
+  .el { position: absolute; display: flex; align-items: center; gap: 4px; white-space: nowrap; cursor: grab; padding: 2px; margin: -2px; border-radius: 3px; touch-action: none; font-family: var(--watch); font-weight: 400; line-height: 1; }
   .el:active { cursor: grabbing; }
   .el .ico { display: flex; align-items: center; }
   .el.sel { outline: 1.5px dashed var(--accent); outline-offset: 2px; }
@@ -181,8 +181,11 @@
     venu3s: { name: 'venu3s · vívoactive5 (390)',  w: 390, h: 390, round: true },
     venux1: { name: 'venu X1 (448×486)',           w: 448, h: 486, round: false },
   };
-  // Font px on a 454 dial: text S/M/L ≈ FONT_XTINY/SMALL/MEDIUM, time ≈ NUMBER_MILD/MEDIUM/HOT.
-  const TEXT_PX = [20, 27, 34], TIME_PX = [44, 66, 96];
+  // Font px on a 454 dial (must match WfLayout.mc TEXT_PX / TIME_PX). The watch draws with the
+  // vector font "RobotoRegular" at exactly these px, independent of the device language, so
+  // Google Fonts Roboto 400 here is the same typeface. Icons are authored for M (44px) and
+  // scaled by textPx/44 on both sides.
+  const TEXT_PX = [32, 44, 58], TIME_PX = [64, 80, 96], ICON_BASE = 44;
   const PRESET_LOBBY = [[3,500,150,0,0,5,1],[1,500,330,0,2,0,0],[2,500,445,0,0,1,0],[10,130,560,1,1,2,1],[13,870,560,2,1,3,1],[11,130,650,1,1,0,1],[12,870,650,2,1,0,1],[20,130,760,1,1,4,1],[22,870,760,2,1,6,1]];
   const PRESET_MIN   = [[1,500,420,0,2,0,0],[2,500,540,0,0,1,0],[3,500,700,0,0,5,1]];
 
@@ -199,7 +202,7 @@
     wind:     () => `<svg width="32" height="32" viewBox="0 0 32 32"><polygon points="${arrow(16,16,225)}" fill="currentColor"/></svg>`,
     pressure: () => `<svg width="30" height="30" viewBox="0 0 30 30"><circle cx="15" cy="15" r="12" fill="none" stroke="currentColor" stroke-width="3"/><line x1="15" y1="4" x2="15" y2="7" stroke="currentColor" stroke-width="3"/><line x1="15" y1="15" x2="20.7" y2="9.3" stroke="currentColor" stroke-width="3"/><circle cx="15" cy="15" r="2" fill="currentColor"/></svg>`,
     altitude: () => `<svg width="36" height="28" viewBox="0 0 36 28"><polygon points="2,26 12,0 19,16 26,5 34,26" fill="currentColor"/></svg>`,
-    stock:    () => `<svg width="16" height="24" viewBox="0 0 16 24"><text x="8" y="18" text-anchor="middle" font-size="18" font-family="Barlow Semi Condensed, sans-serif" font-weight="600" fill="currentColor">$</text></svg>`,
+    stock:    () => `<svg width="16" height="24" viewBox="0 0 16 24"><text x="8" y="18" text-anchor="middle" font-size="18" font-family="Roboto, sans-serif" font-weight="400" fill="currentColor">$</text></svg>`,
   };
   function arrow(cx, cy, bearing) {
     const r = (bearing * Math.PI) / 180, s = Math.sin(r), c = Math.cos(r);
@@ -220,7 +223,7 @@
   for (const [t, d] of Object.entries(TYPES)) {
     const p = document.createElement('div');
     p.className = 'part'; p.dataset.t = t;
-    p.innerHTML = `<span class="ico">${d.icon ? ICONS[d.icon]('#1D222B') : `<span style="font:600 16px var(--watch)">${d.sample}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
+    p.innerHTML = `<span class="ico">${d.icon ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${d.sample}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +t));
     $('parts-' + d.grp).appendChild(p);
   }
@@ -260,7 +263,9 @@
     div.style.color = PALETTE[c] || PALETTE[0];
     const px = (t === 1 ? TIME_PX : TEXT_PX)[s] * k;
     div.style.fontSize = px + 'px';
-    const icon = (f & 1) && def.icon ? `<span class="ico" style="width:${def.iw*k}px;justify-content:center;transform:scale(${k});">${ICONS[def.icon](hex(st.bg))}</span>` : '';
+    const ki = (TEXT_PX[s] / ICON_BASE) * k;   // icon scale: same rule as WfLayout.drawEl
+    div.style.gap = (4 * ki) + 'px';
+    const icon = (f & 1) && def.icon ? `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:scale(${ki});">${ICONS[def.icon](hex(st.bg))}</span>` : '';
     div.innerHTML = icon + `<span class="val">${def.sample}</span><span class="anchor"></span>`;
     div.addEventListener('pointerdown', (ev) => startMove(ev, i));
     return div;

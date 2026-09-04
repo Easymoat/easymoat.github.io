@@ -330,15 +330,26 @@ function renderSizeSeg() {
   });
 }
 renderSizeSeg();
-document.querySelectorAll('#sizeSeg button').forEach(function (b) {
-  b.addEventListener('click', function () {
-    mPx = parseInt(b.getAttribute('data-v'), 10) === 454 ? 454 : 320;
-    try { localStorage.setItem('pl_cam_px', String(mPx)); } catch (e) {}
-    renderSizeSeg();
+function setPx(n, fromLocal) {
+  mPx = (parseInt(n, 10) === 454) ? 454 : 320;
+  try { localStorage.setItem('pl_cam_px', String(mPx)); } catch (e) {}
+  renderSizeSeg();
+  if (fromLocal) {
+    camCfg.px = mPx;
+    if (connected()) {
+      fetch(API + '/user/cam-config', {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(withDevBody({ px: mPx }))
+      }).catch(function () {});
+    }
     // 次の定期撮影を待たず、新しいサイズで撮り直す
     const soon = Date.now() + 1500;
     if (typeof nextShotAt !== 'undefined' && (nextShotAt == null || nextShotAt > soon)) { nextShotAt = soon; }
-  });
+  }
+}
+document.querySelectorAll('#sizeSeg button').forEach(function (b) {
+  b.addEventListener('click', function () { setPx(b.getAttribute('data-v'), true); });
 });
 
 document.querySelectorAll('#colorSeg button').forEach(function (b) {
@@ -445,7 +456,7 @@ document.getElementById('facingBtn').addEventListener('click', function () {
 // ─── リモート制御 (Viewer → サーバ → ここ、のステートリレー) ───
 // 30秒 (調整モード中は10秒) ごとに /user/cam-config をポーリングし、最終値を適用する。
 // paused はストリーム停止のみ (Wake Lock とポーリングは維持 = リモート再開が効く)。
-let camCfg = { paused: false, zoom: 100, brightness: 0, colors: 16,
+let camCfg = { paused: false, zoom: 100, brightness: 0, colors: 16, px: 320,
                screen_off: false, torch: false, facing: 'environment',
                shoot_seq: 0, boost_until: 0 };
 renderFacingBtn();   // 初期ラベル (既定=背面)。以後は操作/ポーリングで更新。
@@ -537,6 +548,8 @@ async function pollCamConfig() {
     }
     // 色数は Viewer からも変えられる (サーバのステートが正)。ローカル選択を追随させる。
     if (camCfg.colors && camCfg.colors !== mColors) { setColors(camCfg.colors); }
+    // 撮影サイズも Viewer から変えられる (サーバのステートが正)
+    if (camCfg.px && camCfg.px !== mPx) { setPx(camCfg.px, false); }
   if ((prev.motion_mode || 'med') !== (camCfg.motion_mode || 'med')) { motionPrev = null; }
   renderMotionSeg();
     // 使用カメラ (背面/画面側) のリモート切替。変わった時だけストリームを取り直す。
@@ -553,7 +566,7 @@ async function pollCamConfig() {
     if (prev.torch !== camCfg.torch) { applyTorch(); }
     // 設定変更 (zoom/明るさ/色数) や「今すぐ撮影」→ 次の定期撮影を待たず前倒し
     const changed = (prev.zoom !== camCfg.zoom) || (prev.brightness !== camCfg.brightness)
-                 || (prev.colors !== camCfg.colors);
+                 || (prev.colors !== camCfg.colors) || (prev.px !== camCfg.px);
     const shootReq = (camCfg.shoot_seq || 0) !== lastShootSeq;
     if (shootReq) { lastShootSeq = camCfg.shoot_seq || 0; }
     if (!camCfg.paused && (changed || shootReq)) {

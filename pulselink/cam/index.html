@@ -60,7 +60,7 @@
 <div class="wrap">
   <h1>PulseLink Cam</h1>
   <p class="sub" data-en="Turn a spare iPhone into a watch-face camera. A photo is taken and sent to your watch every 3 minutes." data-ja="余った iPhone を文字盤カメラに。3分ごとに撮影してウォッチに送ります。">Turn a spare iPhone into a watch-face camera. A photo is taken and sent to your watch every 3 minutes.</p>
-  <p id="pageVer" style="color:#9CA3AF; font-size:11px; margin:-14px 0 16px;">v2026-09-05d</p>
+  <p id="pageVer" style="color:#9CA3AF; font-size:11px; margin:-14px 0 16px;">v2026-09-05e</p>
 
   <div class="card" id="loginCard">
     <h2 data-en="1. Connect your watch" data-ja="1. ウォッチをつなぐ">1. Connect your watch</h2>
@@ -145,7 +145,7 @@ const CAM_SLOT = 6;
 const INTERVAL_MS = 3 * 60 * 1000;
 // 調整モード (Viewer の Setup mode) 中の撮影間隔。サーバが fast_sec で通知するので
 // それを使い、未取得時のみこの既定値。時限式なので放置しても通常間隔に戻る。
-let fastSec = 30;
+let fastSec = 10;
 const RETRY_MS = 60 * 1000;           // 失敗時は 60秒後に再試行
 
 // ─── 言語 ───
@@ -939,8 +939,12 @@ async function captureAndUpload() {
   const boostNow = camCfg.boost_until && camCfg.boost_until > Date.now();
   // 検知後3分は25秒間隔 (セットアップモードの boost が最優先)。
   const burstNow = motionBurstUntil > Date.now();
-  nextShotAt = Date.now() + (boostNow ? fastSec * 1000
-                          : (burstNow ? MOTION_BURST_INTERVAL_MS : INTERVAL_MS));
+  // 該当する条件のうち最も短い間隔を採る。セットアップモード中に動体検知バーストが
+  // 走っていても、遅いほうに引きずられない (2026-09-05 修正)。
+  let iv = INTERVAL_MS;
+  if (burstNow) { iv = Math.min(iv, MOTION_BURST_INTERVAL_MS); }
+  if (boostNow) { iv = Math.min(iv, fastSec * 1000); }
+  nextShotAt = Date.now() + iv;
   const box = document.getElementById('camAlert');
   try {
     // ストリームが死んでいたら取り直す (muted は一時的なことが多いので少し待つ)。

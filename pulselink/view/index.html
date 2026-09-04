@@ -87,7 +87,7 @@
     </div>
     <button class="btn ghost" id="facingBtn">Camera: Back</button>
     <button class="btn" id="setupBtn" style="background:#0E7490;">Setup mode</button>
-    <p class="hint" data-en="Setting the camera up? Setup mode shoots every 30 seconds for 5 minutes so you can check framing and brightness quickly on this page. It ends by itself and goes back to the normal 3-minute interval — press it again to extend." data-ja="カメラの設置中に。セットアップモードにすると5分間だけ30秒ごとに撮影するので、構図や明るさをこのページで素早く確認できます。時間が来れば自動で通常の3分間隔に戻ります（もう一度押せば延長）。">Setting the camera up? Setup mode shoots every 30 seconds for 5 minutes so you can check framing and brightness quickly on this page. It ends by itself and goes back to the normal 3-minute interval — press it again to extend.</p>
+    <p class="hint" data-en="Setting the camera up? Setup mode shoots every 10 seconds for 5 minutes so you can check framing and brightness quickly on this page. It ends by itself and goes back to the normal 3-minute interval — press it again to extend." data-ja="カメラの設置中に。セットアップモードにすると5分間だけ10秒ごとに撮影するので、構図や明るさをこのページで素早く確認できます。時間が来れば自動で通常の3分間隔に戻ります（もう一度押せば延長）。">Setting the camera up? Setup mode shoots every 10 seconds for 5 minutes so you can check framing and brightness quickly on this page. It ends by itself and goes back to the normal 3-minute interval — press it again to extend.</p>
     <p class="hint" id="torchHint" style="display:none;" data-en="Torch is not available on this camera phone — the web torch API needs iOS 17.5+ or Android." data-ja="このカメラ端末ではライトを点けられません — Web のライト API は iOS 17.5 以降か Android が必要です。">Torch is not available on this camera phone — the web torch API needs iOS 17.5+ or Android.</p>
     <label data-en="Zoom (digital)" data-ja="ズーム（デジタル）">Zoom (digital)</label>
     <div class="seg" id="zoomSeg">
@@ -428,7 +428,7 @@ document.getElementById('pauseBtn').addEventListener('click', function () {
 document.getElementById('shootBtn').addEventListener('click', function () {
   sendCfg({ shoot: true });
 });
-// セットアップモード: 5分間だけ最短間隔 (30秒) で撮影させる。開始時は同時に1枚撮って
+// セットアップモード: 5分間だけ最短間隔 (10秒) で撮影させる。開始時は同時に1枚撮って
 // すぐ現状を見せる。時限式なので放置しても通常間隔へ自動復帰し、押し直せば延長。
 // 進行中にもう一度押せば即終了 (boost:false)。
 document.getElementById('setupBtn').addEventListener('click', function () {
@@ -558,7 +558,7 @@ function renderSetupBtn() {
       + (j ? ' — 押して終了' : ' — tap to end');
     b.style.background = '#DC2626';
   } else {
-    b.textContent = j ? 'セットアップモード（30秒ごと）' : 'Setup mode (30s interval)';
+    b.textContent = j ? 'セットアップモード（10秒ごと）' : 'Setup mode (10s interval)';
     b.style.background = '#0E7490';
   }
 }

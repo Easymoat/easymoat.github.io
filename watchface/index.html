@@ -183,9 +183,9 @@
     12: { name: 'Floors',    grp: 'body',  sample: '12',     icon: 'floors',    iw: 24 },
     13: { name: 'Calories',  grp: 'body',  sample: '1,850',  icon: 'cal',       iw: 20 },
     14: { name: 'Weight',    grp: 'body',  sample: '68.5',   icon: 'weight',    iw: 26 },
-    15: { name: 'Body Battery', grp: 'body', sample: '75',    icon: 'bodybat',   iw: 14 },
+    15: { name: 'Body Battery', grp: 'body', sample: '75',    icon: 'bodybat',   iw: 16 },
     16: { name: 'Stress',    grp: 'body',  sample: '32',     icon: 'stress',    iw: 26 },
-    17: { name: 'Respiration', grp: 'body', sample: '14',    icon: 'lungs',     iw: 26 },
+    17: { name: 'Respiration', grp: 'body', sample: '14',    icon: 'breath',    iw: 26 },
     20: { name: 'Weather',   grp: 'wx',    sample: '23°',    icon: 'weather',   iw: 34 },
     21: { name: 'Humidity',  grp: 'wx',    sample: '55%',    icon: 'humidity',  iw: 20 },
     22: { name: 'Wind km/h', grp: 'wx',    sample: '12',     icon: 'wind',      iw: 26 },
@@ -236,6 +236,7 @@
 
   // ── Icons: same geometry as WfIcons.mc (center 0,0, ink box W x H at M; viewBox = ink box) ──
   const sw = 'stroke="currentColor" fill="none"';
+  let uid = 0;   // unique ids for per-icon clipPaths
   const ICONS = {
     battery:  () => `<svg width="28" height="14" viewBox="-14 -7 28 14"><rect x="-13" y="-6" width="22" height="12" ${sw} stroke-width="2"/><rect x="11" y="-3" width="3" height="6" fill="currentColor"/><rect x="-11" y="-4" width="15" height="8" fill="currentColor"/></svg>`,
     heart:    () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><g fill="currentColor"><circle cx="-6" cy="-6" r="7"/><circle cx="6" cy="-6" r="7"/><polygon points="-13,-3 13,-3 0,13"/></g></svg>`,
@@ -248,9 +249,12 @@
     wind:     () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><polygon points="${arrow(0,0,225)}" fill="currentColor"/></svg>`,
     pressure: () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="3"/><g stroke="currentColor" stroke-width="3"><line x1="0" y1="-10" x2="0" y2="-7"/><line x1="0" y1="0" x2="5" y2="-5"/></g><circle cx="0" cy="0" r="2" fill="currentColor"/></svg>`,
     altitude: () => `<svg width="32" height="26" viewBox="-16 -14 32 26"><polygon points="-16,12 -6,-14 1,2 8,-9 16,12" fill="currentColor"/></svg>`,
-    bodybat:  () => `<svg width="14" height="26" viewBox="-7 -13 14 26"><rect x="-6" y="-10" width="12" height="22" ${sw} stroke-width="2"/><rect x="-3" y="-13" width="6" height="2" fill="currentColor"/><rect x="-5" y="-4" width="10" height="15" fill="currentColor"/></svg>`,
+    bodybat:  (bg) => { const h = 15, id = 'bb' + (++uid);   // sample level 75% of the 20px well
+                        const bolt = '2,-8 -4,1 0,1 -2,8 4,-1 0,-1';
+                        return `<svg width="16" height="26" viewBox="-8 -13 16 26"><defs><clipPath id="${id}f"><rect x="-6" y="${11-h}" width="12" height="${h}"/></clipPath><clipPath id="${id}e"><rect x="-6" y="-9" width="12" height="${20-h}"/></clipPath></defs><rect x="-7" y="-10" width="14" height="22" rx="3" ${sw} stroke-width="2"/><rect x="-3" y="-13" width="6" height="2" fill="currentColor"/><rect x="-6" y="${11-h}" width="12" height="${h}" fill="currentColor"/><polygon points="${bolt}" fill="${bg}" clip-path="url(#${id}f)"/><polygon points="${bolt}" fill="currentColor" clip-path="url(#${id}e)"/></svg>`; },
     stress:   () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="2"/><polygon points="4,-10 -5,1 0,1 -4,10 5,-1 0,-1" fill="currentColor"/></svg>`,
-    lungs:    () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><g fill="currentColor"><rect x="-12" y="-5" width="10" height="18" rx="4"/><rect x="2" y="-5" width="10" height="18" rx="4"/><rect x="-1" y="-13" width="2" height="9"/></g></svg>`,
+    breath:   () => { const pts = []; for (let i = 0; i <= 13; i++) { const x = -13 + 2 * i; pts.push(`${x},${(-10 * Math.sin(Math.PI * (x + 13) / 13)).toFixed(2)}`); }
+                      return `<svg width="26" height="26" viewBox="-13 -13 26 26"><polyline points="${pts.join(' ')}" ${sw} stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`; },
     umbrella: () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><path d="M-12,-1 A12,12 0 0 1 12,-1 Z" fill="currentColor"/><g stroke="currentColor" stroke-width="2"><line x1="0" y1="-1" x2="0" y2="12"/><line x1="0" y1="12" x2="-4" y2="12"/></g></svg>`,
     moon:     (bg) => { const p = moonPhase(); if (p === 0) return `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="2"/></svg>`;
                         const dark = p === 4 ? '' : p === 1 ? `<circle cx="-6" cy="0" r="12" fill="${bg}"/>` : p === 2 ? `<rect x="-13" y="-13" width="13" height="26" fill="${bg}"/>` : p === 3 ? `<circle cx="-18" cy="0" r="12" fill="${bg}"/>` : p === 5 ? `<circle cx="18" cy="0" r="12" fill="${bg}"/>` : p === 6 ? `<rect x="0" y="-13" width="13" height="26" fill="${bg}"/>` : `<circle cx="6" cy="0" r="12" fill="${bg}"/>`;

@@ -192,6 +192,22 @@
   // Defaults (must match WfLayout.mc DEF_TEXT_PX / DEF_TIME_PX). Editable per layout (st.tx / st.tm)
   // and sent to the watch as "tx"/"tm". Icons are authored for M and scale by tx[s]/tx[1].
   const DEF_TX = [26, 36, 48], DEF_TM = [52, 68, 84], FONT_EM = 1.17, GAP = 6;
+  // Icons: the 26px ink box (M artwork) is scaled to the digit height (0.607 × text px), same as
+  // WfLayout.drawEl. Text is centred on the digit ink, not the font box: inkShift() measures the
+  // browser's real Roboto metrics (the watch does the same from Graphics.getFontAscent).
+  const DIGIT_RATIO = 0.607, ICON_BOX = 26;
+  const shiftCache = {};
+  function inkShift(px) {
+    if (px in shiftCache) return shiftCache[px];
+    let d = 0;
+    try {
+      const c = document.createElement('canvas').getContext('2d'); c.font = `400 ${px / FONT_EM}px Roboto`;
+      const m = c.measureText('8'), A = m.fontBoundingBoxAscent, D = m.fontBoundingBoxDescent;
+      const baseline = (px - (A + D)) / 2 + A, inkC = baseline - (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+      d = px / 2 - inkC;
+    } catch (e) {}
+    return (shiftCache[px] = d);
+  }
   // Faux bold (layout "b" = 1): the watch draws the text twice, shifted right by round(px/36) (min 1).
   const boldOff = (px) => Math.max(1, Math.round(px / 36));
   const PRESET_LOBBY = [[3,500,150,0,0,5,1],[1,500,330,0,2,0,0],[2,500,445,0,0,1,0],[10,130,560,1,1,2,1],[13,870,560,2,1,3,1],[11,130,650,1,1,0,1],[12,870,650,2,1,0,1],[20,130,760,1,1,4,1],[22,870,760,2,1,6,1]];
@@ -289,12 +305,12 @@
     div.style.lineHeight = px + 'px';
     const bo = st.b === 1 ? boldOff(px) : 0;
     if (bo) { div.style.textShadow = `${bo}px 0 0 currentColor`; div.style.paddingRight = (2 + bo) + 'px'; }
-    const ki = (st.tx[s] / st.tx[1]) * k;   // icon scale: M = 1.0, S/L relative (same rule as WfLayout.drawEl)
+    const ki = (DIGIT_RATIO * st.tx[s] * k) / ICON_BOX;   // icon box = digit height (same rule as WfLayout.drawEl)
     div.style.gap = (GAP * ki) + 'px';
     const icon = (f & 1) && def.icon
       ? (def.icon === 'stock' ? `<span class="ico">$</span>` : `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:scale(${ki});">${ICONS[def.icon](hex(st.bg))}</span>`)
       : '';
-    div.innerHTML = icon + `<span class="val">${def.sample}</span><span class="anchor"></span>`;
+    div.innerHTML = icon + `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px">${def.sample}</span><span class="anchor"></span>`;
     div.addEventListener('pointerdown', (ev) => startMove(ev, i));
     return div;
   }

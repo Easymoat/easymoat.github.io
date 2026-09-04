@@ -85,6 +85,12 @@
     <p class="sub" data-en="iPhone: if iOS keeps asking for camera access, open Settings &gt; Apps &gt; Safari &gt; Camera and choose Allow. Otherwise Safari asks again every time and capture stops until you tap OK." data-ja="iPhone: カメラの許可を何度も聞かれる場合は、設定 &gt; アプリ &gt; Safari &gt; カメラ を「許可」にしてください。「確認」のままだと聞かれるたびに撮影が止まります。">iPhone: if iOS keeps asking for camera access, open Settings &gt; Apps &gt; Safari &gt; Camera and choose Allow. Otherwise Safari asks again every time and capture stops until you tap OK.</p>
     <button class="btn ghost" id="ringBtn">Target circle: ON</button>
     <button class="btn ghost" id="facingBtn">Camera: Back</button>
+    <label data-en="Capture size (pixels sent to the watch)" data-ja="撮影サイズ（ウォッチへ送る画素数）">Capture size (pixels sent to the watch)</label>
+    <div class="seg" id="sizeSeg">
+      <button data-v="320" class="active" data-en="320 — standard" data-ja="320 — 標準">320 — standard</button>
+      <button data-v="454" data-en="454 — native (fr965 / venu 3)" data-ja="454 — ネイティブ (fr965 / venu 3)">454 — native (fr965 / venu 3)</button>
+    </div>
+    <p class="hint" data-en="320 is what the PulseLink widget uses. 454 sends the full resolution of 454-pixel watches (about 2× the data per photo); the widget still shows it, and a watch face can use it at native size." data-ja="320 は PulseLink ウィジェットと同じ設定です。454 は 454px 機種の解像度そのままで送ります (1枚あたりのデータ量は約2倍)。ウィジェットでもそのまま表示され、文字盤ではネイティブサイズで使えます。">320 is what the PulseLink widget uses. 454 sends the full resolution of 454-pixel watches (about 2× the data per photo); the widget still shows it, and a watch face can use it at native size.</p>
     <label data-en="Colors (watch memory load)" data-ja="色数（ウォッチの負担）">Colors (watch memory load)</label>
     <div class="seg" id="colorSeg">
       <button data-v="16" class="active" data-en="16 — light" data-ja="16 — 軽い">16 — light</button>
@@ -315,6 +321,26 @@ document.querySelectorAll('#colorSeg button').forEach(function (x) {
     x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === n);
   });
 }
+// 撮影サイズ (320 = PL ウィジェットと同じ / 454 = 454px 機種のネイティブ)。このページだけの設定 (localStorage)。
+let mPx = 320;
+try { if (parseInt(localStorage.getItem('pl_cam_px'), 10) === 454) mPx = 454; } catch (e) {}
+function renderSizeSeg() {
+  document.querySelectorAll('#sizeSeg button').forEach(function (x) {
+    x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === mPx);
+  });
+}
+renderSizeSeg();
+document.querySelectorAll('#sizeSeg button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    mPx = parseInt(b.getAttribute('data-v'), 10) === 454 ? 454 : 320;
+    try { localStorage.setItem('pl_cam_px', String(mPx)); } catch (e) {}
+    renderSizeSeg();
+    // 次の定期撮影を待たず、新しいサイズで撮り直す
+    const soon = Date.now() + 1500;
+    if (typeof nextShotAt !== 'undefined' && (nextShotAt == null || nextShotAt > soon)) { nextShotAt = soon; }
+  });
+});
+
 document.querySelectorAll('#colorSeg button').forEach(function (b) {
   b.addEventListener('click', function () {
     const n = parseInt(b.getAttribute('data-v'), 10);
@@ -902,12 +928,14 @@ async function captureAndUpload() {
     if (!vw || !vh) throw new Error('camera not ready');
     const cv = document.getElementById('shot');
     const ctx = cv.getContext('2d');
+    const PX = mPx;   // 撮影サイズ (320 / 454)
+    if (cv.width !== PX) { cv.width = PX; cv.height = PX; }
     // デジタルズーム: 切り出す正方形を 1/zoom に縮める (320px 出力なので ~2倍まで実質無劣化)
     const z = Math.max(100, Math.min(250, (camCfg.zoom || 100))) / 100;
     const side = Math.min(vw, vh) / z;
     const sx = (vw - side) / 2, sy = (vh - side) / 2;
-    ctx.clearRect(0, 0, 320, 320);
-    ctx.drawImage(video, sx, sy, side, side, 0, 0, 320, 320);
+    ctx.clearRect(0, 0, PX, PX);
+    ctx.drawImage(video, sx, sy, side, side, 0, 0, PX, PX);
     // ─── 暗所のフレームスタッキング (ナイトモードの原理) ───
     // 暗所ノイズはフレームごとにランダムなので、N枚を画素ごとに平均するとノイズは
     // 1/√N に減り、被写体 (毎フレーム同じ) は残る。増感はサーバ側で行うため、ここでは
@@ -915,7 +943,7 @@ async function captureAndUpload() {
     //   - 明るい昼間は 1枚のまま (処理時間ゼロ、動きもブレない)
     //   - 動く被写体は残像になるが、定点カメラで「いるかどうか」を見る用途では許容
     // 判定は先に描いた1枚目の平均輝度。しきい値はサーバの NIGHT_AUTO_LUMA(40) と同じ。
-    const first = ctx.getImageData(0, 0, 320, 320);
+    const first = ctx.getImageData(0, 0, PX, PX);
     let lumaSum = 0, lumaN = 0;
     for (let i = 0; i < first.data.length; i += 64) {
       lumaSum += 0.299 * first.data[i] + 0.587 * first.data[i + 1] + 0.114 * first.data[i + 2];
@@ -930,22 +958,22 @@ async function captureAndUpload() {
       // (255/16/√12 ≒ 4.6) を下回り、残りがバンディング由来になるため。時間と
       // 露出変動のリスク (長く撮るほど途中で自動露出が動く) を勘案してここを採用。
       const STACK_N = 24, STACK_GAP_MS = 150;
-      const acc = new Float32Array(320 * 320 * 4);
+      const acc = new Float32Array(PX * PX * 4);
       const d0 = first.data;
       for (let i = 0; i < acc.length; i++) { acc[i] = d0[i]; }
       stacked = 1;
       const tmp = document.createElement('canvas');
-      tmp.width = 320; tmp.height = 320;
+      tmp.width = PX; tmp.height = PX;
       const tctx = tmp.getContext('2d');
       for (let f = 1; f < STACK_N; f++) {
         await new Promise(function (r) { setTimeout(r, STACK_GAP_MS); });
         if (!streamAlive()) { break; }
-        tctx.drawImage(video, sx, sy, side, side, 0, 0, 320, 320);
-        const fd = tctx.getImageData(0, 0, 320, 320).data;
+        tctx.drawImage(video, sx, sy, side, side, 0, 0, PX, PX);
+        const fd = tctx.getImageData(0, 0, PX, PX).data;
         for (let i = 0; i < acc.length; i++) { acc[i] += fd[i]; }
         stacked++;
       }
-      const outImg = ctx.createImageData(320, 320);
+      const outImg = ctx.createImageData(PX, PX);
       const od = outImg.data;
       for (let i = 0; i < acc.length; i += 4) {
         od[i]     = acc[i]     / stacked;
@@ -961,7 +989,7 @@ async function captureAndUpload() {
     // 揃うことはない。そこで判定は「サンプルの最大値がほぼ 0」の時だけ = 完全黒のみ
     // (平均輝度のしきい値だと暗室の夜間撮影を誤って捨て、朝まで再起動ループになる)。
     // 暗くてもノイズがあれば正常としてそのまま送信する (夜の見守りは低輝度でも続く)。
-    const px = ctx.getImageData(0, 0, 320, 320).data;
+    const px = ctx.getImageData(0, 0, PX, PX).data;
     let maxV = 0;
     for (let i = 0; i < px.length; i += 64) { // 16画素ごとにサンプリング
       if (px[i] > maxV) { maxV = px[i]; }
@@ -976,7 +1004,7 @@ async function captureAndUpload() {
     // 色から作られる。後処理なので実露出の変更ではない (暗所はノイズも一緒に持ち上がる)。
     const bAdj = Math.max(-2, Math.min(2, (camCfg.brightness || 0)));
     if (bAdj !== 0) {
-      const bid = ctx.getImageData(0, 0, 320, 320);
+      const bid = ctx.getImageData(0, 0, PX, PX);
       const bd = bid.data;
       const bf = 1 + 0.3 * bAdj;
       for (let i = 0; i < bd.length; i += 4) {
@@ -992,7 +1020,7 @@ async function captureAndUpload() {
       const q = new RgbQuant({ colors: mColors, dithKern: 'FloydSteinberg', dithSerp: true });
       q.sample(cv);
       const out = q.reduce(cv);
-      const id = ctx.createImageData(320, 320);
+      const id = ctx.createImageData(PX, PX);
       id.data.set(out);
       ctx.putImageData(id, 0, 0);
       const pal = q.palette(true);
@@ -1002,12 +1030,14 @@ async function captureAndUpload() {
     }
     // 円形マスク (既存の画像パイプラインと同じ形式。丸画面では角は見えない)。
     ctx.globalCompositeOperation = 'destination-in';
-    ctx.beginPath(); ctx.arc(160, 160, 160, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(PX / 2, PX / 2, PX / 2, 0, Math.PI * 2); ctx.fill();
     ctx.globalCompositeOperation = 'source-over';
     const png = cv.toDataURL('image/png');
     // サムネイル更新
-    const tctx = document.getElementById('thumb').getContext('2d');
-    tctx.clearRect(0, 0, 320, 320);
+    const th = document.getElementById('thumb');
+    if (th.width !== PX) { th.width = PX; th.height = PX; }
+    const tctx = th.getContext('2d');
+    tctx.clearRect(0, 0, PX, PX);
     tctx.drawImage(cv, 0, 0);
     // アップロード (スロット6 = カメラ専用)
     const r = await fetch(API + '/user/compass-image', {

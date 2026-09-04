@@ -198,6 +198,10 @@
   // Defaults (must match WfLayout.mc DEF_TEXT_PX / DEF_TIME_PX). Editable per layout (st.tx / st.tm)
   // and sent to the watch as "tx"/"tm". Icons are authored for M and scale by tx[s]/tx[1].
   const DEF_TX = [26, 36, 48], DEF_TM = [52, 68, 84], FONT_EM = 1.17, GAP = 6;
+  // The watch draws body text (not the clock) 1.2× the value here (WfLayout.TEXT_BOOST): on the
+  // 33 mm screen thin digits read smaller than the icons, so the editor keeps the comfortable
+  // desktop look while the device compensates. The actual-size preview applies the same boost.
+  const TEXT_BOOST = 1.2;
   // Icons are authored for M (26px ink box) and scale by tx[s]/tx[1], same as WfLayout.drawEl.
   // Text is centred on the digit ink, not the font box: inkShift() measures the browser's real
   // Roboto metrics (the watch does the same from Graphics.getFontAscent).
@@ -305,6 +309,12 @@
     a.style.width = d.w + 'px'; a.style.height = d.h + 'px'; a.style.transform = `scale(${sc})`;
     a.style.background = hex(st.bg); a.style.borderRadius = d.round ? '50%' : '8%';
     a.innerHTML = stage.innerHTML;
+    a.querySelectorAll('.el').forEach((el) => {
+      const e = st.el[+el.dataset.i]; if (!e || e[0] === 1) return;
+      const px = parseFloat(el.style.lineHeight) * TEXT_BOOST;
+      el.style.lineHeight = px + 'px'; el.style.fontSize = (px / FONT_EM) + 'px';
+      const v = el.querySelector('.val'); if (v) v.style.top = inkShift(px).toFixed(2) + 'px';
+    });
   }
   function makeEl(e, i, k) {
     const [t, x, y, a, s, c, f] = e, def = TYPES[t] || TYPES[1];

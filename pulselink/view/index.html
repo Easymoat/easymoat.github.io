@@ -128,6 +128,12 @@
     </div>
     <p class="hint" data-en="Dark photos are auto-enhanced on the server: boosted, denoised and rendered in night-vision green (16 shades = the fastest transfer tier). Auto decides per photo by its brightness. Total darkness still shows black — a small night light works wonders." data-ja="暗い写真はサーバが自動で増感・ノイズ抑制し、暗視スコープ風の緑モノクロ（16階調＝最速の転送ティア）に変換します。Auto は写真ごとの明るさで自動判定。完全な暗闇は増感しても黒のままなので、常夜灯がひとつあると効果的です。">Dark photos are auto-enhanced on the server: boosted, denoised and rendered in night-vision green (16 shades = the fastest transfer tier). Auto decides per photo by its brightness. Total darkness still shows black — a small night light works wonders.</p>
     <p class="hint" data-en="16 colors reaches the watch about twice as fast. 32 and 64 cost the same, so choose 64 if you want the best looking image. This page always shows full quality." data-ja="16色はウォッチへの到着が約2倍速くなります。32色と64色は転送量が同じなので、画質を求めるなら64色を。このページの表示は色数に関わらず常に元画質です。">16 colors reaches the watch about twice as fast. 32 and 64 cost the same, so choose 64 if you want the best looking image. This page always shows full quality.</p>
+    <label data-en="Capture size (pixels sent to the watch)" data-ja="撮影サイズ（ウォッチへ送る画素数）">Capture size (pixels sent to the watch)</label>
+    <div class="seg" id="pxSeg">
+      <button data-v="320" data-en="320 — standard" data-ja="320 — 標準">320 — standard</button>
+      <button data-v="454" data-en="454 — native (fr965 / venu 3)" data-ja="454 — ネイティブ (fr965 / venu 3)">454 — native (fr965 / venu 3)</button>
+    </div>
+    <p class="hint" data-en="454 sends photos at the full resolution of 454-pixel watches (about 2× the data). The camera phone applies it within about 30 seconds; the page there must have been reloaded at least once after this option appeared." data-ja="454 は 454px 機種の解像度そのままで送ります (データ量は約2倍)。カメラ側の iPhone には約30秒以内に反映されます (この項目の追加後に一度はカメラのページを再読み込みしておく必要があります)。">454 sends photos at the full resolution of 454-pixel watches (about 2× the data). The camera phone applies it within about 30 seconds; the page there must have been reloaded at least once after this option appeared.</p>
     <p class="hint" data-en="Changes reach the camera within about 10-30 seconds, and a fresh photo is taken right away. For rapid framing checks, use Setup mode — it is the only control that changes the shooting interval." data-ja="変更は約10〜30秒でカメラに届き、すぐに撮り直されます。構図を素早く確認したい時はセットアップモードを使ってください（撮影間隔が変わるのはセットアップモードだけです）。">Changes reach the camera within about 10-30 seconds, and a fresh photo is taken right away. For rapid framing checks, use Setup mode — it is the only control that changes the shooting interval.</p>
     <div id="ctrlAlert"></div>
   </div>
@@ -273,7 +279,7 @@ document.getElementById('devBtn').addEventListener('click', async function () {
 let mode = null;
 let camUid = '';
 let camVer = '0';
-let cfg = { paused: false, zoom: 100, brightness: 0, colors: 16,
+let cfg = { paused: false, zoom: 100, brightness: 0, colors: 16, px: 320,
             screen_off: false, torch: false, torch_supported: null,
             night_mode: 'auto', night_active: false, facing: 'environment', facing_supported: null,
             motion_mode: 'med', motion_count: 0, motion_at: 0,
@@ -438,6 +444,9 @@ document.querySelectorAll('#brSeg button').forEach(function (b) {
 });
 document.querySelectorAll('#colorSeg button').forEach(function (b) {
   b.addEventListener('click', function () { sendCfg({ colors: parseInt(b.getAttribute('data-v'), 10) }); });
+document.querySelectorAll('#pxSeg button').forEach(function (b) {
+  b.addEventListener('click', function () { sendCfg({ px: parseInt(b.getAttribute('data-v'), 10) }); });
+});
 });
 document.getElementById('screenBtn').addEventListener('click', function () {
   sendCfg({ screen_off: !cfg.screen_off });
@@ -474,6 +483,9 @@ function renderControls() {
   });
   document.querySelectorAll('#colorSeg button').forEach(function (x) {
     x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === (cfg.colors || 16));
+  });
+  document.querySelectorAll('#pxSeg button').forEach(function (x) {
+    x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === (cfg.px || 320));
   });
   // 画面スリープ (カメラ端末の画面を黒く)
   const sb = document.getElementById('screenBtn');

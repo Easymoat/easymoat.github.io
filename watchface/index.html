@@ -129,7 +129,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 17:51</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 18:42</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -162,6 +162,7 @@
       <div class="cols">
         <div class="grp"><span class="lbl">Preview</span>
           <div class="imgstage" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas><canvas id="imgQ" width="320" height="320"></canvas><div class="parts" id="imgParts"></div></div>
+          <div class="ctl">Size <input id="imgsize" type="range" min="30" max="100" step="1" value="100"><span class="muted" id="imgsizev">100%</span></div>
           <div class="ctl">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"></div>
           <div class="ctl"><button class="btn" id="imgshow" disabled title="Put the image as it is now under the layout on the dial above (without uploading)">Show on dial</button><button class="btn" id="imgreset">Reset</button><button class="btn" id="imgparts">Hide parts</button></div>
           <div class="muted">Drag to position, slider to zoom. Shown at the chosen colour count with your layout on top.</div>
@@ -775,7 +776,9 @@
   // ── Background image (ported from easymoat.com/pulselink/image/; keyed by this Device ID, /api/wf/image*) ──
   // src: where the editor image came from — 'file' (chosen by the user; kept while switching slots so it
   // can be uploaded to any slot) or 'slot' (loaded from the server; cleared when an empty slot is picked).
-  const IMG = { cur: null, src: null, panX: 0, panY: 0, zoom: 1, masked: null, colors: 16, bgAuto: 33, sel: 1, reduced: null, previewUrl: '', autoBg: '#000000',
+  // size = how much of the dial the image covers, in % (100 = full screen). Below 100 the image is a
+  // smaller square centred on the dial and the rest stays transparent = the watch's background colour.
+  const IMG = { cur: null, src: null, size: 100, panX: 0, panY: 0, zoom: 1, masked: null, colors: 16, bgAuto: 33, sel: 1, reduced: null, previewUrl: '', autoBg: '#000000',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
   const imgApi = () => $('api').value.replace(/\/$/, '');
   const imgCv = $('imgCanvas');
@@ -794,14 +797,19 @@
   function redrawImg() {
     if (!IMG.cur) return;
     const ctx = imgCv.getContext('2d');
-    const base = Math.max(320 / IMG.cur.width, 320 / IMG.cur.height), sc = base * IMG.zoom;
+    const side = 320 * IMG.size / 100, off = (320 - side) / 2;   // the square the image fills
+    const base = Math.max(side / IMG.cur.width, side / IMG.cur.height), sc = base * IMG.zoom;
     const dw = IMG.cur.width * sc, dh = IMG.cur.height * sc;
-    const maxX = Math.max(0, (dw - 320) / 2), maxY = Math.max(0, (dh - 320) / 2);
+    const maxX = Math.max(0, (dw - side) / 2), maxY = Math.max(0, (dh - side) / 2);
     IMG.panX = Math.max(-maxX, Math.min(maxX, IMG.panX)); IMG.panY = Math.max(-maxY, Math.min(maxY, IMG.panY));
-    // The master is the plain 320 × 320 square (no circular mask): the round screen crops it on the
-    // watch, and future frame shapes will be cut from this square.
-    ctx.clearRect(0, 0, 320, 320); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 320, 320);
-    ctx.drawImage(IMG.cur, (320 - dw) / 2 + IMG.panX, (320 - dh) / 2 + IMG.panY, dw, dh);
+    // The master is a plain square (no circular mask). Outside the image square everything stays
+    // transparent, so the watch shows its background colour there.
+    ctx.clearRect(0, 0, 320, 320);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(off, off, side, side); ctx.clip();
+    ctx.fillStyle = '#000'; ctx.fillRect(off, off, side, side);
+    ctx.drawImage(IMG.cur, off + (side - dw) / 2 + IMG.panX, off + (side - dh) / 2 + IMG.panY, dw, dh);
+    ctx.restore();
     IMG.masked = imgCv.toDataURL('image/png');
     IMG.reduced = null; $('imgQ').getContext('2d').clearRect(0, 0, 320, 320);
     $('imgupload').disabled = false; $('imgupload').textContent = 'Upload to slot ' + IMG.sel; $('imgshow').disabled = false;
@@ -819,7 +827,9 @@
     imgCv.addEventListener('pointermove', (e) => { if (!drag) return; const k = 320 / imgCv.clientWidth; IMG.panX += (e.clientX - lx) * k; IMG.panY += (e.clientY - ly) * k; lx = e.clientX; ly = e.clientY; redrawImg(); });
     const end = () => { drag = false; }; imgCv.addEventListener('pointerup', end); imgCv.addEventListener('pointercancel', end); })();
   $('imgzoom').addEventListener('input', (e) => { IMG.zoom = parseFloat(e.target.value) || 1; redrawImg(); });
-  $('imgreset').addEventListener('click', () => { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1'; redrawImg(); });
+  $('imgsize').addEventListener('input', (e) => { IMG.size = parseInt(e.target.value, 10) || 100; $('imgsizev').textContent = IMG.size + '%'; redrawImg(); });
+  $('imgreset').addEventListener('click', () => { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; IMG.size = 100;
+    $('imgzoom').value = '1'; $('imgsize').value = '100'; $('imgsizev').textContent = '100%'; redrawImg(); });
   // colours
   [2, 4, 8, 16, 32, 64, 128].forEach((c) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = c; b.dataset.c = c; b.classList.toggle('on', c === IMG.colors);
     b.addEventListener('click', () => { IMG.colors = c; document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === c)); scheduleMeasure(); }); $('imgcolors').appendChild(b); });

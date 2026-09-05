@@ -84,10 +84,19 @@
   .box { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
   textarea { width: 100%; min-height: 96px; background: var(--ground); border: 1px solid var(--line); border-radius: 5px; padding: 8px; font: 12px/1.5 var(--mono); color: var(--ink); resize: vertical; }
   .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .btn { background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 5px; padding: 6px 12px; cursor: pointer; }
+  .btn { background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 6px; padding: 7px 14px; cursor: pointer;
+         color: var(--ink); font: 500 13px var(--sans); line-height: 1.2; }
+  .btn:hover { background: var(--line); border-color: var(--ink-3); }
+  .btn:active { background: var(--line-2); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn.file { display: inline-block; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.08); background: var(--accent); }
+  .btn.primary:disabled { filter: none; }
+  .btn.danger { color: var(--danger); border-color: #5A2A2C; }
+  .btn.danger:hover { background: #2A1618; border-color: var(--danger); }
   .btn:hover { border-color: var(--ink-3); }
   .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
-  .btn.danger { color: var(--danger); }
   .btn:disabled { opacity: .45; cursor: default; }
   .status { font-family: var(--mono); font-size: 12px; color: var(--ink-2); min-height: 1.4em; }
   .status.ok { color: var(--ok); } .status.err { color: var(--danger); }
@@ -129,7 +138,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 22:01</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 22:04</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -172,8 +181,8 @@
         <div class="opts">
           <div class="grp"><span class="lbl">Slot</span><div class="ctl"><span class="cb" id="imgslots"></span><button class="btn" id="imguse" hidden>Use this slot on the watch</button></div><div class="muted" id="imgslotnote"></div></div>
           <div class="grp"><span class="lbl">Actions</span>
-            <div class="ctl"><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp"></div>
-            <div class="ctl"><button class="btn" id="imgupload" disabled>Upload to slot</button><button class="btn danger" id="imgremove">Remove image in slot</button></div>
+            <div class="ctl"><label class="btn file" for="imgfile">Choose image…</label><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp" hidden><span class="muted" id="imgfilename">No file chosen</span></div>
+            <div class="ctl"><button class="btn primary" id="imgupload" disabled>Upload to slot</button><button class="btn danger" id="imgremove">Remove image in slot</button></div>
             <div class="status" id="imgstatus"></div></div>
           <div class="grp"><span class="lbl">Colors</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div></div>
           <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span><button class="btn" id="imgbgapply" title="Copy this colour to the dial background (one-off; the dial is not linked to the image)">Use as dial background</button></div></div>
@@ -846,6 +855,7 @@
   $('imgfile').addEventListener('change', (ev) => {
     const f = ev.target.files && ev.target.files[0]; if (!f) return;
     const img = new Image();
+    $('imgfilename').textContent = f.name;
     img.onload = () => { IMG.cur = img; IMG.src = 'file'; IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1'; redrawImg(); URL.revokeObjectURL(img.src); };
     img.src = URL.createObjectURL(f);
   });
@@ -943,7 +953,7 @@
       b.addEventListener('click', () => {
         // the preview always follows the slot: its image, or black when empty (choose a file after picking the slot)
         IMG.sel = n; renderSlots(); $('imgupload').textContent = 'Upload to slot ' + n;
-        $('imgfile').value = '';
+        $('imgfile').value = ''; $('imgfilename').textContent = 'No file chosen';
         if (occ) loadSlotImage(n); else clearImgPreview();
       }); w.appendChild(b); }
     const occ = IMG.state.slots[String(IMG.sel)] === true, act = IMG.state.active === IMG.sel;
@@ -984,7 +994,7 @@
     try { const r = await fetch(imgApi() + '/image', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ device_id: id, image: IMG.masked, colors: IMG.colors, palette: computeOptimalPalette(IMG.colors), bg_auto: IMG.bgAuto, slot: IMG.sel }) });
       const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
-      setStatus('imgstatus', `Uploaded to slot ${IMG.sel} (version ${j.version}). The watch picks it up on its next sync.`, 'ok'); IMG.src = 'slot'; $('imgfile').value = ''; loadSlots(); }
+      setStatus('imgstatus', `Uploaded to slot ${IMG.sel} (version ${j.version}). The watch picks it up on its next sync.`, 'ok'); IMG.src = 'slot'; $('imgfile').value = ''; $('imgfilename').textContent = 'No file chosen'; loadSlots(); }
     catch (e) { setStatus('imgstatus', 'Upload failed: ' + e.message, 'err'); } finally { $('imgupload').disabled = false; }
   });
   $('imgremove').addEventListener('click', async () => {

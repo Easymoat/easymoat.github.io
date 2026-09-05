@@ -42,7 +42,7 @@
   .grp { display: flex; flex-direction: column; gap: 7px; }
   .grp[hidden] { display: none; }   /* the .grp display rule would otherwise beat the default [hidden] */
   .grp > .lbl { font-size: 10px; }
-  .ctl { display: flex; align-items: center; gap: 10px; min-height: 28px; color: var(--ink-2); font-size: 13px; flex-wrap: wrap; }
+  .ctl { display: flex; align-items: center; gap: 14px; min-height: 28px; color: var(--ink-2); font-size: 13px; flex-wrap: wrap; }
   .ctl label { display: flex; align-items: center; gap: 6px; }
   .stagebar select { height: 28px; }
   select, input[type=text], input[type=number] { background: var(--panel-2); border: 2px solid var(--line-2); border-radius: 5px; padding: 4px 8px; color: var(--ink); }
@@ -63,7 +63,7 @@
   .drawer { width: 100%; max-width: 760px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .imgbox { width: 100%; max-width: 760px; gap: 14px; }
   .imgbox .cols { display: grid; grid-template-columns: 260px 1fr; gap: 22px; align-items: start; }
-  .imgbox .opts { display: flex; flex-direction: column; gap: 16px; }
+  .imgbox .opts { display: flex; flex-direction: column; gap: 20px; }
   .imgbox .cb button { height: 28px; min-width: 40px; }
   .imgstage { position: relative; width: 260px; height: 260px; border-radius: 50%; background: #000; overflow: hidden; touch-action: none; cursor: grab; }
   .imgstage canvas { width: 260px; height: 260px; display: block; }
@@ -72,7 +72,7 @@
   .imgstage .parts .anchor, .imgstage .parts .grid { display: none !important; }
   .imgstage .parts .el { outline: none !important; }
   .imgstage .parts[hidden] { display: none; }
-  .imgbox .cb { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+  .imgbox .cb { display: inline-flex; gap: 8px; flex-wrap: wrap; }
   .imgbox .cb button { background: var(--panel-2); border: 2px solid var(--ink-3); border-radius: 5px; padding: 3px 9px; cursor: pointer; color: var(--ink); font: 12px var(--mono); }
   .imgbox .cb button:hover { background: var(--line); border-color: var(--ink-2); }
   .imgbox .cb button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
@@ -84,7 +84,7 @@
   #stage.hasimg { background-size: cover; background-position: center; }
   .box { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
   textarea { width: 100%; min-height: 96px; background: var(--ground); border: 1px solid var(--line); border-radius: 5px; padding: 8px; font: 12px/1.5 var(--mono); color: var(--ink); resize: vertical; }
-  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
   .btn { background: var(--panel-2); border: 2px solid var(--ink-3); border-radius: 6px; padding: 6px 14px; cursor: pointer;
          color: var(--ink); font: 500 13px var(--sans); line-height: 1.2; }
   .btn:hover { background: var(--line); border-color: var(--ink-2); }
@@ -109,8 +109,8 @@
   .seg button.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
   .swatches { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   #bgpick { width: 34px; height: 26px; padding: 0 2px; border: 1px solid var(--line-2); border-radius: 5px; background: var(--panel-2); cursor: pointer; margin-right: 6px; }
-  .pxs { display: inline-flex; gap: 14px; }
-  .pxs .stp { display: inline-flex; align-items: center; gap: 4px; }
+  .pxs { display: inline-flex; gap: 18px; }
+  .pxs .stp { display: inline-flex; align-items: center; gap: 6px; }
   .pxs .stp .sml { font: 600 11px var(--mono); color: var(--ink-3); width: 14px; text-align: center; margin-right: 2px; }
   .pxs input { width: 42px; height: 28px; padding: 0 2px; font: 13px var(--mono); text-align: center; -moz-appearance: textfield;
                background: var(--panel-2); border: 2px solid var(--line-2); border-radius: 5px; color: var(--ink); }
@@ -140,7 +140,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 22:14</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 22:15</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>

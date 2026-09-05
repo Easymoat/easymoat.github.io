@@ -24,10 +24,11 @@
   header .sub { color: var(--ink-2); font-size: 13px; }
   header .spacer { flex: 1; }
   .lbl { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
-  main { display: grid; grid-template-columns: 200px minmax(0, 1fr) 290px; gap: 0; min-height: calc(100vh - 52px); }
+  main { display: grid; grid-template-columns: 200px minmax(0, 1fr) 256px; gap: 0; min-height: calc(100vh - 52px); }
   aside { background: var(--panel); border-right: 1px solid var(--line); padding: 20px 18px; display: flex; flex-direction: column; gap: 18px; }
   aside.right { border-right: 0; border-left: 1px solid var(--line); }
-  aside.right .field { grid-template-columns: 58px 1fr; }      /* narrow label so controls are never clipped */
+  aside.right .field { grid-template-columns: 52px 1fr; }      /* narrow label so controls are never clipped */
+  aside.right .field input[type=number] { width: 100%; }        /* X / Y fill the row instead of leaving a gap */
   aside.right .seg button { padding: 5px 8px; }
   aside.right .swatches { gap: 5px; }
   .group { display: flex; flex-direction: column; gap: 6px; }
@@ -169,7 +170,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 01:13</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 01:18</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>

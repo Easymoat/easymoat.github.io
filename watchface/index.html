@@ -158,12 +158,13 @@
       <div class="cols">
         <div class="grp"><span class="lbl">Preview</span>
           <div class="imgstage" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas><canvas id="imgQ" width="320" height="320"></canvas><div class="parts" id="imgParts"></div></div>
-          <div class="ctl">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"></div>
-          <div class="ctl"><button class="btn" id="imgreset">Reset position</button><button class="btn" id="imgparts">Hide parts</button></div>
-          <div class="muted">Drag to position, slider to zoom. Shown at the chosen colour count with your layout on top.</div>
+          <div class="ctl">Drag moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Image</button><button type="button" data-m="frame">Frame</button></span></div>
+          <div class="ctl">Image zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"></div>
+          <div class="ctl"><button class="btn" id="imgreset">Reset</button><button class="btn" id="imgparts">Hide parts</button></div>
+          <div class="muted">The dashed outline is the frame (circle or half circle). Drag to move the image inside it, or switch to Frame to move the frame. Shown at the chosen colour count with your layout on top.</div>
         </div>
         <div class="opts">
-          <div class="grp" title="Which part of the dial the image fills. The rest shows the background colour."><span class="lbl">Shape</span><div class="ctl"><span class="cb" id="imgshape"></span></div></div>
+          <div class="grp" title="The frame the image fills: a circle or a half circle. Outside the frame the watch shows the background colour."><span class="lbl">Frame</span><div class="ctl"><span class="cb" id="imgshape"></span></div><div class="ctl">Size <input id="imgsize" type="range" min="40" max="160" step="1" value="160"><span class="muted" id="imgsizev">160 px</span></div></div>
           <div class="grp"><span class="lbl">Colors</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div></div>
           <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span></div></div>
           <div class="grp"><span class="lbl">Slot</span><div class="ctl"><span class="cb" id="imgslots"></span><button class="btn" id="imguse" hidden>Use this slot on the watch</button></div><div class="muted" id="imgslotnote"></div></div>
@@ -592,10 +593,13 @@
 
   document.fonts?.ready.then(positionAll);
   // ── Background image (ported from easymoat.com/pulselink/image/; keyed by this Device ID, /api/wf/image*) ──
-  // Shapes: the region of the 320 px master the image fills; the PNG is masked to circle ∩ region so
-  // the watch just draws it full screen (the rest is transparent = background colour).
-  const SHAPES = { full: [0, 0, 320, 320], top: [0, 0, 320, 160], bottom: [0, 160, 320, 160], left: [0, 0, 160, 320], right: [160, 0, 160, 320] };
+  // Frame: a circle (full) or a half circle (top/bottom/left/right = which half of the circle is kept)
+  // with centre (cx, cy) and radius r in the 320 px master. The frame can be moved and resized on the
+  // dial; the image pans/zooms inside it. The PNG is masked to frame ∩ dial, so the watch just draws
+  // it full screen (outside the frame is transparent = background colour).
+  const SHAPES = ['full', 'top', 'bottom', 'left', 'right'];
   const IMG = { cur: null, panX: 0, panY: 0, zoom: 1, masked: null, colors: 16, bgAuto: 33, sel: 1, reduced: null, shape: 'full',
+                frame: { cx: 160, cy: 160, r: 160 }, drag: 'image',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
   const imgApi = () => $('api').value.replace(/\/$/, '');
   const imgCv = $('imgCanvas');
@@ -609,23 +613,48 @@
     imgCv.getContext('2d').clearRect(0, 0, 320, 320); $('imgQ').getContext('2d').clearRect(0, 0, 320, 320);
     $('imgupload').disabled = true; $('imgupload').textContent = 'Upload to slot ' + IMG.sel; $('imgbgrow').hidden = true;
   }
+  // 'clearImgPreview' leaves the frame settings alone so the next image uses them
+  // Bounding rect of the frame (the area the image must cover).
+  function frameRect() {
+    const { cx, cy, r } = IMG.frame, k = IMG.shape;
+    if (k === 'top') return [cx - r, cy - r, 2 * r, r];
+    if (k === 'bottom') return [cx - r, cy, 2 * r, r];
+    if (k === 'left') return [cx - r, cy - r, r, 2 * r];
+    if (k === 'right') return [cx, cy - r, r, 2 * r];
+    return [cx - r, cy - r, 2 * r, 2 * r];
+  }
+  // Path of the frame (canvas angles: 0 = right, π/2 = down).
+  function framePath(ctx) {
+    const { cx, cy, r } = IMG.frame, k = IMG.shape, P = Math.PI;
+    ctx.beginPath();
+    if (k === 'top') { ctx.arc(cx, cy, r, P, 2 * P); ctx.closePath(); }
+    else if (k === 'bottom') { ctx.arc(cx, cy, r, 0, P); ctx.closePath(); }
+    else if (k === 'left') { ctx.arc(cx, cy, r, P / 2, 3 * P / 2); ctx.closePath(); }
+    else if (k === 'right') { ctx.arc(cx, cy, r, -P / 2, P / 2); ctx.closePath(); }
+    else { ctx.arc(cx, cy, r, 0, 2 * P); }
+  }
+  function drawFrameOutline() {
+    const ctx = $('imgQ').getContext('2d');
+    ctx.save(); ctx.setLineDash([5, 4]); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,0.75)'; framePath(ctx); ctx.stroke(); ctx.restore();
+  }
   function redrawImg() {
     if (!IMG.cur) return;
     const ctx = imgCv.getContext('2d');
-    const [rx, ry, rw, rh] = SHAPES[IMG.shape] || SHAPES.full;
-    // cover the shape's region, then pan within it (the image must keep covering the region)
+    const [rx, ry, rw, rh] = frameRect();
+    // cover the frame's bounding rect, then pan within it (the image must keep covering the rect)
     const base = Math.max(rw / IMG.cur.width, rh / IMG.cur.height), sc = base * IMG.zoom;
     const dw = IMG.cur.width * sc, dh = IMG.cur.height * sc;
     const maxX = Math.max(0, (dw - rw) / 2), maxY = Math.max(0, (dh - rh) / 2);
     IMG.panX = Math.max(-maxX, Math.min(maxX, IMG.panX)); IMG.panY = Math.max(-maxY, Math.min(maxY, IMG.panY));
-    ctx.clearRect(0, 0, 320, 320); ctx.fillStyle = '#000'; ctx.fillRect(rx, ry, rw, rh);
+    ctx.clearRect(0, 0, 320, 320);
+    ctx.save();
+    framePath(ctx); ctx.clip();                                        // frame
+    ctx.beginPath(); ctx.arc(160, 160, 160, 0, Math.PI * 2); ctx.clip(); // ∩ dial
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 320, 320);
     ctx.drawImage(IMG.cur, rx + (rw - dw) / 2 + IMG.panX, ry + (rh - dh) / 2 + IMG.panY, dw, dh);
-    // mask = circle ∩ region
-    ctx.save(); ctx.globalCompositeOperation = 'destination-in'; ctx.beginPath(); ctx.rect(rx, ry, rw, rh); ctx.clip();
-    ctx.beginPath(); ctx.arc(160, 160, 160, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-    ctx.globalCompositeOperation = 'source-over';
+    ctx.restore();
     IMG.masked = imgCv.toDataURL('image/png');
-    IMG.reduced = null; $('imgQ').getContext('2d').clearRect(0, 0, 320, 320);
+    IMG.reduced = null; $('imgQ').getContext('2d').clearRect(0, 0, 320, 320); drawFrameOutline();
     $('imgupload').disabled = false; $('imgupload').textContent = 'Upload to slot ' + IMG.sel;
     $('imgbgrow').hidden = false;
     scheduleMeasure();
@@ -638,15 +667,21 @@
   });
   (() => { let drag = false, lx = 0, ly = 0;
     imgCv.addEventListener('pointerdown', (e) => { if (!IMG.cur) return; drag = true; lx = e.clientX; ly = e.clientY; imgCv.setPointerCapture(e.pointerId); });
-    imgCv.addEventListener('pointermove', (e) => { if (!drag) return; const k = 320 / imgCv.clientWidth; IMG.panX += (e.clientX - lx) * k; IMG.panY += (e.clientY - ly) * k; lx = e.clientX; ly = e.clientY; redrawImg(); });
+    imgCv.addEventListener('pointermove', (e) => { if (!drag) return; const k = 320 / imgCv.clientWidth, dx = (e.clientX - lx) * k, dy = (e.clientY - ly) * k; lx = e.clientX; ly = e.clientY;
+      if (IMG.drag === 'frame') { IMG.frame.cx = Math.max(0, Math.min(320, IMG.frame.cx + dx)); IMG.frame.cy = Math.max(0, Math.min(320, IMG.frame.cy + dy)); }
+      else { IMG.panX += dx; IMG.panY += dy; }
+      redrawImg(); });
     const end = () => { drag = false; }; imgCv.addEventListener('pointerup', end); imgCv.addEventListener('pointercancel', end); })();
   $('imgzoom').addEventListener('input', (e) => { IMG.zoom = parseFloat(e.target.value) || 1; redrawImg(); });
-  $('imgreset').addEventListener('click', () => { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1'; redrawImg(); });
+  $('imgreset').addEventListener('click', () => { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1'; setFrameSize(160); IMG.frame.cx = 160; IMG.frame.cy = 160; redrawImg(); });
+  document.querySelectorAll('#imgdrag button').forEach((b) => b.addEventListener('click', () => { IMG.drag = b.dataset.m; document.querySelectorAll('#imgdrag button').forEach((x) => x.classList.toggle('on', x === b)); }));
+  function setFrameSize(r) { IMG.frame.r = r; $('imgsize').value = String(r); $('imgsizev').textContent = r + ' px'; }
+  $('imgsize').addEventListener('input', (e) => { setFrameSize(parseInt(e.target.value, 10) || 160); redrawImg(); });
   // shapes
   [['full', 'Full'], ['top', 'Top half'], ['bottom', 'Bottom half'], ['left', 'Left half'], ['right', 'Right half']].forEach(([k, name]) => {
     const b = document.createElement('button'); b.type = 'button'; b.textContent = name; b.dataset.s = k; b.classList.toggle('on', k === IMG.shape);
     b.addEventListener('click', () => { setShape(k); IMG.panX = 0; IMG.panY = 0; redrawImg(); }); $('imgshape').appendChild(b); });
-  function setShape(k) { IMG.shape = SHAPES[k] ? k : 'full'; document.querySelectorAll('#imgshape button').forEach((x) => x.classList.toggle('on', x.dataset.s === IMG.shape)); }
+  function setShape(k) { IMG.shape = SHAPES.indexOf(k) >= 0 ? k : 'full'; document.querySelectorAll('#imgshape button').forEach((x) => x.classList.toggle('on', x.dataset.s === IMG.shape)); }
   // colours
   [2, 4, 8, 16, 32, 64, 128].forEach((c) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = c; b.dataset.c = c; b.classList.toggle('on', c === IMG.colors);
     b.addEventListener('click', () => { IMG.colors = c; document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === c)); scheduleMeasure(); }); $('imgcolors').appendChild(b); });
@@ -683,12 +718,13 @@
     $('imgbgsw').style.background = currentAutoBg();
     const ctx = $('imgQ').getContext('2d'); ctx.clearRect(0, 0, 320, 320);
     if (IMG.reduced) ctx.drawImage(IMG.reduced, 0, 0, 320, 320);   // reduced-colour result over the master
+    drawFrameOutline();
   }
   function renderQuality() {
     IMG.reduced = null;
     if (typeof RgbQuant !== 'undefined') { try { const q = new RgbQuant({ colors: IMG.colors, dithKern: 'FloydSteinberg', dithSerp: true }); q.sample(imgCv); const out = q.reduce(imgCv);
       const t = document.createElement('canvas'); t.width = 320; t.height = 320; const tc = t.getContext('2d'); const id = tc.createImageData(320, 320); id.data.set(out); tc.putImageData(id, 0, 0);
-      tc.globalCompositeOperation = 'destination-in'; tc.beginPath(); tc.arc(160, 160, 160, 0, Math.PI * 2); tc.fill(); tc.globalCompositeOperation = 'source-over'; IMG.reduced = t; } catch (e) { IMG.reduced = null; } }
+      tc.globalCompositeOperation = 'destination-in'; tc.save(); framePath(tc); tc.clip(); tc.beginPath(); tc.arc(160, 160, 160, 0, Math.PI * 2); tc.fill(); tc.restore(); tc.globalCompositeOperation = 'source-over'; IMG.reduced = t; } catch (e) { IMG.reduced = null; } }
     repaintQuality();
   }
   $('imgbg').addEventListener('input', (e) => { IMG.bgAuto = parseInt(e.target.value, 10) || 0; repaintQuality(); });
@@ -716,8 +752,8 @@
       img.onload = () => { IMG.cur = img; IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1';
         if (meta.colors) { IMG.colors = Number(meta.colors); document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === IMG.colors)); }
         if (meta.bg_auto != null) { IMG.bgAuto = Number(meta.bg_auto); $('imgbg').value = IMG.bgAuto; }
-        // a stored PNG is already masked to its shape: show it as-is (full frame, no re-cropping)
-        setShape('full');
+        // a stored PNG is already masked to its frame: show it as-is (full dial frame, no re-cropping)
+        setShape('full'); setFrameSize(160); IMG.frame.cx = 160; IMG.frame.cy = 160;
         redrawImg(); URL.revokeObjectURL(url); };
       img.src = url; } catch (e) { setStatus('imgstatus', 'Could not load slot ' + n + ': ' + e.message, 'err'); }
   }
@@ -732,7 +768,7 @@
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('imgstatus', 'Enter the Device ID shown on the watch first.', 'err');
     if (!IMG.masked) return; setStatus('imgstatus', 'Uploading…'); $('imgupload').disabled = true;
     try { const r = await fetch(imgApi() + '/image', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ device_id: id, image: IMG.masked, colors: IMG.colors, palette: computeOptimalPalette(IMG.colors), bg_auto: IMG.bgAuto, slot: IMG.sel, shape: IMG.shape }) });
+        body: JSON.stringify({ device_id: id, image: IMG.masked, colors: IMG.colors, palette: computeOptimalPalette(IMG.colors), bg_auto: IMG.bgAuto, slot: IMG.sel, shape: IMG.shape, frame: { cx: Math.round(IMG.frame.cx), cy: Math.round(IMG.frame.cy), r: Math.round(IMG.frame.r) } }) });
       const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
       setStatus('imgstatus', `Uploaded to slot ${IMG.sel} (version ${j.version}). The watch picks it up on its next sync.`, 'ok'); loadSlots(); }
     catch (e) { setStatus('imgstatus', 'Upload failed: ' + e.message, 'err'); } finally { $('imgupload').disabled = false; }

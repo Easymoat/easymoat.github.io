@@ -62,11 +62,11 @@
   .empty { color: var(--ink-3); font-size: 13px; text-align: center; max-width: 34ch; }
   .drawer { width: 100%; max-width: 1040px; display: grid; grid-template-columns: 1fr; gap: 24px; }
   .stage-row { display: flex; align-items: flex-start; gap: 34px; flex-wrap: wrap; justify-content: center; }
-  .rail { display: flex; flex-direction: column; gap: 22px; width: 300px; }
-  .faces { display: flex; gap: 14px; }
-  .face { width: 84px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
-  .face .mini { position: relative; width: 84px; height: 84px; border-radius: 50%; overflow: hidden; background: #000;
-                border: 2px solid var(--line-2); }
+  .rail { display: flex; flex-direction: column; gap: 22px; width: 420px; }
+  .faces { display: flex; gap: 16px; }
+  .face { width: 124px; display: flex; flex-direction: column; align-items: center; gap: 7px; cursor: pointer; }
+  .face .mini { position: relative; width: 124px; height: 124px; border-radius: 50%; overflow: hidden; background: #000;
+                background-size: cover; background-position: center; border: 2px solid var(--line-2); }
   .face.on .mini { border-color: var(--accent); }
   .face .mini .inner { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
   .face .mini .inner .anchor, .face .mini .inner .grid { display: none !important; }
@@ -97,6 +97,10 @@
   .imgbox .frow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); }
   #stage.hasimg { background-size: cover; background-position: center; }
   .box { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+  details.box > summary { list-style: none; }
+  details.box > summary::-webkit-details-marker { display: none; }
+  details.box > summary::before { content: "▸ "; color: var(--ink-3); }
+  details.box[open] > summary::before { content: "▾ "; }
   textarea { width: 100%; min-height: 96px; background: var(--ground); border: 1px solid var(--line); border-radius: 5px; padding: 8px; font: 12px/1.5 var(--mono); color: var(--ink); resize: vertical; }
   .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
   .btn { background: var(--panel-2); border: 2px solid var(--ink-3); border-radius: 6px; padding: 6px 14px; cursor: pointer;
@@ -154,7 +158,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 22:32</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 23:06</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -188,7 +192,7 @@
         </div>
         <div class="grp box" style="padding:14px 16px"><span class="lbl">Sync to watch</span>
           <div class="field"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX"></div>
-          <div class="field"><span>API</span><input type="text" id="api" value="https://mlbwatch-server.onrender.com/api/wf"></div>
+          <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
           <div class="row"><button class="btn primary" id="save">Save to face</button><button class="btn" id="load">Load</button><button class="btn danger" id="remove">Delete face</button></div>
           <div class="status" id="syncstatus"></div>
           <span class="muted">The watch shows the face marked ★ and picks up changes on its next background sync (every 5 min, or long-press the face to sync now).</span>
@@ -221,8 +225,10 @@
       </div>
     </div>
     <div class="drawer">
-      <div class="box">
-        <span class="lbl">Layout JSON</span>
+      <details class="box">
+        <summary class="lbl" style="cursor:pointer">Layout JSON &amp; presets</summary>
+        <span class="muted">The layout in plain text: copy it to keep a backup, paste one in to move a dial to another
+        Device ID, or start from a preset. The watch never reads this box — it is the same data the Save button sends.</span>
         <textarea id="json" spellcheck="false"></textarea>
         <div class="row">
           <button class="btn" id="copy">Copy</button>
@@ -233,7 +239,7 @@
           <button class="btn danger" id="clear">Clear</button>
         </div>
         <div class="status" id="jsonstatus"></div>
-      </div>
+      </details>
     </div>
   </section>
 
@@ -493,6 +499,8 @@
   if (!Number.isInteger(st.io) || st.io < -20 || st.io > 20) st.io = DEF_IO;
   function intArr3(v, lo, hi) { lo = lo || 10; hi = hi || 200; return Array.isArray(v) && v.length === 3 && v.every((n) => Number.isInteger(n) && n >= lo && n <= hi) ? v.map(Number) : null; }
   const $ = (id) => document.getElementById(id);
+  // The server address is fixed; ?api=… overrides it for debugging against another host.
+  try { const q = new URLSearchParams(location.search).get('api'); if (q) $('api').value = q; } catch (e) {}
   const stage = $('stage');
   const hex = (n) => '#' + n.toString(16).padStart(6, '0').toUpperCase();
   const dev = () => DEVICES[st.dev] || DEVICES.fr965;
@@ -778,8 +786,10 @@
   }
   // Render one saved layout as a small dial (reuses makeEl by swapping `st` while it builds).
   function renderFaceMini(el, lay) {
-    const d = dev(), sc = 84 / d.w, keep = st;
+    const d = dev(), sc = 124 / d.w, keep = st;
     el.innerHTML = ''; el.style.background = hex(lay.bg);
+    // the background image is per device (one active slot), so every face shows the same one
+    el.style.backgroundImage = IMG.activeUrl ? `url("${IMG.activeUrl}")` : '';
     const inner = document.createElement('div');
     inner.className = 'inner';
     inner.style.width = d.w + 'px'; inner.style.height = d.h + 'px'; inner.style.transform = `scale(${sc})`;
@@ -1050,6 +1060,7 @@
       IMG.state = { slots: j.slots || {}, active: Number(j.active || 1), meta: j.meta || {} };
       IMG.activeUrl = IMG.state.slots[String(IMG.state.active)] ? `${imgApi()}/image/${id.toLowerCase()}_s${IMG.state.active}.png?v=${j.version}` : '';
       IMG.previewUrl = ''; applyStageImage();
+      if (typeof renderFaces === 'function') renderFaces();   // the minis show the same image
       if (opts.selectActive) { IMG.sel = IMG.state.active; if (IMG.state.slots[String(IMG.sel)]) loadSlotImage(IMG.sel); else clearImgPreview(); }
       renderSlots(); } catch (e) {}
   }

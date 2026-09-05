@@ -129,7 +129,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 21:01</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 21:02</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -936,6 +936,7 @@
     if ($('imgbgauto').checked) { st.bg = parseInt(IMG.autoBg.slice(1), 16) || 0; pushBgHist(st.bg); commit();
       setStatus('imgstatus', `Dial background follows the image (${IMG.autoBg.toUpperCase()}).`, 'ok'); }
     else { setStatus('imgstatus', 'Dial background is fixed again — pick it in the toolbar above.', ''); }
+    repaintQuality();   // the preview is painted with st.bg, so redraw it right away
   });
   // "Show on dial": the editor image (reduced colours, masked to the frame) under the layout, no upload
   $('imgshow').addEventListener('click', () => {

@@ -97,7 +97,7 @@
   .seg button:last-child { border-right: 0; }
   .seg button.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
   .swatches { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  #bgpick { width: 34px; height: 26px; padding: 0 2px; border: 1px solid var(--line-2); border-radius: 5px; background: var(--panel-2); cursor: pointer; margin-left: 6px; }
+  #bgpick { width: 34px; height: 26px; padding: 0 2px; border: 1px solid var(--line-2); border-radius: 5px; background: var(--panel-2); cursor: pointer; margin-right: 6px; }
   .pxs { display: inline-flex; gap: 14px; }
   .pxs .stp { display: inline-flex; align-items: center; gap: 4px; }
   .pxs .stp .sml { font: 600 11px var(--mono); color: var(--ink-3); width: 14px; text-align: center; margin-right: 2px; }
@@ -145,7 +145,7 @@
     <div class="stagebar">
       <div class="grp"><span class="lbl">Device</span><div class="ctl"><select id="dev"></select></div></div>
       <div class="grp"><span class="lbl">Grid</span><div class="ctl"><select id="grid"><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label></div></div>
-      <div class="grp"><span class="lbl">Background</span><div class="ctl"><span class="swatches" id="bgsw"></span><input type="color" id="bgpick" title="Any background colour (sent to the watch as bg)" value="#000000"></div></div>
+      <div class="grp"><span class="lbl">Background</span><div class="ctl"><input type="color" id="bgpick" title="Pick any background colour (sent to the watch as bg)" value="#000000"><span class="swatches" id="bgsw" title="Recently used colours"></span></div></div>
       <div class="grp" title="Text height in px on a 454 dial: S / M / L. Sent to the watch with the layout."><span class="lbl">Text size (px)</span><div class="ctl"><span class="pxs" id="tx"></span></div></div>
       <div class="grp" title="Clock height in px on a 454 dial: S / M / L."><span class="lbl">Time size (px)</span><div class="ctl"><span class="pxs" id="tm"></span></div></div>
       <div class="grp" title="Faux bold: text drawn twice with a 1–2 px offset (Roboto has no bold on the watch)."><span class="lbl">Style</span><div class="ctl"><label><input type="checkbox" id="bold"> bold</label></div></div>
@@ -213,7 +213,7 @@
   // ── Shared definitions (must match WfLayout.mc / wf_layout.js) ──────────────
   const PALETTE = ['#FFFFFF','#AAAAAA','#FF5555','#FF9900','#FFFF00','#55FF55','#00FFFF','#55AAFF','#FF55FF'];
   const PALETTE_NAMES = ['White','Gray','Red','Orange','Yellow','Green','Cyan','Blue','Magenta'];
-  const BGS = [0x000000, 0x0A1A2A, 0x1A0A1A, 0x101010, 0x0A2010];
+  const BG_HIST_MAX = 5;   // the 5 round swatches = recently used background colours (newest first)
   // Moon age in days (reference new moon 2000-01-06 18:14 UTC, synodic month 29.530588853 d) —
   // same formula as WfData.moonAge / moonPhase. Phase 0 new … 4 full (northern hemisphere, lit from the right).
   const SYNODIC = 29.530588853;
@@ -335,8 +335,21 @@
   }
   for (const [k, d] of Object.entries(DEVICES)) { const o = document.createElement('option'); o.value = k; o.textContent = d.name; $('dev').appendChild(o); }
   $('dev').value = st.dev; $('grid').value = String(st.grid); $('showgrid').checked = st.showGrid;
-  BGS.forEach((c) => { const b = document.createElement('button'); b.className = 'sw'; b.style.background = hex(c); b.title = hex(c); b.dataset.bg = c; b.addEventListener('click', () => { st.bg = c; commit(); }); $('bgsw').appendChild(b); });
-  $('bgpick').addEventListener('input', (ev) => { st.bg = parseInt(ev.target.value.slice(1), 16); commit(); });
+  let bgHist = [];
+  try { const h = JSON.parse(localStorage.getItem('faceComposer.bgHist') || '[]'); if (Array.isArray(h)) bgHist = h.filter((c) => Number.isInteger(c) && c >= 0 && c <= 0xFFFFFF).slice(0, BG_HIST_MAX); } catch (e) {}
+  if (!bgHist.length) bgHist = [0x000000];
+  function pushBgHist(c) {
+    bgHist = [c].concat(bgHist.filter((x) => x !== c)).slice(0, BG_HIST_MAX);
+    try { localStorage.setItem('faceComposer.bgHist', JSON.stringify(bgHist)); } catch (e) {}
+    renderBgHist();
+  }
+  function renderBgHist() {
+    const w = $('bgsw'); w.innerHTML = '';
+    bgHist.forEach((c) => { const b = document.createElement('button'); b.className = 'sw' + (c === st.bg ? ' on' : ''); b.style.background = hex(c); b.title = hex(c); b.dataset.bg = c;
+      b.addEventListener('click', () => { st.bg = c; pushBgHist(c); commit(); }); w.appendChild(b); });
+  }
+  $('bgpick').addEventListener('input', (ev) => { st.bg = parseInt(ev.target.value.slice(1), 16); commit(); });      // live while dragging
+  $('bgpick').addEventListener('change', (ev) => { pushBgHist(parseInt(ev.target.value.slice(1), 16)); });          // remember when the picker closes
   for (const key of ['tx', 'tm']) {
     ['S', 'M', 'L'].forEach((lbl, i) => {
       const wrap = document.createElement('span'); wrap.className = 'stp';
@@ -374,7 +387,7 @@
     st.el.forEach((e, i) => stage.appendChild(makeEl(e, i, k)));
     positionAll();
     $('empty').hidden = st.el.length > 0;
-    document.querySelectorAll('#bgsw .sw').forEach((b) => b.classList.toggle('on', +b.dataset.bg === st.bg));
+    renderBgHist();
     $('bgpick').value = hex(st.bg).toLowerCase();
     renderInspector(); renderList(); renderJson(); renderSizes(); renderImgParts();
   }
@@ -577,7 +590,7 @@
       if (r.status === 404) return setStatus('syncstatus', 'Nothing saved for this Device ID yet.', '');
       if (!r.ok) throw new Error(j.error || r.status);
       const clean = sanitize(j); if (!clean) throw new Error('bad layout');
-      st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; st.b = clean.b; sel = -1; commit();
+      st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; st.b = clean.b; sel = -1; pushBgHist(st.bg); commit();
       setStatus('syncstatus', `Loaded version ${j.v}.`, 'ok');
       loadSlots({ selectActive: true });
     } catch (e) { setStatus('syncstatus', 'Load failed: ' + e.message, 'err'); }
@@ -597,7 +610,7 @@
   // with centre (cx, cy) and radius r in the 320 px master. The frame can be moved and resized on the
   // dial; the image pans/zooms inside it. The PNG is masked to frame ∩ dial, so the watch just draws
   // it full screen (outside the frame is transparent = background colour).
-  const SHAPES = ['full', 'top', 'bottom', 'left', 'right'];
+  const SHAPES = ['full', 'top', 'bottom', 'left', 'right'];   // mask = frame only (no dial trim), see redrawImg
   const IMG = { cur: null, panX: 0, panY: 0, zoom: 1, masked: null, colors: 16, bgAuto: 33, sel: 1, reduced: null, shape: 'full',
                 frame: { cx: 160, cy: 160, r: 160 }, drag: 'image', previewUrl: '', autoBg: '#000000',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
@@ -650,8 +663,8 @@
     IMG.panX = Math.max(-maxX, Math.min(maxX, IMG.panX)); IMG.panY = Math.max(-maxY, Math.min(maxY, IMG.panY));
     ctx.clearRect(0, 0, 320, 320);
     ctx.save();
-    framePath(ctx); ctx.clip();                                        // frame
-    ctx.beginPath(); ctx.arc(160, 160, 160, 0, Math.PI * 2); ctx.clip(); // ∩ dial
+    framePath(ctx); ctx.clip();   // frame only: a half circle keeps its shape wherever it is moved
+                                  // (the round screen itself hides anything outside the dial)
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 320, 320);
     ctx.drawImage(IMG.cur, rx + (rw - dw) / 2 + IMG.panX, ry + (rh - dh) / 2 + IMG.panY, dw, dh);
     ctx.restore();
@@ -729,13 +742,12 @@
     IMG.reduced = null;
     if (typeof RgbQuant !== 'undefined') { try { const q = new RgbQuant({ colors: IMG.colors, dithKern: 'FloydSteinberg', dithSerp: true }); q.sample(imgCv); const out = q.reduce(imgCv);
       const t = document.createElement('canvas'); t.width = 320; t.height = 320; const tc = t.getContext('2d'); const id = tc.createImageData(320, 320); id.data.set(out); tc.putImageData(id, 0, 0);
-      // keep only frame ∩ dial: two successive destination-in fills (a clip would leave the outside untouched)
-      tc.globalCompositeOperation = 'destination-in'; framePath(tc); tc.fill();
-      tc.beginPath(); tc.arc(160, 160, 160, 0, Math.PI * 2); tc.fill(); tc.globalCompositeOperation = 'source-over'; IMG.reduced = t; } catch (e) { IMG.reduced = null; } }
+      // keep only the frame (destination-in; a clip would leave the outside untouched)
+      tc.globalCompositeOperation = 'destination-in'; framePath(tc); tc.fill(); tc.globalCompositeOperation = 'source-over'; IMG.reduced = t; } catch (e) { IMG.reduced = null; } }
     repaintQuality();
   }
   $('imgbg').addEventListener('input', (e) => { IMG.bgAuto = parseInt(e.target.value, 10) || 0; repaintQuality(); });
-  $('imgbgapply').addEventListener('click', () => { st.bg = parseInt(IMG.autoBg.slice(1), 16) || 0; commit(); setStatus('imgstatus', `Dial background set to ${IMG.autoBg.toUpperCase()}. Save the layout to send it to the watch.`, 'ok'); });
+  $('imgbgapply').addEventListener('click', () => { st.bg = parseInt(IMG.autoBg.slice(1), 16) || 0; pushBgHist(st.bg); commit(); setStatus('imgstatus', `Dial background set to ${IMG.autoBg.toUpperCase()}. Save the layout to send it to the watch.`, 'ok'); });
   // "Show on dial": the editor image (reduced colours, masked to the frame) under the layout, no upload
   $('imgshow').addEventListener('click', () => {
     if (!IMG.cur) return;

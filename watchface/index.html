@@ -128,7 +128,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 15:50</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 16:08</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -151,6 +151,7 @@
       <div class="grp" title="Clock height in px on a 454 dial: S / M / L."><span class="lbl">Time size (px)</span><div class="ctl"><span class="pxs" id="tm"></span></div></div>
       <div class="grp" title="Icon height in px on a 454 dial: S / M / L. Independent of the text size — use it to balance the look on devices whose text is fixed to S/M/L."><span class="lbl">Icon size (px)</span><div class="ctl"><span class="pxs" id="ic"></span></div></div>
       <div class="grp" title="Faux bold: text drawn twice with a 1–2 px offset (Roboto has no bold on the watch)."><span class="lbl">Style</span><div class="ctl"><label><input type="checkbox" id="bold"> bold</label></div></div>
+      <div class="grp" id="fixednote" hidden style="flex-basis:100%"><div class="ctl"><span class="muted" id="fixednotetxt"></span></div></div>
     </div>
     <div class="stage-outer"><div id="stage"></div></div>
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
@@ -246,11 +247,138 @@
     30: { name: 'Stock 1',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
     31: { name: 'Stock 2',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
   };
+  // Measured in the simulator (2026-09-05, one run per device, WfLayout logMetrics):
+  //   id: [w, h, vector?1:0, textS, textM, textL, timeS, timeM, timeL]
+  // vector = the device has Graphics.getVectorFont, so the px you type is used as-is.
+  // The other six numbers are the heights of FONT_XTINY/SMALL/MEDIUM and
+  // FONT_NUMBER_MILD/MEDIUM/HOT — what the watch actually draws when there is no vector font.
+  const DEVPROF = {
+    approachs50: [390,390,0,29,39,43,82,100,144],
+    approachs7042mm: [390,390,0,29,44,51,82,102,138],
+    approachs7047mm: [454,454,0,33,51,59,96,118,160],
+    d2airx10: [416,416,0,32,49,58,82,105,154],
+    d2mach1: [416,416,0,31,47,55,88,109,147],
+    d2mach2: [454,454,1,37,53,61,113,153,173],
+    d2mach2pro: [454,454,1,37,53,61,113,153,173],
+    descentg2: [390,390,0,29,44,51,82,102,138],
+    descentmk343mm: [390,390,0,29,44,51,82,102,138],
+    descentmk351mm: [454,454,0,33,51,59,96,118,160],
+    enduro3: [280,280,0,22,34,39,62,69,107],
+    epix2: [416,416,0,31,47,55,88,109,147],
+    epix2pro42mm: [390,390,0,29,44,51,82,102,138],
+    epix2pro47mm: [416,416,0,31,47,55,88,109,147],
+    epix2pro51mm: [454,454,0,33,51,59,96,118,160],
+    fenix7: [260,260,0,19,32,37,60,73,100],
+    fenix7pro: [260,260,0,19,32,37,60,74,100],
+    fenix7pronowifi: [260,260,0,19,32,37,60,74,100],
+    fenix7s: [240,240,0,19,29,34,55,67,92],
+    fenix7spro: [240,240,0,19,29,34,55,68,92],
+    fenix7x: [280,280,0,19,34,40,64,78,107],
+    fenix7xpro: [280,280,0,19,34,40,64,79,107],
+    fenix7xpronowifi: [280,280,0,19,34,40,64,79,107],
+    fenix843mm: [416,416,1,34,50,58,103,141,159],
+    fenix847mm: [454,454,1,37,53,61,113,153,173],
+    fenix8pro47mm: [454,454,1,37,53,61,113,153,173],
+    fenix8solar47mm: [260,260,0,21,32,39,58,65,99],
+    fenix8solar51mm: [280,280,0,22,34,39,62,69,107],
+    fenixe: [416,416,1,34,50,58,103,141,159],
+    fr165: [390,390,1,30,45,53,88,109,132],
+    fr165m: [390,390,1,30,45,53,88,109,132],
+    fr255: [260,260,0,19,32,37,45,53,89],
+    fr255m: [260,260,0,19,32,37,45,53,89],
+    fr255s: [218,218,0,19,26,32,40,53,74],
+    fr255sm: [218,218,0,19,26,32,40,53,74],
+    fr265: [416,416,1,34,50,58,95,117,140],
+    fr265s: [360,360,1,29,43,50,85,98,122],
+    fr57042mm: [390,390,1,30,45,53,79,106,120],
+    fr57047mm: [454,454,1,37,53,61,91,124,140],
+    fr955: [260,260,0,21,32,39,47,53,79],
+    fr965: [454,454,1,37,53,61,103,128,152],
+    fr970: [454,454,1,37,53,61,91,124,140],
+    instinct3amoled45mm: [390,390,0,26,39,48,78,105,140],
+    instinct3amoled50mm: [416,416,0,28,42,52,84,113,150],
+    instinct3solar45mm: [176,176,0,23,24,27,35,41,44],
+    instinctcrossoveramoled: [390,390,0,26,43,48,78,105,140],
+    instincte40mm: [166,166,0,20,23,24,32,35,41],
+    instincte45mm: [176,176,0,23,24,27,35,41,44],
+    marq2: [390,390,0,29,44,51,82,102,138],
+    marq2aviator: [390,390,0,29,44,51,82,102,138],
+    venu2: [416,416,0,32,49,58,82,105,154],
+    venu2plus: [416,416,0,32,49,58,82,105,154],
+    venu2s: [360,360,0,29,43,52,71,91,134],
+    venu3: [454,454,1,35,50,58,89,116,169],
+    venu3s: [390,390,1,32,47,53,77,100,142],
+    venu441mm: [390,390,1,30,45,53,97,130,148],
+    venu445mm: [454,454,1,37,53,61,112,152,171],
+    venusq2: [320,360,0,39,51,59,82,105,155],
+    venusq2m: [320,360,0,39,51,59,82,105,155],
+    venux1: [448,486,1,37,53,61,112,152,171],
+    vivoactive5: [390,390,0,32,48,54,74,99,144],
+    vivoactive6: [390,390,1,30,45,53,97,130,148],
+  };
   const DEVICES = {
-    fr965:  { name: 'fr965 · venu3 · fr970 (454)', w: 454, h: 454, round: true,  mm: 33.0 },
-    fr265:  { name: 'fr265 · epix2pro47 (416)',    w: 416, h: 416, round: true,  mm: 33.0 },
-    venu3s: { name: 'venu3s · vívoactive5 (390)',  w: 390, h: 390, round: true,  mm: 30.5 },
-    venux1: { name: 'venu X1 (448×486)',           w: 448, h: 486, round: false, mm: 51.0 },
+    approachs7047mm: { name: "Approach S70 47mm (454)", w: 454, h: 454, round: true },
+    d2mach2: { name: "D2 Mach 2 (454)", w: 454, h: 454, round: true },
+    d2mach2pro: { name: "D2 Mach 2 Pro (454)", w: 454, h: 454, round: true },
+    descentmk351mm: { name: "Descent Mk3i 51mm (454)", w: 454, h: 454, round: true },
+    epix2pro51mm: { name: "epix Pro (Gen 2) 51mm / D2 Mach 1 Pro / tactix 7 \u2013 AMOLED Edition (454)", w: 454, h: 454, round: true },
+    fenix847mm: { name: "f\u0113nix 8 47mm / 51mm / tactix 8 47mm / 51mm / quatix 8 47mm / 51mm (454)", w: 454, h: 454, round: true },
+    fenix8pro47mm: { name: "f\u0113nix 8 Pro 47mm / 51mm / MicroLED / quatix 8 Pro 47mm / 51mm (454)", w: 454, h: 454, round: true },
+    fr57047mm: { name: "Forerunner 570 47mm (454)", w: 454, h: 454, round: true },
+    fr965: { name: "Forerunner 965 (454)", w: 454, h: 454, round: true },
+    fr970: { name: "Forerunner 970 (454)", w: 454, h: 454, round: true },
+    venu3: { name: "Venu 3 (454)", w: 454, h: 454, round: true },
+    venu445mm: { name: "Venu 4 45mm / D2 Air X15 (454)", w: 454, h: 454, round: true },
+    venux1: { name: "Venu X1 (448)", w: 448, h: 486, round: false },
+    d2airx10: { name: "D2 Air X10 (416)", w: 416, h: 416, round: true },
+    d2mach1: { name: "D2 Mach 1 (416)", w: 416, h: 416, round: true },
+    epix2: { name: "epix (Gen 2) / quatix 7 Sapphire (416)", w: 416, h: 416, round: true },
+    epix2pro47mm: { name: "epix Pro (Gen 2) 47mm / quatix 7 Pro (416)", w: 416, h: 416, round: true },
+    fenix843mm: { name: "f\u0113nix 8 43mm (416)", w: 416, h: 416, round: true },
+    fenixe: { name: "f\u0113nix E (416)", w: 416, h: 416, round: true },
+    fr265: { name: "Forerunner 265 (416)", w: 416, h: 416, round: true },
+    instinct3amoled50mm: { name: "Instinct 3 AMOLED 50mm (416)", w: 416, h: 416, round: true },
+    venu2: { name: "Venu 2 (416)", w: 416, h: 416, round: true },
+    venu2plus: { name: "Venu 2 Plus (416)", w: 416, h: 416, round: true },
+    approachs50: { name: "Approach S50 (390)", w: 390, h: 390, round: true },
+    approachs7042mm: { name: "Approach S70 42mm (390)", w: 390, h: 390, round: true },
+    descentg2: { name: "Descent G2 (390)", w: 390, h: 390, round: true },
+    descentmk343mm: { name: "Descent Mk3 43mm / Mk3i 43mm (390)", w: 390, h: 390, round: true },
+    epix2pro42mm: { name: "epix Pro (Gen 2) 42mm (390)", w: 390, h: 390, round: true },
+    fr165: { name: "Forerunner 165 (390)", w: 390, h: 390, round: true },
+    fr165m: { name: "Forerunner 165 Music (390)", w: 390, h: 390, round: true },
+    fr57042mm: { name: "Forerunner 570 42mm (390)", w: 390, h: 390, round: true },
+    instinct3amoled45mm: { name: "Instinct 3 AMOLED 45mm (390)", w: 390, h: 390, round: true },
+    instinctcrossoveramoled: { name: "Instinct Crossover AMOLED (390)", w: 390, h: 390, round: true },
+    marq2: { name: "MARQ (Gen 2) Athlete / Adventurer / Captain / Golfer / Carbon Edition / Commander - Carbon Edition (390)", w: 390, h: 390, round: true },
+    marq2aviator: { name: "MARQ (Gen 2) Aviator (390)", w: 390, h: 390, round: true },
+    venu3s: { name: "Venu 3S (390)", w: 390, h: 390, round: true },
+    venu441mm: { name: "Venu 4 41mm (390)", w: 390, h: 390, round: true },
+    vivoactive5: { name: "v\u00edvoactive 5 (390)", w: 390, h: 390, round: true },
+    vivoactive6: { name: "v\u00edvoactive 6 (390)", w: 390, h: 390, round: true },
+    fr265s: { name: "Forerunner 265s (360)", w: 360, h: 360, round: true },
+    venu2s: { name: "Venu 2S (360)", w: 360, h: 360, round: true },
+    venusq2: { name: "Venu Sq 2 (320)", w: 320, h: 360, round: false },
+    venusq2m: { name: "Venu Sq 2 Music (320)", w: 320, h: 360, round: false },
+    enduro3: { name: "Enduro 3 (280)", w: 280, h: 280, round: true },
+    fenix7x: { name: "f\u0113nix 7X / tactix 7 / quatix 7X Solar / Enduro 2 (280)", w: 280, h: 280, round: true },
+    fenix7xpro: { name: "f\u0113nix 7X Pro (280)", w: 280, h: 280, round: true },
+    fenix7xpronowifi: { name: "f\u0113nix 7X Pro - Solar Edition (no Wi-Fi) (280)", w: 280, h: 280, round: true },
+    fenix8solar51mm: { name: "f\u0113nix 8 Solar 51mm / tactix 8 Solar 51mm (280)", w: 280, h: 280, round: true },
+    fenix7: { name: "f\u0113nix 7 / quatix 7 (260)", w: 260, h: 260, round: true },
+    fenix7pro: { name: "f\u0113nix 7 Pro (260)", w: 260, h: 260, round: true },
+    fenix7pronowifi: { name: "f\u0113nix 7 Pro - Solar Edition (no Wi-Fi) (260)", w: 260, h: 260, round: true },
+    fenix8solar47mm: { name: "f\u0113nix 8 Solar 47mm (260)", w: 260, h: 260, round: true },
+    fr255: { name: "Forerunner 255 (260)", w: 260, h: 260, round: true },
+    fr255m: { name: "Forerunner 255 Music (260)", w: 260, h: 260, round: true },
+    fr955: { name: "Forerunner 955 / Solar (260)", w: 260, h: 260, round: true },
+    fenix7s: { name: "f\u0113nix 7S (240)", w: 240, h: 240, round: true },
+    fenix7spro: { name: "f\u0113nix 7S Pro (240)", w: 240, h: 240, round: true },
+    fr255s: { name: "Forerunner 255s (218)", w: 218, h: 218, round: true },
+    fr255sm: { name: "Forerunner 255s Music (218)", w: 218, h: 218, round: true },
+    instinct3solar45mm: { name: "Instinct 3 Solar 45mm / 50mm (176)", w: 176, h: 176, round: false },
+    instincte45mm: { name: "Instinct E 45mm (176)", w: 176, h: 176, round: false },
+    instincte40mm: { name: "Instinct E 40mm (166)", w: 166, h: 166, round: false },
   };
   // Font px on a 454 dial (must match WfLayout.mc TEXT_PX / TIME_PX). The watch draws with the
   // vector font "RobotoRegular" at exactly these px, independent of the device language, so
@@ -331,6 +459,18 @@
   const stage = $('stage');
   const hex = (n) => '#' + n.toString(16).padStart(6, '0').toUpperCase();
   const dev = () => DEVICES[st.dev] || DEVICES.fr965;
+  const prof = () => DEVPROF[st.dev] || DEVPROF.fr965;
+  const isVector = () => prof()[2] === 1;
+  // The px this device really draws for (type, size): vector-font devices use the value you typed
+  // (scaled by screen height, ×TEXT_BOOST for body text); the rest use their fixed system fonts.
+  function effPx(t, sz) {
+    const p = prof(), s = (sz < 0 || sz > 2) ? 1 : sz;
+    if (p[2] === 1) {
+      const px = Math.round((t === 1 ? st.tm : st.tx)[s] * p[1] / 454);
+      return t === 1 ? px : Math.round(px * TEXT_BOOST);
+    }
+    return t === 1 ? p[6 + s] : p[3 + s];
+  }
 
   // ── Palette ────────────────────────────────────────────────────────────────
   for (const [t, d] of Object.entries(TYPES)) {
@@ -370,7 +510,18 @@
       $(key).appendChild(wrap);
     });
   }
-  function renderSizes() { document.querySelectorAll('.pxs input').forEach((inp) => { inp.value = st[inp.dataset.key][+inp.dataset.i]; }); $('bold').checked = st.b === 1; }
+  function renderSizes() {
+    document.querySelectorAll('.pxs input').forEach((inp) => { inp.value = st[inp.dataset.key][+inp.dataset.i]; });
+    $('bold').checked = st.b === 1;
+    // Devices without a vector font ignore the px you type and use three fixed system fonts.
+    const vec = isVector(), p = prof();
+    ['tx', 'tm'].forEach((key) => { $(key).style.opacity = vec ? '1' : '0.45'; });
+    $('fixednote').hidden = vec;
+    if (!vec) {
+      $('fixednotetxt').textContent =
+        `This device has no vector font: the text px above are ignored and it draws the fixed system fonts — text ${p[3]}/${p[4]}/${p[5]} px, clock ${p[6]}/${p[7]}/${p[8]} px (shown on the dial). Icon size still works.`;
+    }
+  }
   $('bold').addEventListener('change', (ev) => { st.b = ev.target.checked ? 1 : 0; commit(); });
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -406,19 +557,15 @@
     a.style.width = d.w + 'px'; a.style.height = d.h + 'px'; a.style.transform = `scale(${sc})`;
     a.innerHTML = stage.innerHTML;
     a.querySelectorAll('.el').forEach((el) => {
-      const e = st.el[+el.dataset.i]; if (!e || e[0] === 1) return;
-      const px = parseFloat(el.style.lineHeight) * TEXT_BOOST;
-      el.style.lineHeight = px + 'px'; el.style.fontSize = (px / FONT_EM) + 'px';
-      const v = el.querySelector('.val'); if (v) v.style.top = inkShift(px).toFixed(2) + 'px';
-    });
+    });   // the stage already draws the true device sizes, so the copy needs no adjustment
   }
-  function makeEl(e, i, k) {
+  function makeEl(e, i, k) {   // k = d.w / 454 (device scale) — used for icons and gaps only
     const [t, x, y, a, s, c, f] = e, def = TYPES[t] || TYPES[1];
     const div = document.createElement('div');
     div.className = 'el' + (i === sel ? ' sel' : '');
     div.dataset.i = i;
     div.style.color = PALETTE[c] || PALETTE[0];
-    const px = (t === 1 ? st.tm : st.tx)[s] * k;
+    const px = effPx(t, s);   // what this device really draws (vector px, or its fixed system font)
     // The watch's vector-font :size is the line height (getFontHeight == size); Roboto's glyphs
     // at that size equal CSS font-size = size / 1.17 (measured on fr965 sim: "8,421" @44 = 91px
     // vs 108px for CSS 44px). Keep the box height = px so vertical centering matches VCENTER.

@@ -24,7 +24,7 @@
   header .sub { color: var(--ink-2); font-size: 13px; }
   header .spacer { flex: 1; }
   .lbl { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
-  main { display: grid; grid-template-columns: 260px minmax(0, 1fr) 340px; gap: 0; min-height: calc(100vh - 52px); }
+  main { display: grid; grid-template-columns: 240px minmax(0, 1fr) 300px; gap: 0; min-height: calc(100vh - 52px); }
   aside { background: var(--panel); border-right: 1px solid var(--line); padding: 20px 18px; display: flex; flex-direction: column; gap: 18px; }
   aside.right { border-right: 0; border-left: 1px solid var(--line); }
   .group { display: flex; flex-direction: column; gap: 6px; }
@@ -61,11 +61,13 @@
   .el.ghost { opacity: .85; pointer-events: none; }
   .empty { color: var(--ink-3); font-size: 13px; text-align: center; max-width: 34ch; }
   .drawer { width: 100%; max-width: 1040px; display: grid; grid-template-columns: 1fr; gap: 24px; }
-  .stage-row { display: flex; align-items: flex-start; gap: 34px; flex-wrap: wrap; justify-content: center; }
-  .rail { display: flex; flex-direction: column; gap: 22px; width: 420px; }
-  .faces { display: flex; gap: 16px; }
-  .face { width: 124px; display: flex; flex-direction: column; align-items: center; gap: 7px; cursor: pointer; }
-  .face .mini { position: relative; width: 124px; height: 124px; border-radius: 50%; overflow: hidden; background: #000;
+  /* The rail sits beside the dial; when the window is too narrow it wraps ABOVE the dial (wrap-reverse)
+     so the send button never disappears below the fold. */
+  .stage-row { display: flex; align-items: flex-start; gap: 24px; flex-wrap: wrap-reverse; justify-content: center; }
+  .rail { display: flex; flex-direction: column; gap: 20px; width: 380px; }
+  .faces { display: flex; gap: 14px; }
+  .face { width: 116px; display: flex; flex-direction: column; align-items: center; gap: 7px; cursor: pointer; }
+  .face .mini { position: relative; width: 116px; height: 116px; border-radius: 50%; overflow: hidden; background: #000;
                 background-size: cover; background-position: center; border: 2px solid var(--line-2); }
   .face.on .mini { border-color: var(--accent); }
   .face .mini .inner { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
@@ -159,7 +161,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 00:24</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 00:29</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -194,9 +196,9 @@
         <div class="grp box" style="padding:14px 16px"><span class="lbl">Sync to watch</span>
           <div class="field"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX"></div>
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
-          <div class="row"><button class="btn primary" id="save">Save to face</button><button class="btn" id="load">Load</button><button class="btn danger" id="remove">Delete face</button></div>
+          <div class="row"><button class="btn primary" id="save">Send to watch</button><button class="btn" id="load">Load</button><button class="btn danger" id="remove">Delete face</button></div>
           <div class="status" id="syncstatus"></div>
-          <span class="muted">The watch shows the face marked ★ and picks up changes on its next background sync (every 5 min, or long-press the face to sync now).</span>
+          <span class="muted"><b>Send to watch</b> saves the dial above into the selected face and makes it the one the watch shows (★). The watch picks it up on its next background sync (every 5 min, or long-press the face to sync now).</span>
         </div>
       </div>
     </div>
@@ -787,7 +789,7 @@
   }
   // Render one saved layout as a small dial (reuses makeEl by swapping `st` while it builds).
   function renderFaceMini(el, lay) {
-    const d = dev(), sc = 124 / d.w, keep = st;
+    const d = dev(), sc = 116 / d.w, keep = st;
     el.innerHTML = ''; el.style.background = hex(lay.bg);   // faces store the layout only, never the image
     const inner = document.createElement('div');
     inner.className = 'inner';
@@ -821,7 +823,7 @@
     $('facenote').textContent = cur
       ? `Face ${FACES.sel}${FACES.active === FACES.sel ? ' — shown on the watch (★)' : ' — saving it puts it on the watch'}`
       : `Face ${FACES.sel} is empty — build a dial and save it here.`;
-    $('save').textContent = 'Save to face ' + FACES.sel;
+    $('save').textContent = `Send to watch (save as face ${FACES.sel})`;
   }
   // Clicking a face loads it into the editor (an empty one just becomes the target slot).
   function selectFace(n) {

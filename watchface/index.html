@@ -128,7 +128,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 14:55</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 15:02</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -155,7 +155,7 @@
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
     <div class="imgbox box">
       <div class="grp"><span class="lbl">Background image</span>
-        <div class="ctl"><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp"><span class="muted">Pick a slot, then choose an image and upload. Stored per slot under the Device ID below; the active slot is drawn under the layout on the dial and on the watch.</span></div></div>
+        <div class="ctl"><span class="muted">1. pick a slot &nbsp;·&nbsp; 2. choose an image &nbsp;·&nbsp; 3. upload. Stored per slot under the Device ID below; the active slot is drawn under the layout on the dial and on the watch.</span></div></div>
       <div class="cols">
         <div class="grp"><span class="lbl">Preview</span>
           <div class="imgstage" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas><canvas id="imgQ" width="320" height="320"></canvas><div class="parts" id="imgParts"></div></div>
@@ -167,7 +167,10 @@
           <div class="grp"><span class="lbl">Colors</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div></div>
           <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span><button class="btn" id="imgbgapply" title="Set the dial background colour (sent with the layout) to this colour">Use as dial background</button></div></div>
           <div class="grp"><span class="lbl">Slot</span><div class="ctl"><span class="cb" id="imgslots"></span><button class="btn" id="imguse" hidden>Use this slot on the watch</button></div><div class="muted" id="imgslotnote"></div></div>
-          <div class="grp"><span class="lbl">Actions</span><div class="ctl"><button class="btn" id="imgupload" disabled>Upload to slot</button><button class="btn danger" id="imgremove">Remove image in slot</button></div><div class="status" id="imgstatus"></div></div>
+          <div class="grp"><span class="lbl">Actions</span>
+            <div class="ctl"><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp"></div>
+            <div class="ctl"><button class="btn" id="imgupload" disabled>Upload to slot</button><button class="btn danger" id="imgremove">Remove image in slot</button></div>
+            <div class="status" id="imgstatus"></div></div>
         </div>
       </div>
     </div>

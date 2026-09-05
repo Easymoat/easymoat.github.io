@@ -24,7 +24,7 @@
   header .sub { color: var(--ink-2); font-size: 13px; }
   header .spacer { flex: 1; }
   .lbl { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
-  main { display: grid; grid-template-columns: 240px minmax(0, 1fr) 300px; gap: 0; min-height: calc(100vh - 52px); }
+  main { display: grid; grid-template-columns: 220px minmax(0, 1fr) 280px; gap: 0; min-height: calc(100vh - 52px); }
   aside { background: var(--panel); border-right: 1px solid var(--line); padding: 20px 18px; display: flex; flex-direction: column; gap: 18px; }
   aside.right { border-right: 0; border-left: 1px solid var(--line); }
   .group { display: flex; flex-direction: column; gap: 6px; }
@@ -36,7 +36,7 @@
   .part .ico svg { max-height: 26px; }
   .part .nm { flex: 1; }
   .part .hint { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
-  .stagewrap { display: flex; flex-direction: column; align-items: center; gap: 26px; padding: 30px 24px 40px; }
+  .stagewrap { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 18px 20px 40px; }
   .stagebar { display: flex; flex-wrap: wrap; gap: 22px 40px; align-items: flex-start; justify-content: center;
               width: 100%; max-width: 1040px; padding: 18px 24px 20px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
   .grp { display: flex; flex-direction: column; gap: 10px; }
@@ -47,7 +47,11 @@
   .stagebar select { height: 28px; }
   select, input[type=text], input[type=number] { background: var(--panel-2); border: 2px solid var(--line-2); border-radius: 5px; padding: 4px 8px; color: var(--ink); }
   select:focus, input:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-  .stage-outer { position: relative; }
+  /* The dial is laid out at device px (454/390/…) but shown larger: #stage is scaled with a CSS
+     transform and .stage-outer reserves the scaled size. Pointer maths use the on-screen rect, so the
+     scale never affects editing. */
+  .stage-outer { position: relative; flex: none; }
+  #stage { transform-origin: 0 0; }
   #stage { position: relative; overflow: hidden; background: #000; box-shadow: 0 0 0 10px #05070A, 0 0 0 12px var(--line-2), 0 30px 60px rgba(0,0,0,.6); touch-action: none; user-select: none; }
   #stage.round { border-radius: 50%; }
   #stage svg.grid { position: absolute; inset: 0; pointer-events: none; }
@@ -63,11 +67,11 @@
   .drawer { width: 100%; max-width: 1040px; display: grid; grid-template-columns: 1fr; gap: 24px; }
   /* The rail sits beside the dial; when the window is too narrow it wraps ABOVE the dial (wrap-reverse)
      so the send button never disappears below the fold. */
-  .stage-row { display: flex; align-items: flex-start; gap: 24px; flex-wrap: wrap-reverse; justify-content: center; }
-  .rail { display: flex; flex-direction: column; gap: 20px; width: 380px; }
+  .stage-row { display: flex; align-items: flex-start; gap: 28px; flex-wrap: wrap-reverse; justify-content: flex-start; width: 100%; max-width: 1040px; }
+  .rail { display: flex; flex-direction: column; gap: 20px; width: 330px; }
   .faces { display: flex; gap: 14px; }
-  .face { width: 116px; display: flex; flex-direction: column; align-items: center; gap: 7px; cursor: pointer; }
-  .face .mini { position: relative; width: 116px; height: 116px; border-radius: 50%; overflow: hidden; background: #000;
+  .face { width: 100px; display: flex; flex-direction: column; align-items: center; gap: 7px; cursor: pointer; }
+  .face .mini { position: relative; width: 100px; height: 100px; border-radius: 50%; overflow: hidden; background: #000;
                 background-size: cover; background-position: center; border: 2px solid var(--line-2); }
   .face.on .mini { border-color: var(--accent); }
   .face .mini .inner { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
@@ -161,7 +165,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 00:49</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 00:54</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -431,6 +435,7 @@
   // Icon box height in px (454 basis, S/M/L) — independent of the text size, so the look can still be
   // balanced on devices where the text falls back to the fixed S/M/L system fonts. ICON_ART = the
   // artwork's own box height (WfIcons coordinates); must match WfLayout.mc.
+  const DIAL_PX = 520;   // on-screen size of the big dial (the layout itself stays in device px)
   const DEF_TX = [26, 36, 48], DEF_TM = [52, 68, 84], DEF_IC = [19, 26, 35], DEF_IO = 0, ICON_ART = 26, FONT_EM = 1.17, GAP = 6;
   // The watch draws body text (not the clock) 1.2× the value here (WfLayout.TEXT_BOOST): on the
   // 33 mm screen thin digits read smaller than the icons, so the editor keeps the comfortable
@@ -580,6 +585,9 @@
   function render() {
     const d = dev(), k = d.w / 454;
     stage.style.width = d.w + 'px'; stage.style.height = d.h + 'px';
+    const vs = DIAL_PX / Math.max(d.w, d.h);   // visual scale only
+    stage.style.transform = `scale(${vs})`;
+    const outer = stage.parentElement; outer.style.width = Math.round(d.w * vs) + 'px'; outer.style.height = Math.round(d.h * vs) + 'px';
     stage.classList.toggle('round', d.round);
     stage.style.background = hex(st.bg);
     applyStageImage();
@@ -697,7 +705,7 @@
 
   // ── Dragging ───────────────────────────────────────────────────────────────
   let drag = null;
-  function stagePoint(ev) { const r = stage.getBoundingClientRect(), d = dev(); return { x: (ev.clientX - r.left) * 1000 / d.w, y: (ev.clientY - r.top) * 1000 / d.h, inside: ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom }; }
+  function stagePoint(ev) { const r = stage.getBoundingClientRect(); return { x: (ev.clientX - r.left) * 1000 / r.width, y: (ev.clientY - r.top) * 1000 / r.height, inside: ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom }; }
   function startMove(ev, i) {
     ev.preventDefault(); ev.stopPropagation();
     sel = i; render();
@@ -789,7 +797,7 @@
   }
   // Render one saved layout as a small dial (reuses makeEl by swapping `st` while it builds).
   function renderFaceMini(el, lay) {
-    const d = dev(), sc = 116 / d.w, keep = st;
+    const d = dev(), sc = 100 / d.w, keep = st;
     el.innerHTML = ''; el.style.background = hex(lay.bg);   // faces store the layout only, never the image
     const inner = document.createElement('div');
     inner.className = 'inner';

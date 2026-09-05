@@ -55,6 +55,20 @@
   .el.ghost { opacity: .85; pointer-events: none; }
   .empty { color: var(--ink-3); font-size: 13px; text-align: center; max-width: 34ch; }
   .drawer { width: 100%; max-width: 760px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .imgbox { width: 100%; max-width: 760px; }
+  .imgbox .cols { display: grid; grid-template-columns: 260px 1fr; gap: 16px; align-items: start; }
+  .imgstage { position: relative; width: 260px; height: 260px; border-radius: 50%; background: #000; overflow: hidden; touch-action: none; cursor: grab; }
+  .imgstage canvas { width: 260px; height: 260px; display: block; }
+  .imgbox .qprev canvas { width: 130px; height: 130px; border-radius: 50%; display: block; }
+  .imgbox .cb { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+  .imgbox .cb button { background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 5px; padding: 4px 9px; cursor: pointer; color: var(--ink-2); font: 12px var(--mono); }
+  .imgbox .cb button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .imgbox .cb button:disabled { opacity: .4; cursor: default; }
+  .imgbox input[type=range] { width: 140px; vertical-align: middle; }
+  .imgbox .verdict { font: 12px var(--mono); padding: 6px 8px; border-radius: 5px; background: var(--panel-2); }
+  .imgbox .verdict.ok { color: var(--ok); } .imgbox .verdict.warn { color: var(--accent); } .imgbox .verdict.bad { color: var(--danger); }
+  .imgbox .frow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); }
+  #stage.hasimg { background-size: cover; background-position: center; }
   .box { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
   textarea { width: 100%; min-height: 96px; background: var(--ground); border: 1px solid var(--line); border-radius: 5px; padding: 8px; font: 12px/1.5 var(--mono); color: var(--ink); resize: vertical; }
   .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -134,6 +148,29 @@
     <div class="stage-outer"><div id="stage"></div></div>
     <div class="actual" id="actualwrap"><div class="actual-box"><div id="actual"></div></div><span class="muted">Actual size (approx. — assumes 96 dpi; the dial is the physical screen diameter)</span></div>
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
+    <div class="imgbox box">
+      <span class="lbl">Background image</span>
+      <div class="frow">
+        <input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp">
+        <span class="muted">Uses the Device ID above. The image is stored per slot; the active slot shows under the layout on the dial and on the watch.</span>
+      </div>
+      <div class="cols">
+        <div>
+          <div class="imgstage" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas></div>
+          <div class="frow" style="margin-top:8px">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"> <button class="btn" id="imgreset">Reset</button></div>
+          <div class="muted" style="margin-top:4px">Drag to position, slider to zoom. Preview is the 320 px master the watch downloads.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="frow">Colors <span class="cb" id="imgcolors"></span></div>
+          <div class="frow" id="imgbgrow" hidden>Auto background <input id="imgbg" type="range" min="0" max="100" step="1" value="33"> <span id="imgbgsw" style="display:inline-block;width:22px;height:22px;border-radius:5px;border:1px solid var(--line-2)"></span> <span class="muted">(when the watch background is set to Auto)</span></div>
+          <div class="frow"><span class="verdict" id="imgverdict"></span><span class="qprev" id="imgq"></span></div>
+          <div class="frow">Slot <span class="cb" id="imgslots"></span> <button class="btn" id="imguse" hidden>Use this slot on the watch</button></div>
+          <div class="muted" id="imgslotnote"></div>
+          <div class="row"><button class="btn" id="imgupload" disabled>Upload to slot</button><button class="btn danger" id="imgremove">Remove image in slot</button></div>
+          <div class="status" id="imgstatus"></div>
+        </div>
+      </div>
+    </div>
     <div class="drawer">
       <div class="box">
         <span class="lbl">Layout JSON</span>
@@ -169,6 +206,7 @@
   </aside>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/rgbquant@1.1.2/src/rgbquant.js"></script>
 <script>
 (() => {
   // ── Shared definitions (must match WfLayout.mc / wf_layout.js) ──────────────
@@ -319,6 +357,7 @@
     stage.style.width = d.w + 'px'; stage.style.height = d.h + 'px';
     stage.classList.toggle('round', d.round);
     stage.style.background = hex(st.bg);
+    applyStageImage();
     stage.innerHTML = '';
     if (st.showGrid) {
       const step = st.grid, sx = d.w / 1000, sy = d.h / 1000;
@@ -346,6 +385,7 @@
     box.style.width = Math.round(d.w * sc) + 'px'; box.style.height = Math.round(d.h * sc) + 'px';
     a.style.width = d.w + 'px'; a.style.height = d.h + 'px'; a.style.transform = `scale(${sc})`;
     a.style.background = hex(st.bg); a.style.borderRadius = d.round ? '50%' : '8%';
+    if (IMG.activeUrl) { a.style.backgroundImage = `url("${IMG.activeUrl}")`; a.style.backgroundSize = 'cover'; a.style.backgroundPosition = 'center'; }
     a.innerHTML = stage.innerHTML;
     a.querySelectorAll('.el').forEach((el) => {
       const e = st.el[+el.dataset.i]; if (!e || e[0] === 1) return;
@@ -542,6 +582,7 @@
       const clean = sanitize(j); if (!clean) throw new Error('bad layout');
       st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; st.b = clean.b; sel = -1; commit();
       setStatus('syncstatus', `Loaded version ${j.v}.`, 'ok');
+      loadSlots();
     } catch (e) { setStatus('syncstatus', 'Load failed: ' + e.message, 'err'); }
   });
   $('remove').addEventListener('click', async () => {
@@ -554,7 +595,143 @@
   });
 
   document.fonts?.ready.then(positionAll);
+  // ── Background image (ported from easymoat.com/pulselink/image/; keyed by this Device ID, /api/wf/image*) ──
+  const IMG = { cur: null, panX: 0, panY: 0, zoom: 1, masked: null, colors: 16, bgAuto: 33, sel: 1, reduced: null,
+                state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
+  const imgApi = () => $('api').value.replace(/\/$/, '');
+  const imgCv = $('imgCanvas');
+  function applyStageImage() {
+    stage.classList.toggle('hasimg', !!IMG.activeUrl);
+    if (IMG.activeUrl) { stage.style.backgroundImage = `url("${IMG.activeUrl}")`; stage.style.backgroundSize = 'cover'; stage.style.backgroundPosition = 'center'; }
+    else { stage.style.backgroundImage = ''; }
+  }
+  function redrawImg() {
+    if (!IMG.cur) return;
+    const ctx = imgCv.getContext('2d');
+    const base = Math.max(320 / IMG.cur.width, 320 / IMG.cur.height), sc = base * IMG.zoom;
+    const dw = IMG.cur.width * sc, dh = IMG.cur.height * sc;
+    const maxX = Math.max(0, (dw - 320) / 2), maxY = Math.max(0, (dh - 320) / 2);
+    IMG.panX = Math.max(-maxX, Math.min(maxX, IMG.panX)); IMG.panY = Math.max(-maxY, Math.min(maxY, IMG.panY));
+    ctx.clearRect(0, 0, 320, 320); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 320, 320);
+    ctx.drawImage(IMG.cur, (320 - dw) / 2 + IMG.panX, (320 - dh) / 2 + IMG.panY, dw, dh);
+    ctx.globalCompositeOperation = 'destination-in'; ctx.beginPath(); ctx.arc(160, 160, 160, 0, Math.PI * 2); ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+    IMG.masked = imgCv.toDataURL('image/png');
+    $('imgupload').disabled = false; $('imgupload').textContent = 'Upload to slot ' + IMG.sel;
+    $('imgbgrow').hidden = false;
+    scheduleMeasure();
+  }
+  $('imgfile').addEventListener('change', (ev) => {
+    const f = ev.target.files && ev.target.files[0]; if (!f) return;
+    const img = new Image();
+    img.onload = () => { IMG.cur = img; IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1'; redrawImg(); URL.revokeObjectURL(img.src); };
+    img.src = URL.createObjectURL(f);
+  });
+  (() => { let drag = false, lx = 0, ly = 0;
+    imgCv.addEventListener('pointerdown', (e) => { if (!IMG.cur) return; drag = true; lx = e.clientX; ly = e.clientY; imgCv.setPointerCapture(e.pointerId); });
+    imgCv.addEventListener('pointermove', (e) => { if (!drag) return; const k = 320 / imgCv.clientWidth; IMG.panX += (e.clientX - lx) * k; IMG.panY += (e.clientY - ly) * k; lx = e.clientX; ly = e.clientY; redrawImg(); });
+    const end = () => { drag = false; }; imgCv.addEventListener('pointerup', end); imgCv.addEventListener('pointercancel', end); })();
+  $('imgzoom').addEventListener('input', (e) => { IMG.zoom = parseFloat(e.target.value) || 1; redrawImg(); });
+  $('imgreset').addEventListener('click', () => { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1'; redrawImg(); });
+  // colours
+  [2, 4, 8, 16, 32, 64, 128].forEach((c) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = c; b.dataset.c = c; b.classList.toggle('on', c === IMG.colors);
+    b.addEventListener('click', () => { IMG.colors = c; document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === c)); scheduleMeasure(); }); $('imgcolors').appendChild(b); });
+  // size / colour verdict (decoded bitmap = px² × bpp / 8; fr965: ≤150 KB safe, >210 KB fails). Watch faces: 16 colours at 320 px is the safe zone.
+  const bppFor = (c) => c <= 2 ? 1 : c <= 4 ? 2 : c <= 16 ? 4 : 8;
+  let measureTimer = null;
+  function scheduleMeasure() { clearTimeout(measureTimer); measureTimer = setTimeout(measure, 180); }
+  function measure() {
+    const px = dev().w, kb = px * px * bppFor(IMG.colors) / 8 / 1000;
+    const v = $('imgverdict'); v.className = 'verdict ' + (kb <= 150 ? 'ok' : kb <= 210 ? 'warn' : 'bad');
+    v.textContent = `${px}px · ${IMG.colors} colors · ${kb.toFixed(0)} KB — ` + (kb <= 150 ? 'OK' : kb <= 210 ? 'borderline' : 'too big');
+    if (IMG.cur) { $('imgq').innerHTML = '<canvas id="qCanvas" width="320" height="320" title="Quality preview at this colour count"></canvas>'; renderQuality(); }
+  }
+  function autoBgColorJS(pal, p) {
+    if (!pal || pal.length < 2) return '#000000';
+    const W = [0,0,0,0,0,0], R = [0,0,0,0,0,0], G = [0,0,0,0,0,0], B = [0,0,0,0,0,0];
+    for (const c of pal) { const r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), sat = mx - mn;
+      if (mx < 30 || sat < 16) continue; let s; if (r >= g && r >= b) s = g >= b ? 0 : 5; else if (g >= r && g >= b) s = r >= b ? 1 : 2; else s = g >= r ? 3 : 4;
+      W[s] += sat; R[s] += r * sat; G[s] += g * sat; B[s] += b * sat; }
+    let best = 0; for (let k = 1; k < 6; k++) if (W[k] > W[best]) best = k;
+    if (W[best] <= 0) return '#000000';
+    const w = W[best]; let ar = R[best] / w, ag = G[best] / w, ab = B[best] / w; const amn = Math.min(ar, ag, ab); ar -= amn; ag -= amn; ab -= amn;
+    const amx = Math.max(ar, ag, ab); if (amx < 1) return '#000000';
+    const t = Math.max(0, Math.min(1, p / 100)), maxc = 40 + t * 195, mix = t <= 0.4 ? 0 : (t - 0.4) / 0.6;
+    const f = (x) => Math.min(255, Math.round((x / amx * (1 - mix) + mix) * maxc)), h2 = (v) => ('0' + v.toString(16)).slice(-2);
+    return '#' + h2(f(ar)) + h2(f(ag)) + h2(f(ab));
+  }
+  function computeOptimalPalette(n) {
+    if (typeof RgbQuant === 'undefined' || !IMG.cur) return null;
+    try { const q = new RgbQuant({ colors: n, dithKern: 'FloydSteinberg' }); q.sample(imgCv); const pal = q.palette(true); if (!pal || pal.length < 2) return null; return pal.map((c) => (c[0] << 16) | (c[1] << 8) | c[2]); } catch (e) { return null; }
+  }
+  function currentAutoBg() { return autoBgColorJS(computeOptimalPalette(IMG.colors), IMG.bgAuto); }
+  function repaintQuality() {
+    const qc = document.getElementById('qCanvas'), bg = currentAutoBg(); $('imgbgsw').style.background = bg;
+    if (!qc) return; const ctx = qc.getContext('2d'); ctx.clearRect(0, 0, 320, 320); ctx.fillStyle = bg; ctx.fillRect(0, 0, 320, 320); ctx.drawImage(IMG.reduced || imgCv, 0, 0, 320, 320);
+  }
+  function renderQuality() {
+    IMG.reduced = null;
+    if (typeof RgbQuant !== 'undefined') { try { const q = new RgbQuant({ colors: IMG.colors, dithKern: 'FloydSteinberg', dithSerp: true }); q.sample(imgCv); const out = q.reduce(imgCv);
+      const t = document.createElement('canvas'); t.width = 320; t.height = 320; const tc = t.getContext('2d'); const id = tc.createImageData(320, 320); id.data.set(out); tc.putImageData(id, 0, 0);
+      tc.globalCompositeOperation = 'destination-in'; tc.beginPath(); tc.arc(160, 160, 160, 0, Math.PI * 2); tc.fill(); tc.globalCompositeOperation = 'source-over'; IMG.reduced = t; } catch (e) { IMG.reduced = null; } }
+    repaintQuality();
+  }
+  $('imgbg').addEventListener('input', (e) => { IMG.bgAuto = parseInt(e.target.value, 10) || 0; repaintQuality(); });
+  // slots
+  function renderSlots() {
+    const w = $('imgslots'); w.innerHTML = '';
+    for (let n = 1; n <= 5; n++) { const b = document.createElement('button'); b.type = 'button'; const occ = IMG.state.slots[String(n)] === true, act = IMG.state.active === n;
+      b.textContent = n + (act ? ' ★' : occ ? ' ●' : ''); b.classList.toggle('on', n === IMG.sel);
+      b.addEventListener('click', () => { IMG.sel = n; renderSlots(); $('imgupload').textContent = 'Upload to slot ' + n; if (occ) loadSlotImage(n); }); w.appendChild(b); }
+    const occ = IMG.state.slots[String(IMG.sel)] === true, act = IMG.state.active === IMG.sel;
+    $('imgslotnote').textContent = `Slot ${IMG.sel}: ${occ ? 'has an image' : 'empty'}${act ? ' (active on watch)' : ''} · ● = has image / ★ = active`;
+    $('imguse').hidden = act; $('imguse').textContent = occ ? 'Use this slot on the watch' : 'Show no image (empty slot)';
+  }
+  async function loadSlots() {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { IMG.activeUrl = ''; applyStageImage(); return; }
+    try { const r = await fetch(imgApi() + '/image-info?device_id=' + encodeURIComponent(id)); if (!r.ok) return; const j = await r.json();
+      IMG.state = { slots: j.slots || {}, active: Number(j.active || 1), meta: j.meta || {} };
+      IMG.activeUrl = IMG.state.slots[String(IMG.state.active)] ? `${imgApi()}/image/${id.toLowerCase()}_s${IMG.state.active}.png?v=${j.version}` : '';
+      applyStageImage(); renderSlots(); renderActual(); } catch (e) {}
+  }
+  async function loadSlotImage(n) {
+    const id = devId(); const meta = IMG.state.meta[String(n)] || {};
+    try { const r = await fetch(`${imgApi()}/image/${id.toLowerCase()}_s${n}.png?t=${Date.now()}`); if (!r.ok) throw new Error('http_' + r.status);
+      const url = URL.createObjectURL(await r.blob()); const img = new Image();
+      img.onload = () => { IMG.cur = img; IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1';
+        if (meta.colors) { IMG.colors = Number(meta.colors); document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === IMG.colors)); }
+        if (meta.bg_auto != null) { IMG.bgAuto = Number(meta.bg_auto); $('imgbg').value = IMG.bgAuto; }
+        redrawImg(); URL.revokeObjectURL(url); };
+      img.src = url; } catch (e) { setStatus('imgstatus', 'Could not load slot ' + n + ': ' + e.message, 'err'); }
+  }
+  $('imguse').addEventListener('click', async () => {
+    const id = devId(); if (!id) return setStatus('imgstatus', 'Enter the Device ID first.', 'err');
+    try { const r = await fetch(imgApi() + '/image-slot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, slot: IMG.sel }) });
+      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
+      setStatus('imgstatus', j.empty ? `Empty slot ${IMG.sel} selected — the watch shows no image.` : `Slot ${IMG.sel} is now active on the watch.`, 'ok'); loadSlots(); }
+    catch (e) { setStatus('imgstatus', 'Switch failed: ' + e.message, 'err'); }
+  });
+  $('imgupload').addEventListener('click', async () => {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('imgstatus', 'Enter the Device ID shown on the watch first.', 'err');
+    if (!IMG.masked) return; setStatus('imgstatus', 'Uploading…'); $('imgupload').disabled = true;
+    try { const r = await fetch(imgApi() + '/image', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device_id: id, image: IMG.masked, colors: IMG.colors, palette: computeOptimalPalette(IMG.colors), bg_auto: IMG.bgAuto, slot: IMG.sel }) });
+      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
+      setStatus('imgstatus', `Uploaded to slot ${IMG.sel} (version ${j.version}). The watch picks it up on its next sync.`, 'ok'); loadSlots(); }
+    catch (e) { setStatus('imgstatus', 'Upload failed: ' + e.message, 'err'); } finally { $('imgupload').disabled = false; }
+  });
+  $('imgremove').addEventListener('click', async () => {
+    const id = devId(); if (!id) return setStatus('imgstatus', 'Enter the Device ID first.', 'err');
+    try { const r = await fetch(imgApi() + '/image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, slot: IMG.sel, remove: true }) });
+      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
+      setStatus('imgstatus', `Removed the image in slot ${IMG.sel}.`, 'ok'); loadSlots(); }
+    catch (e) { setStatus('imgstatus', 'Remove failed: ' + e.message, 'err'); }
+  });
+  $('devid').addEventListener('change', () => loadSlots());
+  renderSlots(); measure();
+
   render();
+  loadSlots();
 })();
 </script>
 </body>

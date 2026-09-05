@@ -629,12 +629,17 @@
     IMG.previewUrl = ''; applyStageImage();
   }
   // 'clearImgPreview' leaves the frame settings alone so the next image uses them
-  // The area the image must cover: always the full circle's bounding square (2r × 2r), whatever the
-  // shape. A half circle is then a window onto that square, so the image can be moved anywhere
-  // within the square and the half circle always stays filled.
-  function frameRect() {
-    const { cx, cy, r } = IMG.frame;
-    return [cx - r, cy - r, 2 * r, 2 * r];
+  // Sizing: the image is always fitted to the full circle's bounding square (2r × 2r), whatever the
+  // shape, so it is at least a 2r square. Moving: it only has to keep covering the shape's own
+  // bounding rect (for a half circle: 2r × r), so with a half circle it can slide by r at zoom 1.
+  function squareRect() { const { cx, cy, r } = IMG.frame; return [cx - r, cy - r, 2 * r, 2 * r]; }
+  function coverRect() {
+    const { cx, cy, r } = IMG.frame, k = IMG.shape;
+    if (k === 'top') return [cx - r, cy - r, 2 * r, r];
+    if (k === 'bottom') return [cx - r, cy, 2 * r, r];
+    if (k === 'left') return [cx - r, cy - r, r, 2 * r];
+    if (k === 'right') return [cx, cy - r, r, 2 * r];
+    return squareRect();
   }
   // Path of the frame (canvas angles: 0 = right, π/2 = down).
   function framePath(ctx) {
@@ -653,18 +658,19 @@
   function redrawImg() {
     if (!IMG.cur) return;
     const ctx = imgCv.getContext('2d');
-    const [rx, ry, rw, rh] = frameRect();
-    // cover the circle's square, then pan within it (the image must keep covering the square)
-    const base = Math.max(rw / IMG.cur.width, rh / IMG.cur.height), sc = base * IMG.zoom;
+    const [sx, sy, sw2, sh2] = squareRect(), [cx0, cy0, cw, ch] = coverRect();
+    const base = Math.max(sw2 / IMG.cur.width, sh2 / IMG.cur.height), sc = base * IMG.zoom;
     const dw = IMG.cur.width * sc, dh = IMG.cur.height * sc;
-    const maxX = Math.max(0, (dw - rw) / 2), maxY = Math.max(0, (dh - rh) / 2);
-    IMG.panX = Math.max(-maxX, Math.min(maxX, IMG.panX)); IMG.panY = Math.max(-maxY, Math.min(maxY, IMG.panY));
+    const baseX = sx + (sw2 - dw) / 2, baseY = sy + (sh2 - dh) / 2;   // image origin at pan 0 (centred in the square)
+    // pan range that keeps the cover rect fully inside the image
+    const clampPan = (pan, base0, d, c0, c) => { const lo = c0 + c - (base0 + d), hi = c0 - base0; return lo > hi ? (lo + hi) / 2 : Math.max(lo, Math.min(hi, pan)); };
+    IMG.panX = clampPan(IMG.panX, baseX, dw, cx0, cw); IMG.panY = clampPan(IMG.panY, baseY, dh, cy0, ch);
     ctx.clearRect(0, 0, 320, 320);
     ctx.save();
     framePath(ctx); ctx.clip();   // frame only: a half circle keeps its shape wherever it is moved
                                   // (the round screen itself hides anything outside the dial)
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 320, 320);
-    ctx.drawImage(IMG.cur, rx + (rw - dw) / 2 + IMG.panX, ry + (rh - dh) / 2 + IMG.panY, dw, dh);
+    ctx.drawImage(IMG.cur, baseX + IMG.panX, baseY + IMG.panY, dw, dh);
     ctx.restore();
     IMG.masked = imgCv.toDataURL('image/png');
     IMG.reduced = null; $('imgQ').getContext('2d').clearRect(0, 0, 320, 320); drawFrameOutline();

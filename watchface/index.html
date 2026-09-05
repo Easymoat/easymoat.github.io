@@ -129,7 +129,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 18:51</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 20:29</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -162,10 +162,12 @@
       <div class="cols">
         <div class="grp"><span class="lbl">Preview</span>
           <div class="imgstage" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas><canvas id="imgQ" width="320" height="320"></canvas><div class="parts" id="imgParts"></div></div>
-          <div class="ctl">Size <input id="imgsize" type="range" min="30" max="100" step="1" value="100"><span class="muted" id="imgsizev">100%</span></div>
+          <div class="ctl">Shape <span class="cb" id="imgshape"></span></div>
+          <div class="ctl" id="imgsizerow">Size <input id="imgsize" type="range" min="30" max="100" step="1" value="100"><span class="muted" id="imgsizev">100%</span></div>
           <div class="ctl">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"></div>
+          <div class="ctl" id="imgdragrow">Drag moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Image</button><button type="button" data-m="frame">Frame</button></span></div>
           <div class="ctl"><button class="btn" id="imgshow" disabled title="Put the image as it is now under the layout on the dial above (without uploading)">Show on dial</button><button class="btn" id="imgreset">Reset</button><button class="btn" id="imgparts">Hide parts</button></div>
-          <div class="muted">Drag to position, slider to zoom. Shown at the chosen colour count with your layout on top.</div>
+          <div class="muted">Square and circle can be resized and moved on the dial; the half shapes are fixed to their half. Zoom and dragging the image inside the frame work for every shape. Shown at the chosen colour count with your layout on top.</div>
         </div>
         <div class="opts">
           <div class="grp"><span class="lbl">Slot</span><div class="ctl"><span class="cb" id="imgslots"></span><button class="btn" id="imguse" hidden>Use this slot on the watch</button></div><div class="muted" id="imgslotnote"></div></div>
@@ -778,7 +780,12 @@
   // can be uploaded to any slot) or 'slot' (loaded from the server; cleared when an empty slot is picked).
   // size = how much of the dial the image covers, in % (100 = full screen). Below 100 the image is a
   // smaller square centred on the dial and the rest stays transparent = the watch's background colour.
-  const IMG = { cur: null, src: null, size: 100, panX: 0, panY: 0, zoom: 1, masked: null, colors: 16, bgAuto: 33, sel: 1, reduced: null, previewUrl: '', autoBg: '#000000',
+  // Frame shapes in the 320 master: square (default) and circle can be resized (size %) and moved
+  // (cx, cy); the four half shapes are fixed halves of the dial. The image always fills the frame's
+  // bounding box and can be panned inside it; outside the frame stays transparent = background colour.
+  const SHAPES = [['square', 'Square'], ['circle', 'Circle'], ['top', 'Top half'], ['bottom', 'Bottom half'], ['left', 'Left half'], ['right', 'Right half']];
+  const CAN_SIZE = ['square', 'circle'];   // the half shapes are fixed
+  const IMG = { cur: null, src: null, shape: 'square', size: 100, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 16, bgAuto: 33, sel: 1, reduced: null, previewUrl: '', autoBg: '#000000',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
   const imgApi = () => $('api').value.replace(/\/$/, '');
   const imgCv = $('imgCanvas');
@@ -794,21 +801,41 @@
     $('imgupload').disabled = true; $('imgupload').textContent = 'Upload to slot ' + IMG.sel; $('imgbgrow').hidden = true; $('imgshow').disabled = true;
     IMG.previewUrl = ''; applyStageImage();
   }
+  // Bounding box of the current frame, in the 320 master.
+  function frameBox() {
+    const k = IMG.shape;
+    if (k === 'top') return [0, 0, 320, 160];
+    if (k === 'bottom') return [0, 160, 320, 160];
+    if (k === 'left') return [0, 0, 160, 320];
+    if (k === 'right') return [160, 0, 160, 320];
+    const side = 320 * IMG.size / 100;
+    return [IMG.cx - side / 2, IMG.cy - side / 2, side, side];
+  }
+  // Path of the frame (square, circle, or a half of the dial circle).
+  function framePath(ctx) {
+    const k = IMG.shape, P = Math.PI, [bx, by, bw, bh] = frameBox();
+    ctx.beginPath();
+    if (k === 'circle') { ctx.arc(bx + bw / 2, by + bh / 2, bw / 2, 0, 2 * P); }
+    else if (k === 'top') { ctx.arc(160, 160, 160, P, 2 * P); ctx.closePath(); }
+    else if (k === 'bottom') { ctx.arc(160, 160, 160, 0, P); ctx.closePath(); }
+    else if (k === 'left') { ctx.arc(160, 160, 160, P / 2, 3 * P / 2); ctx.closePath(); }
+    else if (k === 'right') { ctx.arc(160, 160, 160, -P / 2, P / 2); ctx.closePath(); }
+    else { ctx.rect(bx, by, bw, bh); }
+  }
   function redrawImg() {
     if (!IMG.cur) return;
     const ctx = imgCv.getContext('2d');
-    const side = 320 * IMG.size / 100, off = (320 - side) / 2;   // the square the image fills
-    const base = Math.max(side / IMG.cur.width, side / IMG.cur.height), sc = base * IMG.zoom;
+    const [bx, by, bw, bh] = frameBox();
+    const base = Math.max(bw / IMG.cur.width, bh / IMG.cur.height), sc = base * IMG.zoom;
     const dw = IMG.cur.width * sc, dh = IMG.cur.height * sc;
-    const maxX = Math.max(0, (dw - side) / 2), maxY = Math.max(0, (dh - side) / 2);
+    const maxX = Math.max(0, (dw - bw) / 2), maxY = Math.max(0, (dh - bh) / 2);
     IMG.panX = Math.max(-maxX, Math.min(maxX, IMG.panX)); IMG.panY = Math.max(-maxY, Math.min(maxY, IMG.panY));
-    // The master is a plain square (no circular mask). Outside the image square everything stays
-    // transparent, so the watch shows its background colour there.
+    // Outside the frame everything stays transparent, so the watch shows its background colour there.
     ctx.clearRect(0, 0, 320, 320);
     ctx.save();
-    ctx.beginPath(); ctx.rect(off, off, side, side); ctx.clip();
-    ctx.fillStyle = '#000'; ctx.fillRect(off, off, side, side);
-    ctx.drawImage(IMG.cur, off + (side - dw) / 2 + IMG.panX, off + (side - dh) / 2 + IMG.panY, dw, dh);
+    framePath(ctx); ctx.clip();
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 320, 320);
+    ctx.drawImage(IMG.cur, bx + (bw - dw) / 2 + IMG.panX, by + (bh - dh) / 2 + IMG.panY, dw, dh);
     ctx.restore();
     IMG.masked = imgCv.toDataURL('image/png');
     IMG.reduced = null; $('imgQ').getContext('2d').clearRect(0, 0, 320, 320);
@@ -824,11 +851,26 @@
   });
   (() => { let drag = false, lx = 0, ly = 0;
     imgCv.addEventListener('pointerdown', (e) => { if (!IMG.cur) return; drag = true; lx = e.clientX; ly = e.clientY; imgCv.setPointerCapture(e.pointerId); });
-    imgCv.addEventListener('pointermove', (e) => { if (!drag) return; const k = 320 / imgCv.clientWidth; IMG.panX += (e.clientX - lx) * k; IMG.panY += (e.clientY - ly) * k; lx = e.clientX; ly = e.clientY; redrawImg(); });
+    imgCv.addEventListener('pointermove', (e) => { if (!drag) return; const k = 320 / imgCv.clientWidth, dx = (e.clientX - lx) * k, dy = (e.clientY - ly) * k; lx = e.clientX; ly = e.clientY;
+      if (IMG.drag === 'frame' && CAN_SIZE.indexOf(IMG.shape) >= 0) {
+        IMG.cx = Math.max(0, Math.min(320, IMG.cx + dx)); IMG.cy = Math.max(0, Math.min(320, IMG.cy + dy));   // frame and image move together
+      } else { IMG.panX += dx; IMG.panY += dy; }                                                              // image inside the frame
+      redrawImg(); });
     const end = () => { drag = false; }; imgCv.addEventListener('pointerup', end); imgCv.addEventListener('pointercancel', end); })();
   $('imgzoom').addEventListener('input', (e) => { IMG.zoom = parseFloat(e.target.value) || 1; redrawImg(); });
   $('imgsize').addEventListener('input', (e) => { IMG.size = parseInt(e.target.value, 10) || 100; $('imgsizev').textContent = IMG.size + '%'; redrawImg(); });
-  $('imgreset').addEventListener('click', () => { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; IMG.size = 100;
+  SHAPES.forEach(([k, name]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = name; b.dataset.s = k; b.classList.toggle('on', k === IMG.shape);
+    b.addEventListener('click', () => { setShape(k); IMG.panX = 0; IMG.panY = 0; redrawImg(); }); $('imgshape').appendChild(b); });
+  function setShape(k) {
+    IMG.shape = SHAPES.some(([x]) => x === k) ? k : 'square';
+    document.querySelectorAll('#imgshape button').forEach((x) => x.classList.toggle('on', x.dataset.s === IMG.shape));
+    const sizable = CAN_SIZE.indexOf(IMG.shape) >= 0;
+    $('imgsizerow').hidden = !sizable; $('imgdragrow').hidden = !sizable;
+    if (!sizable) { IMG.drag = 'image'; document.querySelectorAll('#imgdrag button').forEach((x) => x.classList.toggle('on', x.dataset.m === 'image')); }
+  }
+  document.querySelectorAll('#imgdrag button').forEach((b) => b.addEventListener('click', () => {
+    IMG.drag = b.dataset.m; document.querySelectorAll('#imgdrag button').forEach((x) => x.classList.toggle('on', x === b)); }));
+  $('imgreset').addEventListener('click', () => { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; IMG.size = 100; IMG.cx = 160; IMG.cy = 160;
     $('imgzoom').value = '1'; $('imgsize').value = '100'; $('imgsizev').textContent = '100%'; redrawImg(); });
   // colours
   [2, 4, 8, 16, 32, 64, 128].forEach((c) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = c; b.dataset.c = c; b.classList.toggle('on', c === IMG.colors);
@@ -919,6 +961,7 @@
     try { const r = await fetch(`${imgApi()}/image/${id.toLowerCase()}_s${n}.png?t=${Date.now()}`); if (!r.ok) throw new Error('http_' + r.status);
       const url = URL.createObjectURL(await r.blob()); const img = new Image();
       img.onload = () => { IMG.cur = img; IMG.src = 'slot'; IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1';
+        setShape('square'); IMG.size = 100; IMG.cx = 160; IMG.cy = 160; $('imgsize').value = '100'; $('imgsizev').textContent = '100%';
         if (meta.colors) { IMG.colors = Number(meta.colors); document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === IMG.colors)); }
         if (meta.bg_auto != null) { IMG.bgAuto = Number(meta.bg_auto); $('imgbg').value = IMG.bgAuto; }
         redrawImg(); URL.revokeObjectURL(url); };
@@ -949,7 +992,7 @@
   });
   $('devid').addEventListener('change', () => loadSlots({ selectActive: true }));
   $('imgparts').addEventListener('click', () => { const a = $('imgParts'); a.hidden = !a.hidden; $('imgparts').textContent = a.hidden ? 'Show parts' : 'Hide parts'; });
-  renderSlots(); measure();
+  setShape('square'); renderSlots(); measure();
 
   render();
   loadSlots({ selectActive: true });

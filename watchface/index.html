@@ -159,7 +159,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 00:16</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 00:24</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1066,7 +1066,7 @@
     opts = opts || {};
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { IMG.activeUrl = ''; applyStageImage(); return; }
     try { const r = await fetch(imgApi() + '/image-info?device_id=' + encodeURIComponent(id)); if (!r.ok) return; const j = await r.json();
-      IMG.state = { slots: j.slots || {}, active: Number(j.active || 1), meta: j.meta || {} };
+      IMG.state = { slots: j.slots || {}, active: Number.isInteger(Number(j.active)) ? Number(j.active) : 1, meta: j.meta || {} };   // 0 = no image (must not fall back to 1)
       IMG.activeUrl = IMG.state.slots[String(IMG.state.active)] ? `${imgApi()}/image/${id.toLowerCase()}_s${IMG.state.active}.png?v=${j.version}` : '';
       applyStageImage();
       if (opts.selectActive) { IMG.sel = IMG.state.active; if (IMG.state.slots[String(IMG.sel)]) loadSlotImage(IMG.sel); else clearImgPreview(); }

@@ -129,7 +129,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 17:15</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 17:27</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -241,7 +241,7 @@
     21: { name: 'Humidity',  grp: 'wx',    sample: '55%',    icon: 'humidity',  iw: 20 },
     22: { name: 'Wind km/h', grp: 'wx',    sample: '12',     icon: 'wind',      iw: 26 },
     23: { name: 'Pressure',  grp: 'wx',    sample: '1013',   icon: 'pressure',  iw: 26 },
-    24: { name: 'Altitude',  grp: 'wx',    sample: '45m',    icon: 'altitude',  iw: 32 },
+    24: { name: 'Altitude',  grp: 'wx',    sample: '45m',    icon: 'altitude',  iw: 30 },
     25: { name: 'Precip %',  grp: 'wx',    sample: '40%',    icon: 'umbrella',  iw: 26 },
     26: { name: 'Moon age',  grp: 'wx',    sample: moonAgeStr(), icon: 'moon',  iw: 26 },
     40: { name: 'Notifications', grp: 'clock', sample: '3',  icon: 'bell',      iw: 22 },
@@ -429,7 +429,7 @@
     humidity: (bg) => `<svg width="20" height="26" viewBox="-10 -13 20 26"><polygon points="0,-13 -9,3 9,3" fill="currentColor"/><circle cx="0" cy="4" r="9" fill="currentColor"/><line x1="-4" y1="10" x2="4" y2="-2" stroke="${bg}" stroke-width="2"/><circle cx="-4" cy="0" r="2" fill="${bg}"/><circle cx="4" cy="8" r="2" fill="${bg}"/></svg>`,
     wind:     () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><polygon points="${arrow(0,0,225)}" fill="currentColor"/></svg>`,
     pressure: () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="3"/><g stroke="currentColor" stroke-width="3"><line x1="0" y1="-10" x2="0" y2="-7"/><line x1="0" y1="0" x2="5" y2="-5"/></g><circle cx="0" cy="0" r="2" fill="currentColor"/></svg>`,
-    altitude: () => `<svg width="32" height="26" viewBox="-16 -14 32 26"><polygon points="-16,12 -6,-14 1,2 8,-9 16,12" fill="currentColor"/></svg>`,
+    altitude: () => `<svg width="30" height="24" viewBox="-15 -13 30 24"><polygon points="-15,11 -6,-13 1,2 7,-8 15,11" fill="currentColor"/></svg>`,
     bodybat:  (bg) => { const h = 15, id = 'bb' + (++uid);   // sample level 75% of the 20px well
                         const bolt = '2,-8 -4,1 0,1 -2,8 4,-1 0,-1';
                         return `<svg width="16" height="26" viewBox="-8 -13 16 26"><defs><clipPath id="${id}f"><rect x="-6" y="${11-h}" width="12" height="${h}"/></clipPath><clipPath id="${id}e"><rect x="-6" y="-9" width="12" height="${20-h}"/></clipPath></defs><rect x="-7" y="-10" width="14" height="22" rx="3" ${sw} stroke-width="2"/><rect x="-3" y="-13" width="6" height="2" fill="currentColor"/><rect x="-6" y="${11-h}" width="12" height="${h}" fill="currentColor"/><polygon points="${bolt}" fill="${bg}" clip-path="url(#${id}f)"/><polygon points="${bolt}" fill="currentColor" clip-path="url(#${id}e)"/></svg>`; },

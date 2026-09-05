@@ -24,8 +24,8 @@
   header .sub { color: var(--ink-2); font-size: 13px; }
   header .spacer { flex: 1; }
   .lbl { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
-  main { display: grid; grid-template-columns: 232px minmax(0, 1fr) 300px; gap: 0; min-height: calc(100vh - 52px); }
-  aside { background: var(--panel); border-right: 1px solid var(--line); padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  main { display: grid; grid-template-columns: 260px minmax(0, 1fr) 340px; gap: 0; min-height: calc(100vh - 52px); }
+  aside { background: var(--panel); border-right: 1px solid var(--line); padding: 20px 18px; display: flex; flex-direction: column; gap: 18px; }
   aside.right { border-right: 0; border-left: 1px solid var(--line); }
   .group { display: flex; flex-direction: column; gap: 6px; }
   .parts { display: grid; grid-template-columns: 1fr; gap: 4px; }
@@ -36,10 +36,10 @@
   .part .ico svg { max-height: 26px; }
   .part .nm { flex: 1; }
   .part .hint { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
-  .stagewrap { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 22px 18px; }
-  .stagebar { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: flex-start; justify-content: center;
-              width: 100%; max-width: 760px; padding: 12px 18px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
-  .grp { display: flex; flex-direction: column; gap: 7px; }
+  .stagewrap { display: flex; flex-direction: column; align-items: center; gap: 26px; padding: 30px 24px 40px; }
+  .stagebar { display: flex; flex-wrap: wrap; gap: 22px 40px; align-items: flex-start; justify-content: center;
+              width: 100%; max-width: 1040px; padding: 18px 24px 20px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+  .grp { display: flex; flex-direction: column; gap: 10px; }
   .grp[hidden] { display: none; }   /* the .grp display rule would otherwise beat the default [hidden] */
   .grp > .lbl { font-size: 10px; }
   .ctl { display: flex; align-items: center; gap: 14px; min-height: 28px; color: var(--ink-2); font-size: 13px; flex-wrap: wrap; }
@@ -60,13 +60,13 @@
   .el.sel .anchor { display: block; }
   .el.ghost { opacity: .85; pointer-events: none; }
   .empty { color: var(--ink-3); font-size: 13px; text-align: center; max-width: 34ch; }
-  .drawer { width: 100%; max-width: 760px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .imgbox { width: 100%; max-width: 760px; gap: 14px; }
-  .imgbox .cols { display: grid; grid-template-columns: 260px 1fr; gap: 22px; align-items: start; }
+  .drawer { width: 100%; max-width: 1040px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .imgbox { width: 100%; max-width: 1040px; gap: 22px; }
+  .imgbox .cols { display: grid; grid-template-columns: 320px 1fr; gap: 40px; align-items: start; }
   .imgbox .opts { display: flex; flex-direction: column; gap: 20px; }
   .imgbox .cb button { height: 28px; min-width: 40px; }
-  .imgstage { position: relative; width: 260px; height: 260px; border-radius: 50%; background: #000; overflow: hidden; touch-action: none; cursor: grab; }
-  .imgstage canvas { width: 260px; height: 260px; display: block; }
+  .imgstage { position: relative; width: 320px; height: 320px; border-radius: 50%; background: #000; overflow: hidden; touch-action: none; cursor: grab; }
+  .imgstage canvas { width: 320px; height: 320px; display: block; }
   .imgstage #imgQ { position: absolute; left: 0; top: 0; pointer-events: none; }
   .imgstage .parts { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; overflow: hidden; }
   .imgstage .parts .anchor, .imgstage .parts .grid { display: none !important; }
@@ -82,7 +82,7 @@
   .imgbox .verdict.ok { color: var(--ok); } .imgbox .verdict.warn { color: var(--accent); } .imgbox .verdict.bad { color: var(--danger); }
   .imgbox .frow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); }
   #stage.hasimg { background-size: cover; background-position: center; }
-  .box { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .box { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
   textarea { width: 100%; min-height: 96px; background: var(--ground); border: 1px solid var(--line); border-radius: 5px; padding: 8px; font: 12px/1.5 var(--mono); color: var(--ink); resize: vertical; }
   .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
   .btn { background: var(--panel-2); border: 2px solid var(--ink-3); border-radius: 6px; padding: 6px 14px; cursor: pointer;
@@ -101,7 +101,7 @@
   .btn:disabled { opacity: .45; cursor: default; }
   .status { font-family: var(--mono); font-size: 12px; color: var(--ink-2); min-height: 1.4em; }
   .status.ok { color: var(--ok); } .status.err { color: var(--danger); }
-  .field { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 8px; }
+  .field { display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 12px; }
   .field input[type=number] { width: 100%; font-family: var(--mono); }
   .seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 5px; overflow: hidden; }
   .seg button { background: transparent; border: 0; padding: 5px 10px; cursor: pointer; color: var(--ink-2); border-right: 1px solid var(--line-2); }
@@ -140,7 +140,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 22:15</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 22:16</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -577,7 +577,7 @@
   // Layout overlay on the image editor: a non-interactive copy of the stage scaled to the 260 px
   // circle (body text ×TEXT_BOOST like the watch). Toggled with the "parts" button.
   function renderImgParts() {
-    const d = dev(), sc = 260 / d.w, a = $('imgParts');
+    const d = dev(), sc = 320 / d.w, a = $('imgParts');
     a.style.width = d.w + 'px'; a.style.height = d.h + 'px'; a.style.transform = `scale(${sc})`;
     a.innerHTML = stage.innerHTML;
     a.querySelectorAll('.el').forEach((el) => {

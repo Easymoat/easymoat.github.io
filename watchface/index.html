@@ -45,7 +45,7 @@
   .ctl { display: flex; align-items: center; gap: 10px; min-height: 28px; color: var(--ink-2); font-size: 13px; flex-wrap: wrap; }
   .ctl label { display: flex; align-items: center; gap: 6px; }
   .stagebar select { height: 28px; }
-  select, input[type=text], input[type=number] { background: var(--panel-2); border: 1px solid var(--line); border-radius: 5px; padding: 5px 8px; color: var(--ink); }
+  select, input[type=text], input[type=number] { background: var(--panel-2); border: 2px solid var(--line-2); border-radius: 5px; padding: 4px 8px; color: var(--ink); }
   select:focus, input:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .stage-outer { position: relative; }
   #stage { position: relative; overflow: hidden; background: #000; box-shadow: 0 0 0 10px #05070A, 0 0 0 12px var(--line-2), 0 30px 60px rgba(0,0,0,.6); touch-action: none; user-select: none; }
@@ -73,7 +73,8 @@
   .imgstage .parts .el { outline: none !important; }
   .imgstage .parts[hidden] { display: none; }
   .imgbox .cb { display: inline-flex; gap: 4px; flex-wrap: wrap; }
-  .imgbox .cb button { background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 5px; padding: 4px 9px; cursor: pointer; color: var(--ink-2); font: 12px var(--mono); }
+  .imgbox .cb button { background: var(--panel-2); border: 2px solid var(--ink-3); border-radius: 5px; padding: 3px 9px; cursor: pointer; color: var(--ink); font: 12px var(--mono); }
+  .imgbox .cb button:hover { background: var(--line); border-color: var(--ink-2); }
   .imgbox .cb button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
   .imgbox .cb button:disabled { opacity: .4; cursor: default; }
   .imgbox input[type=range] { width: 140px; vertical-align: middle; }
@@ -84,16 +85,16 @@
   .box { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
   textarea { width: 100%; min-height: 96px; background: var(--ground); border: 1px solid var(--line); border-radius: 5px; padding: 8px; font: 12px/1.5 var(--mono); color: var(--ink); resize: vertical; }
   .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .btn { background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 6px; padding: 7px 14px; cursor: pointer;
+  .btn { background: var(--panel-2); border: 2px solid var(--ink-3); border-radius: 6px; padding: 6px 14px; cursor: pointer;
          color: var(--ink); font: 500 13px var(--sans); line-height: 1.2; }
-  .btn:hover { background: var(--line); border-color: var(--ink-3); }
+  .btn:hover { background: var(--line); border-color: var(--ink-2); }
   .btn:active { background: var(--line-2); }
   .btn:disabled { opacity: .45; cursor: default; }
   .btn.file { display: inline-block; }
   .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
   .btn.primary:hover { filter: brightness(1.08); background: var(--accent); }
   .btn.primary:disabled { filter: none; }
-  .btn.danger { color: var(--danger); border-color: #5A2A2C; }
+  .btn.danger { color: var(--danger); border-color: var(--danger); }
   .btn.danger:hover { background: #2A1618; border-color: var(--danger); }
   .btn:hover { border-color: var(--ink-3); }
   .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
@@ -111,9 +112,10 @@
   .pxs { display: inline-flex; gap: 14px; }
   .pxs .stp { display: inline-flex; align-items: center; gap: 4px; }
   .pxs .stp .sml { font: 600 11px var(--mono); color: var(--ink-3); width: 14px; text-align: center; margin-right: 2px; }
-  .pxs input { width: 42px; height: 28px; padding: 0 2px; font: 13px var(--mono); text-align: center; -moz-appearance: textfield; }
+  .pxs input { width: 42px; height: 28px; padding: 0 2px; font: 13px var(--mono); text-align: center; -moz-appearance: textfield;
+               background: var(--panel-2); border: 2px solid var(--line-2); border-radius: 5px; color: var(--ink); }
   .pxs input::-webkit-outer-spin-button, .pxs input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .pxs .step { width: 28px; height: 28px; padding: 0; line-height: 1; font: 600 16px var(--sans); border-radius: 5px; background: var(--panel-2); border: 1px solid var(--line-2); color: var(--ink); cursor: pointer; }
+  .pxs .step { width: 28px; height: 28px; padding: 0; line-height: 1; font: 600 16px var(--sans); border-radius: 5px; background: var(--panel-2); border: 2px solid var(--ink-3); color: var(--ink); cursor: pointer; }
   .pxs .step:hover { background: var(--line); } .pxs .step:active { background: var(--line-2); }
   .sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
   .sw.on { border-color: var(--ink); box-shadow: 0 0 0 2px var(--panel); }
@@ -138,7 +140,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 22:04</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 22:14</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>

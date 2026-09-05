@@ -128,7 +128,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 14:46</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 14:51</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -630,10 +630,10 @@
     const dw = IMG.cur.width * sc, dh = IMG.cur.height * sc;
     const maxX = Math.max(0, (dw - 320) / 2), maxY = Math.max(0, (dh - 320) / 2);
     IMG.panX = Math.max(-maxX, Math.min(maxX, IMG.panX)); IMG.panY = Math.max(-maxY, Math.min(maxY, IMG.panY));
+    // The master is the plain 320 × 320 square (no circular mask): the round screen crops it on the
+    // watch, and future frame shapes will be cut from this square.
     ctx.clearRect(0, 0, 320, 320); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 320, 320);
     ctx.drawImage(IMG.cur, (320 - dw) / 2 + IMG.panX, (320 - dh) / 2 + IMG.panY, dw, dh);
-    ctx.globalCompositeOperation = 'destination-in'; ctx.beginPath(); ctx.arc(160, 160, 160, 0, Math.PI * 2); ctx.fill();
-    ctx.globalCompositeOperation = 'source-over';
     IMG.masked = imgCv.toDataURL('image/png');
     IMG.reduced = null; $('imgQ').getContext('2d').clearRect(0, 0, 320, 320);
     $('imgupload').disabled = false; $('imgupload').textContent = 'Upload to slot ' + IMG.sel; $('imgshow').disabled = false;
@@ -696,7 +696,7 @@
     IMG.reduced = null;
     if (typeof RgbQuant !== 'undefined') { try { const q = new RgbQuant({ colors: IMG.colors, dithKern: 'FloydSteinberg', dithSerp: true }); q.sample(imgCv); const out = q.reduce(imgCv);
       const t = document.createElement('canvas'); t.width = 320; t.height = 320; const tc = t.getContext('2d'); const id = tc.createImageData(320, 320); id.data.set(out); tc.putImageData(id, 0, 0);
-      tc.globalCompositeOperation = 'destination-in'; tc.beginPath(); tc.arc(160, 160, 160, 0, Math.PI * 2); tc.fill(); tc.globalCompositeOperation = 'source-over'; IMG.reduced = t; } catch (e) { IMG.reduced = null; } }
+      IMG.reduced = t; } catch (e) { IMG.reduced = null; } }
     repaintQuality();
   }
   $('imgbg').addEventListener('input', (e) => { IMG.bgAuto = parseInt(e.target.value, 10) || 0; repaintQuality(); });

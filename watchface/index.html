@@ -128,7 +128,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 14:44</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 14:46</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -605,7 +605,9 @@
 
   document.fonts?.ready.then(positionAll);
   // ── Background image (ported from easymoat.com/pulselink/image/; keyed by this Device ID, /api/wf/image*) ──
-  const IMG = { cur: null, panX: 0, panY: 0, zoom: 1, masked: null, colors: 16, bgAuto: 33, sel: 1, reduced: null, previewUrl: '', autoBg: '#000000',
+  // src: where the editor image came from — 'file' (chosen by the user; kept while switching slots so it
+  // can be uploaded to any slot) or 'slot' (loaded from the server; cleared when an empty slot is picked).
+  const IMG = { cur: null, src: null, panX: 0, panY: 0, zoom: 1, masked: null, colors: 16, bgAuto: 33, sel: 1, reduced: null, previewUrl: '', autoBg: '#000000',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
   const imgApi = () => $('api').value.replace(/\/$/, '');
   const imgCv = $('imgCanvas');
@@ -616,7 +618,7 @@
     else { stage.style.backgroundImage = ''; }
   }
   function clearImgPreview() {
-    IMG.cur = null; IMG.masked = null; IMG.reduced = null;
+    IMG.cur = null; IMG.src = null; IMG.masked = null; IMG.reduced = null;
     imgCv.getContext('2d').clearRect(0, 0, 320, 320); $('imgQ').getContext('2d').clearRect(0, 0, 320, 320);
     $('imgupload').disabled = true; $('imgupload').textContent = 'Upload to slot ' + IMG.sel; $('imgbgrow').hidden = true; $('imgshow').disabled = true;
     IMG.previewUrl = ''; applyStageImage();
@@ -641,7 +643,7 @@
   $('imgfile').addEventListener('change', (ev) => {
     const f = ev.target.files && ev.target.files[0]; if (!f) return;
     const img = new Image();
-    img.onload = () => { IMG.cur = img; IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1'; redrawImg(); URL.revokeObjectURL(img.src); };
+    img.onload = () => { IMG.cur = img; IMG.src = 'file'; IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1'; redrawImg(); URL.revokeObjectURL(img.src); };
     img.src = URL.createObjectURL(f);
   });
   (() => { let drag = false, lx = 0, ly = 0;
@@ -710,7 +712,11 @@
     const w = $('imgslots'); w.innerHTML = '';
     for (let n = 1; n <= 5; n++) { const b = document.createElement('button'); b.type = 'button'; const occ = IMG.state.slots[String(n)] === true, act = IMG.state.active === n;
       b.textContent = n + (act ? ' ★' : occ ? ' ●' : ''); b.classList.toggle('on', n === IMG.sel);
-      b.addEventListener('click', () => { IMG.sel = n; renderSlots(); $('imgupload').textContent = 'Upload to slot ' + n; if (occ) loadSlotImage(n); else { clearImgPreview(); $('imgfile').value = ''; } }); w.appendChild(b); }
+      b.addEventListener('click', () => {
+        IMG.sel = n; renderSlots(); $('imgupload').textContent = 'Upload to slot ' + n;
+        if (IMG.src === 'file') return;                       // a freshly chosen file stays: this just picks the target slot
+        if (occ) loadSlotImage(n); else { clearImgPreview(); $('imgfile').value = ''; }
+      }); w.appendChild(b); }
     const occ = IMG.state.slots[String(IMG.sel)] === true, act = IMG.state.active === IMG.sel;
     $('imgslotnote').textContent = `Slot ${IMG.sel}: ${occ ? 'has an image' : 'empty'}${act ? ' (active on watch)' : ''} · ● = has image / ★ = active`;
     $('imguse').hidden = act; $('imguse').textContent = occ ? 'Use this slot on the watch' : 'Show no image (empty slot)';
@@ -729,7 +735,7 @@
     const id = devId(); const meta = IMG.state.meta[String(n)] || {};
     try { const r = await fetch(`${imgApi()}/image/${id.toLowerCase()}_s${n}.png?t=${Date.now()}`); if (!r.ok) throw new Error('http_' + r.status);
       const url = URL.createObjectURL(await r.blob()); const img = new Image();
-      img.onload = () => { IMG.cur = img; IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1';
+      img.onload = () => { IMG.cur = img; IMG.src = 'slot'; IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1';
         if (meta.colors) { IMG.colors = Number(meta.colors); document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === IMG.colors)); }
         if (meta.bg_auto != null) { IMG.bgAuto = Number(meta.bg_auto); $('imgbg').value = IMG.bgAuto; }
         redrawImg(); URL.revokeObjectURL(url); };
@@ -748,7 +754,7 @@
     try { const r = await fetch(imgApi() + '/image', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ device_id: id, image: IMG.masked, colors: IMG.colors, palette: computeOptimalPalette(IMG.colors), bg_auto: IMG.bgAuto, slot: IMG.sel }) });
       const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
-      setStatus('imgstatus', `Uploaded to slot ${IMG.sel} (version ${j.version}). The watch picks it up on its next sync.`, 'ok'); loadSlots(); }
+      setStatus('imgstatus', `Uploaded to slot ${IMG.sel} (version ${j.version}). The watch picks it up on its next sync.`, 'ok'); IMG.src = 'slot'; $('imgfile').value = ''; loadSlots(); }
     catch (e) { setStatus('imgstatus', 'Upload failed: ' + e.message, 'err'); } finally { $('imgupload').disabled = false; }
   });
   $('imgremove').addEventListener('click', async () => {

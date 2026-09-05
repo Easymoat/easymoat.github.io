@@ -59,7 +59,11 @@
   .imgbox .cols { display: grid; grid-template-columns: 260px 1fr; gap: 16px; align-items: start; }
   .imgstage { position: relative; width: 260px; height: 260px; border-radius: 50%; background: #000; overflow: hidden; touch-action: none; cursor: grab; }
   .imgstage canvas { width: 260px; height: 260px; display: block; }
-  .imgbox .qprev canvas { width: 130px; height: 130px; border-radius: 50%; display: block; }
+  .imgstage #imgQ { position: absolute; left: 0; top: 0; pointer-events: none; }
+  .imgstage .parts { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; overflow: hidden; }
+  .imgstage .parts .anchor, .imgstage .parts .grid { display: none !important; }
+  .imgstage .parts .el { outline: none !important; }
+  .imgstage .parts[hidden] { display: none; }
   .imgbox .cb { display: inline-flex; gap: 4px; flex-wrap: wrap; }
   .imgbox .cb button { background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 5px; padding: 4px 9px; cursor: pointer; color: var(--ink-2); font: 12px var(--mono); }
   .imgbox .cb button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
@@ -87,11 +91,6 @@
   .seg button.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
   .swatches { display: flex; gap: 6px; flex-wrap: wrap; }
   #bgpick { width: 30px; height: 24px; padding: 0 2px; border: 1px solid var(--line-2); border-radius: 5px; background: var(--panel-2); cursor: pointer; margin-left: 4px; }
-  .actual { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
-  .actual-box { position: relative; flex: none; overflow: hidden; }
-  .actual-box #actual { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; overflow: hidden; }
-  .actual-box #actual .anchor, .actual-box #actual .grid { display: none !important; }
-  .actual-box #actual .el { outline: none !important; }
   .pxs { display: inline-flex; gap: 8px; }
   .pxs .stp { display: inline-flex; align-items: center; gap: 2px; }
   .pxs .stp .sml { font: 500 11px var(--mono); color: var(--ink-3); width: 12px; text-align: center; }
@@ -146,7 +145,6 @@
       <label title="Faux bold: text drawn twice with a 1–2 px offset (Roboto has no bold on the watch)."><input type="checkbox" id="bold"> bold</label>
     </div>
     <div class="stage-outer"><div id="stage"></div></div>
-    <div class="actual" id="actualwrap"><div class="actual-box"><div id="actual"></div></div><span class="muted">Actual size (approx. — assumes 96 dpi; the dial is the physical screen diameter)</span></div>
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
     <div class="imgbox box">
       <span class="lbl">Background image</span>
@@ -156,14 +154,14 @@
       </div>
       <div class="cols">
         <div>
-          <div class="imgstage" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas></div>
-          <div class="frow" style="margin-top:8px">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"> <button class="btn" id="imgreset">Reset</button></div>
-          <div class="muted" style="margin-top:4px">Drag to position, slider to zoom. Preview is the 320 px master the watch downloads.</div>
+          <div class="imgstage" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas><canvas id="imgQ" width="320" height="320"></canvas><div class="parts" id="imgParts"></div></div>
+          <div class="frow" style="margin-top:8px">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"> <button class="btn" id="imgreset">Reset</button> <button class="btn" id="imgparts">Hide parts</button></div>
+          <div class="muted" style="margin-top:4px">Drag to position, slider to zoom. The circle shows the image at the chosen colour count with your layout on top.</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:10px">
           <div class="frow">Colors <span class="cb" id="imgcolors"></span></div>
           <div class="frow" id="imgbgrow" hidden>Auto background <input id="imgbg" type="range" min="0" max="100" step="1" value="33"> <span id="imgbgsw" style="display:inline-block;width:22px;height:22px;border-radius:5px;border:1px solid var(--line-2)"></span> <span class="muted">(when the watch background is set to Auto)</span></div>
-          <div class="frow"><span class="verdict" id="imgverdict"></span><span class="qprev" id="imgq"></span></div>
+          <div class="frow"><span class="verdict" id="imgverdict"></span></div>
           <div class="frow">Slot <span class="cb" id="imgslots"></span> <button class="btn" id="imguse" hidden>Use this slot on the watch</button></div>
           <div class="muted" id="imgslotnote"></div>
           <div class="row"><button class="btn" id="imgupload" disabled>Upload to slot</button><button class="btn danger" id="imgremove">Remove image in slot</button></div>
@@ -375,17 +373,13 @@
     $('empty').hidden = st.el.length > 0;
     document.querySelectorAll('#bgsw .sw').forEach((b) => b.classList.toggle('on', +b.dataset.bg === st.bg));
     $('bgpick').value = hex(st.bg).toLowerCase();
-    renderInspector(); renderList(); renderJson(); renderSizes(); renderActual();
+    renderInspector(); renderList(); renderJson(); renderSizes(); renderImgParts();
   }
-  // Physical-size preview: a non-interactive copy of the stage scaled so the dial is d.mm wide
-  // (at the nominal 96 CSS px per inch). Shows how small the layout really is on the wrist.
-  function renderActual() {
-    const d = dev(), sc = (d.mm / 25.4 * 96) / d.w;
-    const box = $('actualwrap').querySelector('.actual-box'), a = $('actual');
-    box.style.width = Math.round(d.w * sc) + 'px'; box.style.height = Math.round(d.h * sc) + 'px';
+  // Layout overlay on the image editor: a non-interactive copy of the stage scaled to the 260 px
+  // circle (body text ×TEXT_BOOST like the watch). Toggled with the "parts" button.
+  function renderImgParts() {
+    const d = dev(), sc = 260 / d.w, a = $('imgParts');
     a.style.width = d.w + 'px'; a.style.height = d.h + 'px'; a.style.transform = `scale(${sc})`;
-    a.style.background = hex(st.bg); a.style.borderRadius = d.round ? '50%' : '8%';
-    if (IMG.activeUrl) { a.style.backgroundImage = `url("${IMG.activeUrl}")`; a.style.backgroundSize = 'cover'; a.style.backgroundPosition = 'center'; }
     a.innerHTML = stage.innerHTML;
     a.querySelectorAll('.el').forEach((el) => {
       const e = st.el[+el.dataset.i]; if (!e || e[0] === 1) return;
@@ -617,6 +611,7 @@
     ctx.globalCompositeOperation = 'destination-in'; ctx.beginPath(); ctx.arc(160, 160, 160, 0, Math.PI * 2); ctx.fill();
     ctx.globalCompositeOperation = 'source-over';
     IMG.masked = imgCv.toDataURL('image/png');
+    IMG.reduced = null; $('imgQ').getContext('2d').clearRect(0, 0, 320, 320);
     $('imgupload').disabled = false; $('imgupload').textContent = 'Upload to slot ' + IMG.sel;
     $('imgbgrow').hidden = false;
     scheduleMeasure();
@@ -644,7 +639,7 @@
     const px = dev().w, kb = px * px * bppFor(IMG.colors) / 8 / 1000;
     const v = $('imgverdict'); v.className = 'verdict ' + (kb <= 150 ? 'ok' : kb <= 210 ? 'warn' : 'bad');
     v.textContent = `${px}px · ${IMG.colors} colors · ${kb.toFixed(0)} KB — ` + (kb <= 150 ? 'OK' : kb <= 210 ? 'borderline' : 'too big');
-    if (IMG.cur) { $('imgq').innerHTML = '<canvas id="qCanvas" width="320" height="320" title="Quality preview at this colour count"></canvas>'; renderQuality(); }
+    if (IMG.cur) renderQuality();
   }
   function autoBgColorJS(pal, p) {
     if (!pal || pal.length < 2) return '#000000';
@@ -666,8 +661,9 @@
   }
   function currentAutoBg() { return autoBgColorJS(computeOptimalPalette(IMG.colors), IMG.bgAuto); }
   function repaintQuality() {
-    const qc = document.getElementById('qCanvas'), bg = currentAutoBg(); $('imgbgsw').style.background = bg;
-    if (!qc) return; const ctx = qc.getContext('2d'); ctx.clearRect(0, 0, 320, 320); ctx.fillStyle = bg; ctx.fillRect(0, 0, 320, 320); ctx.drawImage(IMG.reduced || imgCv, 0, 0, 320, 320);
+    $('imgbgsw').style.background = currentAutoBg();
+    const ctx = $('imgQ').getContext('2d'); ctx.clearRect(0, 0, 320, 320);
+    if (IMG.reduced) ctx.drawImage(IMG.reduced, 0, 0, 320, 320);   // reduced-colour result over the master
   }
   function renderQuality() {
     IMG.reduced = null;
@@ -692,7 +688,7 @@
     try { const r = await fetch(imgApi() + '/image-info?device_id=' + encodeURIComponent(id)); if (!r.ok) return; const j = await r.json();
       IMG.state = { slots: j.slots || {}, active: Number(j.active || 1), meta: j.meta || {} };
       IMG.activeUrl = IMG.state.slots[String(IMG.state.active)] ? `${imgApi()}/image/${id.toLowerCase()}_s${IMG.state.active}.png?v=${j.version}` : '';
-      applyStageImage(); renderSlots(); renderActual(); } catch (e) {}
+      applyStageImage(); renderSlots(); } catch (e) {}
   }
   async function loadSlotImage(n) {
     const id = devId(); const meta = IMG.state.meta[String(n)] || {};
@@ -728,6 +724,7 @@
     catch (e) { setStatus('imgstatus', 'Remove failed: ' + e.message, 'err'); }
   });
   $('devid').addEventListener('change', () => loadSlots());
+  $('imgparts').addEventListener('click', () => { const a = $('imgParts'); a.hidden = !a.hidden; $('imgparts').textContent = a.hidden ? 'Show parts' : 'Hide parts'; });
   renderSlots(); measure();
 
   render();

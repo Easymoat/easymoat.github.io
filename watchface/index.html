@@ -129,7 +129,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 17:27</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 17:51</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -224,6 +224,7 @@
   const SYNODIC = 29.530588853;
   function moonAge() { const d = (Date.now() / 1000 - 947182440) / 86400; return ((d % SYNODIC) + SYNODIC) % SYNODIC; }
   function moonAgeStr() { return moonAge().toFixed(1); }
+  function moonPhaseDeg() { return (moonAge() / SYNODIC) * 360; }
   function moonPhase() { const f = moonAge() / SYNODIC; return (f < 0.04 || f > 0.96) ? 0 : f < 0.21 ? 1 : f < 0.29 ? 2 : f < 0.46 ? 3 : f < 0.54 ? 4 : f < 0.71 ? 5 : f < 0.79 ? 6 : 7; }
   const TYPES = {
     1:  { name: 'Time',      grp: 'clock', sample: '10:08',  icon: null,        iw: 0 },
@@ -244,7 +245,7 @@
     24: { name: 'Altitude',  grp: 'wx',    sample: '45m',    icon: 'altitude',  iw: 30 },
     25: { name: 'Precip %',  grp: 'wx',    sample: '40%',    icon: 'umbrella',  iw: 26 },
     26: { name: 'Moon age',  grp: 'wx',    sample: moonAgeStr(), icon: 'moon',  iw: 26 },
-    40: { name: 'Notifications', grp: 'clock', sample: '3',  icon: 'bell',      iw: 22 },
+    40: { name: 'Notifications', grp: 'clock', sample: '3',  icon: 'bell',      iw: 26 },
     30: { name: 'Stock 1',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
     31: { name: 'Stock 2',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
   };
@@ -437,10 +438,13 @@
     breath:   () => { const pts = []; for (let i = 0; i <= 13; i++) { const x = -13 + 2 * i; pts.push(`${x},${(-10 * Math.sin(2 * Math.PI * (x + 13) / 26)).toFixed(2)}`); }
                       return `<svg width="26" height="26" viewBox="-13 -13 26 26"><polyline points="${pts.join(' ')}" ${sw} stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`; },
     umbrella: () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><path d="M-12,-1 A12,12 0 0 1 12,-1 Z" fill="currentColor"/><g stroke="currentColor" stroke-width="2"><line x1="0" y1="-1" x2="0" y2="12"/><line x1="0" y1="12" x2="-4" y2="12"/></g></svg>`,
-    moon:     (bg) => { const p = moonPhase(); if (p === 0) return `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="2"/></svg>`;
-                        const dark = p === 4 ? '' : p === 1 ? `<circle cx="-6" cy="0" r="12" fill="${bg}"/>` : p === 2 ? `<rect x="-13" y="-13" width="13" height="26" fill="${bg}"/>` : p === 3 ? `<circle cx="-18" cy="0" r="12" fill="${bg}"/>` : p === 5 ? `<circle cx="18" cy="0" r="12" fill="${bg}"/>` : p === 6 ? `<rect x="0" y="-13" width="13" height="26" fill="${bg}"/>` : `<circle cx="6" cy="0" r="12" fill="${bg}"/>`;
-                        return `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="12" fill="currentColor"/>${dark}</svg>`; },
-    bell:     () => `<svg width="22" height="26" viewBox="-11 -13 22 26"><g fill="currentColor"><rect x="-8" y="-13" width="16" height="19" rx="7"/><rect x="-11" y="5" width="22" height="3"/><circle cx="0" cy="11" r="3"/></g></svg>`,
+    moon:     () => { const r = 12, ph = moonPhaseDeg(), rad = ph * Math.PI / 180, k = Math.cos(rad), rx = (Math.abs(k) * r).toFixed(2);
+                      if (ph < 12 || ph > 348) return `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="2"/></svg>`;
+                      const sweep = k > 0 ? 0 : 1;   // crescent bulges out, gibbous bulges in
+                      const path = `M 0,${-r} A ${r},${r} 0 0 1 0,${r} A ${rx},${r} 0 0 ${sweep} 0,${-r} Z`;
+                      const flip = ph > 180 ? ' transform="scale(-1,1)"' : '';   // waning: lit on the left
+                      return `<svg width="26" height="26" viewBox="-13 -13 26 26"><path d="${path}" fill="currentColor"${flip}/></svg>`; },
+    bell:     () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><g ${sw} stroke-width="2" stroke-linejoin="round"><rect x="-13" y="-11" width="26" height="18" rx="5"/><path d="M-7,7 L-10,13 L-2,7"/></g><g fill="currentColor"><circle cx="-6" cy="-2" r="2"/><circle cx="0" cy="-2" r="2"/><circle cx="6" cy="-2" r="2"/></g></svg>`,
     stock:    () => `$`,
   };
   function arrow(cx, cy, bearing) {

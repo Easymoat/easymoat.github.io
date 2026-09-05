@@ -128,7 +128,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 14:51</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 14:55</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -155,7 +155,7 @@
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
     <div class="imgbox box">
       <div class="grp"><span class="lbl">Background image</span>
-        <div class="ctl"><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp"><span class="muted">Stored per slot under the Device ID below. The active slot is drawn under the layout on the dial and on the watch.</span></div></div>
+        <div class="ctl"><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp"><span class="muted">Pick a slot, then choose an image and upload. Stored per slot under the Device ID below; the active slot is drawn under the layout on the dial and on the watch.</span></div></div>
       <div class="cols">
         <div class="grp"><span class="lbl">Preview</span>
           <div class="imgstage" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas><canvas id="imgQ" width="320" height="320"></canvas><div class="parts" id="imgParts"></div></div>
@@ -713,9 +713,10 @@
     for (let n = 1; n <= 5; n++) { const b = document.createElement('button'); b.type = 'button'; const occ = IMG.state.slots[String(n)] === true, act = IMG.state.active === n;
       b.textContent = n + (act ? ' ★' : occ ? ' ●' : ''); b.classList.toggle('on', n === IMG.sel);
       b.addEventListener('click', () => {
+        // the preview always follows the slot: its image, or black when empty (choose a file after picking the slot)
         IMG.sel = n; renderSlots(); $('imgupload').textContent = 'Upload to slot ' + n;
-        if (IMG.src === 'file') return;                       // a freshly chosen file stays: this just picks the target slot
-        if (occ) loadSlotImage(n); else { clearImgPreview(); $('imgfile').value = ''; }
+        $('imgfile').value = '';
+        if (occ) loadSlotImage(n); else clearImgPreview();
       }); w.appendChild(b); }
     const occ = IMG.state.slots[String(IMG.sel)] === true, act = IMG.state.active === IMG.sel;
     $('imgslotnote').textContent = `Slot ${IMG.sel}: ${occ ? 'has an image' : 'empty'}${act ? ' (active on watch)' : ''} · ● = has image / ★ = active`;

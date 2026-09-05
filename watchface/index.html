@@ -128,7 +128,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 15:05</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 15:50</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -149,6 +149,7 @@
       <div class="grp"><span class="lbl">Background</span><div class="ctl"><input type="color" id="bgpick" title="Pick any background colour (sent to the watch as bg)" value="#000000"><span class="swatches" id="bgsw" title="Recently used colours"></span></div></div>
       <div class="grp" title="Text height in px on a 454 dial: S / M / L. Sent to the watch with the layout."><span class="lbl">Text size (px)</span><div class="ctl"><span class="pxs" id="tx"></span></div></div>
       <div class="grp" title="Clock height in px on a 454 dial: S / M / L."><span class="lbl">Time size (px)</span><div class="ctl"><span class="pxs" id="tm"></span></div></div>
+      <div class="grp" title="Icon height in px on a 454 dial: S / M / L. Independent of the text size — use it to balance the look on devices whose text is fixed to S/M/L."><span class="lbl">Icon size (px)</span><div class="ctl"><span class="pxs" id="ic"></span></div></div>
       <div class="grp" title="Faux bold: text drawn twice with a 1–2 px offset (Roboto has no bold on the watch)."><span class="lbl">Style</span><div class="ctl"><label><input type="checkbox" id="bold"> bold</label></div></div>
     </div>
     <div class="stage-outer"><div id="stage"></div></div>
@@ -257,7 +258,10 @@
   // scaled by textPx/44 on both sides.
   // Defaults (must match WfLayout.mc DEF_TEXT_PX / DEF_TIME_PX). Editable per layout (st.tx / st.tm)
   // and sent to the watch as "tx"/"tm". Icons are authored for M and scale by tx[s]/tx[1].
-  const DEF_TX = [26, 36, 48], DEF_TM = [52, 68, 84], FONT_EM = 1.17, GAP = 6;
+  // Icon box height in px (454 basis, S/M/L) — independent of the text size, so the look can still be
+  // balanced on devices where the text falls back to the fixed S/M/L system fonts. ICON_ART = the
+  // artwork's own box height (WfIcons coordinates); must match WfLayout.mc.
+  const DEF_TX = [26, 36, 48], DEF_TM = [52, 68, 84], DEF_IC = [19, 26, 35], ICON_ART = 26, FONT_EM = 1.17, GAP = 6;
   // The watch draws body text (not the clock) 1.2× the value here (WfLayout.TEXT_BOOST): on the
   // 33 mm screen thin digits read smaller than the icons, so the editor keeps the comfortable
   // desktop look while the device compensates. The actual-size preview applies the same boost.
@@ -317,11 +321,12 @@
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
-  let st = { dev: 'fr965', grid: 50, showGrid: true, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), b: 0 };
+  let st = { dev: 'fr965', grid: 50, showGrid: true, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), b: 0 };
   let sel = -1;
   try { const s = JSON.parse(localStorage.getItem('faceComposer') || 'null'); if (s && Array.isArray(s.el)) st = Object.assign(st, s); } catch (e) {}
-  if (!intArr3(st.tx)) st.tx = DEF_TX.slice(); if (!intArr3(st.tm)) st.tm = DEF_TM.slice(); st.b = st.b === 1 ? 1 : 0;
-  function intArr3(v) { return Array.isArray(v) && v.length === 3 && v.every((n) => Number.isInteger(n) && n >= 10 && n <= 200) ? v.map(Number) : null; }
+  if (!intArr3(st.tx)) st.tx = DEF_TX.slice(); if (!intArr3(st.tm)) st.tm = DEF_TM.slice();
+  if (!intArr3(st.ic, 6, 120)) st.ic = DEF_IC.slice(); st.b = st.b === 1 ? 1 : 0;
+  function intArr3(v, lo, hi) { lo = lo || 10; hi = hi || 200; return Array.isArray(v) && v.length === 3 && v.every((n) => Number.isInteger(n) && n >= lo && n <= hi) ? v.map(Number) : null; }
   const $ = (id) => document.getElementById(id);
   const stage = $('stage');
   const hex = (n) => '#' + n.toString(16).padStart(6, '0').toUpperCase();
@@ -352,12 +357,13 @@
   }
   $('bgpick').addEventListener('input', (ev) => { st.bg = parseInt(ev.target.value.slice(1), 16); commit(); });      // live while dragging
   $('bgpick').addEventListener('change', (ev) => { pushBgHist(parseInt(ev.target.value.slice(1), 16)); });          // remember when the picker closes
-  for (const key of ['tx', 'tm']) {
+  for (const key of ['tx', 'tm', 'ic']) {
     ['S', 'M', 'L'].forEach((lbl, i) => {
       const wrap = document.createElement('span'); wrap.className = 'stp';
       const sml = document.createElement('span'); sml.className = 'sml'; sml.textContent = lbl;
-      const inp = document.createElement('input'); inp.type = 'number'; inp.min = 10; inp.max = 200; inp.title = lbl; inp.dataset.key = key; inp.dataset.i = i;
-      const setv = (v) => { v = Math.round(v); if (v >= 10 && v <= 200) { st[key][i] = v; commit(); } else { inp.value = st[key][i]; } };
+      const lo = key === 'ic' ? 6 : 10, hi = key === 'ic' ? 120 : 200;
+      const inp = document.createElement('input'); inp.type = 'number'; inp.min = lo; inp.max = hi; inp.title = lbl; inp.dataset.key = key; inp.dataset.i = i;
+      const setv = (v) => { v = Math.round(v); if (v >= lo && v <= hi) { st[key][i] = v; commit(); } else { inp.value = st[key][i]; } };
       inp.addEventListener('change', () => setv(+inp.value));
       const mk = (txt, d) => { const b = document.createElement('button'); b.className = 'step'; b.type = 'button'; b.textContent = txt; b.title = `${lbl} ${d > 0 ? '+' : '−'}1 px`; b.addEventListener('click', () => setv(st[key][i] + d)); return b; };
       wrap.append(sml, mk('−', -1), inp, mk('+', +1));
@@ -420,7 +426,7 @@
     div.style.lineHeight = px + 'px';
     const bo = st.b === 1 ? boldOff(px) : 0;
     if (bo) { div.style.textShadow = `${bo}px 0 0 currentColor`; div.style.paddingRight = (2 + bo) + 'px'; }
-    const ki = (st.tx[s] / st.tx[1]) * k;   // icon scale: M = 1.0, S/L relative (same rule as WfLayout.drawEl)
+    const ki = (st.ic[s] / ICON_ART) * k;   // icon scale from the icon table (same rule as WfLayout.drawEl)
     div.style.gap = (GAP * ki) + 'px';
     const icon = (f & 1) && def.icon
       ? (def.icon === 'stock' ? `<span class="ico">$</span>` : `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:scale(${ki});">${ICONS[def.icon](hex(st.bg))}</span>`)
@@ -450,7 +456,7 @@
       div.classList.toggle('oob', oob);
     });
   }
-  const layoutObj = () => ({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, b: st.b });
+  const layoutObj = () => ({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, b: st.b });
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   function renderList() {
     const l = $('list'); l.innerHTML = '';
@@ -550,7 +556,7 @@
     try {
       const j = JSON.parse($('json').value);
       const clean = sanitize(j); if (!clean) throw new Error('bad');
-      st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; st.b = clean.b; sel = -1; commit(); setStatus('jsonstatus', `Applied ${clean.el.length} elements.`, 'ok');
+      st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; st.ic = clean.ic; st.b = clean.b; sel = -1; commit(); setStatus('jsonstatus', `Applied ${clean.el.length} elements.`, 'ok');
     } catch (e) { setStatus('jsonstatus', 'Not a valid layout. Expect {"bg":n,"el":[[t,x,y,a,s,c,f],…]} with 0..1000 coordinates.', 'err'); }
   });
   $('preset-lobby').addEventListener('click', () => { st.el = PRESET_LOBBY.map(e => e.slice()); sel = -1; commit(); });
@@ -567,7 +573,8 @@
       el.push(n);
     }
     const bg = Number.isInteger(j.bg) && j.bg >= 0 && j.bg <= 0xFFFFFF ? j.bg : 0;
-    return { bg, el, tx: intArr3(j.tx) || DEF_TX.slice(), tm: intArr3(j.tm) || DEF_TM.slice(), b: Number(j.b) === 1 ? 1 : 0 };
+    return { bg, el, tx: intArr3(j.tx) || DEF_TX.slice(), tm: intArr3(j.tm) || DEF_TM.slice(),
+             ic: intArr3(j.ic, 6, 120) || DEF_IC.slice(), b: Number(j.b) === 1 ? 1 : 0 };
   }
 
   // ── Server sync ────────────────────────────────────────────────────────────
@@ -592,7 +599,7 @@
       if (r.status === 404) return setStatus('syncstatus', 'Nothing saved for this Device ID yet.', '');
       if (!r.ok) throw new Error(j.error || r.status);
       const clean = sanitize(j); if (!clean) throw new Error('bad layout');
-      st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; st.b = clean.b; sel = -1; pushBgHist(st.bg); commit();
+      st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; st.ic = clean.ic; st.b = clean.b; sel = -1; pushBgHist(st.bg); commit();
       setStatus('syncstatus', `Loaded version ${j.v}.`, 'ok');
       loadSlots({ selectActive: true });
     } catch (e) { setStatus('syncstatus', 'Load failed: ' + e.message, 'err'); }

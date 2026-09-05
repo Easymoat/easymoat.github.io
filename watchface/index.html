@@ -129,7 +129,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 18:50</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 18:51</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -865,8 +865,9 @@
   function repaintQuality() {
     IMG.autoBg = currentAutoBg(); $('imgbgsw').style.background = IMG.autoBg;
     const ctx = $('imgQ').getContext('2d'); ctx.clearRect(0, 0, 320, 320);
-    // outside the frame: the Auto background colour (what the watch shows there when Background = Auto)
-    ctx.save(); ctx.beginPath(); ctx.arc(160, 160, 160, 0, Math.PI * 2); ctx.clip(); ctx.fillStyle = IMG.autoBg; ctx.fillRect(0, 0, 320, 320); ctx.restore();
+    // Outside the image the watch shows the dial background colour, so the preview does the same.
+    // (The Auto colour has its own swatch next to the slider; it is not what the dial shows here.)
+    ctx.save(); ctx.beginPath(); ctx.arc(160, 160, 160, 0, Math.PI * 2); ctx.clip(); ctx.fillStyle = hex(st.bg); ctx.fillRect(0, 0, 320, 320); ctx.restore();
     if (IMG.reduced) ctx.drawImage(IMG.reduced, 0, 0, 320, 320);   // reduced-colour result over the master
     else ctx.drawImage(imgCv, 0, 0, 320, 320);
   }

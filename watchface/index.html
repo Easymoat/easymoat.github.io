@@ -60,7 +60,21 @@
   .el.sel .anchor { display: block; }
   .el.ghost { opacity: .85; pointer-events: none; }
   .empty { color: var(--ink-3); font-size: 13px; text-align: center; max-width: 34ch; }
-  .drawer { width: 100%; max-width: 1040px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .drawer { width: 100%; max-width: 1040px; display: grid; grid-template-columns: 1fr; gap: 24px; }
+  .stage-row { display: flex; align-items: flex-start; gap: 34px; flex-wrap: wrap; justify-content: center; }
+  .rail { display: flex; flex-direction: column; gap: 22px; width: 300px; }
+  .faces { display: flex; gap: 14px; }
+  .face { width: 84px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
+  .face .mini { position: relative; width: 84px; height: 84px; border-radius: 50%; overflow: hidden; background: #000;
+                border: 2px solid var(--line-2); }
+  .face.on .mini { border-color: var(--accent); }
+  .face .mini .inner { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
+  .face .mini .inner .anchor, .face .mini .inner .grid { display: none !important; }
+  .face .mini .inner .el { outline: none !important; }
+  .face .cap { font: 11px var(--mono); color: var(--ink-3); }
+  .face.on .cap { color: var(--accent); }
+  .face .mini.empty::after { content: "+"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+                             color: var(--ink-3); font: 300 28px var(--sans); }
   .imgbox { width: 100%; max-width: 1040px; gap: 22px; }
   .imgbox .cols { display: grid; grid-template-columns: 320px 1fr; gap: 40px; align-items: start; }
   .imgbox .opts { display: flex; flex-direction: column; gap: 20px; }
@@ -140,7 +154,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 22:16</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 22:32</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -165,7 +179,22 @@
       <div class="grp" title="Faux bold: text drawn twice with a 1–2 px offset (Roboto has no bold on the watch)."><span class="lbl">Style</span><div class="ctl"><label><input type="checkbox" id="bold"> bold</label></div></div>
       <div class="grp" id="fixednote" hidden style="flex-basis:100%"><div class="ctl"><span class="muted" id="fixednotetxt"></span></div></div>
     </div>
-    <div class="stage-outer"><div id="stage"></div></div>
+    <div class="stage-row">
+      <div class="stage-outer"><div id="stage"></div></div>
+      <div class="rail">
+        <div class="grp"><span class="lbl">Watch faces</span>
+          <div class="faces" id="faces"></div>
+          <span class="muted" id="facenote"></span>
+        </div>
+        <div class="grp box" style="padding:14px 16px"><span class="lbl">Sync to watch</span>
+          <div class="field"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX"></div>
+          <div class="field"><span>API</span><input type="text" id="api" value="https://mlbwatch-server.onrender.com/api/wf"></div>
+          <div class="row"><button class="btn primary" id="save">Save to face</button><button class="btn" id="load">Load</button><button class="btn danger" id="remove">Delete face</button></div>
+          <div class="status" id="syncstatus"></div>
+          <span class="muted">The watch shows the face marked ★ and picks up changes on its next background sync (every 5 min, or long-press the face to sync now).</span>
+        </div>
+      </div>
+    </div>
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
     <div class="imgbox box">
       <div class="grp"><span class="lbl">Background image</span>
@@ -173,7 +202,6 @@
       <div class="cols">
         <div class="grp"><span class="lbl">Preview</span>
           <div class="imgstage" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas><canvas id="imgQ" width="320" height="320"></canvas><div class="parts" id="imgParts"></div></div>
-          <div class="ctl">Shape <span class="cb" id="imgshape"></span></div>
           <div class="ctl" id="imgsizerow">Size <input id="imgsize" type="range" min="30" max="100" step="1" value="100"><span class="muted" id="imgsizev">100%</span></div>
           <div class="ctl">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"></div>
           <div class="ctl" id="imgdragrow">Drag moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Image</button><button type="button" data-m="frame">Frame</button></span></div>
@@ -181,6 +209,7 @@
           <div class="muted">Square and circle can be resized and moved on the dial; the half shapes are fixed to their half. Zoom and dragging the image inside the frame work for every shape. Shown at the chosen colour count with your layout on top.</div>
         </div>
         <div class="opts">
+          <div class="grp" title="The shape of the image frame on the dial."><span class="lbl">Shape</span><div class="ctl"><span class="cb" id="imgshape"></span></div></div>
           <div class="grp"><span class="lbl">Slot</span><div class="ctl"><span class="cb" id="imgslots"></span><button class="btn" id="imguse" hidden>Use this slot on the watch</button></div><div class="muted" id="imgslotnote"></div></div>
           <div class="grp"><span class="lbl">Actions</span>
             <div class="ctl"><label class="btn file" for="imgfile">Choose image…</label><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp" hidden><span class="muted" id="imgfilename">No file chosen</span></div>
@@ -204,18 +233,6 @@
           <button class="btn danger" id="clear">Clear</button>
         </div>
         <div class="status" id="jsonstatus"></div>
-      </div>
-      <div class="box">
-        <span class="lbl">Sync to watch</span>
-        <div class="field"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX" maxlength="40" autocomplete="off"></div>
-        <div class="field"><span>API</span><input type="text" id="api" value="https://mlbwatch-server.onrender.com/api/wf"></div>
-        <div class="row">
-          <button class="btn primary" id="save">Save to server</button>
-          <button class="btn" id="load">Load from server</button>
-          <button class="btn danger" id="remove">Remove</button>
-        </div>
-        <div class="status" id="syncstatus"></div>
-        <span class="muted">The watch face picks up a saved layout on its next background sync (every 5 min, or long-press the face to sync now).</span>
       </div>
     </div>
   </section>
@@ -752,36 +769,100 @@
   // ── Server sync ────────────────────────────────────────────────────────────
   try { $('devid').value = localStorage.getItem('faceComposer.devid') || ''; } catch (e) {}
   const devId = () => { const v = $('devid').value.trim(); try { localStorage.setItem('faceComposer.devid', v); } catch (e) {} return v; };
+  // ── Watch faces: three layouts per device (slot 1-3). The watch always shows the ★ one; saving a
+  // face makes it the ★, so "save" and "switch" are the same action. Clicking a face loads it here.
+  const FACES = { sel: 1, active: 1, faces: {} };
+  function faceLayout(f) {
+    const c = sanitize(f); if (!c) return null;
+    return c;
+  }
+  // Render one saved layout as a small dial (reuses makeEl by swapping `st` while it builds).
+  function renderFaceMini(el, lay) {
+    const d = dev(), sc = 84 / d.w, keep = st;
+    el.innerHTML = ''; el.style.background = hex(lay.bg);
+    const inner = document.createElement('div');
+    inner.className = 'inner';
+    inner.style.width = d.w + 'px'; inner.style.height = d.h + 'px'; inner.style.transform = `scale(${sc})`;
+    try {
+      st = Object.assign({}, keep, lay);
+      lay.el.forEach((e, i) => inner.appendChild(makeEl(e, i, d.w / 454)));
+    } finally { st = keep; }
+    el.appendChild(inner);
+    // makeEl positions elements through positionAll(); do the same maths here
+    inner.querySelectorAll('.el').forEach((div, i) => {
+      const e = lay.el[i]; if (!e) return;
+      const [, x, y, a] = e, px = x * d.w / 1000, py = y * d.h / 1000;
+      const w = div.offsetWidth, h = div.offsetHeight;
+      div.style.left = (a === 1 ? px : a === 2 ? px - w : px - w / 2) + 'px';
+      div.style.top = (py - h / 2) + 'px';
+    });
+  }
+  function renderFaces() {
+    const wrap = $('faces'); wrap.innerHTML = '';
+    for (let n = 1; n <= 3; n++) {
+      const lay = FACES.faces[String(n)], has = !!lay;
+      const d = document.createElement('div');
+      d.className = 'face' + (n === FACES.sel ? ' on' : '');
+      d.innerHTML = `<div class="mini${has ? '' : ' empty'}"></div><span class="cap">${n}${FACES.active === n && has ? ' ★' : ''}</span>`;
+      if (has) { const clean = faceLayout(lay); if (clean) renderFaceMini(d.querySelector('.mini'), clean); }
+      d.addEventListener('click', () => selectFace(n));
+      wrap.appendChild(d);
+    }
+    const cur = FACES.faces[String(FACES.sel)];
+    $('facenote').textContent = cur
+      ? `Face ${FACES.sel}${FACES.active === FACES.sel ? ' — shown on the watch (★)' : ' — saving it puts it on the watch'}`
+      : `Face ${FACES.sel} is empty — build a dial and save it here.`;
+    $('save').textContent = 'Save to face ' + FACES.sel;
+  }
+  // Clicking a face loads it into the editor (an empty one just becomes the target slot).
+  function selectFace(n) {
+    FACES.sel = n;
+    const lay = FACES.faces[String(n)];
+    if (lay) { const c = faceLayout(lay); if (c) { st.bg = c.bg; st.el = c.el; st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; sel = -1; pushBgHist(st.bg); commit(); } }
+    renderFaces();
+  }
+  async function loadFaces(opts) {
+    opts = opts || {};
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { FACES.faces = {}; renderFaces(); return; }
+    try {
+      const r = await fetch($('api').value + '/layouts?device_id=' + encodeURIComponent(id));
+      if (!r.ok) return;
+      const j = await r.json();
+      FACES.faces = j.faces || {}; FACES.active = Number(j.active || 1);
+      if (opts.selectActive) FACES.sel = FACES.active;
+      renderFaces();
+      if (opts.loadIntoEditor && FACES.faces[String(FACES.sel)]) selectFace(FACES.sel);
+    } catch (e) {}
+  }
   $('save').addEventListener('click', async () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('syncstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
     setStatus('syncstatus', 'Saving…');
     try {
-      const r = await fetch($('api').value + '/layout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, layout: layoutObj() }) });
+      const r = await fetch($('api').value + '/layout', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device_id: id, layout: layoutObj(), slot: FACES.sel }) });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || r.status);
-      setStatus('syncstatus', `Saved. Version ${j.v}, ${j.count} elements. The watch applies it within 5 minutes.`, 'ok');
+      setStatus('syncstatus', `Saved to face ${j.slot} (${j.count} elements) and set as the one the watch shows.`, 'ok');
+      loadFaces();
     } catch (e) { setStatus('syncstatus', 'Save failed: ' + e.message, 'err'); }
   });
   $('load').addEventListener('click', async () => {
     const id = devId(); if (!id) return setStatus('syncstatus', 'Enter the Device ID first.', 'err');
     setStatus('syncstatus', 'Loading…');
     try {
-      const r = await fetch($('api').value + '/layout?device_id=' + encodeURIComponent(id));
-      const j = await r.json();
-      if (r.status === 404) return setStatus('syncstatus', 'Nothing saved for this Device ID yet.', '');
-      if (!r.ok) throw new Error(j.error || r.status);
-      const clean = sanitize(j); if (!clean) throw new Error('bad layout');
-      st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; st.ic = clean.ic; st.io = clean.io; st.b = clean.b; sel = -1; pushBgHist(st.bg); commit();
-      setStatus('syncstatus', `Loaded version ${j.v}.`, 'ok');
+      await loadFaces({ selectActive: true, loadIntoEditor: true });
       loadSlots({ selectActive: true });
+      setStatus('syncstatus', Object.keys(FACES.faces).length ? `Loaded face ${FACES.sel}.` : 'Nothing saved for this Device ID yet.', 'ok');
     } catch (e) { setStatus('syncstatus', 'Load failed: ' + e.message, 'err'); }
   });
   $('remove').addEventListener('click', async () => {
     const id = devId(); if (!id) return setStatus('syncstatus', 'Enter the Device ID first.', 'err');
     try {
-      const r = await fetch($('api').value + '/layout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, remove: true }) });
+      const r = await fetch($('api').value + '/layout', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device_id: id, remove: true, slot: FACES.sel }) });
       if (!r.ok) throw new Error(r.status);
-      setStatus('syncstatus', 'Removed from server. The watch keeps its last layout until it is replaced.', 'ok');
+      setStatus('syncstatus', `Deleted face ${FACES.sel}. The watch keeps its last layout until another is saved.`, 'ok');
+      loadFaces();
     } catch (e) { setStatus('syncstatus', 'Remove failed: ' + e.message, 'err'); }
   });
 
@@ -1006,12 +1087,13 @@
       setStatus('imgstatus', `Removed the image in slot ${IMG.sel}.`, 'ok'); loadSlots(); }
     catch (e) { setStatus('imgstatus', 'Remove failed: ' + e.message, 'err'); }
   });
-  $('devid').addEventListener('change', () => loadSlots({ selectActive: true }));
+  $('devid').addEventListener('change', () => { loadSlots({ selectActive: true }); loadFaces({ selectActive: true }); });
   $('imgparts').addEventListener('click', () => { const a = $('imgParts'); a.hidden = !a.hidden; $('imgparts').textContent = a.hidden ? 'Show parts' : 'Hide parts'; });
   setShape('square'); renderSlots(); measure();
 
   render();
   loadSlots({ selectActive: true });
+  loadFaces({ selectActive: true });
 })();
 </script>
 </body>

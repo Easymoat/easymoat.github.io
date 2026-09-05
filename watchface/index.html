@@ -39,12 +39,11 @@
   .stagewrap { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 22px 18px; }
   .stagebar { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: flex-start; justify-content: center;
               width: 100%; max-width: 760px; padding: 12px 18px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
-  .stagebar .grp { display: flex; flex-direction: column; gap: 7px; }
-  .stagebar .grp > .lbl { font-size: 10px; }
-  .stagebar .ctl { display: flex; align-items: center; gap: 10px; min-height: 28px; color: var(--ink-2); font-size: 13px; }
-  .stagebar .ctl label { display: flex; align-items: center; gap: 6px; }
+  .grp { display: flex; flex-direction: column; gap: 7px; }
+  .grp > .lbl { font-size: 10px; }
+  .ctl { display: flex; align-items: center; gap: 10px; min-height: 28px; color: var(--ink-2); font-size: 13px; flex-wrap: wrap; }
+  .ctl label { display: flex; align-items: center; gap: 6px; }
   .stagebar select { height: 28px; }
-  .stagebar .sep { width: 1px; align-self: stretch; background: var(--line); }
   select, input[type=text], input[type=number] { background: var(--panel-2); border: 1px solid var(--line); border-radius: 5px; padding: 5px 8px; color: var(--ink); }
   select:focus, input:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .stage-outer { position: relative; }
@@ -61,8 +60,10 @@
   .el.ghost { opacity: .85; pointer-events: none; }
   .empty { color: var(--ink-3); font-size: 13px; text-align: center; max-width: 34ch; }
   .drawer { width: 100%; max-width: 760px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .imgbox { width: 100%; max-width: 760px; }
-  .imgbox .cols { display: grid; grid-template-columns: 260px 1fr; gap: 16px; align-items: start; }
+  .imgbox { width: 100%; max-width: 760px; gap: 14px; }
+  .imgbox .cols { display: grid; grid-template-columns: 260px 1fr; gap: 22px; align-items: start; }
+  .imgbox .opts { display: flex; flex-direction: column; gap: 16px; }
+  .imgbox .cb button { height: 28px; min-width: 40px; }
   .imgstage { position: relative; width: 260px; height: 260px; border-radius: 50%; background: #000; overflow: hidden; touch-action: none; cursor: grab; }
   .imgstage canvas { width: 260px; height: 260px; display: block; }
   .imgstage #imgQ { position: absolute; left: 0; top: 0; pointer-events: none; }
@@ -152,25 +153,21 @@
     <div class="stage-outer"><div id="stage"></div></div>
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
     <div class="imgbox box">
-      <span class="lbl">Background image</span>
-      <div class="frow">
-        <input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp">
-        <span class="muted">Uses the Device ID above. The image is stored per slot; the active slot shows under the layout on the dial and on the watch.</span>
-      </div>
+      <div class="grp"><span class="lbl">Background image</span>
+        <div class="ctl"><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp"><span class="muted">Stored per slot under the Device ID below. The active slot is drawn under the layout on the dial and on the watch.</span></div></div>
       <div class="cols">
-        <div>
+        <div class="grp"><span class="lbl">Preview</span>
           <div class="imgstage" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas><canvas id="imgQ" width="320" height="320"></canvas><div class="parts" id="imgParts"></div></div>
-          <div class="frow" style="margin-top:8px">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"> <button class="btn" id="imgreset">Reset</button> <button class="btn" id="imgparts">Hide parts</button></div>
-          <div class="muted" style="margin-top:4px">Drag to position, slider to zoom. The circle shows the image at the chosen colour count with your layout on top.</div>
+          <div class="ctl">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"></div>
+          <div class="ctl"><button class="btn" id="imgreset">Reset position</button><button class="btn" id="imgparts">Hide parts</button></div>
+          <div class="muted">Drag to position, slider to zoom. Shown at the chosen colour count with your layout on top.</div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <div class="frow">Colors <span class="cb" id="imgcolors"></span></div>
-          <div class="frow" id="imgbgrow" hidden>Auto background <input id="imgbg" type="range" min="0" max="100" step="1" value="33"> <span id="imgbgsw" style="display:inline-block;width:22px;height:22px;border-radius:5px;border:1px solid var(--line-2)"></span> <span class="muted">(when the watch background is set to Auto)</span></div>
-          <div class="frow"><span class="verdict" id="imgverdict"></span></div>
-          <div class="frow">Slot <span class="cb" id="imgslots"></span> <button class="btn" id="imguse" hidden>Use this slot on the watch</button></div>
-          <div class="muted" id="imgslotnote"></div>
-          <div class="row"><button class="btn" id="imgupload" disabled>Upload to slot</button><button class="btn danger" id="imgremove">Remove image in slot</button></div>
-          <div class="status" id="imgstatus"></div>
+        <div class="opts">
+          <div class="grp" title="Which part of the dial the image fills. The rest shows the background colour."><span class="lbl">Shape</span><div class="ctl"><span class="cb" id="imgshape"></span></div></div>
+          <div class="grp"><span class="lbl">Colors</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div></div>
+          <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span></div></div>
+          <div class="grp"><span class="lbl">Slot</span><div class="ctl"><span class="cb" id="imgslots"></span><button class="btn" id="imguse" hidden>Use this slot on the watch</button></div><div class="muted" id="imgslotnote"></div></div>
+          <div class="grp"><span class="lbl">Actions</span><div class="ctl"><button class="btn" id="imgupload" disabled>Upload to slot</button><button class="btn danger" id="imgremove">Remove image in slot</button></div><div class="status" id="imgstatus"></div></div>
         </div>
       </div>
     </div>
@@ -595,7 +592,10 @@
 
   document.fonts?.ready.then(positionAll);
   // ── Background image (ported from easymoat.com/pulselink/image/; keyed by this Device ID, /api/wf/image*) ──
-  const IMG = { cur: null, panX: 0, panY: 0, zoom: 1, masked: null, colors: 16, bgAuto: 33, sel: 1, reduced: null,
+  // Shapes: the region of the 320 px master the image fills; the PNG is masked to circle ∩ region so
+  // the watch just draws it full screen (the rest is transparent = background colour).
+  const SHAPES = { full: [0, 0, 320, 320], top: [0, 0, 320, 160], bottom: [0, 160, 320, 160], left: [0, 0, 160, 320], right: [160, 0, 160, 320] };
+  const IMG = { cur: null, panX: 0, panY: 0, zoom: 1, masked: null, colors: 16, bgAuto: 33, sel: 1, reduced: null, shape: 'full',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
   const imgApi = () => $('api').value.replace(/\/$/, '');
   const imgCv = $('imgCanvas');
@@ -604,16 +604,25 @@
     if (IMG.activeUrl) { stage.style.backgroundImage = `url("${IMG.activeUrl}")`; stage.style.backgroundSize = 'cover'; stage.style.backgroundPosition = 'center'; }
     else { stage.style.backgroundImage = ''; }
   }
+  function clearImgPreview() {
+    IMG.cur = null; IMG.masked = null; IMG.reduced = null;
+    imgCv.getContext('2d').clearRect(0, 0, 320, 320); $('imgQ').getContext('2d').clearRect(0, 0, 320, 320);
+    $('imgupload').disabled = true; $('imgupload').textContent = 'Upload to slot ' + IMG.sel; $('imgbgrow').hidden = true;
+  }
   function redrawImg() {
     if (!IMG.cur) return;
     const ctx = imgCv.getContext('2d');
-    const base = Math.max(320 / IMG.cur.width, 320 / IMG.cur.height), sc = base * IMG.zoom;
+    const [rx, ry, rw, rh] = SHAPES[IMG.shape] || SHAPES.full;
+    // cover the shape's region, then pan within it (the image must keep covering the region)
+    const base = Math.max(rw / IMG.cur.width, rh / IMG.cur.height), sc = base * IMG.zoom;
     const dw = IMG.cur.width * sc, dh = IMG.cur.height * sc;
-    const maxX = Math.max(0, (dw - 320) / 2), maxY = Math.max(0, (dh - 320) / 2);
+    const maxX = Math.max(0, (dw - rw) / 2), maxY = Math.max(0, (dh - rh) / 2);
     IMG.panX = Math.max(-maxX, Math.min(maxX, IMG.panX)); IMG.panY = Math.max(-maxY, Math.min(maxY, IMG.panY));
-    ctx.clearRect(0, 0, 320, 320); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 320, 320);
-    ctx.drawImage(IMG.cur, (320 - dw) / 2 + IMG.panX, (320 - dh) / 2 + IMG.panY, dw, dh);
-    ctx.globalCompositeOperation = 'destination-in'; ctx.beginPath(); ctx.arc(160, 160, 160, 0, Math.PI * 2); ctx.fill();
+    ctx.clearRect(0, 0, 320, 320); ctx.fillStyle = '#000'; ctx.fillRect(rx, ry, rw, rh);
+    ctx.drawImage(IMG.cur, rx + (rw - dw) / 2 + IMG.panX, ry + (rh - dh) / 2 + IMG.panY, dw, dh);
+    // mask = circle ∩ region
+    ctx.save(); ctx.globalCompositeOperation = 'destination-in'; ctx.beginPath(); ctx.rect(rx, ry, rw, rh); ctx.clip();
+    ctx.beginPath(); ctx.arc(160, 160, 160, 0, Math.PI * 2); ctx.fill(); ctx.restore();
     ctx.globalCompositeOperation = 'source-over';
     IMG.masked = imgCv.toDataURL('image/png');
     IMG.reduced = null; $('imgQ').getContext('2d').clearRect(0, 0, 320, 320);
@@ -633,6 +642,11 @@
     const end = () => { drag = false; }; imgCv.addEventListener('pointerup', end); imgCv.addEventListener('pointercancel', end); })();
   $('imgzoom').addEventListener('input', (e) => { IMG.zoom = parseFloat(e.target.value) || 1; redrawImg(); });
   $('imgreset').addEventListener('click', () => { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1'; redrawImg(); });
+  // shapes
+  [['full', 'Full'], ['top', 'Top half'], ['bottom', 'Bottom half'], ['left', 'Left half'], ['right', 'Right half']].forEach(([k, name]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = name; b.dataset.s = k; b.classList.toggle('on', k === IMG.shape);
+    b.addEventListener('click', () => { setShape(k); IMG.panX = 0; IMG.panY = 0; redrawImg(); }); $('imgshape').appendChild(b); });
+  function setShape(k) { IMG.shape = SHAPES[k] ? k : 'full'; document.querySelectorAll('#imgshape button').forEach((x) => x.classList.toggle('on', x.dataset.s === IMG.shape)); }
   // colours
   [2, 4, 8, 16, 32, 64, 128].forEach((c) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = c; b.dataset.c = c; b.classList.toggle('on', c === IMG.colors);
     b.addEventListener('click', () => { IMG.colors = c; document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === c)); scheduleMeasure(); }); $('imgcolors').appendChild(b); });
@@ -683,7 +697,7 @@
     const w = $('imgslots'); w.innerHTML = '';
     for (let n = 1; n <= 5; n++) { const b = document.createElement('button'); b.type = 'button'; const occ = IMG.state.slots[String(n)] === true, act = IMG.state.active === n;
       b.textContent = n + (act ? ' ★' : occ ? ' ●' : ''); b.classList.toggle('on', n === IMG.sel);
-      b.addEventListener('click', () => { IMG.sel = n; renderSlots(); $('imgupload').textContent = 'Upload to slot ' + n; if (occ) loadSlotImage(n); }); w.appendChild(b); }
+      b.addEventListener('click', () => { IMG.sel = n; renderSlots(); $('imgupload').textContent = 'Upload to slot ' + n; if (occ) loadSlotImage(n); else { clearImgPreview(); $('imgfile').value = ''; } }); w.appendChild(b); }
     const occ = IMG.state.slots[String(IMG.sel)] === true, act = IMG.state.active === IMG.sel;
     $('imgslotnote').textContent = `Slot ${IMG.sel}: ${occ ? 'has an image' : 'empty'}${act ? ' (active on watch)' : ''} · ● = has image / ★ = active`;
     $('imguse').hidden = act; $('imguse').textContent = occ ? 'Use this slot on the watch' : 'Show no image (empty slot)';
@@ -702,6 +716,8 @@
       img.onload = () => { IMG.cur = img; IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1';
         if (meta.colors) { IMG.colors = Number(meta.colors); document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === IMG.colors)); }
         if (meta.bg_auto != null) { IMG.bgAuto = Number(meta.bg_auto); $('imgbg').value = IMG.bgAuto; }
+        // a stored PNG is already masked to its shape: show it as-is (full frame, no re-cropping)
+        setShape('full');
         redrawImg(); URL.revokeObjectURL(url); };
       img.src = url; } catch (e) { setStatus('imgstatus', 'Could not load slot ' + n + ': ' + e.message, 'err'); }
   }
@@ -716,7 +732,7 @@
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('imgstatus', 'Enter the Device ID shown on the watch first.', 'err');
     if (!IMG.masked) return; setStatus('imgstatus', 'Uploading…'); $('imgupload').disabled = true;
     try { const r = await fetch(imgApi() + '/image', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ device_id: id, image: IMG.masked, colors: IMG.colors, palette: computeOptimalPalette(IMG.colors), bg_auto: IMG.bgAuto, slot: IMG.sel }) });
+        body: JSON.stringify({ device_id: id, image: IMG.masked, colors: IMG.colors, palette: computeOptimalPalette(IMG.colors), bg_auto: IMG.bgAuto, slot: IMG.sel, shape: IMG.shape }) });
       const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
       setStatus('imgstatus', `Uploaded to slot ${IMG.sel} (version ${j.version}). The watch picks it up on its next sync.`, 'ok'); loadSlots(); }
     catch (e) { setStatus('imgstatus', 'Upload failed: ' + e.message, 'err'); } finally { $('imgupload').disabled = false; }

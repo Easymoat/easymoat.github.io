@@ -161,7 +161,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 00:39</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 00:49</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -196,7 +196,7 @@
         <div class="grp box" style="padding:14px 16px"><span class="lbl">Sync to watch</span>
           <div class="field"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX"></div>
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
-          <div class="row"><button class="btn primary" id="save">Send to watch</button><button class="btn" id="load">Load</button><button class="btn danger" id="remove">Delete face</button></div>
+          <div class="row"><button class="btn primary" id="save">Send to watch</button><button class="btn danger" id="remove">Delete face</button></div>
           <div class="status" id="syncstatus"></div>
           <span class="muted"><b>Send to watch</b> saves the dial above into the selected face and makes it the one the watch shows (★). The watch picks it up on its next background sync (every 5 min, or long-press the face to sync now).</span>
         </div>
@@ -856,15 +856,6 @@
       setStatus('syncstatus', `Saved to face ${j.slot} (${j.count} elements) and set as the one the watch shows.`, 'ok');
       loadFaces();
     } catch (e) { setStatus('syncstatus', 'Save failed: ' + e.message, 'err'); }
-  });
-  $('load').addEventListener('click', async () => {
-    const id = devId(); if (!id) return setStatus('syncstatus', 'Enter the Device ID first.', 'err');
-    setStatus('syncstatus', 'Loading…');
-    try {
-      await loadFaces({ selectActive: true, loadIntoEditor: true });
-      loadSlots({ selectActive: true });
-      setStatus('syncstatus', Object.keys(FACES.faces).length ? `Loaded face ${FACES.sel}.` : 'Nothing saved for this Device ID yet.', 'ok');
-    } catch (e) { setStatus('syncstatus', 'Load failed: ' + e.message, 'err'); }
   });
   $('remove').addEventListener('click', async () => {
     const id = devId(); if (!id) return setStatus('syncstatus', 'Enter the Device ID first.', 'err');

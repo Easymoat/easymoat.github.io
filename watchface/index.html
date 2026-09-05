@@ -160,13 +160,13 @@
           <div class="imgstage" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas><canvas id="imgQ" width="320" height="320"></canvas><div class="parts" id="imgParts"></div></div>
           <div class="ctl">Drag moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Image</button><button type="button" data-m="frame">Frame</button></span></div>
           <div class="ctl">Image zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"></div>
-          <div class="ctl"><button class="btn" id="imgreset">Reset</button><button class="btn" id="imgparts">Hide parts</button></div>
+          <div class="ctl"><button class="btn" id="imgshow" disabled title="Put the image as it is now under the layout on the dial above (without uploading)">Show on dial</button><button class="btn" id="imgreset">Reset</button><button class="btn" id="imgparts">Hide parts</button></div>
           <div class="muted">The dashed outline is the frame (circle or half circle). Drag to move the image inside it, or switch to Frame to move the frame. Shown at the chosen colour count with your layout on top.</div>
         </div>
         <div class="opts">
           <div class="grp" title="The frame the image fills: a circle or a half circle. Outside the frame the watch shows the background colour."><span class="lbl">Frame</span><div class="ctl"><span class="cb" id="imgshape"></span></div><div class="ctl">Size <input id="imgsize" type="range" min="40" max="160" step="1" value="160"><span class="muted" id="imgsizev">160 px</span></div></div>
           <div class="grp"><span class="lbl">Colors</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div></div>
-          <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span></div></div>
+          <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span><button class="btn" id="imgbgapply" title="Set the dial background colour (sent with the layout) to this colour">Use as dial background</button></div></div>
           <div class="grp"><span class="lbl">Slot</span><div class="ctl"><span class="cb" id="imgslots"></span><button class="btn" id="imguse" hidden>Use this slot on the watch</button></div><div class="muted" id="imgslotnote"></div></div>
           <div class="grp"><span class="lbl">Actions</span><div class="ctl"><button class="btn" id="imgupload" disabled>Upload to slot</button><button class="btn danger" id="imgremove">Remove image in slot</button></div><div class="status" id="imgstatus"></div></div>
         </div>
@@ -579,7 +579,7 @@
       const clean = sanitize(j); if (!clean) throw new Error('bad layout');
       st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; st.b = clean.b; sel = -1; commit();
       setStatus('syncstatus', `Loaded version ${j.v}.`, 'ok');
-      loadSlots();
+      loadSlots({ selectActive: true });
     } catch (e) { setStatus('syncstatus', 'Load failed: ' + e.message, 'err'); }
   });
   $('remove').addEventListener('click', async () => {
@@ -599,19 +599,21 @@
   // it full screen (outside the frame is transparent = background colour).
   const SHAPES = ['full', 'top', 'bottom', 'left', 'right'];
   const IMG = { cur: null, panX: 0, panY: 0, zoom: 1, masked: null, colors: 16, bgAuto: 33, sel: 1, reduced: null, shape: 'full',
-                frame: { cx: 160, cy: 160, r: 160 }, drag: 'image',
+                frame: { cx: 160, cy: 160, r: 160 }, drag: 'image', previewUrl: '', autoBg: '#000000',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
   const imgApi = () => $('api').value.replace(/\/$/, '');
   const imgCv = $('imgCanvas');
   function applyStageImage() {
-    stage.classList.toggle('hasimg', !!IMG.activeUrl);
-    if (IMG.activeUrl) { stage.style.backgroundImage = `url("${IMG.activeUrl}")`; stage.style.backgroundSize = 'cover'; stage.style.backgroundPosition = 'center'; }
+    const url = IMG.previewUrl || IMG.activeUrl;
+    stage.classList.toggle('hasimg', !!url);
+    if (url) { stage.style.backgroundImage = `url("${url}")`; stage.style.backgroundSize = 'cover'; stage.style.backgroundPosition = 'center'; }
     else { stage.style.backgroundImage = ''; }
   }
   function clearImgPreview() {
     IMG.cur = null; IMG.masked = null; IMG.reduced = null;
     imgCv.getContext('2d').clearRect(0, 0, 320, 320); $('imgQ').getContext('2d').clearRect(0, 0, 320, 320);
-    $('imgupload').disabled = true; $('imgupload').textContent = 'Upload to slot ' + IMG.sel; $('imgbgrow').hidden = true;
+    $('imgupload').disabled = true; $('imgupload').textContent = 'Upload to slot ' + IMG.sel; $('imgbgrow').hidden = true; $('imgshow').disabled = true;
+    IMG.previewUrl = ''; applyStageImage();
   }
   // 'clearImgPreview' leaves the frame settings alone so the next image uses them
   // Bounding rect of the frame (the area the image must cover).
@@ -655,7 +657,7 @@
     ctx.restore();
     IMG.masked = imgCv.toDataURL('image/png');
     IMG.reduced = null; $('imgQ').getContext('2d').clearRect(0, 0, 320, 320); drawFrameOutline();
-    $('imgupload').disabled = false; $('imgupload').textContent = 'Upload to slot ' + IMG.sel;
+    $('imgupload').disabled = false; $('imgupload').textContent = 'Upload to slot ' + IMG.sel; $('imgshow').disabled = false;
     $('imgbgrow').hidden = false;
     scheduleMeasure();
   }
@@ -715,9 +717,12 @@
   }
   function currentAutoBg() { return autoBgColorJS(computeOptimalPalette(IMG.colors), IMG.bgAuto); }
   function repaintQuality() {
-    $('imgbgsw').style.background = currentAutoBg();
+    IMG.autoBg = currentAutoBg(); $('imgbgsw').style.background = IMG.autoBg;
     const ctx = $('imgQ').getContext('2d'); ctx.clearRect(0, 0, 320, 320);
+    // outside the frame: the Auto background colour (what the watch shows there when Background = Auto)
+    ctx.save(); ctx.beginPath(); ctx.arc(160, 160, 160, 0, Math.PI * 2); ctx.clip(); ctx.fillStyle = IMG.autoBg; ctx.fillRect(0, 0, 320, 320); ctx.restore();
     if (IMG.reduced) ctx.drawImage(IMG.reduced, 0, 0, 320, 320);   // reduced-colour result over the master
+    else ctx.drawImage(imgCv, 0, 0, 320, 320);
     drawFrameOutline();
   }
   function renderQuality() {
@@ -728,6 +733,13 @@
     repaintQuality();
   }
   $('imgbg').addEventListener('input', (e) => { IMG.bgAuto = parseInt(e.target.value, 10) || 0; repaintQuality(); });
+  $('imgbgapply').addEventListener('click', () => { st.bg = parseInt(IMG.autoBg.slice(1), 16) || 0; commit(); setStatus('imgstatus', `Dial background set to ${IMG.autoBg.toUpperCase()}. Save the layout to send it to the watch.`, 'ok'); });
+  // "Show on dial": the editor image (reduced colours, masked to the frame) under the layout, no upload
+  $('imgshow').addEventListener('click', () => {
+    if (!IMG.cur) return;
+    IMG.previewUrl = (IMG.reduced || imgCv).toDataURL('image/png'); applyStageImage();
+    setStatus('imgstatus', 'Showing the edited image on the dial (not uploaded yet).', 'ok');
+  });
   // slots
   function renderSlots() {
     const w = $('imgslots'); w.innerHTML = '';
@@ -738,12 +750,15 @@
     $('imgslotnote').textContent = `Slot ${IMG.sel}: ${occ ? 'has an image' : 'empty'}${act ? ' (active on watch)' : ''} · ● = has image / ★ = active`;
     $('imguse').hidden = act; $('imguse').textContent = occ ? 'Use this slot on the watch' : 'Show no image (empty slot)';
   }
-  async function loadSlots() {
+  async function loadSlots(opts) {
+    opts = opts || {};
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { IMG.activeUrl = ''; applyStageImage(); return; }
     try { const r = await fetch(imgApi() + '/image-info?device_id=' + encodeURIComponent(id)); if (!r.ok) return; const j = await r.json();
       IMG.state = { slots: j.slots || {}, active: Number(j.active || 1), meta: j.meta || {} };
       IMG.activeUrl = IMG.state.slots[String(IMG.state.active)] ? `${imgApi()}/image/${id.toLowerCase()}_s${IMG.state.active}.png?v=${j.version}` : '';
-      applyStageImage(); renderSlots(); } catch (e) {}
+      IMG.previewUrl = ''; applyStageImage();
+      if (opts.selectActive) { IMG.sel = IMG.state.active; if (IMG.state.slots[String(IMG.sel)]) loadSlotImage(IMG.sel); else clearImgPreview(); }
+      renderSlots(); } catch (e) {}
   }
   async function loadSlotImage(n) {
     const id = devId(); const meta = IMG.state.meta[String(n)] || {};
@@ -780,12 +795,12 @@
       setStatus('imgstatus', `Removed the image in slot ${IMG.sel}.`, 'ok'); loadSlots(); }
     catch (e) { setStatus('imgstatus', 'Remove failed: ' + e.message, 'err'); }
   });
-  $('devid').addEventListener('change', () => loadSlots());
+  $('devid').addEventListener('change', () => loadSlots({ selectActive: true }));
   $('imgparts').addEventListener('click', () => { const a = $('imgParts'); a.hidden = !a.hidden; $('imgparts').textContent = a.hidden ? 'Show parts' : 'Hide parts'; });
   renderSlots(); measure();
 
   render();
-  loadSlots();
+  loadSlots({ selectActive: true });
 })();
 </script>
 </body>

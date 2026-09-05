@@ -158,7 +158,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 23:06</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 23:46</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -787,9 +787,7 @@
   // Render one saved layout as a small dial (reuses makeEl by swapping `st` while it builds).
   function renderFaceMini(el, lay) {
     const d = dev(), sc = 124 / d.w, keep = st;
-    el.innerHTML = ''; el.style.background = hex(lay.bg);
-    // the background image is per device (one active slot), so every face shows the same one
-    el.style.backgroundImage = IMG.activeUrl ? `url("${IMG.activeUrl}")` : '';
+    el.innerHTML = ''; el.style.background = hex(lay.bg);   // faces store the layout only, never the image
     const inner = document.createElement('div');
     inner.className = 'inner';
     inner.style.width = d.w + 'px'; inner.style.height = d.h + 'px'; inner.style.transform = `scale(${sc})`;
@@ -814,9 +812,9 @@
       const d = document.createElement('div');
       d.className = 'face' + (n === FACES.sel ? ' on' : '');
       d.innerHTML = `<div class="mini${has ? '' : ' empty'}"></div><span class="cap">${n}${FACES.active === n && has ? ' ★' : ''}</span>`;
-      if (has) { const clean = faceLayout(lay); if (clean) renderFaceMini(d.querySelector('.mini'), clean); }
       d.addEventListener('click', () => selectFace(n));
       wrap.appendChild(d);
+      if (has) { const clean = faceLayout(lay); if (clean) renderFaceMini(d.querySelector('.mini'), clean); }
     }
     const cur = FACES.faces[String(FACES.sel)];
     $('facenote').textContent = cur
@@ -876,7 +874,7 @@
     } catch (e) { setStatus('syncstatus', 'Remove failed: ' + e.message, 'err'); }
   });
 
-  document.fonts?.ready.then(positionAll);
+  document.fonts?.ready.then(() => { positionAll(); renderFaces(); });
   // ── Background image (ported from easymoat.com/pulselink/image/; keyed by this Device ID, /api/wf/image*) ──
   // src: where the editor image came from — 'file' (chosen by the user; kept while switching slots so it
   // can be uploaded to any slot) or 'slot' (loaded from the server; cleared when an empty slot is picked).
@@ -1060,7 +1058,6 @@
       IMG.state = { slots: j.slots || {}, active: Number(j.active || 1), meta: j.meta || {} };
       IMG.activeUrl = IMG.state.slots[String(IMG.state.active)] ? `${imgApi()}/image/${id.toLowerCase()}_s${IMG.state.active}.png?v=${j.version}` : '';
       IMG.previewUrl = ''; applyStageImage();
-      if (typeof renderFaces === 'function') renderFaces();   // the minis show the same image
       if (opts.selectActive) { IMG.sel = IMG.state.active; if (IMG.state.slots[String(IMG.sel)]) loadSlotImage(IMG.sel); else clearImgPreview(); }
       renderSlots(); } catch (e) {}
   }

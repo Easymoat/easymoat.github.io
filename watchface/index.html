@@ -129,7 +129,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 21:02</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-05 21:40</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -176,7 +176,7 @@
             <div class="ctl"><button class="btn" id="imgupload" disabled>Upload to slot</button><button class="btn danger" id="imgremove">Remove image in slot</button></div>
             <div class="status" id="imgstatus"></div></div>
           <div class="grp"><span class="lbl">Colors</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div></div>
-          <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span><label title="Keep the dial background colour equal to this colour. It follows the image and the slider live."><input type="checkbox" id="imgbgauto"> use as dial background</label></div></div>
+          <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span><button class="btn" id="imgbgapply" title="Copy this colour to the dial background (one-off; the dial is not linked to the image)">Use as dial background</button></div></div>
         </div>
       </div>
     </div>
@@ -906,11 +906,11 @@
   function currentAutoBg() { return autoBgColorJS(computeOptimalPalette(IMG.colors), IMG.bgAuto); }
   function repaintQuality() {
     IMG.autoBg = currentAutoBg(); $('imgbgsw').style.background = IMG.autoBg;
-    applyAutoBg();   // keeps the dial (and this preview) in step with the image and the slider
     const ctx = $('imgQ').getContext('2d'); ctx.clearRect(0, 0, 320, 320);
-    // Outside the image the watch shows the dial background colour, so the preview does the same.
-    // (The Auto colour has its own swatch next to the slider; it is not what the dial shows here.)
-    ctx.save(); ctx.beginPath(); ctx.arc(160, 160, 160, 0, Math.PI * 2); ctx.clip(); ctx.fillStyle = hex(st.bg); ctx.fillRect(0, 0, 320, 320); ctx.restore();
+    // This preview belongs to the image: it shows the Auto colour behind it, so the slider and a new
+    // image are visible here at once. The dial above keeps its own background colour — the two are
+    // deliberately NOT linked; use the button to copy this colour to the dial.
+    ctx.save(); ctx.beginPath(); ctx.arc(160, 160, 160, 0, Math.PI * 2); ctx.clip(); ctx.fillStyle = IMG.autoBg; ctx.fillRect(0, 0, 320, 320); ctx.restore();
     if (IMG.reduced) ctx.drawImage(IMG.reduced, 0, 0, 320, 320);   // reduced-colour result over the master
     else ctx.drawImage(imgCv, 0, 0, 320, 320);
   }
@@ -925,18 +925,9 @@
     repaintQuality();
   }
   $('imgbg').addEventListener('input', (e) => { IMG.bgAuto = parseInt(e.target.value, 10) || 0; repaintQuality(); });
-  // When "use as dial background" is on, the dial colour follows the computed Auto colour live —
-  // changing the image or the Deep/Pale slider updates the preview immediately.
-  function applyAutoBg() {
-    if (!$('imgbgauto').checked) return;
-    const c = parseInt(IMG.autoBg.slice(1), 16) || 0;
-    if (c !== st.bg) { st.bg = c; commit(); }
-  }
-  $('imgbgauto').addEventListener('change', () => {
-    if ($('imgbgauto').checked) { st.bg = parseInt(IMG.autoBg.slice(1), 16) || 0; pushBgHist(st.bg); commit();
-      setStatus('imgstatus', `Dial background follows the image (${IMG.autoBg.toUpperCase()}).`, 'ok'); }
-    else { setStatus('imgstatus', 'Dial background is fixed again — pick it in the toolbar above.', ''); }
-    repaintQuality();   // the preview is painted with st.bg, so redraw it right away
+  $('imgbgapply').addEventListener('click', () => {
+    st.bg = parseInt(IMG.autoBg.slice(1), 16) || 0; pushBgHist(st.bg); commit();
+    setStatus('imgstatus', `Dial background set to ${IMG.autoBg.toUpperCase()}.`, 'ok');
   });
   // "Show on dial": the editor image (reduced colours, masked to the frame) under the layout, no upload
   $('imgshow').addEventListener('click', () => {

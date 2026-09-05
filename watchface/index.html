@@ -37,8 +37,14 @@
   .part .nm { flex: 1; }
   .part .hint { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
   .stagewrap { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 22px 18px; }
-  .stagebar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: center; }
-  .stagebar label { display: flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 13px; }
+  .stagebar { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: flex-start; justify-content: center;
+              width: 100%; max-width: 760px; padding: 12px 18px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+  .stagebar .grp { display: flex; flex-direction: column; gap: 7px; }
+  .stagebar .grp > .lbl { font-size: 10px; }
+  .stagebar .ctl { display: flex; align-items: center; gap: 10px; min-height: 28px; color: var(--ink-2); font-size: 13px; }
+  .stagebar .ctl label { display: flex; align-items: center; gap: 6px; }
+  .stagebar select { height: 28px; }
+  .stagebar .sep { width: 1px; align-self: stretch; background: var(--line); }
   select, input[type=text], input[type=number] { background: var(--panel-2); border: 1px solid var(--line); border-radius: 5px; padding: 5px 8px; color: var(--ink); }
   select:focus, input:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .stage-outer { position: relative; }
@@ -89,14 +95,14 @@
   .seg button { background: transparent; border: 0; padding: 5px 10px; cursor: pointer; color: var(--ink-2); border-right: 1px solid var(--line-2); }
   .seg button:last-child { border-right: 0; }
   .seg button.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
-  .swatches { display: flex; gap: 6px; flex-wrap: wrap; }
-  #bgpick { width: 30px; height: 24px; padding: 0 2px; border: 1px solid var(--line-2); border-radius: 5px; background: var(--panel-2); cursor: pointer; margin-left: 4px; }
-  .pxs { display: inline-flex; gap: 8px; }
-  .pxs .stp { display: inline-flex; align-items: center; gap: 2px; }
-  .pxs .stp .sml { font: 500 11px var(--mono); color: var(--ink-3); width: 12px; text-align: center; }
-  .pxs input { width: 40px; height: 26px; padding: 0 2px; font: 13px var(--mono); text-align: center; -moz-appearance: textfield; }
+  .swatches { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  #bgpick { width: 34px; height: 26px; padding: 0 2px; border: 1px solid var(--line-2); border-radius: 5px; background: var(--panel-2); cursor: pointer; margin-left: 6px; }
+  .pxs { display: inline-flex; gap: 14px; }
+  .pxs .stp { display: inline-flex; align-items: center; gap: 4px; }
+  .pxs .stp .sml { font: 600 11px var(--mono); color: var(--ink-3); width: 14px; text-align: center; margin-right: 2px; }
+  .pxs input { width: 42px; height: 28px; padding: 0 2px; font: 13px var(--mono); text-align: center; -moz-appearance: textfield; }
   .pxs input::-webkit-outer-spin-button, .pxs input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .pxs .step { width: 26px; height: 26px; padding: 0; line-height: 1; font: 600 16px var(--sans); border-radius: 5px; background: var(--panel-2); border: 1px solid var(--line-2); color: var(--ink); cursor: pointer; }
+  .pxs .step { width: 28px; height: 28px; padding: 0; line-height: 1; font: 600 16px var(--sans); border-radius: 5px; background: var(--panel-2); border: 1px solid var(--line-2); color: var(--ink); cursor: pointer; }
   .pxs .step:hover { background: var(--line); } .pxs .step:active { background: var(--line-2); }
   .sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
   .sw.on { border-color: var(--ink); box-shadow: 0 0 0 2px var(--panel); }
@@ -136,13 +142,12 @@
 
   <section class="stagewrap">
     <div class="stagebar">
-      <label>Device <select id="dev"></select></label>
-      <label>Grid <select id="grid"><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select></label>
-      <label><input type="checkbox" id="showgrid" checked> show grid</label>
-      <label>Background <span class="swatches" id="bgsw"></span><input type="color" id="bgpick" title="Any background colour (sent to the watch as bg)" value="#000000"></label>
-      <label title="Text height in px on a 454 dial: S / M / L. Sent to the watch with the layout.">Text <span class="pxs" id="tx"></span></label>
-      <label title="Clock height in px on a 454 dial: S / M / L.">Time <span class="pxs" id="tm"></span></label>
-      <label title="Faux bold: text drawn twice with a 1–2 px offset (Roboto has no bold on the watch)."><input type="checkbox" id="bold"> bold</label>
+      <div class="grp"><span class="lbl">Device</span><div class="ctl"><select id="dev"></select></div></div>
+      <div class="grp"><span class="lbl">Grid</span><div class="ctl"><select id="grid"><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label></div></div>
+      <div class="grp"><span class="lbl">Background</span><div class="ctl"><span class="swatches" id="bgsw"></span><input type="color" id="bgpick" title="Any background colour (sent to the watch as bg)" value="#000000"></div></div>
+      <div class="grp" title="Text height in px on a 454 dial: S / M / L. Sent to the watch with the layout."><span class="lbl">Text size (px)</span><div class="ctl"><span class="pxs" id="tx"></span></div></div>
+      <div class="grp" title="Clock height in px on a 454 dial: S / M / L."><span class="lbl">Time size (px)</span><div class="ctl"><span class="pxs" id="tm"></span></div></div>
+      <div class="grp" title="Faux bold: text drawn twice with a 1–2 px offset (Roboto has no bold on the watch)."><span class="lbl">Style</span><div class="ctl"><label><input type="checkbox" id="bold"> bold</label></div></div>
     </div>
     <div class="stage-outer"><div id="stage"></div></div>
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>

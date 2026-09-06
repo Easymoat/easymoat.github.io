@@ -190,7 +190,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 19:59</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 20:15</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1110,7 +1110,9 @@
     ctx.clearRect(0, 0, 320, 320);
     ctx.save();
     framePath(ctx); ctx.clip();
-    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 320, 320);
+    // No fill behind the picture: anything transparent in the source (e.g. a slot image that was already
+    // cut to a circle) stays transparent, so the watch paints its background colour there instead of
+    // black getting baked into the slot on the next Upload.
     ctx.drawImage(IMG.cur, bx + (bw - dw) / 2 + IMG.panX, by + (bh - dh) / 2 + IMG.panY, dw, dh);
     ctx.restore();
     IMG.masked = imgCv.toDataURL('image/png');
@@ -1244,9 +1246,13 @@
     try { const r = await fetch(`${imgApi()}/image/${id.toLowerCase()}_s${n}.png?t=${Date.now()}`); if (!r.ok) throw new Error('http_' + r.status);
       const url = URL.createObjectURL(await r.blob()); const img = new Image();
       img.onload = () => { IMG.cur = img; IMG.src = 'slot';
-        if (!keep) {   // fresh view of the slot: reset the editor to what is stored
+        if (!keep) {   // fresh view of the slot: reset the editor to what is stored (its frame included)
           IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1';
-          setShape('square'); IMG.size = 100; IMG.cx = 160; IMG.cy = 160; $('imgsize').value = '100'; $('imgsizev').textContent = '100%';
+          const fr = meta.frame && typeof meta.frame === 'object' ? meta.frame : {};
+          setShape(SHAPES.some(([x]) => x === meta.shape) ? meta.shape : 'square');
+          IMG.size = (fr.size >= 30 && fr.size <= 100) ? fr.size : 100;
+          IMG.cx = (fr.cx >= 0 && fr.cx <= 320) ? fr.cx : 160; IMG.cy = (fr.cy >= 0 && fr.cy <= 320) ? fr.cy : 160;
+          $('imgsize').value = IMG.size; $('imgsizev').textContent = IMG.size + '%';
           if (meta.colors) { IMG.colors = Number(meta.colors); document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === IMG.colors)); }
           if (meta.bg_auto != null) { IMG.bgAuto = Number(meta.bg_auto); $('imgbg').value = IMG.bgAuto; }
         }
@@ -1290,7 +1296,8 @@
   // activate=true stores it and makes it the one the watch uses (Sync to watch).
   async function uploadImage(id, slot, activate) {
     const r = await fetch(imgApi() + '/image', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ device_id: id, image: IMG.masked, colors: IMG.colors, palette: computeOptimalPalette(IMG.colors), bg_auto: IMG.bgAuto, slot, activate: !!activate }) });
+      body: JSON.stringify({ device_id: id, image: IMG.masked, colors: IMG.colors, palette: computeOptimalPalette(IMG.colors), bg_auto: IMG.bgAuto, slot, activate: !!activate,
+                             shape: IMG.shape, frame: { cx: Math.round(IMG.cx), cy: Math.round(IMG.cy), size: Math.round(IMG.size) } }) });
     const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
     IMG.src = 'slot'; IMG.dirty = false; $('imgfile').value = ''; $('imgfilename').textContent = 'No file chosen';
     return j;

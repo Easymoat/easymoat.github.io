@@ -73,6 +73,8 @@
      so the send button never disappears below the fold. */
   .stage-row { display: flex; align-items: flex-start; gap: 56px; flex-wrap: wrap-reverse; justify-content: flex-start; width: 100%; max-width: 1040px; }
   .rail { display: flex; flex-direction: column; gap: 20px; width: 410px; }
+  .rail .synchelp { margin: 0; padding-left: 18px; line-height: 1.5; }
+  .rail .synchelp li { margin: 2px 0; }
   .rail .row { flex-wrap: nowrap; }   /* Upload to face and Delete face stay on one line */
   .faces { display: flex; gap: 14px; }
   .face { width: 124px; display: flex; flex-direction: column; align-items: center; gap: 7px; cursor: pointer; }
@@ -170,7 +172,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 11:28</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 13:15</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -209,8 +211,14 @@
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
           <div class="row"><button class="btn primary" id="sync">Sync to watch</button></div>
           <div class="status" id="syncstatus"></div>
-          <span class="muted"><b>Sync to watch</b> puts the dial above on the watch as you see it: the layout (uploaded to the selected face if it changed, ★) and the image — with "Show on dial" ON the image in the editor is used (uploaded to its slot if it changed), with it OFF the watch shows no image. The watch picks it up on its next background sync (every 5 min, or long-press the face to sync now).</span>
         </div>
+        <ul class="muted synchelp">
+          <li><b>Sync to watch</b> puts the dial above on the watch as you see it.</li>
+          <li>Layout: the selected face (★). If you changed it, it is uploaded to that face first.</li>
+          <li>Image with "Show on dial" ON: the image in the editor (uploaded to its slot first if it changed).</li>
+          <li>Image with "Show on dial" OFF: the watch shows no image.</li>
+          <li>The watch picks it up on its next background sync (every 5 min, or long-press the face to sync now).</li>
+        </ul>
       </div>
     </div>
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
@@ -1137,7 +1145,7 @@
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('imgstatus', 'Enter the Device ID shown on the watch first.', 'err');
     if (!IMG.masked) return; setStatus('imgstatus', 'Uploading…'); $('imgupload').disabled = true;
     try { const j = await uploadImage(id, IMG.sel, false);
-      setStatus('imgstatus', `Stored in slot ${IMG.sel} (version ${j.version}). Sync to watch (top right) puts it on the watch.`, 'ok'); loadSlots(); }
+      setStatus('imgstatus', `Stored in slot ${IMG.sel}. Sync to watch (top right) puts it on the watch.`, 'ok'); loadSlots(); }
     catch (e) { setStatus('imgstatus', 'Upload failed: ' + e.message, 'err'); } finally { $('imgupload').disabled = false; }
   });
   $('imgremove').addEventListener('click', async () => {

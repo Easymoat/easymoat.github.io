@@ -190,7 +190,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 20:46</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 00:52</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1158,10 +1158,11 @@
   $('imgreset').addEventListener('click', () => { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; IMG.size = 100; IMG.cx = 160; IMG.cy = 160;
     $('imgzoom').value = '1'; $('imgsize').value = '100'; $('imgsizev').textContent = '100%'; redrawImg(); });
   // colours
-  [2, 4, 8, 16, 32, 64, 128].forEach((c) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = c; b.dataset.c = c; b.classList.toggle('on', c === IMG.colors);
+  const COLOR_STEPS = [2, 4, 8, 16, 32];   // a watch face cannot fetch more than 32 colours (fr965 measured, 2026-09-07)
+  COLOR_STEPS.forEach((c) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = c; b.dataset.c = c; b.classList.toggle('on', c === IMG.colors);
     b.addEventListener('click', () => { IMG.colors = c; IMG.dirty = true; document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === c)); scheduleMeasure(); }); $('imgcolors').appendChild(b); });
   // size / colour verdict (decoded bitmap = px² × bpp / 8; fr965: ≤150 KB safe, >210 KB fails). Watch faces: 16 colours at 320 px is the safe zone.
-  const bppFor = (c) => c <= 2 ? 1 : c <= 4 ? 2 : c <= 16 ? 4 : 8;
+  const bppFor = (c) => c <= 2 ? 1 : c <= 4 ? 2 : c <= 16 ? 4 : 8;   // decoded bitmap on the watch; 32 colours = 8 bpp
   let measureTimer = null;
   function scheduleMeasure() { clearTimeout(measureTimer); measureTimer = setTimeout(measure, 180); }
   function measure() {
@@ -1205,12 +1206,12 @@
   }
   function renderQuality() {
     IMG.reduced = null;
-    if (typeof RgbQuant !== 'undefined') { try { const q = new RgbQuant({ colors: IMG.colors, dithKern: 'FloydSteinberg', dithSerp: true }); q.sample(imgCv); const out = q.reduce(imgCv);
+    if (typeof RgbQuant !== 'undefined') { try { const q = new RgbQuant({ colors: IMG.colors, dithKern: 'FloydSteinberg', dithSerp: true }); q.sample(imgCv); const out = q.reduce(imgCv); const pal = q.palette(true);
       const t = document.createElement('canvas'); t.width = 320; t.height = 320; const tc = t.getContext('2d'); const id = tc.createImageData(320, 320); id.data.set(out); tc.putImageData(id, 0, 0);
       // RgbQuant.reduce() returns opaque pixels everywhere, so restore the master's transparency —
       // otherwise a shrunk image paints its colour over the whole dial and the background never shows.
       tc.globalCompositeOperation = 'destination-in'; tc.drawImage(imgCv, 0, 0); tc.globalCompositeOperation = 'source-over';
-      IMG.reduced = t; } catch (e) { IMG.reduced = null; } }
+      IMG.reduced = t; IMG.reducedPal = pal.map((c) => (c[0] << 16) | (c[1] << 8) | c[2]); } catch (e) { IMG.reduced = null; IMG.reducedPal = null; } }
     applyStageImage();                 // and again once the reduced-colour version is ready
     repaintQuality();
   }
@@ -1295,7 +1296,7 @@
     IMG.cx = Number.isFinite(d.cx) ? d.cx : 160; IMG.cy = Number.isFinite(d.cy) ? d.cy : 160;
     IMG.panX = Number(d.panX) || 0; IMG.panY = Number(d.panY) || 0;
     IMG.zoom = Math.max(1, Math.min(3, Number(d.zoom) || 1)); $('imgzoom').value = IMG.zoom;
-    if ([2, 4, 8, 16, 32, 64, 128].includes(d.colors)) { IMG.colors = d.colors; document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === IMG.colors)); }
+    if (COLOR_STEPS.includes(d.colors)) { IMG.colors = d.colors; document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === IMG.colors)); }
     IMG.bgAuto = Math.max(0, Math.min(100, Number(d.bgAuto) || 0)); $('imgbg').value = IMG.bgAuto;
     IMG.show = d.show !== false;
     renderSlots(); renderShowToggle();
@@ -1311,8 +1312,14 @@
   // Upload the editor image to a slot. activate=false stores it only (the Upload button);
   // activate=true stores it and makes it the one the watch uses (Sync to watch).
   async function uploadImage(id, slot, activate) {
+    // Send the reduced (dithered) picture, not the full-colour master: the watch then receives exactly the
+    // preview, and the palette below is the one those pixels use, so the Garmin proxy has nothing to re-quantise.
+    // (Before 2026-09-07 the master went up and only the palette changed with the colour count.)
+    if (!IMG.reduced) renderQuality();
+    const png = (IMG.reduced || imgCv).toDataURL('image/png');
+    const palette = (IMG.reduced && IMG.reducedPal && IMG.reducedPal.length >= 2) ? IMG.reducedPal : computeOptimalPalette(IMG.colors);
     const r = await fetch(imgApi() + '/image', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ device_id: id, image: IMG.masked, colors: IMG.colors, palette: computeOptimalPalette(IMG.colors), bg_auto: IMG.bgAuto, slot, activate: !!activate,
+      body: JSON.stringify({ device_id: id, image: png, colors: IMG.colors, palette, bg_auto: IMG.bgAuto, slot, activate: !!activate,
                              shape: IMG.shape, frame: { cx: Math.round(IMG.cx), cy: Math.round(IMG.cy), size: Math.round(IMG.size) } }) });
     const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
     IMG.src = 'slot'; IMG.dirty = false; IMG.fromSlot = slot; $('imgfile').value = ''; $('imgfilename').textContent = 'No file chosen';

@@ -24,6 +24,10 @@
   header .sub { color: var(--ink-2); font-size: 13px; }
   header .spacer { flex: 1; }
   .lbl { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
+  .tier { display: flex; align-items: baseline; gap: 12px; width: 100%; max-width: 1040px; margin: 6px 0 -6px; }
+  .tier .num { font: 600 13px var(--mono); color: var(--accent); }
+  .tier .name { font-size: 15px; font-weight: 600; color: var(--ink); letter-spacing: .02em; }
+  .tier .what { font-size: 12px; color: var(--ink-3); }
   main { display: grid; grid-template-columns: 200px minmax(0, 1fr) 230px; gap: 0; min-height: calc(100vh - 52px); }
   aside { background: var(--panel); border-right: 1px solid var(--line); padding: 20px 18px; display: flex; flex-direction: column; gap: 18px; }
   aside.right { border-right: 0; border-left: 1px solid var(--line); }
@@ -205,7 +209,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 01:32</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 05:54</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -220,10 +224,11 @@
   </aside>
 
   <section class="stagewrap">
+    <div class="tier"><span class="num">1</span><span class="name">Layout</span><span class="what">Build the dial: parts, sizes, colours</span></div>
     <div class="stagebar">
       <div class="grp"><span class="lbl">Device</span><div class="ctl"><select id="dev"></select></div></div>
       <div class="grp"><span class="lbl">Grid</span><div class="ctl"><select id="grid"><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label></div></div>
-      <div class="grp" id="selgrp"><span class="lbl">Selected</span><div id="insp"><span class="muted">Click an element on the dial.</span></div></div>
+      <div class="grp" id="selgrp"><span class="lbl">Selected part</span><div id="insp"><span class="muted">Click an element on the dial.</span></div></div>
       <div class="grp" id="fixednote" hidden style="flex-basis:100%"><div class="ctl"><span class="muted" id="fixednotetxt"></span></div></div>
     </div>
     <div class="stage-row">
@@ -247,8 +252,9 @@
       </div>
     </div>
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
+    <div class="tier"><span class="num">2</span><span class="name">Photo</span><span class="what">Pick a photo and frame it for the dial</span></div>
     <div class="imgbox box">
-      <div class="grp"><span class="lbl">Background image</span>
+      <div class="grp"><span class="lbl">Photo</span>
         <div class="ctl"><span class="muted">1. add a photo (kept as is, up to 10) &nbsp;·&nbsp; 2. pick it &nbsp;·&nbsp; 3. adjust the frame, zoom and colours (the dial above previews it live while "Show on dial" is ON). The cut-out is made only when you Sync or Save to collection, so the photo can always be adjusted again.</span></div></div>
       <div class="cols">
         <div class="grp"><span class="lbl">Preview</span>
@@ -270,6 +276,7 @@
       </div>
       <div class="muted">Square and circle can be resized and moved on the dial; the half shapes are fixed to their half. Zoom and dragging the image inside the frame work for every shape. Shown at the chosen colour count with your layout on top.</div>
     </div>
+    <div class="tier"><span class="num">3</span><span class="name">Collection</span><span class="what">Send the dial to the watch and keep finished dials</span></div>
     <div class="shelfbox box">
       <div class="grp"><span class="lbl">Collection</span>
         <div class="ctl"><span class="muted"><b>Sync to watch</b> sends the dial above (layout + the photo as framed) to the watch. <b>Save to collection</b> keeps that same dial here as one item, so it stays available even after you change the dial or the photos. Each item can be loaded back or sent to the watch.</span></div></div>

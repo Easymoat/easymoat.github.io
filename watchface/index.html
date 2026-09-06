@@ -170,7 +170,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 01:18</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 10:50</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -207,21 +207,21 @@
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
           <div class="row"><button class="btn primary" id="save">Send to watch</button><button class="btn danger" id="remove">Delete face</button></div>
           <div class="status" id="syncstatus"></div>
-          <span class="muted"><b>Send to watch</b> saves the dial above into the selected face and makes it the one the watch shows (★). The watch picks it up on its next background sync (every 5 min, or long-press the face to sync now).</span>
+          <span class="muted"><b>Send to watch</b> puts the dial above on the watch: the layout is saved into the selected face (★), and the image is applied as shown — with "Show on dial" ON the image in the editor goes to its slot and is used, with it OFF the watch shows no image. The watch picks it up on its next background sync (every 5 min, or long-press the face to sync now).</span>
         </div>
       </div>
     </div>
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
     <div class="imgbox box">
       <div class="grp"><span class="lbl">Background image</span>
-        <div class="ctl"><span class="muted">1. pick a slot &nbsp;·&nbsp; 2. choose an image &nbsp;·&nbsp; 3. adjust it (the dial above previews it live while "Show on dial" is ON) &nbsp;·&nbsp; 4. Upload sends it to the watch. Stored per slot under the Device ID.</span></div></div>
+        <div class="ctl"><span class="muted">1. pick a slot &nbsp;·&nbsp; 2. choose an image &nbsp;·&nbsp; 3. adjust it (the dial above previews it live while "Show on dial" is ON) &nbsp;·&nbsp; 4. Upload stores it in the slot. <b>Send to watch</b> (top right) is what puts the dial, image included, on the watch. Stored per slot under the Device ID.</span></div></div>
       <div class="cols">
         <div class="grp"><span class="lbl">Preview</span>
           <div class="imgstage" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas><canvas id="imgQ" width="320" height="320"></canvas><div class="parts" id="imgParts"></div></div>
           <div class="ctl" id="imgsizerow">Size <input id="imgsize" type="range" min="30" max="100" step="1" value="100"><span class="muted" id="imgsizev">100%</span></div>
           <div class="ctl">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"></div>
           <div class="ctl" id="imgdragrow">Drag moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Image</button><button type="button" data-m="frame">Frame</button></span></div>
-          <div class="ctl"><button class="btn toggle on" id="imgshow" disabled title="Preview: while ON, the dial above shows the image exactly as it is here (frame, size, zoom, colours). Upload to send it to the watch.">Show on dial: ON</button><button class="btn" id="imgreset">Reset</button><button class="btn" id="imgparts">Hide parts</button></div>
+          <div class="ctl"><button class="btn toggle on" id="imgshow" disabled title="While ON, the dial above shows the image exactly as it is here (frame, size, zoom, colours) and Send to watch applies it. While OFF, Send to watch turns the image off on the watch.">Show on dial: ON</button><button class="btn" id="imgreset">Reset</button><button class="btn" id="imgparts">Hide parts</button></div>
           <div class="muted">Square and circle can be resized and moved on the dial; the half shapes are fixed to their half. Zoom and dragging the image inside the frame work for every shape. Shown at the chosen colour count with your layout on top.</div>
         </div>
         <div class="opts">
@@ -229,7 +229,7 @@
           <div class="grp"><span class="lbl">Slot</span><div class="ctl"><span class="cb" id="imgslots"></span></div><div class="muted" id="imgslotnote"></div></div>
           <div class="grp"><span class="lbl">Actions</span>
             <div class="ctl"><label class="btn file" for="imgfile">Choose image…</label><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp" hidden><span class="muted" id="imgfilename">No file chosen</span></div>
-            <div class="ctl"><button class="btn primary" id="imgupload" disabled>Upload &amp; use on watch</button><button class="btn danger" id="imgremove">Remove image in slot</button><button class="btn" id="imgoff" hidden title="Keep the slots but show no image on the watch">Image off on watch</button></div>
+            <div class="ctl"><button class="btn primary" id="imgupload" disabled title="Stores the image in the slot only. Send to watch (top right) applies it on the watch.">Upload to slot</button><button class="btn danger" id="imgremove">Remove image in slot</button></div>
             <div class="status" id="imgstatus"></div></div>
           <div class="grp"><span class="lbl">Colors</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div></div>
           <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span><button class="btn" id="imgbgapply" title="Copy this colour to the dial background (one-off; the dial is not linked to the image)">Use as dial background</button></div></div>
@@ -860,15 +860,18 @@
   }
   $('save').addEventListener('click', async () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('syncstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
-    setStatus('syncstatus', 'Saving…');
+    setStatus('syncstatus', 'Sending…');
     try {
       const r = await fetch($('api').value + '/layout', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ device_id: id, layout: layoutObj(), slot: FACES.sel }) });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || r.status);
-      setStatus('syncstatus', `Saved to face ${j.slot} (${j.count} elements) and set as the one the watch shows.`, 'ok');
+      let imgMsg = '';
+      try { imgMsg = await sendImageToWatch(id); loadSlots(); }
+      catch (e) { setStatus('syncstatus', `Face ${j.slot} saved, but the image failed: ${e.message}`, 'err'); loadFaces(); return; }
+      setStatus('syncstatus', `Sent: face ${j.slot} (${j.count} elements), ${imgMsg}. The watch shows it on its next sync.`, 'ok');
       loadFaces();
-    } catch (e) { setStatus('syncstatus', 'Save failed: ' + e.message, 'err'); }
+    } catch (e) { setStatus('syncstatus', 'Send failed: ' + e.message, 'err'); }
   });
   $('remove').addEventListener('click', async () => {
     const id = devId(); if (!id) return setStatus('syncstatus', 'Enter the Device ID first.', 'err');
@@ -892,7 +895,7 @@
   // bounding box and can be panned inside it; outside the frame stays transparent = background colour.
   const SHAPES = [['square', 'Square'], ['circle', 'Circle'], ['top', 'Top half'], ['bottom', 'Bottom half'], ['left', 'Left half'], ['right', 'Right half']];
   const CAN_SIZE = ['square', 'circle'];   // the half shapes are fixed
-  const IMG = { cur: null, src: null, shape: 'square', size: 100, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 16, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
+  const IMG = { cur: null, src: null, dirty: false, shape: 'square', size: 100, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 16, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
   const imgApi = () => $('api').value.replace(/\/$/, '');
   const imgCv = $('imgCanvas');
@@ -950,7 +953,8 @@
     IMG.masked = imgCv.toDataURL('image/png');
     applyStageImage();                 // live: the dial follows every edit at once
     IMG.reduced = null; $('imgQ').getContext('2d').clearRect(0, 0, 320, 320);
-    $('imgupload').disabled = false; $('imgupload').textContent = `Upload & use on watch (slot ${IMG.sel})`; renderShowToggle();
+    $('imgupload').disabled = false; $('imgupload').textContent = `Upload to slot ${IMG.sel}`; renderShowToggle();
+    IMG.dirty = true;                  // differs from what the slot holds until it is uploaded
     $('imgbgrow').hidden = false;
     scheduleMeasure();
   }
@@ -986,7 +990,7 @@
     $('imgzoom').value = '1'; $('imgsize').value = '100'; $('imgsizev').textContent = '100%'; redrawImg(); });
   // colours
   [2, 4, 8, 16, 32, 64, 128].forEach((c) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = c; b.dataset.c = c; b.classList.toggle('on', c === IMG.colors);
-    b.addEventListener('click', () => { IMG.colors = c; document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === c)); scheduleMeasure(); }); $('imgcolors').appendChild(b); });
+    b.addEventListener('click', () => { IMG.colors = c; IMG.dirty = true; document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === c)); scheduleMeasure(); }); $('imgcolors').appendChild(b); });
   // size / colour verdict (decoded bitmap = px² × bpp / 8; fr965: ≤150 KB safe, >210 KB fails). Watch faces: 16 colours at 320 px is the safe zone.
   const bppFor = (c) => c <= 2 ? 1 : c <= 4 ? 2 : c <= 16 ? 4 : 8;
   let measureTimer = null;
@@ -1037,7 +1041,7 @@
     applyStageImage();                 // and again once the reduced-colour version is ready
     repaintQuality();
   }
-  $('imgbg').addEventListener('input', (e) => { IMG.bgAuto = parseInt(e.target.value, 10) || 0; repaintQuality(); });
+  $('imgbg').addEventListener('input', (e) => { IMG.bgAuto = parseInt(e.target.value, 10) || 0; IMG.dirty = true; repaintQuality(); });
   $('imgbgapply').addEventListener('click', () => {
     st.bg = parseInt(IMG.autoBg.slice(1), 16) || 0; pushBgHist(st.bg); commit();
     setStatus('imgstatus', `Dial background set to ${IMG.autoBg.toUpperCase()}.`, 'ok');
@@ -1047,14 +1051,6 @@
     b.disabled = !IMG.cur;
   }
   $('imgshow').addEventListener('click', () => { IMG.show = !IMG.show; renderShowToggle(); applyStageImage(); });
-  // "Image off on watch": the server keeps the slots but the watch shows no image (slot 0).
-  $('imgoff').addEventListener('click', async () => {
-    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('imgstatus', 'Enter the Device ID first.', 'err');
-    try { const r = await fetch(imgApi() + '/image-slot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, slot: 0 }) });
-      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
-      setStatus('imgstatus', 'The watch now shows no image (the slots are kept).', 'ok'); loadSlots(); }
-    catch (e) { setStatus('imgstatus', 'Failed: ' + e.message, 'err'); }
-  });
   // slots
   function renderSlots() {
     const w = $('imgslots'); w.innerHTML = '';
@@ -1068,8 +1064,7 @@
       }); w.appendChild(b); }
     const occ = IMG.state.slots[String(IMG.sel)] === true, act = IMG.state.active === IMG.sel;
     $('imgslotnote').textContent = `Slot ${IMG.sel}: ${occ ? 'has an image' : 'empty'}${act ? ' (on the watch)' : ''} · ● = has image / ★ = on the watch`;
-    $('imgupload').textContent = `Upload & use on watch (slot ${IMG.sel})`;
-    $('imgoff').hidden = !(IMG.state.active > 0);
+    $('imgupload').textContent = `Upload to slot ${IMG.sel}`;
   }
   async function loadSlots(opts) {
     opts = opts || {};
@@ -1089,16 +1084,35 @@
         setShape('square'); IMG.size = 100; IMG.cx = 160; IMG.cy = 160; $('imgsize').value = '100'; $('imgsizev').textContent = '100%';
         if (meta.colors) { IMG.colors = Number(meta.colors); document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === IMG.colors)); }
         if (meta.bg_auto != null) { IMG.bgAuto = Number(meta.bg_auto); $('imgbg').value = IMG.bgAuto; }
-        redrawImg(); URL.revokeObjectURL(url); };
+        redrawImg(); IMG.dirty = false; URL.revokeObjectURL(url); };   // as stored: nothing to re-upload
       img.src = url; } catch (e) { setStatus('imgstatus', 'Could not load slot ' + n + ': ' + e.message, 'err'); }
+  }
+  // Upload the editor image to a slot. activate=false stores it only (the Upload button);
+  // activate=true stores it and makes it the one the watch uses (Send to watch).
+  async function uploadImage(id, slot, activate) {
+    const r = await fetch(imgApi() + '/image', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ device_id: id, image: IMG.masked, colors: IMG.colors, palette: computeOptimalPalette(IMG.colors), bg_auto: IMG.bgAuto, slot, activate: !!activate }) });
+    const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
+    IMG.src = 'slot'; IMG.dirty = false; $('imgfile').value = ''; $('imgfilename').textContent = 'No file chosen';
+    return j;
+  }
+  // Which slot the watch should use: the editor's slot while "Show on dial" is ON, none while OFF.
+  async function setWatchImageSlot(id, slot) {
+    const r = await fetch(imgApi() + '/image-slot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, slot }) });
+    const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
+    return j;
+  }
+  // Apply the image exactly as the dial above shows it (called by Send to watch). Returns a status phrase.
+  async function sendImageToWatch(id) {
+    if (!(IMG.show && IMG.cur && IMG.masked)) { await setWatchImageSlot(id, 0); return 'no image'; }
+    if (IMG.dirty) { await uploadImage(id, IMG.sel, true); return `image uploaded to slot ${IMG.sel} and used`; }
+    await setWatchImageSlot(id, IMG.sel); return `image slot ${IMG.sel} used`;
   }
   $('imgupload').addEventListener('click', async () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('imgstatus', 'Enter the Device ID shown on the watch first.', 'err');
     if (!IMG.masked) return; setStatus('imgstatus', 'Uploading…'); $('imgupload').disabled = true;
-    try { const r = await fetch(imgApi() + '/image', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ device_id: id, image: IMG.masked, colors: IMG.colors, palette: computeOptimalPalette(IMG.colors), bg_auto: IMG.bgAuto, slot: IMG.sel }) });
-      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
-      setStatus('imgstatus', `Uploaded to slot ${IMG.sel} (version ${j.version}). The watch picks it up on its next sync.`, 'ok'); IMG.src = 'slot'; $('imgfile').value = ''; $('imgfilename').textContent = 'No file chosen'; loadSlots(); }
+    try { const j = await uploadImage(id, IMG.sel, false);
+      setStatus('imgstatus', `Stored in slot ${IMG.sel} (version ${j.version}). Send to watch (top right) puts it on the watch.`, 'ok'); loadSlots(); }
     catch (e) { setStatus('imgstatus', 'Upload failed: ' + e.message, 'err'); } finally { $('imgupload').disabled = false; }
   });
   $('imgremove').addEventListener('click', async () => {

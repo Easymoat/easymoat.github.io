@@ -25,7 +25,9 @@
   header .spacer { flex: 1; }
   .lbl { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
   .tier { display: flex; align-items: baseline; gap: 12px; width: 100%; max-width: 1040px; margin: 6px 0 -6px; }
-  .box > .tier { margin: 0 0 -2px; }   /* inside a box: sits at the top edge of the frame */
+  /* Tiers 2 and 3 are not boxes: just a dividing line above each, then the heading */
+  .imgbox.box, .shelfbox.box { background: none; border: 0; border-top: 1px solid var(--line); border-radius: 0; padding: 22px 0 0; }
+  .box > .tier { margin: 0 0 2px; }
   .tier .num { font: 600 13px var(--mono); color: var(--accent); }
   .tier .name { font-size: 15px; font-weight: 600; color: var(--ink); letter-spacing: .02em; }
   .tier .what { font-size: 12px; color: var(--ink-3); }
@@ -210,7 +212,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 06:03</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 06:07</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>

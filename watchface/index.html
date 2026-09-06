@@ -83,7 +83,6 @@
   .stage-col { display: flex; flex-direction: column; flex: none; gap: 24px; }
   .synchelp { margin: 0; padding-left: 18px; line-height: 1.5; }
   .synchelp li { margin: 2px 0; }
-  #synchelpL { width: 520px; }
   .rail .row { flex-wrap: nowrap; }   /* Upload to face and Delete face stay on one line */
   .faces { display: flex; gap: 14px; }
   .face { width: 124px; display: flex; flex-direction: column; align-items: center; gap: 7px; cursor: pointer; }
@@ -151,13 +150,13 @@
   .swatches { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   #bgpick { width: 34px; height: 26px; padding: 0 2px; border: 1px solid var(--line-2); border-radius: 5px; background: var(--panel-2); cursor: pointer; margin-right: 6px; }
   .pxs { display: inline-flex; gap: 18px; }
-  .pxs .stp { display: inline-flex; align-items: center; gap: 6px; }
-  .pxs .stp .sml { font: 600 11px var(--mono); color: var(--ink-3); width: 14px; text-align: center; margin-right: 2px; }
-  .pxs input { width: 42px; height: 28px; padding: 0 2px; font: 13px var(--mono); text-align: center; -moz-appearance: textfield;
+  .stp { display: inline-flex; align-items: center; gap: 6px; }
+  .stp .sml { font: 600 11px var(--mono); color: var(--ink-3); width: 14px; text-align: center; margin-right: 2px; }
+  .pxs input, .stp input { width: 42px; height: 28px; padding: 0 2px; font: 13px var(--mono); text-align: center; -moz-appearance: textfield;
                background: var(--panel-2); border: 2px solid var(--line-2); border-radius: 5px; color: var(--ink); }
-  .pxs input::-webkit-outer-spin-button, .pxs input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .pxs .step { width: 28px; height: 28px; padding: 0; line-height: 1; font: 600 16px var(--sans); border-radius: 5px; background: var(--panel-2); border: 2px solid var(--ink-3); color: var(--ink); cursor: pointer; }
-  .pxs .step:hover { background: var(--line); } .pxs .step:active { background: var(--line-2); }
+  .pxs input::-webkit-outer-spin-button, .pxs input::-webkit-inner-spin-button, .stp input::-webkit-outer-spin-button, .stp input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .pxs .step, .stp .step { width: 28px; height: 28px; padding: 0; line-height: 1; font: 600 16px var(--sans); border-radius: 5px; background: var(--panel-2); border: 2px solid var(--ink-3); color: var(--ink); cursor: pointer; }
+  .pxs .step:hover, .stp .step:hover { background: var(--line); } .pxs .step:active, .stp .step:active { background: var(--line-2); }
   .sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line-2); cursor: pointer; padding: 0; box-sizing: border-box; }
   .sw.on { border-color: var(--panel); box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); transform: scale(1.1); }
   .kbd { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
@@ -181,7 +180,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 14:03</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 14:14</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -205,9 +204,6 @@
     <div class="stage-row">
       <div class="stage-col">
         <div class="stage-outer"><div id="stage"></div></div>
-        <ul class="muted synchelp" id="synchelpL">
-          <li><b>Sync to watch</b> puts the dial above on the watch as you see it.</li>
-        </ul>
       </div>
       <div class="rail">
         <div class="grp"><span class="lbl">Watch faces</span>
@@ -223,6 +219,7 @@
           <div class="status" id="syncstatus"></div>
         </div>
         <ul class="muted synchelp" id="synchelpR">
+          <li><b>Sync to watch</b> puts the dial above on the watch as you see it.</li>
           <li>The watch picks it up on its next background sync (every 5 min, or long-press the face to sync now).</li>
         </ul>
       </div>

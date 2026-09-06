@@ -186,7 +186,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 16:05</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 18:08</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -318,6 +318,10 @@
     22: { name: 'Wind km/h', grp: 'wx',    sample: '12',     icon: 'wind',      iw: 26 },
     23: { name: 'Pressure',  grp: 'wx',    sample: '1013',   icon: 'pressure',  iw: 26 },
     24: { name: 'Altitude',  grp: 'wx',    sample: '45m',    icon: 'altitude',  iw: 30 },
+    // 27-29 = Open-Meteo forecast fetched by the watch's background service (server /api/wf/forecast), 2026-09-06
+    27: { name: 'Today hi/lo', grp: 'wx',  sample: '31°/24°', icon: 'hilo',     iw: 16 },
+    28: { name: 'Rain today', grp: 'wx',   sample: '40%',    icon: 'umbrella',  iw: 26 },
+    29: { name: 'Next 3h',   grp: 'wx',    sample: '29°',    icon: 'weather',   iw: 34, strip: 3 },
     25: { name: 'Precip %',  grp: 'wx',    sample: '40%',    icon: 'umbrella',  iw: 26 },
     26: { name: 'Moon age',  grp: 'wx',    sample: moonAgeStr(), icon: 'moon',  iw: 26 },
     40: { name: 'Notifications', grp: 'clock', sample: '3',  icon: 'bell',      iw: 26 },
@@ -515,6 +519,7 @@
     stress:   () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="2"/><polygon points="4,-10 -5,1 0,1 -4,10 5,-1 0,-1" fill="currentColor"/></svg>`,
     breath:   () => { const pts = []; for (let i = 0; i <= 13; i++) { const x = -13 + 2 * i; pts.push(`${x},${(-10 * Math.sin(2 * Math.PI * (x + 13) / 26)).toFixed(2)}`); }
                       return `<svg width="26" height="26" viewBox="-13 -13 26 26"><polyline points="${pts.join(' ')}" ${sw} stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></svg>`; },
+    hilo:     () => `<svg width="16" height="26" viewBox="-8 -13 16 26"><polygon points="0,-11 8,-2 -8,-2" fill="currentColor"/><polygon points="-8,2 8,2 0,11" fill="currentColor"/></svg>`,
     umbrella: () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><path d="M-12,-1 A12,12 0 0 1 12,-1 Z" fill="currentColor"/><g stroke="currentColor" stroke-width="2"><line x1="0" y1="-1" x2="0" y2="12"/><line x1="0" y1="12" x2="-4" y2="12"/></g></svg>`,
     moon:     () => { const r = 12, ph = moonPhaseDeg(), rad = ph * Math.PI / 180, k = Math.cos(rad), rx = (Math.abs(k) * r).toFixed(2);
                       if (ph < 12 || ph > 348) return `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="2"/></svg>`;
@@ -687,7 +692,13 @@
     const icon = (f & 1) && def.icon
       ? (def.icon === 'stock' ? `<span class="ico">$</span>` : `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:translateY(${iody}px) scale(${ki});">${ICONS[def.icon](hex(st.bg))}</span>`)
       : '';
-    div.innerHTML = icon + `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px">${def.sample}</span><span class="anchor"></span>`;
+    if (def.strip) {
+      const temps = ['29°', '28°', '27°'], cells = [];
+      for (let c = 0; c < def.strip; c++) cells.push(`${icon}<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px;${c < def.strip - 1 ? `margin-right:${(GAP * 2 * ki).toFixed(1)}px` : ''}">${temps[c]}</span>`);
+      div.innerHTML = cells.join('') + '<span class="anchor"></span>';
+    } else {
+      div.innerHTML = icon + `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px">${def.sample}</span><span class="anchor"></span>`;
+    }
     div.addEventListener('pointerdown', (ev) => startMove(ev, i));
     return div;
   }

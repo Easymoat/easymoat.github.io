@@ -212,7 +212,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 06:07</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 06:12</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -273,7 +273,8 @@
           <div class="grp"><span class="lbl">Actions</span>
             <div class="ctl"><label class="btn file" for="imgfile">Add photo…</label><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp" hidden><span class="muted" id="imgfilename">Stored as is (max 1024 px)</span><button class="btn danger" id="imgremove" disabled>Delete photo</button></div>
             <div class="status" id="imgstatus"></div></div>
-          <div class="grp"><span class="lbl">Colors</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div></div>
+          <div class="grp" title="How many colours the cut-out is reduced to when you Sync or Save. The watch can show at most 32."><span class="lbl">Colours on the watch</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div>
+            <div class="muted">The watch shows a picture in at most 32 colours. 32 is the best look; fewer colours give a flatter, poster-like picture and a smaller file. Choose before Sync or Save — the preview on the left already shows the result.</div></div>
           <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span><button class="btn" id="imgbgapply" title="Copy this colour to the dial background (one-off; the dial is not linked to the image)">Use as dial background</button></div></div>
         </div>
       </div>
@@ -1112,7 +1113,7 @@
   // bounding box and can be panned inside it; outside the frame stays transparent = background colour.
   const SHAPES = [['square', 'Square'], ['circle', 'Circle'], ['top', 'Top half'], ['bottom', 'Bottom half'], ['left', 'Left half'], ['right', 'Right half']];
   const CAN_SIZE = ['square', 'circle'];   // the half shapes are fixed
-  const IMG = { cur: null, src: null, k: 0, dirty: false, fromSlot: 0, shape: 'square', size: 100, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 16, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
+  const IMG = { cur: null, src: null, k: 0, dirty: false, fromSlot: 0, shape: 'square', size: 100, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 32, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
   const imgApi = () => $('api').value.replace(/\/$/, '');
   const absUrl = (u) => (!u || /^https?:/.test(u)) ? u : new URL($('api').value).origin + u;   // server gives /api/wf/... paths

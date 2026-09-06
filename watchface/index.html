@@ -186,7 +186,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 18:44</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 19:05</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -784,8 +784,19 @@
   // EDITING = 'draft' or the face number last loaded, only used for the note under the faces.
   let EDITING = 'draft';
   try { EDITING = localStorage.getItem('faceComposer.editing') || 'draft'; if (EDITING !== 'draft' && !/^[123]$/.test(EDITING)) EDITING = 'draft'; } catch (e) {}
-  const draftKeys = () => ({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, savedAt: Date.now() });
-  function saveDraft() { try { localStorage.setItem('faceComposer.draft', JSON.stringify(draftKeys())); } catch (e) {} }
+  // The draft holds the layout AND the image editor: slot, shape, size, position, zoom, colours, Auto
+  // shade, Show on dial, and — for an image chosen from a file — the picture itself (downscaled JPEG),
+  // so Back to draft restores the dial exactly. imgDraftState / applyImgDraft live with the image code.
+  const draftKeys = () => ({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, img: imgDraftState(), savedAt: Date.now() });
+  function saveDraft() {
+    const d = draftKeys();
+    try { localStorage.setItem('faceComposer.draft', JSON.stringify(d)); return true; }
+    catch (e) {   // quota: keep everything but the picture data
+      if (d.img) delete d.img.data;
+      try { localStorage.setItem('faceComposer.draft', JSON.stringify(d)); } catch (e2) {}
+      return false;
+    }
+  }
   function readDraft() { try { return JSON.parse(localStorage.getItem('faceComposer.draft') || 'null'); } catch (e) { return null; } }
   function setEditing(m) { EDITING = m; try { localStorage.setItem('faceComposer.editing', String(m)); } catch (e) {} }
   function commit() {
@@ -942,14 +953,19 @@
   function renderDraftNote() {
     const d = readDraft(), has = !!(d && Array.isArray(d.el));
     $('draft').disabled = !has;
-    $('draftnote').textContent = has ? `Draft saved ${d.savedAt ? fmtTime(d.savedAt) : ''} (${d.el.length} elements)` : 'No draft saved yet.';
+    const im = has && d.img ? (d.img.none ? ', no image' : d.img.data ? ', image from file' : `, image slot ${d.img.sel}`) : '';
+    $('draftnote').textContent = has ? `Draft saved ${d.savedAt ? fmtTime(d.savedAt) : ''} (${d.el.length} elements${im})` : 'No draft saved yet.';
   }
-  $('savedraft').addEventListener('click', () => { saveDraft(); setEditing('draft'); renderDraftNote(); renderFaces(); setStatus('facestatus', 'Draft saved in this browser.', 'ok'); });
+  $('savedraft').addEventListener('click', () => {
+    const full = saveDraft(); setEditing('draft'); renderDraftNote(); renderFaces();
+    setStatus('facestatus', full ? 'Draft saved in this browser (layout and image settings).' : 'Draft saved, but the picture was too large to keep — choose the file again after Back to draft.', full ? 'ok' : 'err');
+  });
   $('draft').addEventListener('click', () => {
     const d = readDraft(), c = d && faceLayout(d);
     if (!c) return setStatus('facestatus', 'No draft saved yet — use Save draft first.', 'err');
     setEditing('draft'); loadIntoEditor(c); commit(); renderFaces();
-    setStatus('facestatus', `Draft loaded (${c.el.length} elements).`, 'ok');
+    if (d.img) applyImgDraft(d.img);
+    setStatus('facestatus', `Draft loaded (${c.el.length} elements${d.img ? ', image settings restored' : ''}).`, 'ok');
   });
   async function loadFaces(opts) {
     opts = opts || {};
@@ -1204,16 +1220,52 @@
       if (opts.selectActive) { IMG.sel = IMG.state.active; if (IMG.state.slots[String(IMG.sel)]) loadSlotImage(IMG.sel); else clearImgPreview(); }
       renderSlots(); } catch (e) {}
   }
-  async function loadSlotImage(n) {
+  async function loadSlotImage(n, keep) {
     const id = devId(); const meta = IMG.state.meta[String(n)] || {};
     try { const r = await fetch(`${imgApi()}/image/${id.toLowerCase()}_s${n}.png?t=${Date.now()}`); if (!r.ok) throw new Error('http_' + r.status);
       const url = URL.createObjectURL(await r.blob()); const img = new Image();
-      img.onload = () => { IMG.cur = img; IMG.src = 'slot'; IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1';
-        setShape('square'); IMG.size = 100; IMG.cx = 160; IMG.cy = 160; $('imgsize').value = '100'; $('imgsizev').textContent = '100%';
-        if (meta.colors) { IMG.colors = Number(meta.colors); document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === IMG.colors)); }
-        if (meta.bg_auto != null) { IMG.bgAuto = Number(meta.bg_auto); $('imgbg').value = IMG.bgAuto; }
-        redrawImg(); IMG.dirty = false; URL.revokeObjectURL(url); };   // as stored: nothing to re-upload
+      img.onload = () => { IMG.cur = img; IMG.src = 'slot';
+        if (!keep) {   // fresh view of the slot: reset the editor to what is stored
+          IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1';
+          setShape('square'); IMG.size = 100; IMG.cx = 160; IMG.cy = 160; $('imgsize').value = '100'; $('imgsizev').textContent = '100%';
+          if (meta.colors) { IMG.colors = Number(meta.colors); document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === IMG.colors)); }
+          if (meta.bg_auto != null) { IMG.bgAuto = Number(meta.bg_auto); $('imgbg').value = IMG.bgAuto; }
+        }
+        redrawImg(); IMG.dirty = !!keep; URL.revokeObjectURL(url); };   // as stored: nothing to re-upload (a draft's edits are dirty)
       img.src = url; } catch (e) { setStatus('imgstatus', 'Could not load slot ' + n + ': ' + e.message, 'err'); }
+  }
+  // ── Draft: image editor state ──
+  function imgDraftState() {
+    const base = { sel: IMG.sel, shape: IMG.shape, size: IMG.size, cx: IMG.cx, cy: IMG.cy, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom,
+                   colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, src: IMG.src };
+    if (!IMG.cur) return Object.assign(base, { none: true });
+    if (IMG.src === 'file') {   // not on the server: keep a downscaled copy of the picture itself
+      try { const m = 1024, sc = Math.min(1, m / Math.max(IMG.cur.width, IMG.cur.height)); const c = document.createElement('canvas');
+        c.width = Math.round(IMG.cur.width * sc); c.height = Math.round(IMG.cur.height * sc); c.getContext('2d').drawImage(IMG.cur, 0, 0, c.width, c.height);
+        base.data = c.toDataURL('image/jpeg', 0.85); } catch (e) {}
+    }
+    return base;
+  }
+  function applyImgDraft(d) {
+    if (!d || typeof d !== 'object') return;
+    IMG.sel = [1, 2, 3, 4, 5].includes(d.sel) ? d.sel : IMG.sel;
+    setShape(d.shape);
+    IMG.size = Math.max(30, Math.min(100, Number(d.size) || 100)); $('imgsize').value = IMG.size; $('imgsizev').textContent = IMG.size + '%';
+    IMG.cx = Number.isFinite(d.cx) ? d.cx : 160; IMG.cy = Number.isFinite(d.cy) ? d.cy : 160;
+    IMG.panX = Number(d.panX) || 0; IMG.panY = Number(d.panY) || 0;
+    IMG.zoom = Math.max(1, Math.min(3, Number(d.zoom) || 1)); $('imgzoom').value = IMG.zoom;
+    if ([2, 4, 8, 16, 32, 64, 128].includes(d.colors)) { IMG.colors = d.colors; document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === IMG.colors)); }
+    IMG.bgAuto = Math.max(0, Math.min(100, Number(d.bgAuto) || 0)); $('imgbg').value = IMG.bgAuto;
+    IMG.show = d.show !== false;
+    renderSlots(); renderShowToggle();
+    if (d.none) { clearImgPreview(); return; }
+    if (d.data) {   // picture from a file, kept in the draft
+      const img = new Image();
+      img.onload = () => { IMG.cur = img; IMG.src = 'file'; redrawImg(); IMG.dirty = true; $('imgfilename').textContent = 'From draft'; };
+      img.src = d.data; return;
+    }
+    if (IMG.state.slots[String(IMG.sel)]) loadSlotImage(IMG.sel, true);   // picture is on the server; the draft's edits go on top
+    else clearImgPreview();
   }
   // Upload the editor image to a slot. activate=false stores it only (the Upload button);
   // activate=true stores it and makes it the one the watch uses (Sync to watch).

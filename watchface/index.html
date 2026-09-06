@@ -190,7 +190,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 00:52</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 00:55</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1207,6 +1207,16 @@
   function renderQuality() {
     IMG.reduced = null;
     if (typeof RgbQuant !== 'undefined') { try { const q = new RgbQuant({ colors: IMG.colors, dithKern: 'FloydSteinberg', dithSerp: true }); q.sample(imgCv); const out = q.reduce(imgCv); const pal = q.palette(true);
+      // RgbQuant's dithered output can leave a few pixels a shade off the palette (measured: 160 of 102,400 px
+      // one step away). Snap every pixel to the nearest palette colour so the PNG holds exactly N colours.
+      const pl = pal.map((c) => [c[0], c[1], c[2]]), seen = new Set(pl.map((c) => (c[0] << 16) | (c[1] << 8) | c[2]));
+      for (let i = 0; i < out.length; i += 4) {
+        const key = (out[i] << 16) | (out[i + 1] << 8) | out[i + 2];
+        if (seen.has(key)) continue;
+        let best = 0, bd = Infinity;
+        for (let k = 0; k < pl.length; k++) { const d = (pl[k][0] - out[i]) ** 2 + (pl[k][1] - out[i + 1]) ** 2 + (pl[k][2] - out[i + 2]) ** 2; if (d < bd) { bd = d; best = k; } }
+        out[i] = pl[best][0]; out[i + 1] = pl[best][1]; out[i + 2] = pl[best][2];
+      }
       const t = document.createElement('canvas'); t.width = 320; t.height = 320; const tc = t.getContext('2d'); const id = tc.createImageData(320, 320); id.data.set(out); tc.putImageData(id, 0, 0);
       // RgbQuant.reduce() returns opaque pixels everywhere, so restore the master's transparency —
       // otherwise a shrunk image paints its colour over the whole dial and the background never shows.

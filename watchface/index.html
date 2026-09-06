@@ -205,7 +205,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 01:30</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 01:32</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1053,7 +1053,7 @@
     else if (full.url) {   // photo gone: show the finished cut-out (frame changes only; no re-crop possible)
       applyImgDraft({ none: true }); const img = new Image(); img.crossOrigin = 'anonymous';
       img.onload = () => { IMG.cur = img; IMG.src = 'shelf'; IMG.k = 0; setShape('square'); IMG.size = 100; IMG.cx = 160; IMG.cy = 160; IMG.zoom = 1; IMG.panX = 0; IMG.panY = 0; $('imgzoom').value = '1'; $('imgsize').value = '100'; $('imgsizev').textContent = '100%'; IMG.show = rc.show !== false; renderShowToggle(); redrawImg(); $('imgfilename').textContent = 'From the collection (photo no longer on the shelf)'; };
-      img.src = absUrl(full.url);
+      img.src = absUrl(full.url) + '&c=1';
     }
     setStatus('shelfstatus', `Loaded ${full.name || 'item ' + n} into the editors.`, 'ok');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1072,7 +1072,7 @@
       const j = await uploadLayout(id, full.layout);
       if (full.kind !== 'none' && full.url) {
         const img = new Image(); img.crossOrigin = 'anonymous';
-        await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('image_load')); img.src = absUrl(full.url); });
+        await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('image_load')); img.src = absUrl(full.url) + '&c=1'; });
         const cv = document.createElement('canvas'); cv.width = 320; cv.height = 320; cv.getContext('2d').drawImage(img, 0, 0, 320, 320);
         const rc = full.recipe || {};
         const r = await fetch(imgApi() + '/image', { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1299,7 +1299,7 @@
       if (!keep) { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1'; }
       redrawImg(); IMG.dirty = true; renderPhotos(); $('imgfilename').textContent = p.name || `Photo ${k}`; };
     img.onerror = () => setStatus('imgstatus', 'Could not load photo ' + k + '.', 'err');
-    img.src = absUrl(p.url);
+    img.src = absUrl(p.url) + '&c=1';
   }
   // Store a picked file on the photo shelf as it is (downscaled to ≤1024 px JPEG), then open it.
   async function addPhoto(img, name) {

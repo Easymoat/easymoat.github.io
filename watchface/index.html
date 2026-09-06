@@ -186,7 +186,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 14:35</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 14:52</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -467,7 +467,9 @@
   // balanced on devices where the text falls back to the fixed S/M/L system fonts. ICON_ART = the
   // artwork's own box height (WfIcons coordinates); must match WfLayout.mc.
   const DIAL_PX = 520;   // on-screen size of the big dial (the layout itself stays in device px)
-  const DEF_TX = [26, 36, 48], DEF_TM = [52, 68, 84], DEF_IC = [19, 26, 35], DEF_IO = 0, ICON_ART = 26, FONT_EM = 1.17, GAP = 6;
+  // 4 size steps S/M/L/XL (3 → 4 on 2026-09-06); older 3-entry tables are padded with the XL default.
+  const SIZES = ['S', 'M', 'L', 'XL'], SIZE_MAX = 3;
+  const DEF_TX = [26, 36, 48, 60], DEF_TM = [52, 68, 84, 100], DEF_IC = [19, 26, 35, 44], DEF_IO = 0, ICON_ART = 26, FONT_EM = 1.17, GAP = 6;
   // The watch draws body text (not the clock) 1.2× the value here (WfLayout.TEXT_BOOST): on the
   // 33 mm screen thin digits read smaller than the icons, so the editor keeps the comfortable
   // desktop look while the device compensates. The actual-size preview applies the same boost.
@@ -544,10 +546,13 @@
   }
   const addKey = (ev) => ev.shiftKey || ev.metaKey || ev.ctrlKey;
   try { const s = JSON.parse(localStorage.getItem('faceComposer') || 'null'); if (s && Array.isArray(s.el)) st = Object.assign(st, s); } catch (e) {}
-  if (!intArr3(st.tx)) st.tx = DEF_TX.slice(); if (!intArr3(st.tm)) st.tm = DEF_TM.slice();
-  if (!intArr3(st.ic, 6, 120)) st.ic = DEF_IC.slice(); st.b = st.b === 1 ? 1 : 0;
+  st.tx = intArr3(st.tx, 10, 200, DEF_TX) || DEF_TX.slice(); st.tm = intArr3(st.tm, 10, 200, DEF_TM) || DEF_TM.slice();
+  st.ic = intArr3(st.ic, 6, 120, DEF_IC) || DEF_IC.slice(); st.b = st.b === 1 ? 1 : 0;
   if (!Number.isInteger(st.io) || st.io < -20 || st.io > 20) st.io = DEF_IO;
-  function intArr3(v, lo, hi) { lo = lo || 10; hi = hi || 200; return Array.isArray(v) && v.length === 3 && v.every((n) => Number.isInteger(n) && n >= lo && n <= hi) ? v.map(Number) : null; }
+  // 3 or 4 integers in range → 4 (a 3-entry table gets the XL default appended); anything else → null
+  function intArr3(v, lo, hi, def) { lo = lo || 10; hi = hi || 200; def = def || DEF_TX;
+    if (!Array.isArray(v) || (v.length !== 3 && v.length !== 4) || !v.every((n) => Number.isInteger(n) && n >= lo && n <= hi)) return null;
+    const a = v.map(Number); if (a.length === 3) a.push(Math.max(lo, Math.min(hi, def[3]))); return a; }
   const $ = (id) => document.getElementById(id);
   // The server address is fixed; ?api=… overrides it for debugging against another host.
   try { const q = new URLSearchParams(location.search).get('api'); if (q) $('api').value = q; } catch (e) {}
@@ -559,12 +564,13 @@
   // The px this device really draws for (type, size): vector-font devices use the value you typed
   // (scaled by screen height, ×TEXT_BOOST for body text); the rest use their fixed system fonts.
   function effPx(t, sz) {
-    const p = prof(), s = (sz < 0 || sz > 2) ? 1 : sz;
+    const p = prof(), s = (sz < 0 || sz > SIZE_MAX) ? 1 : sz;
     if (p[2] === 1) {
       const px = Math.round((t === 1 ? st.tm : st.tx)[s] * p[1] / 454);
       return t === 1 ? px : Math.round(px * TEXT_BOOST);
     }
-    return t === 1 ? p[6 + s] : p[3 + s];
+    const f = Math.min(s, 2);   // fixed system fonts come in three steps: XL draws as L
+    return t === 1 ? p[6 + f] : p[3 + f];
   }
 
   // ── Palette ────────────────────────────────────────────────────────────────
@@ -593,7 +599,7 @@
   $('bgpick').addEventListener('input', (ev) => { st.bg = parseInt(ev.target.value.slice(1), 16); commit(); });      // live while dragging
   $('bgpick').addEventListener('change', (ev) => { pushBgHist(parseInt(ev.target.value.slice(1), 16)); });          // remember when the picker closes
   for (const key of ['tx', 'tm', 'ic']) {
-    ['S', 'M', 'L'].forEach((lbl, i) => {
+    SIZES.forEach((lbl, i) => {
       const wrap = document.createElement('span'); wrap.className = 'stp';
       const sml = document.createElement('span'); sml.className = 'sml'; sml.textContent = lbl;
       const lo = key === 'ic' ? 6 : 10, hi = key === 'ic' ? 120 : 200;
@@ -614,7 +620,7 @@
     $('fixednote').hidden = vec;
     if (!vec) {
       $('fixednotetxt').textContent =
-        `This device has no vector font: the text px above are ignored and it draws the fixed system fonts — text ${p[3]}/${p[4]}/${p[5]} px, clock ${p[6]}/${p[7]}/${p[8]} px (shown on the dial). Icon size still works.`;
+        `This device has no vector font: the text px above are ignored and it draws the fixed system fonts — text ${p[3]}/${p[4]}/${p[5]} px, clock ${p[6]}/${p[7]}/${p[8]} px (shown on the dial; XL draws as L). Icon size still works.`;
     }
   }
   $('bold').addEventListener('change', (ev) => { st.b = ev.target.checked ? 1 : 0; commit(); });
@@ -662,7 +668,7 @@
     });   // the stage already draws the true device sizes, so the copy needs no adjustment
   }
   function makeEl(e, i, k) {   // k = d.w / 454 (device scale) — used for icons and gaps only
-    const [t, x, y, a, s, c, f] = e, def = TYPES[t] || TYPES[1];
+    const [t, x, y, a, s, c, f, is] = e, def = TYPES[t] || TYPES[1];
     const div = document.createElement('div');
     div.className = 'el' + (isSel(i) ? ' sel' : '');
     div.dataset.i = i;
@@ -675,7 +681,8 @@
     div.style.lineHeight = px + 'px';
     const bo = st.b === 1 ? boldOff(px) : 0;
     if (bo) { div.style.textShadow = `${bo}px 0 0 currentColor`; div.style.paddingRight = (2 + bo) + 'px'; }
-    const ki = (st.ic[s] / ICON_ART) * k, iody = st.io * k;   // icon scale from the icon table (same rule as WfLayout.drawEl)
+    const si = (Number.isInteger(is) && is >= 0 && is <= SIZE_MAX) ? is : s;   // per-part icon size, else the text step (WfLayout.drawEl)
+    const ki = (st.ic[Math.min(si, st.ic.length - 1)] / ICON_ART) * k, iody = st.io * k;
     div.style.gap = (GAP * ki) + 'px';
     const icon = (f & 1) && def.icon
       ? (def.icon === 'stock' ? `<span class="ico">$</span>` : `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:translateY(${iody}px) scale(${ki});">${ICONS[def.icon](hex(st.bg))}</span>`)
@@ -725,7 +732,9 @@
     const all = none ? [e] : idx.map((i) => st.el[i]), multi = all.length > 1;
     const def = TYPES[e[0]];
     const same = (k) => all.every((x) => x[k] === e[k]);   // highlight a value only when every selected element has it
-    const seg = (label, vals, cur, key) => `<div class="field"><span>${label}</span><span class="seg" data-key="${key}">${vals.map((v, i) => `<button class="${i === cur ? 'on' : ''}" data-v="${i}">${v}</button>`).join('')}</span></div>`;
+    const seg = (label, vals, cur, key, base) => { base = base || 0; return `<div class="field"><span>${label}</span><span class="seg" data-key="${key}">${vals.map((v, i) => `<button class="${i + base === cur ? 'on' : ''}" data-v="${i + base}">${v}</button>`).join('')}</span></div>`; };
+    const isOf = (x) => (Number.isInteger(x[7]) && x[7] >= 0 && x[7] <= SIZE_MAX) ? x[7] : -1;
+    const sameIs = all.every((x) => isOf(x) === isOf(e));
     const anyIcon = all.some((x) => TYPES[x[0]]?.icon);
     box.innerHTML = `
       <div style="font-weight:600;margin-bottom:8px">${none ? '<span class="muted" style="font-weight:400">No part selected — click one on the dial (Shift+click for several)</span>' : multi ? `${all.length} elements <span class="kbd">changes apply to all</span>` : `${def.name} <span class="kbd">type ${e[0]}</span>`}</div>
@@ -733,7 +742,8 @@
         ${multi ? '' : `<div class="field"><span>X</span><input type="number" id="fx" min="0" max="1000" step="${st.grid}" value="${none ? '' : e[1]}"></div>
         <div class="field"><span>Y</span><input type="number" id="fy" min="0" max="1000" step="${st.grid}" value="${none ? '' : e[2]}"></div>`}
         ${seg('Anchor', ['Center', 'Left', 'Right'], same(3) ? e[3] : -1, 3)}
-        ${seg('Size', ['S', 'M', 'L'], same(4) ? e[4] : -1, 4)}
+        ${seg('Size', SIZES, same(4) ? e[4] : -9, 4)}
+        ${anyIcon ? seg('Icon size', ['Auto'].concat(SIZES), sameIs ? isOf(e) : -9, 7, -1) : ''}
         <div class="field"><span>Color</span><span class="swatches">${PALETTE.map((c, i) => `<button class="sw ${same(5) && i === e[5] ? 'on' : ''}" data-c="${i}" title="${PALETTE_NAMES[i]}" style="background:${c}"></button>`).join('')}</span></div>
         ${anyIcon ? `<div class="field"><span>Icon</span><label><input type="checkbox" id="ficon" ${all.some((x) => TYPES[x[0]]?.icon && (x[6] & 1)) ? 'checked' : ''}> show</label></div>` : ''}
         <div class="row" style="margin-top:6px"><button class="btn" id="dup">Duplicate</button><button class="btn danger" id="del">Remove</button></div>
@@ -744,7 +754,7 @@
     const fx = $('fx'), fy = $('fy');
     if (fx) fx.addEventListener('change', (ev) => { e[1] = clamp(+ev.target.value); commit(); });
     if (fy) fy.addEventListener('change', (ev) => { e[2] = clamp(+ev.target.value); commit(); });
-    box.querySelectorAll('.seg').forEach((sg) => sg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => each((x) => { x[+sg.dataset.key] = +b.dataset.v; }))));
+    box.querySelectorAll('.seg').forEach((sg) => sg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => each((x) => { const k = +sg.dataset.key; while (x.length < 8) x.push(-1); x[k] = +b.dataset.v; }))));
     box.querySelectorAll('.sw').forEach((b) => b.addEventListener('click', () => each((x) => { x[5] = +b.dataset.c; })));
     const fi = $('ficon'); if (fi) fi.addEventListener('change', () => each((x) => { if (TYPES[x[0]]?.icon) x[6] = fi.checked ? (x[6] | 1) : (x[6] & ~1); }));
     $('dup').addEventListener('click', () => {   // copies of every selected element, one grid step down, and the copies become the selection
@@ -787,7 +797,7 @@
   function startPaletteDrag(ev, t) {
     ev.preventDefault();
     const d = TYPES[t];
-    const e = [t, 500, 500, 0, t === 1 ? 2 : 1, 0, d.icon ? 1 : 0];
+    const e = [t, 500, 500, 0, t === 1 ? 2 : 1, 0, d.icon ? 1 : 0, -1];
     st.el.push(e); setSel(st.el.length - 1, false);
     const p = stagePoint(ev); e[1] = clamp(p.x); e[2] = clamp(p.y);
     drag = { i: sel, items: [{ i: sel, dx: 0, dy: 0 }], fromPalette: true, moved: false };
@@ -846,14 +856,14 @@
     const el = [];
     for (const e of j.el) {
       if (!Array.isArray(e) || e.length < 7) return null;
-      const n = e.slice(0, 7).map(Number);
+      const n = e.slice(0, 8).map(Number); if (n.length < 8) n.push(-1);
       if (!TYPES[n[0]] || n.some((v) => !Number.isInteger(v))) return null;
-      if (n[1] < 0 || n[1] > 1000 || n[2] < 0 || n[2] > 1000 || n[3] < 0 || n[3] > 2 || n[4] < 0 || n[4] > 2 || n[5] < 0 || n[5] >= PALETTE.length || n[6] < 0 || n[6] > 3) return null;
+      if (n[1] < 0 || n[1] > 1000 || n[2] < 0 || n[2] > 1000 || n[3] < 0 || n[3] > 2 || n[4] < 0 || n[4] > SIZE_MAX || n[5] < 0 || n[5] >= PALETTE.length || n[6] < 0 || n[6] > 3 || n[7] < -1 || n[7] > SIZE_MAX) return null;
       el.push(n);
     }
     const bg = Number.isInteger(j.bg) && j.bg >= 0 && j.bg <= 0xFFFFFF ? j.bg : 0;
-    return { bg, el, tx: intArr3(j.tx) || DEF_TX.slice(), tm: intArr3(j.tm) || DEF_TM.slice(),
-             ic: intArr3(j.ic, 6, 120) || DEF_IC.slice(),
+    return { bg, el, tx: intArr3(j.tx, 10, 200, DEF_TX) || DEF_TX.slice(), tm: intArr3(j.tm, 10, 200, DEF_TM) || DEF_TM.slice(),
+             ic: intArr3(j.ic, 6, 120, DEF_IC) || DEF_IC.slice(),
              io: (Number.isInteger(j.io) && j.io >= -20 && j.io <= 20) ? j.io : DEF_IO, b: Number(j.b) === 1 ? 1 : 0 };
   }
 

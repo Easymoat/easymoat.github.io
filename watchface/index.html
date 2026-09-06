@@ -190,7 +190,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 20:27</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 20:46</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1024,6 +1024,10 @@
   // face if it changed, then made the watch's face) and image (as "Show on dial" shows it).
   $('sync').addEventListener('click', async () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('syncstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
+    if (imageBlocksSync()) {
+      const occ = IMG.state.slots[String(IMG.sel)] === true;
+      return setStatus('syncstatus', `The image in the editor is not uploaded yet. Upload it to a slot first${occ ? ` (slot ${IMG.sel} already has a picture — pick an empty slot to keep it)` : ''}, then Sync.`, 'err');
+    }
     setStatus('syncstatus', 'Syncing…'); $('sync').disabled = true;
     try {
       let faceMsg;
@@ -1058,7 +1062,7 @@
   // bounding box and can be panned inside it; outside the frame stays transparent = background colour.
   const SHAPES = [['square', 'Square'], ['circle', 'Circle'], ['top', 'Top half'], ['bottom', 'Bottom half'], ['left', 'Left half'], ['right', 'Right half']];
   const CAN_SIZE = ['square', 'circle'];   // the half shapes are fixed
-  const IMG = { cur: null, src: null, dirty: false, shape: 'square', size: 100, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 16, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
+  const IMG = { cur: null, src: null, dirty: false, fromSlot: 0, shape: 'square', size: 100, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 16, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
   const imgApi = () => $('api').value.replace(/\/$/, '');
   const imgCv = $('imgCanvas');
@@ -1072,7 +1076,7 @@
     else { stage.style.backgroundImage = ''; }
   }
   function clearImgPreview() {
-    IMG.cur = null; IMG.src = null; IMG.masked = null; IMG.reduced = null;
+    IMG.cur = null; IMG.src = null; IMG.masked = null; IMG.reduced = null; IMG.dirty = false; IMG.fromSlot = 0;
     imgCv.getContext('2d').clearRect(0, 0, 320, 320); $('imgQ').getContext('2d').clearRect(0, 0, 320, 320);
     $('imgupload').disabled = true; $('imgupload').textContent = 'Upload to slot ' + IMG.sel; $('imgbgrow').hidden = true;
     applyStageImage(); renderShowToggle();
@@ -1127,7 +1131,7 @@
     const f = ev.target.files && ev.target.files[0]; if (!f) return;
     const img = new Image();
     $('imgfilename').textContent = f.name;
-    img.onload = () => { IMG.cur = img; IMG.src = 'file'; IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1'; redrawImg(); URL.revokeObjectURL(img.src); };
+    img.onload = () => { IMG.cur = img; IMG.src = 'file'; IMG.fromSlot = 0; IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1'; redrawImg(); URL.revokeObjectURL(img.src); };
     img.src = URL.createObjectURL(f);
   });
   (() => { let drag = false, lx = 0, ly = 0;
@@ -1249,7 +1253,7 @@
     const id = devId(); const meta = IMG.state.meta[String(n)] || {};
     try { const r = await fetch(`${imgApi()}/image/${id.toLowerCase()}_s${n}.png?t=${Date.now()}`); if (!r.ok) throw new Error('http_' + r.status);
       const url = URL.createObjectURL(await r.blob()); const img = new Image();
-      img.onload = () => { IMG.cur = img; IMG.src = 'slot';
+      img.onload = () => { IMG.cur = img; IMG.src = 'slot'; IMG.fromSlot = n;
         if (!keep) {   // fresh view of the slot: reset the editor to what is stored (its frame included)
           IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1';
           const fr = meta.frame && typeof meta.frame === 'object' ? meta.frame : {};
@@ -1260,8 +1264,16 @@
           if (meta.colors) { IMG.colors = Number(meta.colors); document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === IMG.colors)); }
           if (meta.bg_auto != null) { IMG.bgAuto = Number(meta.bg_auto); $('imgbg').value = IMG.bgAuto; }
         }
-        redrawImg(); IMG.dirty = !!keep; URL.revokeObjectURL(url); };   // as stored: nothing to re-upload (a draft's edits are dirty)
+        redrawImg(); IMG.dirty = keep ? !sameAsStored(meta) : false; URL.revokeObjectURL(url); };   // dirty only if the draft changed something
       img.src = url; } catch (e) { setStatus('imgstatus', 'Could not load slot ' + n + ': ' + e.message, 'err'); }
+  }
+  // Does the editor show exactly what the slot stores (same frame, no zoom/pan, same colours)?
+  function sameAsStored(meta) {
+    const fr = meta && meta.frame && typeof meta.frame === 'object' ? meta.frame : {};
+    const shape = SHAPES.some(([x]) => x === (meta || {}).shape) ? meta.shape : 'square';
+    const size = (fr.size >= 30 && fr.size <= 100) ? fr.size : 100, cx = (fr.cx >= 0 && fr.cx <= 320) ? fr.cx : 160, cy = (fr.cy >= 0 && fr.cy <= 320) ? fr.cy : 160;
+    return IMG.shape === shape && IMG.size === size && IMG.cx === cx && IMG.cy === cy && IMG.zoom === 1 && IMG.panX === 0 && IMG.panY === 0
+      && (!meta || !meta.colors || IMG.colors === Number(meta.colors)) && (!meta || meta.bg_auto == null || IMG.bgAuto === Number(meta.bg_auto));
   }
   // ── Draft: image editor state ──
   function imgDraftState() {
@@ -1290,7 +1302,7 @@
     if (d.none) { clearImgPreview(); return; }
     if (d.data) {   // picture from a file, kept in the draft
       const img = new Image();
-      img.onload = () => { IMG.cur = img; IMG.src = 'file'; redrawImg(); IMG.dirty = true; $('imgfilename').textContent = 'From draft'; };
+      img.onload = () => { IMG.cur = img; IMG.src = 'file'; IMG.fromSlot = 0; redrawImg(); IMG.dirty = true; $('imgfilename').textContent = 'From draft (not uploaded)'; };
       img.src = d.data; return;
     }
     if (IMG.state.slots[String(IMG.sel)]) loadSlotImage(IMG.sel, true);   // picture is on the server; the draft's edits go on top
@@ -1303,7 +1315,7 @@
       body: JSON.stringify({ device_id: id, image: IMG.masked, colors: IMG.colors, palette: computeOptimalPalette(IMG.colors), bg_auto: IMG.bgAuto, slot, activate: !!activate,
                              shape: IMG.shape, frame: { cx: Math.round(IMG.cx), cy: Math.round(IMG.cy), size: Math.round(IMG.size) } }) });
     const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
-    IMG.src = 'slot'; IMG.dirty = false; $('imgfile').value = ''; $('imgfilename').textContent = 'No file chosen';
+    IMG.src = 'slot'; IMG.dirty = false; IMG.fromSlot = slot; $('imgfile').value = ''; $('imgfilename').textContent = 'No file chosen';
     return j;
   }
   // Which slot the watch should use: the editor's slot while "Show on dial" is ON, none while OFF.
@@ -1313,14 +1325,21 @@
     return j;
   }
   // Apply the image exactly as the dial above shows it (called by Sync to watch). Returns a status phrase.
+  // Sync never writes into a slot by itself: a slot holds an original picture that cannot be rebuilt, so
+  // only an explicit "Upload to slot" may replace it (2026-09-06: a draft restored with Back to draft was
+  // silently uploaded over the slot's original on Sync).
+  function imageBlocksSync() { return IMG.show && IMG.cur && IMG.masked && IMG.dirty; }
   async function sendImageToWatch(id) {
     if (!(IMG.show && IMG.cur && IMG.masked)) { await setWatchImageSlot(id, 0); return 'no image'; }
-    if (IMG.dirty) { await uploadImage(id, IMG.sel, true); return `image uploaded to slot ${IMG.sel} and used`; }
     await setWatchImageSlot(id, IMG.sel); return `image slot ${IMG.sel} used`;
   }
   $('imgupload').addEventListener('click', async () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('imgstatus', 'Enter the Device ID shown on the watch first.', 'err');
-    if (!IMG.masked) return; setStatus('imgstatus', 'Uploading…'); $('imgupload').disabled = true;
+    if (!IMG.masked) return;
+    if (IMG.state.slots[String(IMG.sel)] === true && IMG.fromSlot !== IMG.sel) {   // replacing a different original
+      if (!window.confirm(`Slot ${IMG.sel} already has a picture. Replace it with the image in the editor?\n(The current picture in slot ${IMG.sel} cannot be recovered afterwards.)`)) return;
+    }
+    setStatus('imgstatus', 'Uploading…'); $('imgupload').disabled = true;
     try { const j = await uploadImage(id, IMG.sel, false);
       setStatus('imgstatus', `Stored in slot ${IMG.sel}.` + (IMG.state.active === IMG.sel ? ' This slot is on the watch (★): it updates within 5 minutes.' : ' Sync to watch (top right) puts it on the watch.'), 'ok'); loadSlots(); }
     catch (e) { setStatus('imgstatus', 'Upload failed: ' + e.message, 'err'); } finally { $('imgupload').disabled = false; }

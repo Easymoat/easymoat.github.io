@@ -186,7 +186,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 18:08</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 18:44</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -322,7 +322,7 @@
     27: { name: 'Today hi/lo', grp: 'wx',  sample: '31°/24°', icon: 'hilo',     iw: 16 },
     28: { name: 'Rain today', grp: 'wx',   sample: '40%',    icon: 'umbrella',  iw: 26 },
     29: { name: 'Next 3h',   grp: 'wx',    sample: '29°',    icon: 'weather',   iw: 34, strip: 3 },
-    25: { name: 'Precip %',  grp: 'wx',    sample: '40%',    icon: 'umbrella',  iw: 26 },
+    25: { name: 'Precip %',  grp: 'wx',    sample: '40%',    icon: 'umbrella',  iw: 26 , hidden: true },   // removed from the palette 2026-09-06 (Garmin's current-hour value; use 28 Rain today). Kept so saved faces still render.
     26: { name: 'Moon age',  grp: 'wx',    sample: moonAgeStr(), icon: 'moon',  iw: 26 },
     40: { name: 'Notifications', grp: 'clock', sample: '3',  icon: 'bell',      iw: 26 },
     30: { name: 'Stock 1',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
@@ -580,6 +580,7 @@
 
   // ── Palette ────────────────────────────────────────────────────────────────
   for (const [t, d] of Object.entries(TYPES)) {
+    if (d.hidden) continue;   // retired parts stay renderable but are not offered
     const p = document.createElement('div');
     p.className = 'part'; p.dataset.t = t;
     p.innerHTML = `<span class="ico">${d.icon && d.icon !== 'stock' ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${d.icon === 'stock' ? '$' : d.sample}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;

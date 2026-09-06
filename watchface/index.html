@@ -190,7 +190,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 19:38</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 19:59</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -227,10 +227,11 @@
           <div class="row" style="align-items:center;gap:14px"><div class="field" style="grid-template-columns:auto 140px;gap:10px"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX"></div><button class="btn primary" id="sync">Sync to watch</button></div>
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
           <div class="status" id="syncstatus"></div>
+          <div class="status" id="watchseen" title="When your watch last checked in, and whether it already has the face marked ★"></div>
         </div>
         <ul class="muted synchelp" id="synchelpR">
           <li><b>Sync to watch</b> puts the dial above on the watch as you see it.</li>
-          <li>The watch picks it up on its next background sync (every 5 min, or long-press the face to sync now).</li>
+          <li>The watch checks for changes every 5 minutes, so allow up to 5 minutes after Sync.</li>
         </ul>
       </div>
     </div>
@@ -953,6 +954,19 @@
     if (lay) { const c = faceLayout(lay); if (c) { setEditing(n); loadIntoEditor(c); commit(); LAYOUT_DIRTY = false; } }
     renderFaces();
   }
+  // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
+  function renderWatchSeen() {
+    const el = $('watchseen'); if (!el) return;
+    const sn = FACES.seen, act = FACES.faces[String(FACES.active)];
+    if (!sn || !sn.ts) { el.textContent = 'Watch: not checked in yet — it looks for changes every 5 minutes.'; el.className = 'status'; return; }
+    const age = Math.max(0, Math.round(Date.now() / 1000 - sn.ts));
+    const ago = age < 60 ? 'just now' : age < 3600 ? `${Math.round(age / 60)} min ago` : age < 86400 ? `${Math.round(age / 3600)} h ago` : `${Math.round(age / 86400)} d ago`;
+    const upToDate = act && String(sn.have) === String(act.v);
+    const pending = act && !upToDate;
+    el.textContent = `Watch: last checked ${ago} · ` + (upToDate ? 'up to date ✓' : pending ? 'update pending — arrives within 5 min' : 'no face on the watch yet');
+    el.className = 'status ' + (upToDate ? 'ok' : '');
+  }
+  setInterval(() => { if (/^[0-9a-zA-Z-]{4,40}$/.test(devId())) loadFaces(); else renderWatchSeen(); }, 30000);   // refresh the watch line while the page is open
   const fmtTime = (t) => { const d = new Date(t); return isNaN(d) ? '' : d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); };
   function renderDraftNote() {
     const d = readDraft(), has = !!(d && Array.isArray(d.el));
@@ -978,7 +992,8 @@
       const r = await fetch($('api').value + '/layouts?device_id=' + encodeURIComponent(id));
       if (!r.ok) return;
       const j = await r.json();
-      FACES.faces = j.faces || {}; FACES.active = Number(j.active || 1);
+      FACES.faces = j.faces || {}; FACES.active = Number(j.active || 1); FACES.seen = j.seen || null;
+      renderWatchSeen();
       if (opts.selectActive) FACES.sel = FACES.active;
       renderFaces();
       if (opts.loadIntoEditor && FACES.faces[String(FACES.sel)]) selectFace(FACES.sel);
@@ -1002,7 +1017,7 @@
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('facestatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
     setStatus('facestatus', 'Uploading…');
     try { const j = await uploadFace(id, FACES.sel, false);
-      setStatus('facestatus', `Stored in face ${j.slot} (${j.count} elements). Sync to watch puts it on the watch.`, 'ok'); loadFaces(); }
+      setStatus('facestatus', `Stored in face ${j.slot} (${j.count} elements).` + (FACES.active === j.slot ? ' This face is on the watch (★): it updates within 5 minutes.' : ' Sync to watch puts it on the watch.'), 'ok'); loadFaces(); }
     catch (e) { setStatus('facestatus', 'Upload failed: ' + e.message, 'err'); }
   });
   // Sync to watch: the dial exactly as shown goes to the watch — layout (uploaded to the selected
@@ -1017,7 +1032,7 @@
       let imgMsg;
       try { imgMsg = await sendImageToWatch(id); }
       catch (e) { setStatus('syncstatus', `${faceMsg}, but the image failed: ${e.message}`, 'err'); loadFaces(); return; }
-      setStatus('syncstatus', `Synced: ${faceMsg}, ${imgMsg}. The watch picks it up on its next sync.`, 'ok');
+      setStatus('syncstatus', `Sent: ${faceMsg}, ${imgMsg}. Your watch updates within 5 minutes.`, 'ok');
       loadFaces(); loadSlots();
     } catch (e) { setStatus('syncstatus', 'Sync failed: ' + e.message, 'err'); } finally { $('sync').disabled = false; }
   });
@@ -1296,7 +1311,7 @@
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('imgstatus', 'Enter the Device ID shown on the watch first.', 'err');
     if (!IMG.masked) return; setStatus('imgstatus', 'Uploading…'); $('imgupload').disabled = true;
     try { const j = await uploadImage(id, IMG.sel, false);
-      setStatus('imgstatus', `Stored in slot ${IMG.sel}. Sync to watch (top right) puts it on the watch.`, 'ok'); loadSlots(); }
+      setStatus('imgstatus', `Stored in slot ${IMG.sel}.` + (IMG.state.active === IMG.sel ? ' This slot is on the watch (★): it updates within 5 minutes.' : ' Sync to watch (top right) puts it on the watch.'), 'ok'); loadSlots(); }
     catch (e) { setStatus('imgstatus', 'Upload failed: ' + e.message, 'err'); } finally { $('imgupload').disabled = false; }
   });
   $('imgremove').addEventListener('click', async () => {

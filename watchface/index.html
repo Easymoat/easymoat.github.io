@@ -27,10 +27,18 @@
   main { display: grid; grid-template-columns: 200px minmax(0, 1fr) 256px; gap: 0; min-height: calc(100vh - 52px); }
   aside { background: var(--panel); border-right: 1px solid var(--line); padding: 20px 18px; display: flex; flex-direction: column; gap: 18px; }
   aside.right { border-right: 0; border-left: 1px solid var(--line); }
-  aside.right .field { grid-template-columns: 52px 1fr; }      /* narrow label so controls are never clipped */
-  aside.right .field input[type=number] { width: 100%; }        /* X / Y fill the row instead of leaving a gap */
-  aside.right .seg button { padding: 5px 8px; }
-  aside.right .swatches { gap: 5px; }
+  aside.right .pxs { flex-wrap: wrap; gap: 8px 14px; }          /* S / M / L steppers stack in the narrow column */
+  aside.right .group > .lbl { font-size: 10px; }
+  aside.right .ctl { gap: 10px; }
+  /* Selected sits in the bar above the dial: its fields flow in a row */
+  #selgrp { flex: 1 1 560px; }
+  #insp .group { flex-direction: row; flex-wrap: wrap; gap: 10px 22px; align-items: center; }
+  #insp .field { display: flex; gap: 8px; align-items: center; }
+  #insp .field > span:first-child { color: var(--ink-3); font-size: 12px; }
+  #insp .field input[type=number] { width: 68px; }
+  #insp .swatches { gap: 5px; max-width: 470px; }
+  #insp .row { margin-top: 0 !important; }
+  #insp > div:first-child { display: inline-block; margin-right: 18px; }
   .group { display: flex; flex-direction: column; gap: 6px; }
   .parts { display: grid; grid-template-columns: 1fr; gap: 4px; }
   .part { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); cursor: grab; user-select: none; touch-action: none; }
@@ -173,7 +181,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 13:53</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 14:03</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -191,11 +199,7 @@
     <div class="stagebar">
       <div class="grp"><span class="lbl">Device</span><div class="ctl"><select id="dev"></select></div></div>
       <div class="grp"><span class="lbl">Grid</span><div class="ctl"><select id="grid"><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label></div></div>
-      <div class="grp"><span class="lbl">Background</span><div class="ctl"><input type="color" id="bgpick" title="Pick any background colour (sent to the watch as bg)" value="#000000"><span class="swatches" id="bgsw" title="Recently used colours"></span></div></div>
-      <div class="grp" title="Text height in px on a 454 dial: S / M / L. Sent to the watch with the layout."><span class="lbl">Text size (px)</span><div class="ctl"><span class="pxs" id="tx"></span></div></div>
-      <div class="grp" title="Clock height in px on a 454 dial: S / M / L."><span class="lbl">Time size (px)</span><div class="ctl"><span class="pxs" id="tm"></span></div></div>
-      <div class="grp" title="Icon height in px on a 454 dial: S / M / L. Independent of the text size — use it to balance the look on devices whose text is fixed to S/M/L."><span class="lbl">Icon size (px)</span><div class="ctl"><span class="pxs" id="ic"></span><span class="stp" title="Move every icon up or down against the numbers (px on a 454 dial, + is down)."><span class="sml">&#8597;</span><button class="step" type="button" id="iodn">&minus;</button><input type="number" id="io" min="-20" max="20"><button class="step" type="button" id="ioup">+</button></span></div></div>
-      <div class="grp" title="Faux bold: text drawn twice with a 1–2 px offset (Roboto has no bold on the watch)."><span class="lbl">Style</span><div class="ctl"><label><input type="checkbox" id="bold"> bold</label></div></div>
+      <div class="grp" id="selgrp"><span class="lbl">Selected</span><div id="insp"><span class="muted">Click an element on the dial.</span></div></div>
       <div class="grp" id="fixednote" hidden style="flex-basis:100%"><div class="ctl"><span class="muted" id="fixednotetxt"></span></div></div>
     </div>
     <div class="stage-row">
@@ -219,7 +223,6 @@
           <div class="status" id="syncstatus"></div>
         </div>
         <ul class="muted synchelp" id="synchelpR">
-          <li>Layout: the selected face (★). If you changed it, it is uploaded to that face first.</li>
           <li>The watch picks it up on its next background sync (every 5 min, or long-press the face to sync now).</li>
         </ul>
       </div>
@@ -269,7 +272,11 @@
   </section>
 
   <aside class="right">
-    <div class="group"><span class="lbl">Selected</span><div id="insp"><span class="muted">Click an element on the dial.</span></div></div>
+    <div class="group"><span class="lbl">Background</span><div class="ctl"><input type="color" id="bgpick" title="Pick any background colour (sent to the watch as bg)" value="#000000"><span class="swatches" id="bgsw" title="Recently used colours"></span></div></div>
+    <div class="group" title="Text height in px on a 454 dial: S / M / L. Sent to the watch with the layout."><span class="lbl">Text size (px)</span><div class="ctl"><span class="pxs" id="tx"></span></div></div>
+    <div class="group" title="Clock height in px on a 454 dial: S / M / L."><span class="lbl">Time size (px)</span><div class="ctl"><span class="pxs" id="tm"></span></div></div>
+    <div class="group" title="Icon height in px on a 454 dial: S / M / L. Independent of the text size — use it to balance the look on devices whose text is fixed to S/M/L."><span class="lbl">Icon size (px)</span><div class="ctl"><span class="pxs" id="ic"></span><span class="stp" title="Move every icon up or down against the numbers (px on a 454 dial, + is down)."><span class="sml">&#8597;</span><button class="step" type="button" id="iodn">&minus;</button><input type="number" id="io" min="-20" max="20"><button class="step" type="button" id="ioup">+</button></span></div></div>
+    <div class="group" title="Faux bold: text drawn twice with a 1–2 px offset (Roboto has no bold on the watch)."><span class="lbl">Style</span><div class="ctl"><label><input type="checkbox" id="bold"> bold</label></div></div>
     <div class="group"><span class="lbl">Elements</span><div class="list" id="list"></div></div>
   </aside>
 </main>

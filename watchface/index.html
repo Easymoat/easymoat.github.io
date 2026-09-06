@@ -190,7 +190,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 20:15</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 20:27</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1117,7 +1117,7 @@
     ctx.restore();
     IMG.masked = imgCv.toDataURL('image/png');
     applyStageImage();                 // live: the dial follows every edit at once
-    IMG.reduced = null; $('imgQ').getContext('2d').clearRect(0, 0, 320, 320);
+    IMG.reduced = null; paintQuality();   // keep the preview lit (Auto colour + raw image) — no black flash while dragging
     $('imgupload').disabled = false; $('imgupload').textContent = `Upload to slot ${IMG.sel}`; renderShowToggle();
     IMG.dirty = true;                  // differs from what the slot holds until it is uploaded
     $('imgbgrow').hidden = false;
@@ -1187,6 +1187,10 @@
   function currentAutoBg() { return autoBgColorJS(computeOptimalPalette(IMG.colors), IMG.bgAuto); }
   function repaintQuality() {
     IMG.autoBg = currentAutoBg(); $('imgbgsw').style.background = IMG.autoBg;
+    paintQuality();
+  }
+  // Paint the preview overlay with the cached Auto colour (cheap: no palette work, safe on every pointermove).
+  function paintQuality() {
     const ctx = $('imgQ').getContext('2d'); ctx.clearRect(0, 0, 320, 320);
     // This preview belongs to the image: it shows the Auto colour behind it, so the slider and a new
     // image are visible here at once. The dial above keeps its own background colour — the two are

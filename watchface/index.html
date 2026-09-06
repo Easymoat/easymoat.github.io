@@ -63,7 +63,6 @@
   .el:active { cursor: grabbing; }
   .el .ico { display: flex; align-items: center; }
   .el.sel { outline: 1.5px dashed var(--accent); outline-offset: 2px; }
-  .el.oob { outline: 1.5px solid var(--danger); outline-offset: 2px; }
   .el .anchor { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); border: 1px solid #000; display: none; }
   .el.sel .anchor { display: block; }
   .el.ghost { opacity: .85; pointer-events: none; }
@@ -174,7 +173,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 13:27</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 13:45</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -204,13 +203,12 @@
         <div class="stage-outer"><div id="stage"></div></div>
         <ul class="muted synchelp" id="synchelpL">
           <li><b>Sync to watch</b> puts the dial above on the watch as you see it.</li>
-          <li>Layout: the selected face (★). If you changed it, it is uploaded to that face first.</li>
         </ul>
       </div>
       <div class="rail">
         <div class="grp"><span class="lbl">Watch faces</span>
           <div class="faces" id="faces"></div>
-          <div class="row"><button class="btn primary" id="save" title="Stores the dial above in this face only. Sync to watch (below) puts it on the watch.">Upload to face 1</button><button class="btn danger" id="remove">Delete face</button></div>
+          <div class="row"><button class="btn primary" id="save" title="Stores the dial above in this face only. Sync to watch (below) puts it on the watch.">Upload to face 1</button><button class="btn danger" id="remove">Delete face</button><button class="btn" id="draft" hidden title="Return to the dial you were editing (it is auto-saved in this browser).">Back to draft</button></div>
           <div class="status" id="facestatus"></div>
           <span class="muted" id="facenote"></span>
         </div>
@@ -221,8 +219,7 @@
           <div class="status" id="syncstatus"></div>
         </div>
         <ul class="muted synchelp" id="synchelpR">
-          <li>Image with "Show on dial" ON: the image in the editor (uploaded to its slot first if it changed).</li>
-          <li>Image with "Show on dial" OFF: the watch shows no image.</li>
+          <li>Layout: the selected face (★). If you changed it, it is uploaded to that face first.</li>
           <li>The watch picks it up on its next background sync (every 5 min, or long-press the face to sync now).</li>
         </ul>
       </div>
@@ -238,7 +235,6 @@
           <div class="ctl">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"></div>
           <div class="ctl" id="imgdragrow">Drag moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Image</button><button type="button" data-m="frame">Frame</button></span></div>
           <div class="ctl"><button class="btn toggle on" id="imgshow" disabled title="While ON, the dial above shows the image exactly as it is here (frame, size, zoom, colours) and Sync to watch applies it. While OFF, Sync to watch turns the image off on the watch.">Show on dial: ON</button><button class="btn" id="imgreset">Reset</button><button class="btn" id="imgparts">Hide parts</button></div>
-          <div class="muted">Square and circle can be resized and moved on the dial; the half shapes are fixed to their half. Zoom and dragging the image inside the frame work for every shape. Shown at the chosen colour count with your layout on top.</div>
         </div>
         <div class="opts">
           <div class="grp" title="The shape of the image frame on the dial."><span class="lbl">Shape</span><div class="ctl"><span class="cb" id="imgshape"></span></div></div>
@@ -251,6 +247,7 @@
           <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span><button class="btn" id="imgbgapply" title="Copy this colour to the dial background (one-off; the dial is not linked to the image)">Use as dial background</button></div></div>
         </div>
       </div>
+      <div class="muted">Square and circle can be resized and moved on the dial; the half shapes are fixed to their half. Zoom and dragging the image inside the frame work for every shape. Shown at the chosen colour count with your layout on top.</div>
     </div>
     <div class="drawer">
       <details class="box">
@@ -743,7 +740,20 @@
   const clamp = (v) => Math.max(0, Math.min(1000, Math.round(v)));
   const snap = (v) => clamp(Math.round(v / st.grid) * st.grid);
   let LAYOUT_DIRTY = true;   // the dial differs from what the selected face holds (cleared by loading a face / Upload)
-  function commit() { LAYOUT_DIRTY = true; try { localStorage.setItem('faceComposer', JSON.stringify(st)); } catch (e) {} render(); }
+  // The editor is auto-saved. What you build is the "draft"; clicking a saved face shows that face
+  // instead, and "Back to draft" returns to the draft. EDITING = 'draft' or the face number shown.
+  let EDITING = 'draft';
+  try { EDITING = localStorage.getItem('faceComposer.editing') || 'draft'; if (EDITING !== 'draft' && !/^[123]$/.test(EDITING)) EDITING = 'draft'; } catch (e) {}
+  const draftKeys = () => ({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b });
+  function saveDraft() { try { localStorage.setItem('faceComposer.draft', JSON.stringify(draftKeys())); } catch (e) {} }
+  function setEditing(m) { EDITING = m; try { localStorage.setItem('faceComposer.editing', String(m)); } catch (e) {} }
+  try { if (!localStorage.getItem('faceComposer.draft')) saveDraft(); } catch (e) {}   // first visit: the current dial is the draft
+  function commit() {
+    LAYOUT_DIRTY = true;
+    try { localStorage.setItem('faceComposer', JSON.stringify(st)); } catch (e) {}
+    if (EDITING === 'draft') saveDraft();
+    render();
+  }
 
   // ── Dragging ───────────────────────────────────────────────────────────────
   let drag = null;
@@ -873,18 +883,28 @@
       if (has) { const clean = faceLayout(lay); if (clean) renderFaceMini(d.querySelector('.mini'), clean); }
     }
     const cur = FACES.faces[String(FACES.sel)];
-    $('facenote').textContent = cur
-      ? `Face ${FACES.sel}${FACES.active === FACES.sel ? ' — on the watch (★)' : ' — Sync to watch shows it on the watch'}`
-      : `Face ${FACES.sel} is empty — build a dial and upload it here.`;
+    const onWatch = FACES.active === FACES.sel && cur;
+    $('facenote').textContent = EDITING === 'draft'
+      ? `Editing your draft (auto-saved). Upload stores it in face ${FACES.sel}${cur ? onWatch ? ' (on the watch ★)' : '' : ' (empty)'}.`
+      : `Showing face ${EDITING}${FACES.active === Number(EDITING) ? ' (on the watch ★)' : ''}. Back to draft returns to what you were editing.`;
     $('save').textContent = `Upload to face ${FACES.sel}`;
+    $('draft').hidden = EDITING === 'draft';
   }
-  // Clicking a face loads it into the editor (an empty one just becomes the target slot).
+  // Clicking a face shows it in the editor (an empty one just becomes the target slot). The draft
+  // you were editing stays saved; "Back to draft" brings it back.
+  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; clearSel(); pushBgHist(st.bg); }
   function selectFace(n) {
     FACES.sel = n;
     const lay = FACES.faces[String(n)];
-    if (lay) { const c = faceLayout(lay); if (c) { st.bg = c.bg; st.el = c.el; st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; clearSel(); pushBgHist(st.bg); commit(); LAYOUT_DIRTY = false; } }
+    if (lay) { const c = faceLayout(lay); if (c) { if (EDITING === 'draft') saveDraft(); setEditing(n); loadIntoEditor(c); commit(); LAYOUT_DIRTY = false; } }
     renderFaces();
   }
+  $('draft').addEventListener('click', () => {
+    let d = null; try { d = JSON.parse(localStorage.getItem('faceComposer.draft') || 'null'); } catch (e) {}
+    const c = d && faceLayout(d); setEditing('draft');
+    if (c) loadIntoEditor(c);
+    commit(); renderFaces();
+  });
   async function loadFaces(opts) {
     opts = opts || {};
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { FACES.faces = {}; renderFaces(); return; }

@@ -150,8 +150,8 @@
   .pxs input::-webkit-outer-spin-button, .pxs input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .pxs .step { width: 28px; height: 28px; padding: 0; line-height: 1; font: 600 16px var(--sans); border-radius: 5px; background: var(--panel-2); border: 2px solid var(--ink-3); color: var(--ink); cursor: pointer; }
   .pxs .step:hover { background: var(--line); } .pxs .step:active { background: var(--line-2); }
-  .sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
-  .sw.on { border-color: var(--ink); box-shadow: 0 0 0 2px var(--panel); }
+  .sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line-2); cursor: pointer; padding: 0; box-sizing: border-box; }
+  .sw.on { border-color: var(--panel); box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); transform: scale(1.1); }
   .kbd { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
   .list { display: flex; flex-direction: column; gap: 3px; }   /* grows with the dial: every element stays visible */
   .li { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
@@ -173,7 +173,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 13:45</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 13:52</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -278,8 +278,11 @@
 <script>
 (() => {
   // ── Shared definitions (must match WfLayout.mc / wf_layout.js) ──────────────
-  const PALETTE = ['#FFFFFF','#AAAAAA','#FF5555','#FF9900','#FFFF00','#55FF55','#00FFFF','#55AAFF','#FF55FF'];
-  const PALETTE_NAMES = ['White','Gray','Red','Orange','Yellow','Green','Cyan','Blue','Magenta'];
+  // 0..8 are the original nine (kept in this order for saved layouts); 9..15 added 2026-09-06.
+  const PALETTE = ['#FFFFFF','#AAAAAA','#FF5555','#FF9900','#FFFF00','#55FF55','#00FFFF','#55AAFF','#FF55FF',
+                   '#000000','#555555','#AA0000','#00AA00','#0000FF','#AA00FF','#FFAAAA'];
+  const PALETTE_NAMES = ['White','Gray','Red','Orange','Yellow','Green','Cyan','Blue','Magenta',
+                         'Black','Dark gray','Dark red','Dark green','Dark blue','Purple','Pink'];
   const BG_HIST_MAX = 5;   // the 5 round swatches = recently used background colours (newest first)
   // Moon age in days (reference new moon 2000-01-06 18:14 UTC, synodic month 29.530588853 d) —
   // same formula as WfData.moonAge / moonPhase. Phase 0 new … 4 full (northern hemisphere, lit from the right).

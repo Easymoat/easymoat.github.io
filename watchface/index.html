@@ -73,7 +73,7 @@
      so the send button never disappears below the fold. */
   .stage-row { display: flex; align-items: flex-start; gap: 56px; flex-wrap: wrap-reverse; justify-content: flex-start; width: 100%; max-width: 1040px; }
   .rail { display: flex; flex-direction: column; gap: 20px; width: 410px; }
-  .rail .row { flex-wrap: nowrap; }   /* Send to watch and Delete face stay on one line */
+  .rail .row { flex-wrap: nowrap; }   /* Upload to face and Delete face stay on one line */
   .faces { display: flex; gap: 14px; }
   .face { width: 124px; display: flex; flex-direction: column; align-items: center; gap: 7px; cursor: pointer; }
   .face .mini { position: relative; width: 124px; height: 124px; border-radius: 50%; overflow: hidden; background: #000;
@@ -170,7 +170,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 10:50</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 11:28</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -200,28 +200,30 @@
       <div class="rail">
         <div class="grp"><span class="lbl">Watch faces</span>
           <div class="faces" id="faces"></div>
+          <div class="row"><button class="btn primary" id="save" title="Stores the dial above in this face only. Sync to watch (below) puts it on the watch.">Upload to face 1</button><button class="btn danger" id="remove">Delete face</button></div>
+          <div class="status" id="facestatus"></div>
           <span class="muted" id="facenote"></span>
         </div>
         <div class="grp box" style="padding:14px 16px"><span class="lbl">Sync to watch</span>
           <div class="field"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX"></div>
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
-          <div class="row"><button class="btn primary" id="save">Send to watch</button><button class="btn danger" id="remove">Delete face</button></div>
+          <div class="row"><button class="btn primary" id="sync">Sync to watch</button></div>
           <div class="status" id="syncstatus"></div>
-          <span class="muted"><b>Send to watch</b> puts the dial above on the watch: the layout is saved into the selected face (★), and the image is applied as shown — with "Show on dial" ON the image in the editor goes to its slot and is used, with it OFF the watch shows no image. The watch picks it up on its next background sync (every 5 min, or long-press the face to sync now).</span>
+          <span class="muted"><b>Sync to watch</b> puts the dial above on the watch as you see it: the layout (uploaded to the selected face if it changed, ★) and the image — with "Show on dial" ON the image in the editor is used (uploaded to its slot if it changed), with it OFF the watch shows no image. The watch picks it up on its next background sync (every 5 min, or long-press the face to sync now).</span>
         </div>
       </div>
     </div>
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
     <div class="imgbox box">
       <div class="grp"><span class="lbl">Background image</span>
-        <div class="ctl"><span class="muted">1. pick a slot &nbsp;·&nbsp; 2. choose an image &nbsp;·&nbsp; 3. adjust it (the dial above previews it live while "Show on dial" is ON) &nbsp;·&nbsp; 4. Upload stores it in the slot. <b>Send to watch</b> (top right) is what puts the dial, image included, on the watch. Stored per slot under the Device ID.</span></div></div>
+        <div class="ctl"><span class="muted">1. pick a slot &nbsp;·&nbsp; 2. choose an image &nbsp;·&nbsp; 3. adjust it (the dial above previews it live while "Show on dial" is ON) &nbsp;·&nbsp; 4. Upload stores it in the slot. <b>Sync to watch</b> (top right) is what puts the dial, image included, on the watch. Stored per slot under the Device ID.</span></div></div>
       <div class="cols">
         <div class="grp"><span class="lbl">Preview</span>
           <div class="imgstage" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas><canvas id="imgQ" width="320" height="320"></canvas><div class="parts" id="imgParts"></div></div>
           <div class="ctl" id="imgsizerow">Size <input id="imgsize" type="range" min="30" max="100" step="1" value="100"><span class="muted" id="imgsizev">100%</span></div>
           <div class="ctl">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"></div>
           <div class="ctl" id="imgdragrow">Drag moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Image</button><button type="button" data-m="frame">Frame</button></span></div>
-          <div class="ctl"><button class="btn toggle on" id="imgshow" disabled title="While ON, the dial above shows the image exactly as it is here (frame, size, zoom, colours) and Send to watch applies it. While OFF, Send to watch turns the image off on the watch.">Show on dial: ON</button><button class="btn" id="imgreset">Reset</button><button class="btn" id="imgparts">Hide parts</button></div>
+          <div class="ctl"><button class="btn toggle on" id="imgshow" disabled title="While ON, the dial above shows the image exactly as it is here (frame, size, zoom, colours) and Sync to watch applies it. While OFF, Sync to watch turns the image off on the watch.">Show on dial: ON</button><button class="btn" id="imgreset">Reset</button><button class="btn" id="imgparts">Hide parts</button></div>
           <div class="muted">Square and circle can be resized and moved on the dial; the half shapes are fixed to their half. Zoom and dragging the image inside the frame work for every shape. Shown at the chosen colour count with your layout on top.</div>
         </div>
         <div class="opts">
@@ -229,7 +231,7 @@
           <div class="grp"><span class="lbl">Slot</span><div class="ctl"><span class="cb" id="imgslots"></span></div><div class="muted" id="imgslotnote"></div></div>
           <div class="grp"><span class="lbl">Actions</span>
             <div class="ctl"><label class="btn file" for="imgfile">Choose image…</label><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp" hidden><span class="muted" id="imgfilename">No file chosen</span></div>
-            <div class="ctl"><button class="btn primary" id="imgupload" disabled title="Stores the image in the slot only. Send to watch (top right) applies it on the watch.">Upload to slot</button><button class="btn danger" id="imgremove">Remove image in slot</button></div>
+            <div class="ctl"><button class="btn primary" id="imgupload" disabled title="Stores the image in the slot only. Sync to watch (top right) applies it on the watch.">Upload to slot</button><button class="btn danger" id="imgremove">Remove image in slot</button></div>
             <div class="status" id="imgstatus"></div></div>
           <div class="grp"><span class="lbl">Colors</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div></div>
           <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span><button class="btn" id="imgbgapply" title="Copy this colour to the dial background (one-off; the dial is not linked to the image)">Use as dial background</button></div></div>
@@ -706,7 +708,8 @@
   }
   const clamp = (v) => Math.max(0, Math.min(1000, Math.round(v)));
   const snap = (v) => clamp(Math.round(v / st.grid) * st.grid);
-  function commit() { try { localStorage.setItem('faceComposer', JSON.stringify(st)); } catch (e) {} render(); }
+  let LAYOUT_DIRTY = true;   // the dial differs from what the selected face holds (cleared by loading a face / Upload)
+  function commit() { LAYOUT_DIRTY = true; try { localStorage.setItem('faceComposer', JSON.stringify(st)); } catch (e) {} render(); }
 
   // ── Dragging ───────────────────────────────────────────────────────────────
   let drag = null;
@@ -834,15 +837,15 @@
     }
     const cur = FACES.faces[String(FACES.sel)];
     $('facenote').textContent = cur
-      ? `Face ${FACES.sel}${FACES.active === FACES.sel ? ' — shown on the watch (★)' : ' — saving it puts it on the watch'}`
-      : `Face ${FACES.sel} is empty — build a dial and save it here.`;
-    $('save').textContent = `Send to watch (face ${FACES.sel})`;
+      ? `Face ${FACES.sel}${FACES.active === FACES.sel ? ' — on the watch (★)' : ' — Sync to watch shows it on the watch'}`
+      : `Face ${FACES.sel} is empty — build a dial and upload it here.`;
+    $('save').textContent = `Upload to face ${FACES.sel}`;
   }
   // Clicking a face loads it into the editor (an empty one just becomes the target slot).
   function selectFace(n) {
     FACES.sel = n;
     const lay = FACES.faces[String(n)];
-    if (lay) { const c = faceLayout(lay); if (c) { st.bg = c.bg; st.el = c.el; st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; sel = -1; pushBgHist(st.bg); commit(); } }
+    if (lay) { const c = faceLayout(lay); if (c) { st.bg = c.bg; st.el = c.el; st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; sel = -1; pushBgHist(st.bg); commit(); LAYOUT_DIRTY = false; } }
     renderFaces();
   }
   async function loadFaces(opts) {
@@ -858,30 +861,52 @@
       if (opts.loadIntoEditor && FACES.faces[String(FACES.sel)]) selectFace(FACES.sel);
     } catch (e) {}
   }
+  // Store the dial in a face. activate=false stores it only (Upload to face N); activate=true also
+  // makes it the face the watch shows (Sync to watch).
+  async function uploadFace(id, slot, activate) {
+    const r = await fetch($('api').value + '/layout', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ device_id: id, layout: layoutObj(), slot, activate: !!activate }) });
+    const j = await r.json(); if (!r.ok) throw new Error(j.error || r.status);
+    LAYOUT_DIRTY = false;
+    return j;
+  }
+  async function setWatchFace(id, slot) {
+    const r = await fetch($('api').value + '/layout-slot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, slot }) });
+    const j = await r.json(); if (!r.ok) throw new Error(j.error || r.status);
+    return j;
+  }
   $('save').addEventListener('click', async () => {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('facestatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
+    setStatus('facestatus', 'Uploading…');
+    try { const j = await uploadFace(id, FACES.sel, false);
+      setStatus('facestatus', `Stored in face ${j.slot} (${j.count} elements). Sync to watch puts it on the watch.`, 'ok'); loadFaces(); }
+    catch (e) { setStatus('facestatus', 'Upload failed: ' + e.message, 'err'); }
+  });
+  // Sync to watch: the dial exactly as shown goes to the watch — layout (uploaded to the selected
+  // face if it changed, then made the watch's face) and image (as "Show on dial" shows it).
+  $('sync').addEventListener('click', async () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('syncstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
-    setStatus('syncstatus', 'Sending…');
+    setStatus('syncstatus', 'Syncing…'); $('sync').disabled = true;
     try {
-      const r = await fetch($('api').value + '/layout', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ device_id: id, layout: layoutObj(), slot: FACES.sel }) });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.error || r.status);
-      let imgMsg = '';
-      try { imgMsg = await sendImageToWatch(id); loadSlots(); }
-      catch (e) { setStatus('syncstatus', `Face ${j.slot} saved, but the image failed: ${e.message}`, 'err'); loadFaces(); return; }
-      setStatus('syncstatus', `Sent: face ${j.slot} (${j.count} elements), ${imgMsg}. The watch shows it on its next sync.`, 'ok');
-      loadFaces();
-    } catch (e) { setStatus('syncstatus', 'Send failed: ' + e.message, 'err'); }
+      let faceMsg;
+      if (LAYOUT_DIRTY || !FACES.faces[String(FACES.sel)]) { const j = await uploadFace(id, FACES.sel, true); faceMsg = `face ${j.slot} uploaded and shown`; }
+      else { await setWatchFace(id, FACES.sel); faceMsg = `face ${FACES.sel} shown`; }
+      let imgMsg;
+      try { imgMsg = await sendImageToWatch(id); }
+      catch (e) { setStatus('syncstatus', `${faceMsg}, but the image failed: ${e.message}`, 'err'); loadFaces(); return; }
+      setStatus('syncstatus', `Synced: ${faceMsg}, ${imgMsg}. The watch picks it up on its next sync.`, 'ok');
+      loadFaces(); loadSlots();
+    } catch (e) { setStatus('syncstatus', 'Sync failed: ' + e.message, 'err'); } finally { $('sync').disabled = false; }
   });
   $('remove').addEventListener('click', async () => {
-    const id = devId(); if (!id) return setStatus('syncstatus', 'Enter the Device ID first.', 'err');
+    const id = devId(); if (!id) return setStatus('facestatus', 'Enter the Device ID first.', 'err');
     try {
       const r = await fetch($('api').value + '/layout', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ device_id: id, remove: true, slot: FACES.sel }) });
       if (!r.ok) throw new Error(r.status);
-      setStatus('syncstatus', `Deleted face ${FACES.sel}. The watch keeps its last layout until another is saved.`, 'ok');
+      setStatus('facestatus', `Deleted face ${FACES.sel}. The watch keeps its last layout until another is synced.`, 'ok');
       loadFaces();
-    } catch (e) { setStatus('syncstatus', 'Remove failed: ' + e.message, 'err'); }
+    } catch (e) { setStatus('facestatus', 'Delete failed: ' + e.message, 'err'); }
   });
 
   document.fonts?.ready.then(() => { positionAll(); renderFaces(); });
@@ -1088,7 +1113,7 @@
       img.src = url; } catch (e) { setStatus('imgstatus', 'Could not load slot ' + n + ': ' + e.message, 'err'); }
   }
   // Upload the editor image to a slot. activate=false stores it only (the Upload button);
-  // activate=true stores it and makes it the one the watch uses (Send to watch).
+  // activate=true stores it and makes it the one the watch uses (Sync to watch).
   async function uploadImage(id, slot, activate) {
     const r = await fetch(imgApi() + '/image', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ device_id: id, image: IMG.masked, colors: IMG.colors, palette: computeOptimalPalette(IMG.colors), bg_auto: IMG.bgAuto, slot, activate: !!activate }) });
@@ -1102,7 +1127,7 @@
     const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
     return j;
   }
-  // Apply the image exactly as the dial above shows it (called by Send to watch). Returns a status phrase.
+  // Apply the image exactly as the dial above shows it (called by Sync to watch). Returns a status phrase.
   async function sendImageToWatch(id) {
     if (!(IMG.show && IMG.cur && IMG.masked)) { await setWatchImageSlot(id, 0); return 'no image'; }
     if (IMG.dirty) { await uploadImage(id, IMG.sel, true); return `image uploaded to slot ${IMG.sel} and used`; }
@@ -1112,7 +1137,7 @@
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('imgstatus', 'Enter the Device ID shown on the watch first.', 'err');
     if (!IMG.masked) return; setStatus('imgstatus', 'Uploading…'); $('imgupload').disabled = true;
     try { const j = await uploadImage(id, IMG.sel, false);
-      setStatus('imgstatus', `Stored in slot ${IMG.sel} (version ${j.version}). Send to watch (top right) puts it on the watch.`, 'ok'); loadSlots(); }
+      setStatus('imgstatus', `Stored in slot ${IMG.sel} (version ${j.version}). Sync to watch (top right) puts it on the watch.`, 'ok'); loadSlots(); }
     catch (e) { setStatus('imgstatus', 'Upload failed: ' + e.message, 'err'); } finally { $('imgupload').disabled = false; }
   });
   $('imgremove').addEventListener('click', async () => {

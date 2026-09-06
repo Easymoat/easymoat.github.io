@@ -88,6 +88,21 @@
   .rail .row { flex-wrap: nowrap; }
   #syncbox { padding: 10px 14px; gap: 8px; }
   #syncbox .status { margin-top: 0; }   /* Upload to face and Delete face stay on one line */
+  .photos { display: flex; gap: 10px; flex-wrap: wrap; }
+  .photo { width: 64px; height: 64px; border-radius: 8px; border: 2px solid var(--line-2); background: #000 center/cover no-repeat; cursor: pointer; padding: 0; }
+  .photo.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
+  .shelfbox { width: 100%; max-width: 1040px; gap: 14px; }
+  .shelf { display: flex; flex-wrap: wrap; gap: 18px 22px; }
+  .item { width: 150px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .item .mini { position: relative; width: 124px; height: 124px; border-radius: 50%; overflow: hidden; background: #000 center/cover no-repeat; border: 2px solid var(--line-2); }
+  .item.onwatch .mini { border-color: var(--accent); }
+  .item .mini .inner { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
+  .item .mini .inner .anchor, .item .mini .inner .grid { display: none !important; }
+  .item .mini .inner .el { outline: none !important; }
+  .item .cap { font: 11px var(--mono); color: var(--ink-3); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+  .item .cap b { color: var(--ink-2); font-weight: 500; }
+  .item .row { gap: 6px; }
+  .item .btn { padding: 3px 8px; font-size: 12px; }
   .faces { display: flex; gap: 14px; }
   .face { width: 124px; display: flex; flex-direction: column; align-items: center; gap: 7px; cursor: pointer; }
   .face .mini { position: relative; width: 124px; height: 124px; border-radius: 50%; overflow: hidden; background: #000;
@@ -190,7 +205,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 00:55</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 01:28</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -216,21 +231,17 @@
         <div class="stage-outer"><div id="stage"></div></div>
       </div>
       <div class="rail">
-        <div class="grp"><span class="lbl">Watch faces</span>
-          <div class="faces" id="faces"></div>
-          <div class="row"><button class="btn primary" id="save" title="Stores the dial above in this face only. Sync to watch (below) puts it on the watch.">Upload to face 1</button><button class="btn danger" id="remove">Delete face</button></div>
-          <div class="row"><button class="btn" id="savedraft" title="Keeps a copy of the dial above in this browser, separate from the three faces.">Save draft</button><button class="btn" id="draft" title="Replaces the dial above with the saved draft.">Back to draft</button><span class="muted" id="draftnote"></span></div>
+        <div class="grp"><span class="lbl">Draft</span>
+          <div class="row"><button class="btn" id="savedraft" title="Keeps a copy of the dial above (layout and image settings) in this browser.">Save draft</button><button class="btn" id="draft" title="Replaces the dial above with the saved draft.">Back to draft</button><span class="muted" id="draftnote"></span></div>
           <div class="status" id="facestatus"></div>
-          <span class="muted" id="facenote"></span>
         </div>
-        <div class="grp box" id="syncbox"><span class="lbl">Sync to watch</span>
-          <div class="row" style="align-items:center;gap:14px"><div class="field" style="grid-template-columns:auto 140px;gap:10px"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX"></div><button class="btn primary" id="sync">Sync to watch</button></div>
+        <div class="grp box" id="syncbox"><span class="lbl">Watch</span>
+          <div class="row" style="align-items:center;gap:14px"><div class="field" style="grid-template-columns:auto 140px;gap:10px"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX"></div></div>
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
-          <div class="status" id="syncstatus"></div>
-          <div class="status" id="watchseen" title="When your watch last checked in, and whether it already has the face marked ★"></div>
+          <div class="status" id="watchseen" title="When your watch last checked in, and whether it already has what was last sent"></div>
         </div>
         <ul class="muted synchelp" id="synchelpR">
-          <li><b>Sync to watch</b> puts the dial above on the watch as you see it.</li>
+          <li>Build the dial here, pick a photo below, then <b>Sync to watch</b> in the Collection at the bottom.</li>
           <li>The watch checks for changes every 5 minutes, so allow up to 5 minutes after Sync.</li>
         </ul>
       </div>
@@ -238,7 +249,7 @@
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
     <div class="imgbox box">
       <div class="grp"><span class="lbl">Background image</span>
-        <div class="ctl"><span class="muted">1. pick a slot &nbsp;·&nbsp; 2. choose an image &nbsp;·&nbsp; 3. adjust it (the dial above previews it live while "Show on dial" is ON) &nbsp;·&nbsp; 4. Upload stores it in the slot. <b>Sync to watch</b> (top right) is what puts the dial, image included, on the watch. Stored per slot under the Device ID.</span></div></div>
+        <div class="ctl"><span class="muted">1. add a photo (kept as is, up to 10) &nbsp;·&nbsp; 2. pick it &nbsp;·&nbsp; 3. adjust the frame, zoom and colours (the dial above previews it live while "Show on dial" is ON). The cut-out is made only when you Sync or Save to collection, so the photo can always be adjusted again.</span></div></div>
       <div class="cols">
         <div class="grp"><span class="lbl">Preview</span>
           <div class="imgstage" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas><canvas id="imgQ" width="320" height="320"></canvas><div class="parts" id="imgParts"></div></div>
@@ -249,16 +260,23 @@
         </div>
         <div class="opts">
           <div class="grp" title="The shape of the image frame on the dial."><span class="lbl">Shape</span><div class="ctl"><span class="cb" id="imgshape"></span></div></div>
-          <div class="grp"><span class="lbl">Slot</span><div class="ctl"><span class="cb" id="imgslots"></span></div><div class="muted" id="imgslotnote"></div></div>
+          <div class="grp"><span class="lbl">Photos</span><div class="photos" id="photos"></div><div class="muted" id="imgslotnote"></div></div>
           <div class="grp"><span class="lbl">Actions</span>
-            <div class="ctl"><label class="btn file" for="imgfile">Choose image…</label><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp" hidden><span class="muted" id="imgfilename">No file chosen</span></div>
-            <div class="ctl"><button class="btn primary" id="imgupload" disabled title="Stores the image in the slot only. Sync to watch (top right) applies it on the watch.">Upload to slot</button><button class="btn danger" id="imgremove">Remove image in slot</button></div>
+            <div class="ctl"><label class="btn file" for="imgfile">Add photo…</label><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp" hidden><span class="muted" id="imgfilename">Stored as is (max 1024 px)</span><button class="btn danger" id="imgremove" disabled>Delete photo</button></div>
             <div class="status" id="imgstatus"></div></div>
           <div class="grp"><span class="lbl">Colors</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div></div>
           <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span><button class="btn" id="imgbgapply" title="Copy this colour to the dial background (one-off; the dial is not linked to the image)">Use as dial background</button></div></div>
         </div>
       </div>
       <div class="muted">Square and circle can be resized and moved on the dial; the half shapes are fixed to their half. Zoom and dragging the image inside the frame work for every shape. Shown at the chosen colour count with your layout on top.</div>
+    </div>
+    <div class="shelfbox box">
+      <div class="grp"><span class="lbl">Collection</span>
+        <div class="ctl"><span class="muted"><b>Sync to watch</b> sends the dial above (layout + the photo as framed) to the watch. <b>Save to collection</b> keeps that same dial here as one item, so it stays available even after you change the dial or the photos. Each item can be loaded back or sent to the watch.</span></div></div>
+      <div class="row" style="align-items:center;gap:14px"><button class="btn primary" id="sync">Sync to watch</button><input type="text" id="shelfname" placeholder="Name (optional)" style="width:180px"><button class="btn" id="shelfsave">Save to collection</button></div>
+      <div class="status" id="syncstatus"></div>
+      <div class="status" id="shelfstatus"></div>
+      <div class="shelf" id="shelf"></div>
     </div>
     <div class="drawer">
       <details class="box">
@@ -898,17 +916,15 @@
   // ── Server sync ────────────────────────────────────────────────────────────
   try { $('devid').value = localStorage.getItem('faceComposer.devid') || ''; } catch (e) {}
   const devId = () => { const v = $('devid').value.trim(); try { localStorage.setItem('faceComposer.devid', v); } catch (e) {} return v; };
-  // ── Watch faces: three layouts per device (slot 1-3). The watch always shows the ★ one; saving a
-  // face makes it the ★, so "save" and "switch" are the same action. Clicking a face loads it here.
-  const FACES = { sel: 1, active: 1, faces: {} };
-  function faceLayout(f) {
-    const c = sanitize(f); if (!c) return null;
-    return c;
-  }
-  // Render one saved layout as a small dial (reuses makeEl by swapping `st` while it builds).
+  // ── Watch state, draft, collection ───────────────────────────────────────
+  // The server still keeps layout "faces" 1-3 for the watch contract; the Web writes only face 1 on Sync.
+  const WATCH = { active: 1, faces: {}, seen: null };
+  function faceLayout(f) { const c = sanitize(f); return c || null; }
+  // Render one layout as a small dial (reuses makeEl by swapping `st` while it builds).
   function renderFaceMini(el, lay) {
     const d = dev(), sc = 124 / d.w, keep = st;
-    el.innerHTML = ''; el.style.background = hex(lay.bg);   // faces store the layout only, never the image
+    el.innerHTML = '';
+    if (!el.style.backgroundImage) el.style.background = hex(lay.bg);
     const inner = document.createElement('div');
     inner.className = 'inner';
     inner.style.width = d.w + 'px'; inner.style.height = d.h + 'px'; inner.style.transform = `scale(${sc})`;
@@ -917,7 +933,6 @@
       lay.el.forEach((e, i) => inner.appendChild(makeEl(e, i, d.w / 454)));
     } finally { st = keep; }
     el.appendChild(inner);
-    // makeEl positions elements through positionAll(); do the same maths here
     inner.querySelectorAll('.el').forEach((div, i) => {
       const e = lay.el[i]; if (!e) return;
       const [, x, y, a] = e, px = x * d.w / 1000, py = y * d.h / 1000;
@@ -926,132 +941,157 @@
       div.style.top = (py - h / 2) + 'px';
     });
   }
-  function renderFaces() {
-    const wrap = $('faces'); wrap.innerHTML = '';
-    for (let n = 1; n <= 3; n++) {
-      const lay = FACES.faces[String(n)], has = !!lay;
-      const d = document.createElement('div');
-      d.className = 'face' + (n === FACES.sel ? ' on' : '');
-      d.innerHTML = `<div class="mini${has ? '' : ' empty'}"></div><span class="cap">${n}${FACES.active === n && has ? ' ★' : ''}</span>`;
-      d.addEventListener('click', () => selectFace(n));
-      wrap.appendChild(d);
-      if (has) { const clean = faceLayout(lay); if (clean) renderFaceMini(d.querySelector('.mini'), clean); }
-    }
-    const cur = FACES.faces[String(FACES.sel)];
-    const onWatch = FACES.active === FACES.sel && cur;
-    $('facenote').textContent = EDITING === 'draft'
-      ? `Upload stores the dial above in face ${FACES.sel}${cur ? onWatch ? ' (on the watch ★)' : '' : ' (empty)'}. Save draft keeps a copy here.`
-      : `Showing face ${EDITING}${FACES.active === Number(EDITING) ? ' (on the watch ★)' : ''}. Upload stores your changes in face ${FACES.sel}; Save draft keeps a copy here.`;
-    $('save').textContent = `Upload to face ${FACES.sel}`;
-    renderDraftNote();
-  }
-  // Clicking a face shows it in the editor (an empty one just becomes the target slot). The draft
-  // you were editing stays saved; "Back to draft" brings it back.
   function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; clearSel(); pushBgHist(st.bg); }
-  function selectFace(n) {
-    FACES.sel = n;
-    const lay = FACES.faces[String(n)];
-    if (lay) { const c = faceLayout(lay); if (c) { setEditing(n); loadIntoEditor(c); commit(); LAYOUT_DIRTY = false; } }
-    renderFaces();
-  }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
   function renderWatchSeen() {
     const el = $('watchseen'); if (!el) return;
-    const sn = FACES.seen, act = FACES.faces[String(FACES.active)];
+    const sn = WATCH.seen, act = WATCH.faces[String(WATCH.active)];
     if (!sn || !sn.ts) { el.textContent = 'Watch: not checked in yet — it looks for changes every 5 minutes.'; el.className = 'status'; return; }
     const age = Math.max(0, Math.round(Date.now() / 1000 - sn.ts));
     const ago = age < 60 ? 'just now' : age < 3600 ? `${Math.round(age / 60)} min ago` : age < 86400 ? `${Math.round(age / 3600)} h ago` : `${Math.round(age / 86400)} d ago`;
     const upToDate = act && String(sn.have) === String(act.v);
-    const pending = act && !upToDate;
-    el.textContent = `Watch: last checked ${ago} · ` + (upToDate ? 'up to date ✓' : pending ? 'update pending — arrives within 5 min' : 'no face on the watch yet');
+    el.textContent = `Watch: last checked ${ago} · ` + (upToDate ? 'up to date ✓' : act ? 'update pending — arrives within 5 min' : 'nothing sent yet');
     el.className = 'status ' + (upToDate ? 'ok' : '');
   }
-  setInterval(() => { if (/^[0-9a-zA-Z-]{4,40}$/.test(devId())) loadFaces(); else renderWatchSeen(); }, 30000);   // refresh the watch line while the page is open
+  async function loadWatchState() {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { WATCH.faces = {}; WATCH.seen = null; renderWatchSeen(); return; }
+    try { const r = await fetch($('api').value + '/layouts?device_id=' + encodeURIComponent(id)); if (!r.ok) return; const j = await r.json();
+      WATCH.faces = j.faces || {}; WATCH.active = Number(j.active || 1); WATCH.seen = j.seen || null; renderWatchSeen(); } catch (e) {}
+  }
+  setInterval(loadWatchState, 30000);   // refresh the watch line while the page is open
   const fmtTime = (t) => { const d = new Date(t); return isNaN(d) ? '' : d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); };
   function renderDraftNote() {
     const d = readDraft(), has = !!(d && Array.isArray(d.el));
     $('draft').disabled = !has;
-    const im = has && d.img ? (d.img.none ? ', no image' : d.img.data ? ', image from file' : `, image slot ${d.img.sel}`) : '';
+    const im = has && d.img ? (d.img.none ? ', no image' : d.img.data ? ', image from file' : d.img.k ? `, photo ${d.img.k}` : '') : '';
     $('draftnote').textContent = has ? `Draft saved ${d.savedAt ? fmtTime(d.savedAt) : ''} (${d.el.length} elements${im})` : 'No draft saved yet.';
   }
   $('savedraft').addEventListener('click', () => {
-    const full = saveDraft(); setEditing('draft'); renderDraftNote(); renderFaces();
+    const full = saveDraft(); setEditing('draft'); renderDraftNote();
     setStatus('facestatus', full ? 'Draft saved in this browser (layout and image settings).' : 'Draft saved, but the picture was too large to keep — choose the file again after Back to draft.', full ? 'ok' : 'err');
   });
   $('draft').addEventListener('click', () => {
     const d = readDraft(), c = d && faceLayout(d);
     if (!c) return setStatus('facestatus', 'No draft saved yet — use Save draft first.', 'err');
-    setEditing('draft'); loadIntoEditor(c); commit(); renderFaces();
+    setEditing('draft'); loadIntoEditor(c); commit();
     if (d.img) applyImgDraft(d.img);
     setStatus('facestatus', `Draft loaded (${c.el.length} elements${d.img ? ', image settings restored' : ''}).`, 'ok');
   });
-  async function loadFaces(opts) {
-    opts = opts || {};
-    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { FACES.faces = {}; renderFaces(); return; }
-    try {
-      const r = await fetch($('api').value + '/layouts?device_id=' + encodeURIComponent(id));
-      if (!r.ok) return;
-      const j = await r.json();
-      FACES.faces = j.faces || {}; FACES.active = Number(j.active || 1); FACES.seen = j.seen || null;
-      renderWatchSeen();
-      if (opts.selectActive) FACES.sel = FACES.active;
-      renderFaces();
-      if (opts.loadIntoEditor && FACES.faces[String(FACES.sel)]) selectFace(FACES.sel);
-    } catch (e) {}
-  }
-  // Store the dial in a face. activate=false stores it only (Upload to face N); activate=true also
-  // makes it the face the watch shows (Sync to watch).
-  async function uploadFace(id, slot, activate) {
+  // Layout → the watch's face 1 (and make it the ★).
+  async function uploadLayout(id, layout) {
     const r = await fetch($('api').value + '/layout', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ device_id: id, layout: layoutObj(), slot, activate: !!activate }) });
+      body: JSON.stringify({ device_id: id, layout, slot: 1, activate: true }) });
     const j = await r.json(); if (!r.ok) throw new Error(j.error || r.status);
     LAYOUT_DIRTY = false;
     return j;
   }
-  async function setWatchFace(id, slot) {
-    const r = await fetch($('api').value + '/layout-slot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, slot }) });
-    const j = await r.json(); if (!r.ok) throw new Error(j.error || r.status);
-    return j;
-  }
-  $('save').addEventListener('click', async () => {
-    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('facestatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
-    setStatus('facestatus', 'Uploading…');
-    try { const j = await uploadFace(id, FACES.sel, false);
-      setStatus('facestatus', `Stored in face ${j.slot} (${j.count} elements).` + (FACES.active === j.slot ? ' This face is on the watch (★): it updates within 5 minutes.' : ' Sync to watch puts it on the watch.'), 'ok'); loadFaces(); }
-    catch (e) { setStatus('facestatus', 'Upload failed: ' + e.message, 'err'); }
-  });
-  // Sync to watch: the dial exactly as shown goes to the watch — layout (uploaded to the selected
-  // face if it changed, then made the watch's face) and image (as "Show on dial" shows it).
+  // Sync to watch: the dial exactly as shown — layout to face 1, the framed photo (reduced) to image slot 1.
   $('sync').addEventListener('click', async () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('syncstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
-    if (imageBlocksSync()) {
-      const occ = IMG.state.slots[String(IMG.sel)] === true;
-      return setStatus('syncstatus', `The image in the editor is not uploaded yet. Upload it to a slot first${occ ? ` (slot ${IMG.sel} already has a picture — pick an empty slot to keep it)` : ''}, then Sync.`, 'err');
-    }
     setStatus('syncstatus', 'Syncing…'); $('sync').disabled = true;
     try {
-      let faceMsg;
-      if (LAYOUT_DIRTY || !FACES.faces[String(FACES.sel)]) { const j = await uploadFace(id, FACES.sel, true); faceMsg = `face ${j.slot} uploaded and shown`; }
-      else { await setWatchFace(id, FACES.sel); faceMsg = `face ${FACES.sel} shown`; }
+      const j = await uploadLayout(id, layoutObj());
       let imgMsg;
-      try { imgMsg = await sendImageToWatch(id); }
-      catch (e) { setStatus('syncstatus', `${faceMsg}, but the image failed: ${e.message}`, 'err'); loadFaces(); return; }
-      setStatus('syncstatus', `Sent: ${faceMsg}, ${imgMsg}. Your watch updates within 5 minutes.`, 'ok');
-      loadFaces(); loadSlots();
+      if (IMG.show && IMG.cur && IMG.masked) { await uploadImage(id, 1, true); imgMsg = 'image sent'; }
+      else { await setWatchImageSlot(id, 0); imgMsg = 'no image'; }
+      setStatus('syncstatus', `Sent: layout (${j.count} elements), ${imgMsg}. Your watch updates within 5 minutes.`, 'ok');
+      loadWatchState();
     } catch (e) { setStatus('syncstatus', 'Sync failed: ' + e.message, 'err'); } finally { $('sync').disabled = false; }
   });
-  $('remove').addEventListener('click', async () => {
-    const id = devId(); if (!id) return setStatus('facestatus', 'Enter the Device ID first.', 'err');
-    try {
-      const r = await fetch($('api').value + '/layout', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ device_id: id, remove: true, slot: FACES.sel }) });
-      if (!r.ok) throw new Error(r.status);
-      setStatus('facestatus', `Deleted face ${FACES.sel}. The watch keeps its last layout until another is synced.`, 'ok');
-      loadFaces();
-    } catch (e) { setStatus('facestatus', 'Delete failed: ' + e.message, 'err'); }
-  });
 
-  document.fonts?.ready.then(() => { positionAll(); renderFaces(); });
+  // ── Collection: finished dials (layout + framed picture + recipe), explicit Save, up to 20 ──
+  const SHELF = { items: [] };
+  function itemMini(el, it, layout) {
+    el.style.backgroundImage = it.url ? `url("${it.url}")` : '';
+    el.style.backgroundColor = hex(layout ? layout.bg : 0);
+    if (layout) renderFaceMini(el, layout);
+  }
+  async function loadShelf() {
+    const wrap = $('shelf'); const id = devId();
+    if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { wrap.innerHTML = '<span class="muted">Enter the Device ID to see your collection.</span>'; return; }
+    try { const r = await fetch($('api').value + '/shelf?device_id=' + encodeURIComponent(id)); if (!r.ok) throw new Error(r.status); const j = await r.json();
+      SHELF.items = j.items || []; SHELF.max = j.max || 20; } catch (e) { return; }
+    wrap.innerHTML = '';
+    if (!SHELF.items.length) { wrap.innerHTML = '<span class="muted">Nothing saved yet — Save to collection keeps the dial above here.</span>'; return; }
+    for (const it of SHELF.items) {
+      const d = document.createElement('div'); d.className = 'item';
+      d.innerHTML = `<div class="mini"></div><span class="cap"><b>${(it.name || `Item ${it.n}`).replace(/</g, '&lt;')}</b></span><span class="cap">${it.kind === 'photo' ? 'photo' : it.kind === 'camera' ? 'camera' : 'no image'} · ${fmtTime(it.ts * 1000)}</span>
+        <div class="row"><button class="btn" data-a="load" title="Put this item back into the editors above">Load</button><button class="btn primary" data-a="send" title="Send this item to the watch as it is">To watch</button><button class="btn danger" data-a="del">✕</button></div>`;
+      d.querySelector('[data-a="load"]').addEventListener('click', () => loadShelfItem(it.n));
+      d.querySelector('[data-a="send"]').addEventListener('click', () => sendShelfItem(it.n, d));
+      d.querySelector('[data-a="del"]').addEventListener('click', () => removeShelfItem(it.n, it.name));
+      wrap.appendChild(d);
+      fetchShelfItem(it.n).then((full) => { if (full) itemMini(d.querySelector('.mini'), it, faceLayout(full.layout)); }).catch(() => {});
+    }
+  }
+  async function fetchShelfItem(n) {
+    const r = await fetch(`${$('api').value}/shelf-item?device_id=${encodeURIComponent(devId())}&n=${n}`); if (!r.ok) return null; return r.json();
+  }
+  // The recipe = how the picture was framed (which photo, shape, size, position, zoom, colours, Auto).
+  function currentRecipe() {
+    return { k: IMG.k || 0, shape: IMG.shape, size: IMG.size, cx: IMG.cx, cy: IMG.cy, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom, colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show };
+  }
+  $('shelfsave').addEventListener('click', async () => {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
+    const hasImg = !!(IMG.show && IMG.cur && IMG.masked);
+    if (hasImg && !IMG.reduced) renderQuality();
+    const body = { device_id: id, layout: layoutObj(), kind: hasImg ? 'photo' : 'none', recipe: currentRecipe(), name: $('shelfname').value.trim() };
+    if (hasImg) body.image = (IMG.reduced || imgCv).toDataURL('image/png');
+    setStatus('shelfstatus', 'Saving…');
+    try { const r = await fetch($('api').value + '/shelf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error === 'shelf_full' ? `the collection is full (${j.max} items) — delete one first` : (j.error || r.status));
+      setStatus('shelfstatus', `Saved as ${body.name || 'item ' + j.n}.`, 'ok'); $('shelfname').value = ''; loadShelf(); }
+    catch (e) { setStatus('shelfstatus', 'Save failed: ' + e.message, 'err'); }
+  });
+  async function loadShelfItem(n) {
+    const full = await fetchShelfItem(n); if (!full) return setStatus('shelfstatus', 'Could not load that item.', 'err');
+    const c = faceLayout(full.layout); if (!c) return setStatus('shelfstatus', 'That item has no usable layout.', 'err');
+    setEditing('draft'); loadIntoEditor(c); commit();
+    const rc = full.recipe || {};
+    if (full.kind === 'none') { applyImgDraft({ none: true, show: rc.show !== false }); }
+    else if (rc.k && PHOTOS.list.some((p) => p.k === rc.k)) { applyImgDraft(Object.assign({}, rc)); }   // the photo is still on the shelf: fully editable
+    else if (full.url) {   // photo gone: show the finished cut-out (frame changes only; no re-crop possible)
+      applyImgDraft({ none: true }); const img = new Image(); img.crossOrigin = 'anonymous';
+      img.onload = () => { IMG.cur = img; IMG.src = 'shelf'; IMG.k = 0; setShape('square'); IMG.size = 100; IMG.cx = 160; IMG.cy = 160; IMG.zoom = 1; IMG.panX = 0; IMG.panY = 0; $('imgzoom').value = '1'; $('imgsize').value = '100'; $('imgsizev').textContent = '100%'; IMG.show = rc.show !== false; renderShowToggle(); redrawImg(); $('imgfilename').textContent = 'From the collection (photo no longer on the shelf)'; };
+      img.src = full.url;
+    }
+    setStatus('shelfstatus', `Loaded ${full.name || 'item ' + n} into the editors.`, 'ok');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  // Palette of a ≤32-colour PNG = its distinct opaque colours (what the watch's makeImageRequest needs).
+  function paletteOfCanvas(cv) {
+    const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data, seen = new Map();
+    for (let i = 0; i < d.length; i += 4) { if (d[i + 3] === 0) continue; const key = (d[i] << 16) | (d[i + 1] << 8) | d[i + 2]; seen.set(key, (seen.get(key) || 0) + 1); if (seen.size > 64) break; }
+    return [...seen.entries()].sort((a, b) => b[1] - a[1]).slice(0, 32).map((e) => e[0]);
+  }
+  async function sendShelfItem(n, card) {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID first.', 'err');
+    setStatus('shelfstatus', 'Sending…');
+    try {
+      const full = await fetchShelfItem(n); if (!full) throw new Error('no_item');
+      const j = await uploadLayout(id, full.layout);
+      if (full.kind !== 'none' && full.url) {
+        const img = new Image(); img.crossOrigin = 'anonymous';
+        await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('image_load')); img.src = full.url; });
+        const cv = document.createElement('canvas'); cv.width = 320; cv.height = 320; cv.getContext('2d').drawImage(img, 0, 0, 320, 320);
+        const rc = full.recipe || {};
+        const r = await fetch(imgApi() + '/image', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ device_id: id, image: cv.toDataURL('image/png'), colors: rc.colors || 16, palette: paletteOfCanvas(cv), bg_auto: rc.bgAuto == null ? 33 : rc.bgAuto, slot: 1, activate: true, shape: rc.shape || 'square', frame: { cx: Math.round(rc.cx || 160), cy: Math.round(rc.cy || 160), size: Math.round(rc.size || 100) } }) });
+        const jj = await r.json(); if (!r.ok || !jj.ok) throw new Error(jj.error || r.status);
+      } else { await setWatchImageSlot(id, 0); }
+      setStatus('shelfstatus', `Sent ${full.name || 'item ' + n} (${j.count} elements). Your watch updates within 5 minutes.`, 'ok');
+      document.querySelectorAll('.item').forEach((x) => x.classList.toggle('onwatch', x === card));
+      loadWatchState();
+    } catch (e) { setStatus('shelfstatus', 'Send failed: ' + e.message, 'err'); }
+  }
+  async function removeShelfItem(n, name) {
+    if (!window.confirm(`Delete ${name || 'item ' + n} from the collection?`)) return;
+    try { const r = await fetch($('api').value + '/shelf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: devId(), remove: true, n }) });
+      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status); setStatus('shelfstatus', 'Deleted.', 'ok'); loadShelf(); }
+    catch (e) { setStatus('shelfstatus', 'Delete failed: ' + e.message, 'err'); }
+  }
+
+  document.fonts?.ready.then(() => { positionAll(); loadShelf(); });
   // ── Background image (ported from easymoat.com/pulselink/image/; keyed by this Device ID, /api/wf/image*) ──
   // src: where the editor image came from — 'file' (chosen by the user; kept while switching slots so it
   // can be uploaded to any slot) or 'slot' (loaded from the server; cleared when an empty slot is picked).
@@ -1062,7 +1102,7 @@
   // bounding box and can be panned inside it; outside the frame stays transparent = background colour.
   const SHAPES = [['square', 'Square'], ['circle', 'Circle'], ['top', 'Top half'], ['bottom', 'Bottom half'], ['left', 'Left half'], ['right', 'Right half']];
   const CAN_SIZE = ['square', 'circle'];   // the half shapes are fixed
-  const IMG = { cur: null, src: null, dirty: false, fromSlot: 0, shape: 'square', size: 100, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 16, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
+  const IMG = { cur: null, src: null, k: 0, dirty: false, fromSlot: 0, shape: 'square', size: 100, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 16, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
   const imgApi = () => $('api').value.replace(/\/$/, '');
   const imgCv = $('imgCanvas');
@@ -1078,7 +1118,7 @@
   function clearImgPreview() {
     IMG.cur = null; IMG.src = null; IMG.masked = null; IMG.reduced = null; IMG.dirty = false; IMG.fromSlot = 0;
     imgCv.getContext('2d').clearRect(0, 0, 320, 320); $('imgQ').getContext('2d').clearRect(0, 0, 320, 320);
-    $('imgupload').disabled = true; $('imgupload').textContent = 'Upload to slot ' + IMG.sel; $('imgbgrow').hidden = true;
+    $('imgbgrow').hidden = true;
     applyStageImage(); renderShowToggle();
   }
   // Bounding box of the current frame, in the 320 master.
@@ -1122,7 +1162,7 @@
     IMG.masked = imgCv.toDataURL('image/png');
     applyStageImage();                 // live: the dial follows every edit at once
     IMG.reduced = null; paintQuality();   // keep the preview lit (Auto colour + raw image) — no black flash while dragging
-    $('imgupload').disabled = false; $('imgupload').textContent = `Upload to slot ${IMG.sel}`; renderShowToggle();
+    renderShowToggle();
     IMG.dirty = true;                  // differs from what the slot holds until it is uploaded
     $('imgbgrow').hidden = false;
     scheduleMeasure();
@@ -1131,7 +1171,7 @@
     const f = ev.target.files && ev.target.files[0]; if (!f) return;
     const img = new Image();
     $('imgfilename').textContent = f.name;
-    img.onload = () => { IMG.cur = img; IMG.src = 'file'; IMG.fromSlot = 0; IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1'; redrawImg(); URL.revokeObjectURL(img.src); };
+    img.onload = () => { URL.revokeObjectURL(img.src); addPhoto(img, f.name); };
     img.src = URL.createObjectURL(f);
   });
   (() => { let drag = false, lx = 0, ly = 0;
@@ -1236,62 +1276,58 @@
   }
   $('imgshow').addEventListener('click', () => { IMG.show = !IMG.show; renderShowToggle(); applyStageImage(); });
   // slots
-  function renderSlots() {
-    const w = $('imgslots'); w.innerHTML = '';
-    for (let n = 1; n <= 5; n++) { const b = document.createElement('button'); b.type = 'button'; const occ = IMG.state.slots[String(n)] === true, act = IMG.state.active === n;
-      b.textContent = n + (act ? ' ★' : occ ? ' ●' : ''); b.classList.toggle('on', n === IMG.sel);
-      b.addEventListener('click', () => {
-        // the preview always follows the slot: its image, or black when empty (choose a file after picking the slot)
-        IMG.sel = n; renderSlots(); $('imgupload').textContent = 'Upload to slot ' + n;
-        $('imgfile').value = ''; $('imgfilename').textContent = 'No file chosen';
-        if (occ) loadSlotImage(n); else clearImgPreview();
-      }); w.appendChild(b); }
-    const occ = IMG.state.slots[String(IMG.sel)] === true, act = IMG.state.active === IMG.sel;
-    $('imgslotnote').textContent = `Slot ${IMG.sel}: ${occ ? 'has an image' : 'empty'}${act ? ' (on the watch)' : ''} · ● = has image / ★ = on the watch`;
-    $('imgupload').textContent = `Upload to slot ${IMG.sel}`;
+  // ── Photo shelf: originals kept as they are (≤1024 px JPEG), up to 10 per Device ID ──
+  const PHOTOS = { list: [], max: 10 };
+  function renderPhotos() {
+    const w = $('photos'); w.innerHTML = '';
+    for (const p of PHOTOS.list) { const b = document.createElement('button'); b.type = 'button'; b.className = 'photo' + (p.k === IMG.k ? ' on' : ''); b.title = p.name || `Photo ${p.k}`; b.style.backgroundImage = `url("${p.url}")`;
+      b.addEventListener('click', () => loadPhoto(p.k)); w.appendChild(b); }
+    if (!PHOTOS.list.length) w.innerHTML = '<span class="muted">No photos yet — Add photo… below.</span>';
+    $('imgslotnote').textContent = PHOTOS.list.length ? `${PHOTOS.list.length} of ${PHOTOS.max} photos` + (IMG.k ? ` · photo ${IMG.k} in the editor` : '') : '';
+    $('imgremove').disabled = !IMG.k;
   }
-  async function loadSlots(opts) {
-    opts = opts || {};
-    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { IMG.activeUrl = ''; applyStageImage(); return; }
-    try { const r = await fetch(imgApi() + '/image-info?device_id=' + encodeURIComponent(id)); if (!r.ok) return; const j = await r.json();
-      IMG.state = { slots: j.slots || {}, active: Number.isInteger(Number(j.active)) ? Number(j.active) : 1, meta: j.meta || {} };   // 0 = no image (must not fall back to 1)
-      IMG.activeUrl = IMG.state.slots[String(IMG.state.active)] ? `${imgApi()}/image/${id.toLowerCase()}_s${IMG.state.active}.png?v=${j.version}` : '';
-      applyStageImage();
-      if (opts.selectActive) { IMG.sel = IMG.state.active; if (IMG.state.slots[String(IMG.sel)]) loadSlotImage(IMG.sel); else clearImgPreview(); }
-      renderSlots(); } catch (e) {}
+  async function loadPhotos() {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { PHOTOS.list = []; renderPhotos(); return; }
+    try { const r = await fetch(imgApi() + '/photos?device_id=' + encodeURIComponent(id)); if (!r.ok) return; const j = await r.json(); PHOTOS.list = j.photos || []; PHOTOS.max = j.max || 10; renderPhotos(); } catch (e) {}
   }
-  async function loadSlotImage(n, keep) {
-    const id = devId(); const meta = IMG.state.meta[String(n)] || {};
-    try { const r = await fetch(`${imgApi()}/image/${id.toLowerCase()}_s${n}.png?t=${Date.now()}`); if (!r.ok) throw new Error('http_' + r.status);
-      const url = URL.createObjectURL(await r.blob()); const img = new Image();
-      img.onload = () => { IMG.cur = img; IMG.src = 'slot'; IMG.fromSlot = n;
-        if (!keep) {   // fresh view of the slot: reset the editor to what is stored (its frame included)
-          IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1';
-          const fr = meta.frame && typeof meta.frame === 'object' ? meta.frame : {};
-          setShape(SHAPES.some(([x]) => x === meta.shape) ? meta.shape : 'square');
-          IMG.size = (fr.size >= 30 && fr.size <= 100) ? fr.size : 100;
-          IMG.cx = (fr.cx >= 0 && fr.cx <= 320) ? fr.cx : 160; IMG.cy = (fr.cy >= 0 && fr.cy <= 320) ? fr.cy : 160;
-          $('imgsize').value = IMG.size; $('imgsizev').textContent = IMG.size + '%';
-          if (meta.colors) { IMG.colors = Number(meta.colors); document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === IMG.colors)); }
-          if (meta.bg_auto != null) { IMG.bgAuto = Number(meta.bg_auto); $('imgbg').value = IMG.bgAuto; }
-        }
-        redrawImg(); IMG.dirty = keep ? !sameAsStored(meta) : false; URL.revokeObjectURL(url); };   // dirty only if the draft changed something
-      img.src = url; } catch (e) { setStatus('imgstatus', 'Could not load slot ' + n + ': ' + e.message, 'err'); }
+  // Load a photo into the editor. keep=true leaves the frame/zoom/colours as they are (draft / collection restore).
+  async function loadPhoto(k, keep) {
+    const p = PHOTOS.list.find((x) => x.k === k); if (!p) return;
+    const img = new Image(); img.crossOrigin = 'anonymous';
+    img.onload = () => { IMG.cur = img; IMG.src = 'photo'; IMG.k = k; IMG.fromSlot = 0;
+      if (!keep) { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1'; }
+      redrawImg(); IMG.dirty = true; renderPhotos(); $('imgfilename').textContent = p.name || `Photo ${k}`; };
+    img.onerror = () => setStatus('imgstatus', 'Could not load photo ' + k + '.', 'err');
+    img.src = p.url;
   }
-  // Does the editor show exactly what the slot stores (same frame, no zoom/pan, same colours)?
-  function sameAsStored(meta) {
-    const fr = meta && meta.frame && typeof meta.frame === 'object' ? meta.frame : {};
-    const shape = SHAPES.some(([x]) => x === (meta || {}).shape) ? meta.shape : 'square';
-    const size = (fr.size >= 30 && fr.size <= 100) ? fr.size : 100, cx = (fr.cx >= 0 && fr.cx <= 320) ? fr.cx : 160, cy = (fr.cy >= 0 && fr.cy <= 320) ? fr.cy : 160;
-    return IMG.shape === shape && IMG.size === size && IMG.cx === cx && IMG.cy === cy && IMG.zoom === 1 && IMG.panX === 0 && IMG.panY === 0
-      && (!meta || !meta.colors || IMG.colors === Number(meta.colors)) && (!meta || meta.bg_auto == null || IMG.bgAuto === Number(meta.bg_auto));
+  // Store a picked file on the photo shelf as it is (downscaled to ≤1024 px JPEG), then open it.
+  async function addPhoto(img, name) {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('imgstatus', 'Enter the Device ID shown on the watch first.', 'err');
+    if (PHOTOS.list.length >= PHOTOS.max) return setStatus('imgstatus', `The photo shelf is full (${PHOTOS.max}) — delete one first.`, 'err');
+    const m = 1024, sc = Math.min(1, m / Math.max(img.width, img.height)); const c = document.createElement('canvas');
+    c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    let q = 0.85, data = c.toDataURL('image/jpeg', q);
+    while (data.length > 540000 && q > 0.5) { q -= 0.1; data = c.toDataURL('image/jpeg', q); }
+    setStatus('imgstatus', 'Adding photo…');
+    try { const r = await fetch(imgApi() + '/photo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, image: data, name: (name || '').slice(0, 40), w: c.width, h: c.height }) });
+      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error === 'photo_shelf_full' ? 'the photo shelf is full' : (j.error || r.status));
+      await loadPhotos(); setStatus('imgstatus', `Photo ${j.k} added.`, 'ok'); loadPhoto(j.k); }
+    catch (e) { setStatus('imgstatus', 'Could not add the photo: ' + e.message, 'err'); }
   }
+  $('imgremove').addEventListener('click', async () => {
+    if (!IMG.k) return; const k = IMG.k;
+    if (!window.confirm(`Delete photo ${k} from the shelf? Collection items made from it keep their cut-out, but cannot be re-adjusted.`)) return;
+    try { const r = await fetch(imgApi() + '/photo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: devId(), remove: true, k }) });
+      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
+      clearImgPreview(); IMG.k = 0; await loadPhotos(); setStatus('imgstatus', `Photo ${k} deleted.`, 'ok'); }
+    catch (e) { setStatus('imgstatus', 'Delete failed: ' + e.message, 'err'); }
+  });
   // ── Draft: image editor state ──
   function imgDraftState() {
-    const base = { sel: IMG.sel, shape: IMG.shape, size: IMG.size, cx: IMG.cx, cy: IMG.cy, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom,
+    const base = { k: IMG.k || 0, shape: IMG.shape, size: IMG.size, cx: IMG.cx, cy: IMG.cy, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom,
                    colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, src: IMG.src };
     if (!IMG.cur) return Object.assign(base, { none: true });
-    if (IMG.src === 'file') {   // not on the server: keep a downscaled copy of the picture itself
+    if (!IMG.k) {   // not a shelf photo (e.g. loaded from the collection): keep a downscaled copy of the picture itself
       try { const m = 1024, sc = Math.min(1, m / Math.max(IMG.cur.width, IMG.cur.height)); const c = document.createElement('canvas');
         c.width = Math.round(IMG.cur.width * sc); c.height = Math.round(IMG.cur.height * sc); c.getContext('2d').drawImage(IMG.cur, 0, 0, c.width, c.height);
         base.data = c.toDataURL('image/jpeg', 0.85); } catch (e) {}
@@ -1300,7 +1336,6 @@
   }
   function applyImgDraft(d) {
     if (!d || typeof d !== 'object') return;
-    IMG.sel = [1, 2, 3, 4, 5].includes(d.sel) ? d.sel : IMG.sel;
     setShape(d.shape);
     IMG.size = Math.max(30, Math.min(100, Number(d.size) || 100)); $('imgsize').value = IMG.size; $('imgsizev').textContent = IMG.size + '%';
     IMG.cx = Number.isFinite(d.cx) ? d.cx : 160; IMG.cy = Number.isFinite(d.cy) ? d.cy : 160;
@@ -1309,15 +1344,15 @@
     if (COLOR_STEPS.includes(d.colors)) { IMG.colors = d.colors; document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === IMG.colors)); }
     IMG.bgAuto = Math.max(0, Math.min(100, Number(d.bgAuto) || 0)); $('imgbg').value = IMG.bgAuto;
     IMG.show = d.show !== false;
-    renderSlots(); renderShowToggle();
-    if (d.none) { clearImgPreview(); return; }
-    if (d.data) {   // picture from a file, kept in the draft
+    renderShowToggle();
+    if (d.none) { clearImgPreview(); IMG.k = 0; renderPhotos(); return; }
+    if (d.k && PHOTOS.list.some((p) => p.k === d.k)) { loadPhoto(d.k, true); return; }   // shelf photo: the draft's framing goes on top
+    if (d.data) {   // a picture kept inside the draft
       const img = new Image();
-      img.onload = () => { IMG.cur = img; IMG.src = 'file'; IMG.fromSlot = 0; redrawImg(); IMG.dirty = true; $('imgfilename').textContent = 'From draft (not uploaded)'; };
+      img.onload = () => { IMG.cur = img; IMG.src = 'file'; IMG.k = 0; redrawImg(); IMG.dirty = true; renderPhotos(); $('imgfilename').textContent = 'From draft'; };
       img.src = d.data; return;
     }
-    if (IMG.state.slots[String(IMG.sel)]) loadSlotImage(IMG.sel, true);   // picture is on the server; the draft's edits go on top
-    else clearImgPreview();
+    clearImgPreview(); IMG.k = 0; renderPhotos();
   }
   // Upload the editor image to a slot. activate=false stores it only (the Upload button);
   // activate=true stores it and makes it the one the watch uses (Sync to watch).
@@ -1332,7 +1367,7 @@
       body: JSON.stringify({ device_id: id, image: png, colors: IMG.colors, palette, bg_auto: IMG.bgAuto, slot, activate: !!activate,
                              shape: IMG.shape, frame: { cx: Math.round(IMG.cx), cy: Math.round(IMG.cy), size: Math.round(IMG.size) } }) });
     const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
-    IMG.src = 'slot'; IMG.dirty = false; IMG.fromSlot = slot; $('imgfile').value = ''; $('imgfilename').textContent = 'No file chosen';
+    IMG.dirty = false; $('imgfile').value = '';
     return j;
   }
   // Which slot the watch should use: the editor's slot while "Show on dial" is ON, none while OFF.
@@ -1341,40 +1376,12 @@
     const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
     return j;
   }
-  // Apply the image exactly as the dial above shows it (called by Sync to watch). Returns a status phrase.
-  // Sync never writes into a slot by itself: a slot holds an original picture that cannot be rebuilt, so
-  // only an explicit "Upload to slot" may replace it (2026-09-06: a draft restored with Back to draft was
-  // silently uploaded over the slot's original on Sync).
-  function imageBlocksSync() { return IMG.show && IMG.cur && IMG.masked && IMG.dirty; }
-  async function sendImageToWatch(id) {
-    if (!(IMG.show && IMG.cur && IMG.masked)) { await setWatchImageSlot(id, 0); return 'no image'; }
-    await setWatchImageSlot(id, IMG.sel); return `image slot ${IMG.sel} used`;
-  }
-  $('imgupload').addEventListener('click', async () => {
-    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('imgstatus', 'Enter the Device ID shown on the watch first.', 'err');
-    if (!IMG.masked) return;
-    if (IMG.state.slots[String(IMG.sel)] === true && IMG.fromSlot !== IMG.sel) {   // replacing a different original
-      if (!window.confirm(`Slot ${IMG.sel} already has a picture. Replace it with the image in the editor?\n(The current picture in slot ${IMG.sel} cannot be recovered afterwards.)`)) return;
-    }
-    setStatus('imgstatus', 'Uploading…'); $('imgupload').disabled = true;
-    try { const j = await uploadImage(id, IMG.sel, false);
-      setStatus('imgstatus', `Stored in slot ${IMG.sel}.` + (IMG.state.active === IMG.sel ? ' This slot is on the watch (★): it updates within 5 minutes.' : ' Sync to watch (top right) puts it on the watch.'), 'ok'); loadSlots(); }
-    catch (e) { setStatus('imgstatus', 'Upload failed: ' + e.message, 'err'); } finally { $('imgupload').disabled = false; }
-  });
-  $('imgremove').addEventListener('click', async () => {
-    const id = devId(); if (!id) return setStatus('imgstatus', 'Enter the Device ID first.', 'err');
-    try { const r = await fetch(imgApi() + '/image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, slot: IMG.sel, remove: true }) });
-      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
-      setStatus('imgstatus', `Removed the image in slot ${IMG.sel}.`, 'ok'); loadSlots(); }
-    catch (e) { setStatus('imgstatus', 'Remove failed: ' + e.message, 'err'); }
-  });
-  $('devid').addEventListener('change', () => { loadSlots({ selectActive: true }); loadFaces({ selectActive: true }); });
+  $('devid').addEventListener('change', () => { IMG.k = 0; clearImgPreview(); loadPhotos(); loadShelf(); loadWatchState(); });
   $('imgparts').addEventListener('click', () => { const a = $('imgParts'); a.hidden = !a.hidden; $('imgparts').textContent = a.hidden ? 'Show parts' : 'Hide parts'; });
-  setShape('square'); renderSlots(); measure();
+  setShape('square'); renderPhotos(); measure();
 
   render();
-  loadSlots({ selectActive: true });
-  loadFaces({ selectActive: true });
+  loadPhotos(); loadWatchState();
 })();
 </script>
 </body>

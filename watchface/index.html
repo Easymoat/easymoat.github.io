@@ -27,7 +27,9 @@
   main { display: grid; grid-template-columns: 200px minmax(0, 1fr) 256px; gap: 0; min-height: calc(100vh - 52px); }
   aside { background: var(--panel); border-right: 1px solid var(--line); padding: 20px 18px; display: flex; flex-direction: column; gap: 18px; }
   aside.right { border-right: 0; border-left: 1px solid var(--line); }
-  aside.right .pxs { flex-wrap: wrap; gap: 8px 14px; }          /* S / M / L steppers stack in the narrow column */
+  aside.right .pxs { display: flex; flex-direction: column; gap: 8px; width: 100%; }   /* S / M / L stacked, each filling the row */
+  aside.right .stp { width: 100%; }
+  aside.right .stp input { flex: 1 1 auto; width: auto; min-width: 0; }
   aside.right .group > .lbl { font-size: 10px; }
   aside.right .ctl { gap: 10px; }
   /* Selected sits in the bar above the dial: its fields flow in a row */
@@ -164,6 +166,8 @@
   .li { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
   .li:hover { background: var(--panel-2); } .li.on { background: var(--panel-2); outline: 1px solid var(--line-2); }
   .li .xy { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+  .li.hd { cursor: default; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); padding-bottom: 2px; border-bottom: 1px solid var(--line); border-radius: 0; }
+  .li.hd:hover { background: transparent; } .li.hd .xy { font-size: 10px; letter-spacing: .08em; }
   .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
   .muted { color: var(--ink-3); font-size: 12px; }
   @media (max-width: 980px) {
@@ -180,7 +184,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 14:14</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 14:26</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -208,7 +212,8 @@
       <div class="rail">
         <div class="grp"><span class="lbl">Watch faces</span>
           <div class="faces" id="faces"></div>
-          <div class="row"><button class="btn primary" id="save" title="Stores the dial above in this face only. Sync to watch (below) puts it on the watch.">Upload to face 1</button><button class="btn danger" id="remove">Delete face</button><button class="btn" id="draft" hidden title="Return to the dial you were editing (it is auto-saved in this browser).">Back to draft</button></div>
+          <div class="row"><button class="btn primary" id="save" title="Stores the dial above in this face only. Sync to watch (below) puts it on the watch.">Upload to face 1</button><button class="btn danger" id="remove">Delete face</button></div>
+          <div class="row"><button class="btn" id="savedraft" title="Keeps a copy of the dial above in this browser, separate from the three faces.">Save draft</button><button class="btn" id="draft" title="Replaces the dial above with the saved draft.">Back to draft</button><span class="muted" id="draftnote"></span></div>
           <div class="status" id="facestatus"></div>
           <span class="muted" id="facenote"></span>
         </div>
@@ -703,6 +708,7 @@
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   function renderList() {
     const l = $('list'); l.innerHTML = '';
+    if (st.el.length) { const hd = document.createElement('div'); hd.className = 'li hd'; hd.innerHTML = `<span class="dot" style="visibility:hidden"></span>Part<span class="xy">X, Y</span>`; l.appendChild(hd); }
     st.el.forEach((e, i) => {
       const li = document.createElement('div'); li.className = 'li' + (isSel(i) ? ' on' : '');
       li.innerHTML = `<span class="dot" style="background:${PALETTE[e[5]]}"></span>${TYPES[e[0]]?.name || e[0]}<span class="xy">${e[1]},${e[2]}</span>`;
@@ -747,18 +753,19 @@
   const clamp = (v) => Math.max(0, Math.min(1000, Math.round(v)));
   const snap = (v) => clamp(Math.round(v / st.grid) * st.grid);
   let LAYOUT_DIRTY = true;   // the dial differs from what the selected face holds (cleared by loading a face / Upload)
-  // The editor is auto-saved. What you build is the "draft"; clicking a saved face shows that face
-  // instead, and "Back to draft" returns to the draft. EDITING = 'draft' or the face number shown.
+  // The editor state itself survives a reload (localStorage 'faceComposer'). On top of that there is
+  // one "draft" slot in this browser, separate from the three faces: "Save draft" copies the dial into
+  // it explicitly (no auto-save — that silently went stale), "Back to draft" loads it whenever you like.
+  // EDITING = 'draft' or the face number last loaded, only used for the note under the faces.
   let EDITING = 'draft';
   try { EDITING = localStorage.getItem('faceComposer.editing') || 'draft'; if (EDITING !== 'draft' && !/^[123]$/.test(EDITING)) EDITING = 'draft'; } catch (e) {}
-  const draftKeys = () => ({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b });
+  const draftKeys = () => ({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, savedAt: Date.now() });
   function saveDraft() { try { localStorage.setItem('faceComposer.draft', JSON.stringify(draftKeys())); } catch (e) {} }
+  function readDraft() { try { return JSON.parse(localStorage.getItem('faceComposer.draft') || 'null'); } catch (e) { return null; } }
   function setEditing(m) { EDITING = m; try { localStorage.setItem('faceComposer.editing', String(m)); } catch (e) {} }
-  try { if (!localStorage.getItem('faceComposer.draft')) saveDraft(); } catch (e) {}   // first visit: the current dial is the draft
   function commit() {
     LAYOUT_DIRTY = true;
     try { localStorage.setItem('faceComposer', JSON.stringify(st)); } catch (e) {}
-    if (EDITING === 'draft') saveDraft();
     render();
   }
 
@@ -892,10 +899,10 @@
     const cur = FACES.faces[String(FACES.sel)];
     const onWatch = FACES.active === FACES.sel && cur;
     $('facenote').textContent = EDITING === 'draft'
-      ? `Editing your draft (auto-saved). Upload stores it in face ${FACES.sel}${cur ? onWatch ? ' (on the watch ★)' : '' : ' (empty)'}.`
-      : `Showing face ${EDITING}${FACES.active === Number(EDITING) ? ' (on the watch ★)' : ''}. Back to draft returns to what you were editing.`;
+      ? `Upload stores the dial above in face ${FACES.sel}${cur ? onWatch ? ' (on the watch ★)' : '' : ' (empty)'}. Save draft keeps a copy here.`
+      : `Showing face ${EDITING}${FACES.active === Number(EDITING) ? ' (on the watch ★)' : ''}. Upload stores your changes in face ${FACES.sel}; Save draft keeps a copy here.`;
     $('save').textContent = `Upload to face ${FACES.sel}`;
-    $('draft').hidden = EDITING === 'draft';
+    renderDraftNote();
   }
   // Clicking a face shows it in the editor (an empty one just becomes the target slot). The draft
   // you were editing stays saved; "Back to draft" brings it back.
@@ -903,14 +910,21 @@
   function selectFace(n) {
     FACES.sel = n;
     const lay = FACES.faces[String(n)];
-    if (lay) { const c = faceLayout(lay); if (c) { if (EDITING === 'draft') saveDraft(); setEditing(n); loadIntoEditor(c); commit(); LAYOUT_DIRTY = false; } }
+    if (lay) { const c = faceLayout(lay); if (c) { setEditing(n); loadIntoEditor(c); commit(); LAYOUT_DIRTY = false; } }
     renderFaces();
   }
+  const fmtTime = (t) => { const d = new Date(t); return isNaN(d) ? '' : d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); };
+  function renderDraftNote() {
+    const d = readDraft(), has = !!(d && Array.isArray(d.el));
+    $('draft').disabled = !has;
+    $('draftnote').textContent = has ? `Draft saved ${d.savedAt ? fmtTime(d.savedAt) : ''} (${d.el.length} elements)` : 'No draft saved yet.';
+  }
+  $('savedraft').addEventListener('click', () => { saveDraft(); setEditing('draft'); renderDraftNote(); renderFaces(); setStatus('facestatus', 'Draft saved in this browser.', 'ok'); });
   $('draft').addEventListener('click', () => {
-    let d = null; try { d = JSON.parse(localStorage.getItem('faceComposer.draft') || 'null'); } catch (e) {}
-    const c = d && faceLayout(d); setEditing('draft');
-    if (c) loadIntoEditor(c);
-    commit(); renderFaces();
+    const d = readDraft(), c = d && faceLayout(d);
+    if (!c) return setStatus('facestatus', 'No draft saved yet — use Save draft first.', 'err');
+    setEditing('draft'); loadIntoEditor(c); commit(); renderFaces();
+    setStatus('facestatus', `Draft loaded (${c.el.length} elements).`, 'ok');
   });
   async function loadFaces(opts) {
     opts = opts || {};

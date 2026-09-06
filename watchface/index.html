@@ -212,7 +212,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 06:12</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 06:18</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1111,8 +1111,8 @@
   // Frame shapes in the 320 master: square (default) and circle can be resized (size %) and moved
   // (cx, cy); the four half shapes are fixed halves of the dial. The image always fills the frame's
   // bounding box and can be panned inside it; outside the frame stays transparent = background colour.
-  const SHAPES = [['square', 'Square'], ['circle', 'Circle'], ['top', 'Top half'], ['bottom', 'Bottom half'], ['left', 'Left half'], ['right', 'Right half']];
-  const CAN_SIZE = ['square', 'circle'];   // the half shapes are fixed
+  const SHAPES = [['square', 'Square'], ['circle', 'Circle'], ['diamond', 'Diamond'], ['heart', 'Heart'], ['top', 'Top half'], ['bottom', 'Bottom half'], ['left', 'Left half'], ['right', 'Right half']];
+  const CAN_SIZE = ['square', 'circle', 'diamond', 'heart'];   // the half shapes are fixed
   const IMG = { cur: null, src: null, k: 0, dirty: false, fromSlot: 0, shape: 'square', size: 100, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 32, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
   const imgApi = () => $('api').value.replace(/\/$/, '');
@@ -1148,6 +1148,18 @@
     const k = IMG.shape, P = Math.PI, [bx, by, bw, bh] = frameBox();
     ctx.beginPath();
     if (k === 'circle') { ctx.arc(bx + bw / 2, by + bh / 2, bw / 2, 0, 2 * P); }
+    else if (k === 'diamond') { ctx.moveTo(bx + bw / 2, by); ctx.lineTo(bx + bw, by + bh / 2); ctx.lineTo(bx + bw / 2, by + bh); ctx.lineTo(bx, by + bh / 2); ctx.closePath(); }
+    else if (k === 'heart') {   // two lobes on top, point at the bottom, drawn in the frame's box
+      const X = (u) => bx + u * bw, Y = (v) => by + v * bh;
+      ctx.moveTo(X(0.5), Y(0.96));
+      ctx.bezierCurveTo(X(0.18), Y(0.74), X(0), Y(0.55), X(0), Y(0.32));
+      ctx.bezierCurveTo(X(0), Y(0.13), X(0.14), Y(0.02), X(0.29), Y(0.02));
+      ctx.bezierCurveTo(X(0.39), Y(0.02), X(0.47), Y(0.08), X(0.5), Y(0.17));
+      ctx.bezierCurveTo(X(0.53), Y(0.08), X(0.61), Y(0.02), X(0.71), Y(0.02));
+      ctx.bezierCurveTo(X(0.86), Y(0.02), X(1), Y(0.13), X(1), Y(0.32));
+      ctx.bezierCurveTo(X(1), Y(0.55), X(0.82), Y(0.74), X(0.5), Y(0.96));
+      ctx.closePath();
+    }
     else if (k === 'top') { ctx.arc(160, 160, 160, P, 2 * P); ctx.closePath(); }
     else if (k === 'bottom') { ctx.arc(160, 160, 160, 0, P); ctx.closePath(); }
     else if (k === 'left') { ctx.arc(160, 160, 160, P / 2, 3 * P / 2); ctx.closePath(); }

@@ -173,7 +173,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 13:52</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-06 13:53</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -834,7 +834,7 @@
       if (!Array.isArray(e) || e.length < 7) return null;
       const n = e.slice(0, 7).map(Number);
       if (!TYPES[n[0]] || n.some((v) => !Number.isInteger(v))) return null;
-      if (n[1] < 0 || n[1] > 1000 || n[2] < 0 || n[2] > 1000 || n[3] < 0 || n[3] > 2 || n[4] < 0 || n[4] > 2 || n[5] < 0 || n[5] > 8 || n[6] < 0 || n[6] > 3) return null;
+      if (n[1] < 0 || n[1] > 1000 || n[2] < 0 || n[2] > 1000 || n[3] < 0 || n[3] > 2 || n[4] < 0 || n[4] > 2 || n[5] < 0 || n[5] >= PALETTE.length || n[6] < 0 || n[6] > 3) return null;
       el.push(n);
     }
     const bg = Number.isInteger(j.bg) && j.bg >= 0 && j.bg <= 0xFFFFFF ? j.bg : 0;

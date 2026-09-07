@@ -100,6 +100,13 @@
   .photo.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
   .shelfbox { width: 100%; max-width: 1040px; gap: 14px; }
   .shelf { display: flex; flex-wrap: wrap; gap: 18px 22px; }
+  .wslots { display: flex; gap: 10px; flex-wrap: wrap; }
+  .wslot { min-width: 150px; padding: 8px 10px; border: 2px solid var(--line-2); border-radius: 8px; background: var(--panel-2); cursor: pointer; display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--ink-2); }
+  .wslot.on { border-color: var(--accent); }
+  .wslot.empty { border-style: dashed; color: var(--ink-3); cursor: default; }
+  .wslot .t { font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px; }
+  .wslot .x { align-self: flex-end; font-size: 11px; color: var(--ink-3); cursor: pointer; }
+  .item .row select { height: 26px; font-size: 12px; padding: 2px 4px; }
   .item { width: 150px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
   .item .mini { position: relative; width: 124px; height: 124px; border-radius: 50%; overflow: hidden; background: #000 center/cover no-repeat; border: 2px solid var(--line-2); }
   .item.onwatch .mini { border-color: var(--accent); }
@@ -213,7 +220,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-08 06:23</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-08 06:52</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -292,6 +299,9 @@
       <div class="row" style="align-items:center;gap:14px"><button class="btn primary" id="sync">Sync to watch</button><input type="text" id="shelfname" placeholder="Name (optional)" style="width:180px"><button class="btn" id="shelfsave">Save to collection</button></div>
       <div class="status" id="syncstatus"></div>
       <div class="status" id="shelfstatus"></div>
+      <div class="grp"><span class="lbl">On the watch</span>
+        <div class="wslots" id="wslots"></div>
+        <div class="muted">Five faces live on the watch. Sync fills slot 1 with the dial above; "To watch" puts a collection item into the slot you pick. ★ = the one shown; click a slot to switch (the watch follows within 5 minutes).</div></div>
       <div class="shelf" id="shelf"></div>
     </div>
     <div class="drawer">
@@ -1018,12 +1028,17 @@
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('syncstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
     setStatus('syncstatus', 'Syncing…'); $('sync').disabled = true;
     try {
-      const j = await uploadLayout(id, layoutObj());
-      let imgMsg;
-      if (IMG.show && hasSource() && IMG.masked) { await uploadImage(id, 1, true); imgMsg = IMG.src === 'camera' ? 'camera frame + crop sent (the watch follows the live camera)' : IMG.cur ? 'image sent' : 'colour shape sent'; }
-      else { await setWatchImageSlot(id, 0); imgMsg = 'no image'; }
-      setStatus('syncstatus', `Sent: layout (${j.count} elements), ${imgMsg}. Your watch updates within 5 minutes.`, 'ok');
-      loadWatchState();
+      const hasImg = !!(IMG.show && hasSource() && IMG.masked);
+      if (hasImg && !IMG.reduced) renderQuality();
+      const body = { device_id: id, slot: 1, activate: true, layout: layoutObj(), name: 'Current dial',
+                     kind: hasImg ? (IMG.src === 'camera' ? 'camera' : IMG.cur ? 'photo' : 'fill') : 'none' };
+      if (hasImg) { body.image = (IMG.reduced || imgCv).toDataURL('image/png'); body.colors = IMG.colors; body.palette = (IMG.reducedPal && IMG.reducedPal.length >= 2) ? IMG.reducedPal : computeOptimalPalette(IMG.colors); }
+      const r = await fetch($('api').value + '/watch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
+      LAYOUT_DIRTY = false; IMG.dirty = false;
+      const imgMsg = !hasImg ? 'no image' : IMG.src === 'camera' ? 'camera frame + crop (the watch follows the live camera)' : IMG.cur ? 'image' : 'colour shape';
+      setStatus('syncstatus', `Sent to watch slot 1 (${layoutObj().el.length} elements, ${imgMsg}) and made it the one shown. Your watch updates within 5 minutes.`, 'ok');
+      loadWatchState(); loadWatchSlots();
     } catch (e) { setStatus('syncstatus', 'Sync failed: ' + e.message, 'err'); } finally { $('sync').disabled = false; }
   });
 
@@ -1044,9 +1059,10 @@
     for (const it of SHELF.items) {
       const d = document.createElement('div'); d.className = 'item';
       d.innerHTML = `<div class="mini"></div><span class="cap"><b>${(it.name || `Item ${it.n}`).replace(/</g, '&lt;')}</b></span><span class="cap">${it.kind === 'photo' ? 'photo' : it.kind === 'fill' ? 'colour shape' : it.kind === 'camera' ? 'camera' : 'no image'} · ${fmtTime(it.ts * 1000)}</span>
-        <div class="row"><button class="btn" data-a="load" title="Put this item back into the editors above">Load</button><button class="btn primary" data-a="send" title="Send this item to the watch as it is">To watch</button><button class="btn danger" data-a="del">✕</button></div>`;
+        <div class="row"><button class="btn" data-a="load" title="Put this item back into the editors above">Load</button><select class="wslot-pick" title="Watch slot to put this item in">${[1,2,3,4,5].map((k) => `<option value="${k}">slot ${k}</option>`).join('')}</select><button class="btn primary" data-a="send" title="Copy this item into that watch slot and show it">To watch</button><button class="btn danger" data-a="del">✕</button></div>`;
+      d.querySelector('.wslot-pick').value = String(nextFreeWatchSlot());
       d.querySelector('[data-a="load"]').addEventListener('click', () => loadShelfItem(it.n));
-      d.querySelector('[data-a="send"]').addEventListener('click', () => sendShelfItem(it.n, d));
+      d.querySelector('[data-a="send"]').addEventListener('click', () => sendShelfItem(it.n, Number(d.querySelector('.wslot-pick').value)));
       d.querySelector('[data-a="del"]').addEventListener('click', () => removeShelfItem(it.n, it.name));
       wrap.appendChild(d);
       fetchShelfItem(it.n).then((full) => { if (full) itemMini(d.querySelector('.mini'), it, faceLayout(full.layout)); }).catch(() => {});
@@ -1064,7 +1080,7 @@
     const hasImg = !!(IMG.show && hasSource() && IMG.masked);
     if (hasImg && !IMG.reduced) renderQuality();
     const body = { device_id: id, layout: layoutObj(), kind: hasImg ? (IMG.src === 'camera' ? 'camera' : IMG.cur ? 'photo' : 'fill') : 'none', recipe: currentRecipe(), name: $('shelfname').value.trim() };
-    if (hasImg) body.image = (IMG.reduced || imgCv).toDataURL('image/png');
+    if (hasImg) { body.image = (IMG.reduced || imgCv).toDataURL('image/png'); body.palette = (IMG.reducedPal && IMG.reducedPal.length >= 2) ? IMG.reducedPal : computeOptimalPalette(IMG.colors); }
     setStatus('shelfstatus', 'Saving…');
     try { const r = await fetch($('api').value + '/shelf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error === 'shelf_full' ? `the collection is full (${j.max} items) — delete one first` : (j.error || r.status));
@@ -1093,24 +1109,42 @@
     for (let i = 0; i < d.length; i += 4) { if (d[i + 3] === 0) continue; const key = (d[i] << 16) | (d[i + 1] << 8) | d[i + 2]; seen.set(key, (seen.get(key) || 0) + 1); if (seen.size > 64) break; }
     return [...seen.entries()].sort((a, b) => b[1] - a[1]).slice(0, 32).map((e) => e[0]);
   }
-  async function sendShelfItem(n, card) {
+  // ── The five watch slots (server /watch*): copies of collection items, or the dial from Sync ──
+  const WSLOTS = { active: 0, faces: {} };
+  const nextFreeWatchSlot = () => { for (let k = 1; k <= 5; k++) if (!WSLOTS.faces[String(k)]) return k; return WSLOTS.active || 1; };
+  async function loadWatchSlots() {
+    const id = devId(); const w = $('wslots');
+    if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { WSLOTS.active = 0; WSLOTS.faces = {}; w.innerHTML = ''; return; }
+    try { const r = await fetch($('api').value + '/watch?device_id=' + encodeURIComponent(id)); if (!r.ok) return; const j = await r.json(); WSLOTS.active = j.active || 0; WSLOTS.faces = j.faces || {}; } catch (e) { return; }
+    w.innerHTML = '';
+    for (let k = 1; k <= 5; k++) {
+      const f = WSLOTS.faces[String(k)]; const d = document.createElement('div');
+      d.className = 'wslot' + (f ? '' : ' empty') + (WSLOTS.active === k ? ' on' : '');
+      d.innerHTML = f ? `<span>slot ${k}${WSLOTS.active === k ? ' ★' : ''}</span><span class="t">${(f.name || 'Face').replace(/</g, '&lt;')}</span><span>${f.kind === 'none' ? 'no image' : f.kind === 'fill' ? 'colour shape' : f.kind}</span><span class="x" title="Empty this slot">remove</span>` : `<span>slot ${k}</span><span class="t">empty</span>`;
+      if (f) {
+        d.addEventListener('click', (ev) => { if (ev.target.classList.contains('x')) return; setWatchActive(k); });
+        d.querySelector('.x').addEventListener('click', async () => { if (!window.confirm(`Empty watch slot ${k}?`)) return; await fetch($('api').value + '/watch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, slot: k, remove: true }) }); loadWatchSlots(); loadWatchState(); });
+      }
+      w.appendChild(d);
+    }
+    document.querySelectorAll('.wslot-pick').forEach((sel) => { sel.value = String(nextFreeWatchSlot()); });
+  }
+  async function setWatchActive(k) {
+    const id = devId();
+    try { const r = await fetch($('api').value + '/watch-active', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, slot: k }) });
+      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
+      setStatus('shelfstatus', `Watch slot ${k} is now the one shown. Your watch updates within 5 minutes.`, 'ok'); loadWatchSlots(); loadWatchState(); }
+    catch (e) { setStatus('shelfstatus', 'Switch failed: ' + e.message, 'err'); }
+  }
+  // Copy a collection item into a watch slot (the server duplicates layout + picture + palette) and show it.
+  async function sendShelfItem(n, k) {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID first.', 'err');
     setStatus('shelfstatus', 'Sending…');
     try {
-      const full = await fetchShelfItem(n); if (!full) throw new Error('no_item');
-      const j = await uploadLayout(id, full.layout);
-      if (full.kind !== 'none' && full.url) {
-        const img = new Image(); img.crossOrigin = 'anonymous';
-        await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('image_load')); img.src = absUrl(full.url) + '&c=1'; });
-        const cv = document.createElement('canvas'); cv.width = 320; cv.height = 320; cv.getContext('2d').drawImage(img, 0, 0, 320, 320);
-        const rc = full.recipe || {};
-        const r = await fetch(imgApi() + '/image', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ device_id: id, image: cv.toDataURL('image/png'), colors: rc.colors || 16, palette: paletteOfCanvas(cv), bg_auto: rc.bgAuto == null ? 33 : rc.bgAuto, slot: 1, activate: true, shape: rc.shape || 'square', frame: { cx: Math.round(rc.cx || 160), cy: Math.round(rc.cy || 160), size: Math.round(rc.size || 100) } }) });
-        const jj = await r.json(); if (!r.ok || !jj.ok) throw new Error(jj.error || r.status);
-      } else { await setWatchImageSlot(id, 0); }
-      setStatus('shelfstatus', `Sent ${full.name || 'item ' + n} (${j.count} elements). Your watch updates within 5 minutes.`, 'ok');
-      document.querySelectorAll('.item').forEach((x) => x.classList.toggle('onwatch', x === card));
-      loadWatchState();
+      const r = await fetch($('api').value + '/watch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, slot: k, from_shelf: n, activate: true }) });
+      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
+      setStatus('shelfstatus', `Put into watch slot ${k} and made it the one shown. Your watch updates within 5 minutes.`, 'ok');
+      loadWatchSlots(); loadWatchState();
     } catch (e) { setStatus('shelfstatus', 'Send failed: ' + e.message, 'err'); }
   }
   async function removeShelfItem(n, name) {
@@ -1120,7 +1154,7 @@
     catch (e) { setStatus('shelfstatus', 'Delete failed: ' + e.message, 'err'); }
   }
 
-  document.fonts?.ready.then(() => { positionAll(); loadShelf(); });
+  document.fonts?.ready.then(() => { positionAll(); loadShelf(); loadWatchSlots(); });
   // ── Background image (ported from easymoat.com/pulselink/image/; keyed by this Device ID, /api/wf/image*) ──
   // src: where the editor image came from — 'file' (chosen by the user; kept while switching slots so it
   // can be uploaded to any slot) or 'slot' (loaded from the server; cleared when an empty slot is picked).
@@ -1510,7 +1544,7 @@
     const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
     return j;
   }
-  $('devid').addEventListener('change', () => { IMG.k = 0; clearImgPreview(); loadPhotos(); loadShelf(); loadWatchState(); });
+  $('devid').addEventListener('change', () => { IMG.k = 0; clearImgPreview(); loadPhotos(); loadShelf(); loadWatchSlots(); loadWatchState(); });
   $('imgparts').addEventListener('click', () => { const a = $('imgParts'); a.hidden = !a.hidden; $('imgparts').textContent = a.hidden ? 'Show parts' : 'Hide parts'; });
   $('imghide').addEventListener('click', () => { const st_ = $('imgstage'); st_.classList.toggle('noimg'); $('imghide').textContent = st_.classList.contains('noimg') ? 'Show image' : 'Hide image'; });
 

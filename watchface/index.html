@@ -130,6 +130,7 @@
   .imgstage canvas { width: 320px; height: 320px; display: block; }
   .imgstage #imgQ { position: absolute; left: 0; top: 0; pointer-events: none; }
   .imgstage .parts { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; overflow: hidden; }
+  .imgstage.noimg canvas { visibility: hidden; }   /* Hide image: parts and the dark stage only */
   .imgstage .parts .anchor, .imgstage .parts .grid { display: none !important; }
   .imgstage .parts .el { outline: none !important; }
   .imgstage .parts[hidden] { display: none; }
@@ -212,7 +213,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 22:02</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 22:25</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -265,10 +266,13 @@
           <div class="ctl" id="imgsizerow">Size <input id="imgsize" type="range" min="30" max="100" step="1" value="100"><span class="muted" id="imgsizev">100%</span></div>
           <div class="ctl">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"></div>
           <div class="ctl" id="imgdragrow">Drag moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Image</button><button type="button" data-m="frame">Frame</button></span></div>
-          <div class="ctl"><button class="btn toggle on" id="imgshow" disabled title="While ON, the dial above shows the image exactly as it is here (frame, size, zoom, colours) and Sync to watch applies it. While OFF, Sync to watch turns the image off on the watch.">Show on dial: ON</button><button class="btn" id="imgreset">Reset</button><button class="btn" id="imgparts">Hide parts</button></div>
+          <div class="ctl"><button class="btn toggle on" id="imgshow" disabled title="While ON, the dial above shows the image exactly as it is here (frame, size, zoom, colours) and Sync to watch applies it. While OFF, Sync to watch turns the image off on the watch.">Show on dial: ON</button><button class="btn" id="imgreset">Reset</button><button class="btn" id="imgparts">Hide parts</button><button class="btn" id="imghide">Hide image</button></div>
+          <div class="ctl" title="Live camera from PulseLink: while ON, the latest camera frame replaces the picture in the editor (framed the same way)."><button class="btn toggle" id="camon">Camera: OFF</button><span class="muted">PL ID</span><input type="text" id="plid" placeholder="XXXX-XXXX" style="width:110px"><span class="status" id="camnote" style="flex:1 1 auto"></span></div>
         </div>
         <div class="opts">
-          <div class="grp" title="The shape of the image frame on the dial."><span class="lbl">Shape</span><div class="ctl"><span class="cb" id="imgshape"></span></div></div>
+          <div class="grp" title="The shape of the image frame on the dial."><span class="lbl">Shape</span><div class="ctl"><span class="cb" id="imgshape"></span></div>
+            <div class="ctl">Rotate <span class="cb"><button type="button" id="rotl" title="Turn the frame 45° anticlockwise">&#8634; 45°</button><button type="button" id="rotr" title="Turn the frame 45° clockwise">&#8635; 45°</button></span><span class="muted" id="rotv">0°</span></div>
+            <div class="muted">Shift+click a second shape to combine two (the picture shows through both). Rotation turns the frame in 45° steps; a rotated square is a diamond, a turned half circle faces any side.</div></div>
           <div class="grp"><span class="lbl">Photos</span><div class="photos" id="photos"></div><div class="muted" id="imgslotnote"></div></div>
           <div class="grp"><span class="lbl">Actions</span>
             <div class="ctl"><label class="btn file" for="imgfile">Add photo…</label><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp" hidden><span class="muted" id="imgfilename">Stored as is (max 1024 px)</span><button class="btn danger" id="imgremove" disabled>Delete photo</button></div>
@@ -1042,13 +1046,13 @@
   }
   // The recipe = how the picture was framed (which photo, shape, size, position, zoom, colours, Auto).
   function currentRecipe() {
-    return { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, size: IMG.size, cx: IMG.cx, cy: IMG.cy, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom, colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show };
+    return { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, shape2: IMG.shape2 || null, rot: IMG.rot, size: IMG.size, cx: IMG.cx, cy: IMG.cy, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom, colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, plId: IMG.src === 'camera' ? plId() : undefined };
   }
   $('shelfsave').addEventListener('click', async () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
     const hasImg = !!(IMG.show && hasSource() && IMG.masked);
     if (hasImg && !IMG.reduced) renderQuality();
-    const body = { device_id: id, layout: layoutObj(), kind: hasImg ? (IMG.cur ? 'photo' : 'fill') : 'none', recipe: currentRecipe(), name: $('shelfname').value.trim() };
+    const body = { device_id: id, layout: layoutObj(), kind: hasImg ? (IMG.src === 'camera' ? 'camera' : IMG.cur ? 'photo' : 'fill') : 'none', recipe: currentRecipe(), name: $('shelfname').value.trim() };
     if (hasImg) body.image = (IMG.reduced || imgCv).toDataURL('image/png');
     setStatus('shelfstatus', 'Saving…');
     try { const r = await fetch($('api').value + '/shelf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -1114,14 +1118,16 @@
   // Frame shapes in the 320 master: square (default) and circle can be resized (size %) and moved
   // (cx, cy); the four half shapes are fixed halves of the dial. The image always fills the frame's
   // bounding box and can be panned inside it; outside the frame stays transparent = background colour.
-  const SHAPES = [['square', 'Square'], ['circle', 'Circle'], ['diamond', '45° square'], ['heart', '♥ Heart'], ['cardd', '♦ Diamond'], ['spade', '♠ Spade'], ['club', '♣ Club'], ['star', '★ Star'],
-                  ['top', 'Top half'], ['bottom', 'Bottom half'], ['left', 'Left half'], ['right', 'Right half']];
+  const SHAPES = [['square', 'Square'], ['circle', 'Circle'], ['half', 'Half circle'], ['heart', '♥ Heart'], ['cardd', '♦ Diamond'], ['spade', '♠ Spade'], ['club', '♣ Club'], ['star', '★ Star']];
+  // Older layouts / drafts used a rotated square and four fixed halves; they map onto shape + rotation.
+  const LEGACY_SHAPE = { diamond: ['square', 45], top: ['half', 0], right: ['half', 90], bottom: ['half', 180], left: ['half', 270] };
+  function normShape(k, rot) { const L = LEGACY_SHAPE[k]; if (L) return [L[0], rot == null ? L[1] : rot]; return [SHAPES.some(([x]) => x === k) ? k : 'square', rot == null ? 0 : rot]; }
   const CAN_SIZE = SHAPES.map(([k]) => k);   // every shape can be resized and moved (the halves too, since 2026-09-07)
   // Shapes whose outline pokes outside the round dial at 100 %: the size they are opened at (fits the dial).
   const SHAPE_FIT = { heart: 86, spade: 96, club: 96 };   // heart: the lobes' shoulders are the farthest points (measured on the rendered mask)
   // A "picture" is either a photo (IMG.cur) or a flat colour fill of the frame (IMG.fill, no photo).
   const hasSource = () => !!(IMG.cur || IMG.fill);
-  const IMG = { cur: null, src: null, k: 0, fill: null, dirty: false, fromSlot: 0, bgMode: 'auto', shape: 'square', size: 100, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 32, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
+  const IMG = { cur: null, src: null, k: 0, fill: null, dirty: false, fromSlot: 0, bgMode: 'auto', shape: 'square', shape2: null, rot: 0, size: 100, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 32, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
   const imgApi = () => $('api').value.replace(/\/$/, '');
   const absUrl = (u) => (!u || /^https?:/.test(u)) ? u : new URL($('api').value).origin + u;   // server gives /api/wf/... paths
@@ -1146,12 +1152,16 @@
     const side = 320 * IMG.size / 100;
     return [IMG.cx - side / 2, IMG.cy - side / 2, side, side];
   }
-  // Path of the frame (square, circle, or a half of the dial circle).
-  function framePath(ctx) {
-    const k = IMG.shape, P = Math.PI, [bx, by, bw, bh] = frameBox();
+  // Path of one frame shape (k), turned by IMG.rot about the centre of the frame box. Path points are
+  // transformed as they are added, so the transform can be undone right after building it.
+  function framePath(ctx, k) {
+    k = k || IMG.shape;
+    const P = Math.PI, [bx, by, bw, bh] = frameBox();
+    ctx.save();
+    ctx.translate(bx + bw / 2, by + bh / 2); ctx.rotate(IMG.rot * P / 180); ctx.translate(-(bx + bw / 2), -(by + bh / 2));
     ctx.beginPath();
     if (k === 'circle') { ctx.arc(bx + bw / 2, by + bh / 2, bw / 2, 0, 2 * P); }
-    else if (k === 'diamond') { ctx.moveTo(bx + bw / 2, by); ctx.lineTo(bx + bw, by + bh / 2); ctx.lineTo(bx + bw / 2, by + bh); ctx.lineTo(bx, by + bh / 2); ctx.closePath(); }
+    else if (k === 'half') { ctx.arc(bx + bw / 2, by + bh / 2, bw / 2, P, 2 * P); ctx.closePath(); }   // top half; Rotate turns it
     else if (k === 'cardd') {   // playing-card diamond: a taller rhombus with slightly curved sides
       const X = (u) => bx + u * bw, Y = (v) => by + v * bh;
       ctx.moveTo(X(0.5), Y(0));
@@ -1200,18 +1210,17 @@
       ctx.bezierCurveTo(X(1), Y(0.55), X(0.82), Y(0.74), X(0.5), Y(0.96));
       ctx.closePath();
     }
-    else if (k === 'top') { ctx.arc(bx + bw / 2, by + bh / 2, bw / 2, P, 2 * P); ctx.closePath(); }        // halves of the circle inscribed in the frame box
-    else if (k === 'bottom') { ctx.arc(bx + bw / 2, by + bh / 2, bw / 2, 0, P); ctx.closePath(); }
-    else if (k === 'left') { ctx.arc(bx + bw / 2, by + bh / 2, bw / 2, P / 2, 3 * P / 2); ctx.closePath(); }
-    else if (k === 'right') { ctx.arc(bx + bw / 2, by + bh / 2, bw / 2, -P / 2, P / 2); ctx.closePath(); }
     else { ctx.rect(bx, by, bw, bh); }
+    ctx.restore();
   }
+  const frameShapes = () => IMG.shape2 ? [IMG.shape, IMG.shape2] : [IMG.shape];
   function redrawImg() {
     if (!hasSource()) return;
     const ctx = imgCv.getContext('2d');
     const [bx, by, bw, bh] = frameBox();
-    if (!IMG.cur) {   // colour fill: the frame shape in one colour, no photo
-      ctx.clearRect(0, 0, 320, 320); ctx.save(); framePath(ctx); ctx.clip(); ctx.fillStyle = IMG.fill; ctx.fillRect(0, 0, 320, 320); ctx.restore();
+    if (!IMG.cur) {   // colour fill: the frame shape(s) in one colour, no photo
+      ctx.clearRect(0, 0, 320, 320);
+      for (const k of frameShapes()) { ctx.save(); framePath(ctx, k); ctx.clip(); ctx.fillStyle = IMG.fill; ctx.fillRect(0, 0, 320, 320); ctx.restore(); }
       IMG.masked = imgCv.toDataURL('image/png'); applyStageImage(); IMG.reduced = null; paintQuality(); renderShowToggle(); IMG.dirty = true; $('imgbgrow').hidden = false; scheduleMeasure(); return;
     }
     const base = Math.max(bw / IMG.cur.width, bh / IMG.cur.height), sc = base * IMG.zoom;
@@ -1219,20 +1228,23 @@
     // The picture may move as long as it still covers the visible part of the frame. For the half
     // shapes that part is only half of the box, so the picture can slide across the hidden half.
     let vx = bx, vy = by, vw = bw, vh = bh;
-    if (IMG.shape === 'top') vh = bh / 2; else if (IMG.shape === 'bottom') { vy = by + bh / 2; vh = bh / 2; }
-    else if (IMG.shape === 'left') vw = bw / 2; else if (IMG.shape === 'right') { vx = bx + bw / 2; vw = bw / 2; }
+    if (IMG.shape === 'half' && !IMG.shape2) {
+      const r = ((IMG.rot % 360) + 360) % 360;
+      if (r === 0) vh = bh / 2; else if (r === 180) { vy = by + bh / 2; vh = bh / 2; }
+      else if (r === 270) vw = bw / 2; else if (r === 90) { vx = bx + bw / 2; vw = bw / 2; }
+    }
     const x0 = bx + (bw - dw) / 2, y0 = by + (bh - dh) / 2;          // picture origin at pan 0
     const minX = vx + vw - dw - x0, maxX = vx - x0, minY = vy + vh - dh - y0, maxY = vy - y0;
     IMG.panX = Math.max(Math.min(minX, 0), Math.min(Math.max(maxX, 0), IMG.panX)); IMG.panY = Math.max(Math.min(minY, 0), Math.min(Math.max(maxY, 0), IMG.panY));
     // Outside the frame everything stays transparent, so the watch shows its background colour there.
     ctx.clearRect(0, 0, 320, 320);
-    ctx.save();
-    framePath(ctx); ctx.clip();
-    // No fill behind the picture: anything transparent in the source (e.g. a slot image that was already
-    // cut to a circle) stays transparent, so the watch paints its background colour there instead of
-    // black getting baked into the slot on the next Upload.
-    ctx.drawImage(IMG.cur, bx + (bw - dw) / 2 + IMG.panX, by + (bh - dh) / 2 + IMG.panY, dw, dh);
-    ctx.restore();
+    // No fill behind the picture: transparent stays transparent (= the watch's background colour).
+    // Two shapes: the picture is drawn through each, which gives their union without winding trouble.
+    for (const k of frameShapes()) {
+      ctx.save(); framePath(ctx, k); ctx.clip();
+      ctx.drawImage(IMG.cur, bx + (bw - dw) / 2 + IMG.panX, by + (bh - dh) / 2 + IMG.panY, dw, dh);
+      ctx.restore();
+    }
     IMG.masked = imgCv.toDataURL('image/png');
     applyStageImage();                 // live: the dial follows every edit at once
     IMG.reduced = null; paintQuality();   // keep the preview lit (Auto colour + raw image) — no black flash while dragging
@@ -1259,19 +1271,28 @@
   $('imgzoom').addEventListener('input', (e) => { IMG.zoom = parseFloat(e.target.value) || 1; redrawImg(); });
   $('imgsize').addEventListener('input', (e) => { IMG.size = parseInt(e.target.value, 10) || 100; $('imgsizev').textContent = IMG.size + '%'; redrawImg(); });
   SHAPES.forEach(([k, name]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = name; b.dataset.s = k; b.classList.toggle('on', k === IMG.shape);
-    b.addEventListener('click', () => { setShape(k); IMG.panX = 0; IMG.panY = 0;
+    b.addEventListener('click', (ev) => {
+      if (ev.shiftKey || ev.metaKey || ev.ctrlKey) {            // second shape: add, or remove if it is already selected
+        if (k === IMG.shape2) IMG.shape2 = null;
+        else if (k === IMG.shape) { if (IMG.shape2) { IMG.shape = IMG.shape2; IMG.shape2 = null; } }
+        else IMG.shape2 = k;
+        setShape(IMG.shape, IMG.shape2);
+      } else { setShape(k, null); IMG.panX = 0; IMG.panY = 0; }
       const fit = SHAPE_FIT[k]; if (fit && IMG.size > fit) { IMG.size = fit; $('imgsize').value = fit; $('imgsizev').textContent = fit + '%'; }
       redrawImg(); }); $('imgshape').appendChild(b); });
-  function setShape(k) {
-    IMG.shape = SHAPES.some(([x]) => x === k) ? k : 'square';
-    document.querySelectorAll('#imgshape button').forEach((x) => x.classList.toggle('on', x.dataset.s === IMG.shape));
-    const sizable = CAN_SIZE.indexOf(IMG.shape) >= 0;
-    $('imgsizerow').hidden = !sizable; $('imgdragrow').hidden = !sizable;
-    if (!sizable) { IMG.drag = 'image'; document.querySelectorAll('#imgdrag button').forEach((x) => x.classList.toggle('on', x.dataset.m === 'image')); }
+  function setShape(k, k2) {
+    const [nk, rot] = normShape(k, IMG.rot); IMG.shape = nk; IMG.rot = rot;
+    IMG.shape2 = (k2 && k2 !== IMG.shape && SHAPES.some(([x]) => x === k2)) ? k2 : null;
+    document.querySelectorAll('#imgshape button').forEach((x) => x.classList.toggle('on', x.dataset.s === IMG.shape || x.dataset.s === IMG.shape2));
+    $('rotv').textContent = IMG.rot + '°';
+    $('imgsizerow').hidden = false; $('imgdragrow').hidden = false;
   }
+  function rotateFrame(d) { IMG.rot = (((IMG.rot + d) % 360) + 360) % 360; $('rotv').textContent = IMG.rot + '°'; redrawImg(); }
+  $('rotl').addEventListener('click', () => rotateFrame(-45));
+  $('rotr').addEventListener('click', () => rotateFrame(45));
   document.querySelectorAll('#imgdrag button').forEach((b) => b.addEventListener('click', () => {
     IMG.drag = b.dataset.m; document.querySelectorAll('#imgdrag button').forEach((x) => x.classList.toggle('on', x === b)); }));
-  $('imgreset').addEventListener('click', () => { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; IMG.size = 100; IMG.cx = 160; IMG.cy = 160;
+  $('imgreset').addEventListener('click', () => { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; IMG.size = 100; IMG.cx = 160; IMG.cy = 160; IMG.rot = 0; IMG.shape2 = null; setShape(IMG.shape, null);
     $('imgzoom').value = '1'; $('imgsize').value = '100'; $('imgsizev').textContent = '100%'; redrawImg(); });
   // colours
   const COLOR_STEPS = [2, 4, 8, 16, 32];   // a watch face cannot fetch more than 32 colours (fr965 measured, 2026-09-07)
@@ -1423,7 +1444,7 @@
   });
   // ── Draft: image editor state ──
   function imgDraftState() {
-    const base = { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, size: IMG.size, cx: IMG.cx, cy: IMG.cy, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom,
+    const base = { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, shape2: IMG.shape2 || null, rot: IMG.rot, size: IMG.size, cx: IMG.cx, cy: IMG.cy, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom,
                    colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, src: IMG.src };
     if (IMG.fill && !IMG.cur) return base;
     if (!IMG.cur) return Object.assign(base, { none: true });
@@ -1436,7 +1457,8 @@
   }
   function applyImgDraft(d) {
     if (!d || typeof d !== 'object') return;
-    setShape(d.shape);
+    const [nk, rot] = normShape(d.shape, Number.isFinite(d.rot) ? d.rot : null);
+    IMG.rot = ((Math.round(rot / 45) * 45) % 360 + 360) % 360; setShape(nk, d.shape2 || null);
     IMG.size = Math.max(30, Math.min(100, Number(d.size) || 100)); $('imgsize').value = IMG.size; $('imgsizev').textContent = IMG.size + '%';
     IMG.cx = Number.isFinite(d.cx) ? d.cx : 160; IMG.cy = Number.isFinite(d.cy) ? d.cy : 160;
     IMG.panX = Number(d.panX) || 0; IMG.panY = Number(d.panY) || 0;
@@ -1479,6 +1501,42 @@
   }
   $('devid').addEventListener('change', () => { IMG.k = 0; clearImgPreview(); loadPhotos(); loadShelf(); loadWatchState(); });
   $('imgparts').addEventListener('click', () => { const a = $('imgParts'); a.hidden = !a.hidden; $('imgparts').textContent = a.hidden ? 'Show parts' : 'Hide parts'; });
+  $('imghide').addEventListener('click', () => { const st_ = $('imgstage'); st_.classList.toggle('noimg'); $('imghide').textContent = st_.classList.contains('noimg') ? 'Show image' : 'Hide image'; });
+
+  // ── Live camera (PulseLink): while ON the latest camera frame replaces the picture in the editor ──
+  const PL_API = 'https://mlbwatch-server.onrender.com/api/pulselink';
+  const CAM = { on: false, timer: null, ver: '', prev: null };
+  try { $('plid').value = localStorage.getItem('faceComposer.plid') || ''; } catch (e) {}
+  const plId = () => { const v = $('plid').value.trim(); try { localStorage.setItem('faceComposer.plid', v); } catch (e) {} return v; };
+  function camNote(msg, cls) { const el = $('camnote'); el.textContent = msg; el.title = msg; el.className = 'status ' + (cls || ''); }
+  async function fetchCam() {
+    const id = plId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { camNote('Enter the PulseLink Device ID (XXXX-XXXX).', 'err'); return; }
+    try {
+      const r = await fetch(`${PL_API}/cam-ping?device_id=${encodeURIComponent(id)}`); const j = await r.json();
+      if (!r.ok) throw new Error(j.error || r.status);
+      const ov = String(j.ov || '0');
+      if (ov === '0' || !j.uid) { camNote('No camera frame yet — the camera phone has not sent a picture.', 'err'); return; }
+      if (ov === CAM.ver && IMG.src === 'camera') { camNote(`Live camera · frame ${fmtTime(Number(ov))}`, 'ok'); return; }
+      const img = new Image(); img.crossOrigin = 'anonymous';
+      await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('frame_load')); img.src = `${PL_API}/compass-image/${encodeURIComponent(j.uid)}_s6.png?v=${ov}&c=1`; });
+      CAM.ver = ov; IMG.cur = img; IMG.src = 'camera'; IMG.k = 0; IMG.fill = null; IMG.fromSlot = 0;
+      renderPhotos(); $('imgfilename').textContent = 'Live camera'; redrawImg();
+      camNote(`Live camera · frame ${fmtTime(Number(ov))}`, 'ok');
+    } catch (e) { camNote('Camera: ' + e.message, 'err'); }
+  }
+  function setCamera(on) {
+    CAM.on = on; $('camon').classList.toggle('on', on); $('camon').textContent = 'Camera: ' + (on ? 'ON' : 'OFF');
+    if (on) { CAM.prev = { cur: IMG.cur, src: IMG.src, k: IMG.k, fill: IMG.fill }; CAM.ver = ''; fetchCam(); CAM.timer = setInterval(fetchCam, 60000); }
+    else {
+      clearInterval(CAM.timer); CAM.timer = null; camNote('');
+      const p = CAM.prev; CAM.prev = null;
+      if (p && p.cur && p.src !== 'camera') { IMG.cur = p.cur; IMG.src = p.src; IMG.k = p.k; IMG.fill = p.fill; renderPhotos(); $('imgfilename').textContent = p.k ? `Photo ${p.k}` : (p.fill ? 'Colour fill ' + p.fill.toUpperCase() : ''); redrawImg(); }
+      else if (p && p.fill) { useFill(p.fill); }
+      else { clearImgPreview(); IMG.k = 0; renderPhotos(); }
+    }
+  }
+  $('camon').addEventListener('click', () => setCamera(!CAM.on));
+  $('plid').addEventListener('change', () => { if (CAM.on) { CAM.ver = ''; fetchCam(); } });
   setShape('square'); renderPhotos(); measure();
 
   render();

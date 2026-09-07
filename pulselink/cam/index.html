@@ -336,7 +336,9 @@ function renderSizeSeg() {
 }
 renderSizeSeg();
 function setPx(n, fromLocal) {
-  mPx = (parseInt(n, 10) === 454) ? 454 : 320;
+  // 文字盤がカメラを使っている間は、文字盤が書いた機種の画面幅 (200..480) をそのまま使う。
+  const v = parseInt(n, 10);
+  mPx = (camCfg && camCfg.wf_locked && v >= 200 && v <= 480) ? v : (v === 454 ? 454 : 320);
   try { localStorage.setItem('pl_cam_px', String(mPx)); } catch (e) {}
   renderSizeSeg();
   if (fromLocal) {
@@ -1072,6 +1074,21 @@ async function captureAndUpload() {
     ctx.beginPath(); ctx.arc(PX / 2, PX / 2, PX / 2, 0, Math.PI * 2); ctx.fill();
     ctx.globalCompositeOperation = 'source-over';
     const png = cv.toDataURL('image/png');
+    // 文字盤がカメラを使っている間: Face Composer のプレビュー用に、切り出し前のフル画像
+    // (中央正方形、ズーム無し) を 320px・16 色で同送する。あくまで編集用の一時的な絵。
+    let fullPng = null;
+    if (camCfg && camCfg.wf_locked) {
+      try {
+        const fc = document.createElement('canvas'); fc.width = 320; fc.height = 320;
+        const fx = fc.getContext('2d');
+        fx.drawImage(video, bx, by, base, base, 0, 0, 320, 320);
+        if (typeof RgbQuant !== 'undefined') {
+          const fq = new RgbQuant({ colors: 16, dithKern: 'FloydSteinberg', dithSerp: true });
+          fq.sample(fc); const fo = fq.reduce(fc); const fid = fx.createImageData(320, 320); fid.data.set(fo); fx.putImageData(fid, 0, 0);
+        }
+        fullPng = fc.toDataURL('image/png');
+      } catch (e) { fullPng = null; }
+    }
     // サムネイル更新
     const th = document.getElementById('thumb');
     if (th.width !== PX) { th.width = PX; th.height = PX; }
@@ -1083,7 +1100,7 @@ async function captureAndUpload() {
       method: 'POST',
       headers: authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(withDevBody({ image: png, size: sizeMode, colors: mColors,
-        palette: palette, slot: CAM_SLOT, motion: wasMotion }))
+        palette: palette, slot: CAM_SLOT, motion: wasMotion, full: fullPng }))
     });
     if (r.status === 401) { onAuthLost(); return; }
     const j = await r.json();

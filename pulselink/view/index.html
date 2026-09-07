@@ -481,11 +481,15 @@ function renderControls() {
   // 文字盤が枠を書き込んでいる間は、その旨を出す (最後の書き込みから 15 分)。
   var wn = document.getElementById('wfNote');
   if (wn) {
-    var recent = cfg.wf_at && (Date.now() - Number(cfg.wf_at) < 15 * 60 * 1000);
+    var recent = cfg.wf_locked || (cfg.wf_at && (Date.now() - Number(cfg.wf_at) < 15 * 60 * 1000));
     wn.style.display = recent ? '' : 'none';
   }
+  // 文字盤がカメラを使っている間、ズームは文字盤の枠で決まる (Viewer からは変えられない)。
+  var wfLock = !!cfg.wf_locked;
   document.querySelectorAll('#zoomSeg button').forEach(function (x) {
     x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === (cfg.zoom || 100));
+    x.disabled = wfLock;
+    x.title = wfLock ? (ja() ? '文字盤がカメラの枠を決めています' : 'The watch face sets the camera frame') : '';
   });
   document.querySelectorAll('#brSeg button').forEach(function (x) {
     x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === (cfg.brightness || 0));

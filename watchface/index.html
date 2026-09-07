@@ -213,7 +213,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 23:53</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-08 00:10</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1527,8 +1527,12 @@
       const ov = String(j.ov || '0');
       if (ov === '0' || !j.uid) { camNote('No camera frame yet — the camera phone has not sent a picture.', 'err'); return; }
       if (ov === CAM.ver && IMG.src === 'camera') { camNote(`Live camera · frame ${fmtTime(Number(ov))}`, 'ok'); return; }
+      // Prefer the camera's full frame (320 px / 16 colours, sent by the camera phone while the watch face
+      // holds the camera) so the editor can frame it; fall back to the cropped frame the watch gets.
       const img = new Image(); img.crossOrigin = 'anonymous';
-      await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('frame_load')); img.src = `${PL_API}/compass-image/${encodeURIComponent(j.uid)}_s6.png?v=${ov}&c=1`; });
+      const load = (u) => new Promise((res, rej) => { img.onload = () => res(true); img.onerror = () => rej(new Error('frame_load')); img.src = u; });
+      try { await load(`${PL_API}/compass-image/${encodeURIComponent(j.uid)}_s6_full.png?v=${ov}&c=1`); }
+      catch (e) { await load(`${PL_API}/compass-image/${encodeURIComponent(j.uid)}_s6.png?v=${ov}&c=1`); }
       CAM.ver = ov; IMG.cur = img; IMG.src = 'camera'; IMG.k = 0; IMG.fill = null; IMG.fromSlot = 0;
       renderPhotos(); $('imgfilename').textContent = 'Live camera'; redrawImg();
       camNote(`Live camera · frame ${fmtTime(Number(ov))}`, 'ok');

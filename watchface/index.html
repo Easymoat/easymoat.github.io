@@ -212,7 +212,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 06:27</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 10:00</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1112,8 +1112,9 @@
   // Frame shapes in the 320 master: square (default) and circle can be resized (size %) and moved
   // (cx, cy); the four half shapes are fixed halves of the dial. The image always fills the frame's
   // bounding box and can be panned inside it; outside the frame stays transparent = background colour.
-  const SHAPES = [['square', 'Square'], ['circle', 'Circle'], ['diamond', 'Diamond'], ['heart', 'Heart'], ['top', 'Top half'], ['bottom', 'Bottom half'], ['left', 'Left half'], ['right', 'Right half']];
-  const CAN_SIZE = ['square', 'circle', 'diamond', 'heart'];   // the half shapes are fixed
+  const SHAPES = [['square', 'Square'], ['circle', 'Circle'], ['diamond', 'Diamond (45° square)'], ['heart', '♥ Heart'], ['cardd', '♦ Diamond (card)'], ['spade', '♠ Spade'], ['club', '♣ Club'], ['star', '★ Star'],
+                  ['top', 'Top half'], ['bottom', 'Bottom half'], ['left', 'Left half'], ['right', 'Right half']];
+  const CAN_SIZE = ['square', 'circle', 'diamond', 'heart', 'cardd', 'spade', 'club', 'star'];   // the half shapes are fixed
   const IMG = { cur: null, src: null, k: 0, dirty: false, fromSlot: 0, bgMode: 'auto', shape: 'square', size: 100, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 32, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
   const imgApi = () => $('api').value.replace(/\/$/, '');
@@ -1150,6 +1151,43 @@
     ctx.beginPath();
     if (k === 'circle') { ctx.arc(bx + bw / 2, by + bh / 2, bw / 2, 0, 2 * P); }
     else if (k === 'diamond') { ctx.moveTo(bx + bw / 2, by); ctx.lineTo(bx + bw, by + bh / 2); ctx.lineTo(bx + bw / 2, by + bh); ctx.lineTo(bx, by + bh / 2); ctx.closePath(); }
+    else if (k === 'cardd') {   // playing-card diamond: a taller rhombus with slightly curved sides
+      const X = (u) => bx + u * bw, Y = (v) => by + v * bh;
+      ctx.moveTo(X(0.5), Y(0.02));
+      ctx.quadraticCurveTo(X(0.72), Y(0.28), X(0.9), Y(0.5));
+      ctx.quadraticCurveTo(X(0.72), Y(0.72), X(0.5), Y(0.98));
+      ctx.quadraticCurveTo(X(0.28), Y(0.72), X(0.1), Y(0.5));
+      ctx.quadraticCurveTo(X(0.28), Y(0.28), X(0.5), Y(0.02));
+      ctx.closePath();
+    }
+    else if (k === 'spade') {   // one outline: point on top, two lobes, a stem at the bottom
+      const X = (u) => bx + u * bw, Y = (v) => by + v * bh;
+      ctx.moveTo(X(0.5), Y(0.02));
+      ctx.bezierCurveTo(X(0.64), Y(0.2), X(0.97), Y(0.36), X(0.97), Y(0.58));
+      ctx.bezierCurveTo(X(0.97), Y(0.73), X(0.86), Y(0.81), X(0.74), Y(0.81));
+      ctx.bezierCurveTo(X(0.66), Y(0.81), X(0.59), Y(0.77), X(0.55), Y(0.7));
+      ctx.lineTo(X(0.66), Y(0.98)); ctx.lineTo(X(0.34), Y(0.98)); ctx.lineTo(X(0.45), Y(0.7));
+      ctx.bezierCurveTo(X(0.41), Y(0.77), X(0.34), Y(0.81), X(0.26), Y(0.81));
+      ctx.bezierCurveTo(X(0.14), Y(0.81), X(0.03), Y(0.73), X(0.03), Y(0.58));
+      ctx.bezierCurveTo(X(0.03), Y(0.36), X(0.36), Y(0.2), X(0.5), Y(0.02));
+      ctx.closePath();
+    }
+    else if (k === 'club') {   // three lobes and a stem, traced as one outline
+      const X = (u) => bx + u * bw, Y = (v) => by + v * bh, R = 0.21 * Math.min(bw, bh);
+      const T = [X(0.5), Y(0.25)], L = [X(0.27), Y(0.57)], Rr = [X(0.73), Y(0.57)];
+      ctx.moveTo(T[0], T[1] - R);
+      ctx.arc(T[0], T[1], R, -Math.PI / 2, 0.85, false);          // top lobe, right side down to the right lobe
+      ctx.arc(Rr[0], Rr[1], R, -1.9, 1.9, false);                  // right lobe round to the bottom
+      ctx.lineTo(X(0.66), Y(0.98)); ctx.lineTo(X(0.34), Y(0.98)); // stem
+      ctx.arc(L[0], L[1], R, Math.PI - 1.9, Math.PI + 1.9, false); // left lobe from the bottom round to the top
+      ctx.arc(T[0], T[1], R, Math.PI - 0.85, 1.5 * Math.PI, false); // top lobe, left side back to the top
+      ctx.closePath();
+    }
+    else if (k === 'star') {   // five points
+      const cx = bx + bw / 2, cy = by + bh / 2, ro = Math.min(bw, bh) / 2, ri = ro * 0.42;
+      for (let i = 0; i < 10; i++) { const r = i % 2 ? ri : ro, a = -P / 2 + i * P / 5; const px = cx + r * Math.cos(a), py = cy + r * Math.sin(a); if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); }
+      ctx.closePath();
+    }
     else if (k === 'heart') {   // two lobes on top, point at the bottom, drawn in the frame's box
       const X = (u) => bx + u * bw, Y = (v) => by + v * bh;
       ctx.moveTo(X(0.5), Y(0.96));

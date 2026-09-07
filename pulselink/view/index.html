@@ -91,8 +91,8 @@
     <p class="hint" id="torchHint" style="display:none;" data-en="Torch is not available on this camera phone — the web torch API needs iOS 17.5+ or Android." data-ja="このカメラ端末ではライトを点けられません — Web のライト API は iOS 17.5 以降か Android が必要です。">Torch is not available on this camera phone — the web torch API needs iOS 17.5+ or Android.</p>
     <label data-en="Zoom (digital)" data-ja="ズーム（デジタル）">Zoom (digital)</label>
     <p class="hint" id="wfNote" style="display:none; color:#B45309;"
-       data-en="A watch face is framing this camera. Zoom and position follow the watch face in use, so changes made here are replaced within a few minutes."
-       data-ja="この カメラの枠は文字盤が決めています。ズームと位置は使用中の文字盤に従うため、ここで変えても数分で戻ります。">A watch face is framing this camera.</p>
+       data-en="A watch face is using this camera. Zoom, position, picture size and colours follow the watch face in use, so they cannot be changed here for now."
+       data-ja="このカメラは文字盤が使っています。ズーム・位置・撮影サイズ・色数は使用中の文字盤に従うため、今はここから変えられません。">A watch face is using this camera.</p>
     <div class="seg" id="zoomSeg">
       <button data-v="100">1x</button>
       <button data-v="125">1.25x</button>
@@ -486,11 +486,13 @@ function renderControls() {
   }
   // 文字盤がカメラを使っている間、ズームは文字盤の枠で決まる (Viewer からは変えられない)。
   var wfLock = !!cfg.wf_locked;
+  var lockTitle = wfLock ? (ja() ? '文字盤がカメラを使っています' : 'The watch face is using the camera') : '';
   document.querySelectorAll('#zoomSeg button').forEach(function (x) {
     x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === (cfg.zoom || 100));
-    x.disabled = wfLock;
-    x.title = wfLock ? (ja() ? '文字盤がカメラの枠を決めています' : 'The watch face sets the camera frame') : '';
+    x.disabled = wfLock; x.title = lockTitle;
   });
+  // 撮影サイズと色数も文字盤の値で決まる (押しても上書きされるので、ロック中は押せなくする)
+  document.querySelectorAll('#colorSeg button, #pxSeg button').forEach(function (x) { x.disabled = wfLock; x.title = lockTitle; });
   document.querySelectorAll('#brSeg button').forEach(function (x) {
     x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === (cfg.brightness || 0));
   });

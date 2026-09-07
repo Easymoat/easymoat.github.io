@@ -213,7 +213,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 22:26</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 23:53</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -763,7 +763,17 @@
       div.classList.toggle('oob', oob);
     });
   }
-  const layoutObj = () => ({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b });
+  // cam = [cx, cy, zoom]: which part of the live camera picture the watch shows — the point of the picture
+  // that sits at the centre of the frame (0..1000) and the zoom (100 = whole picture … 400). Derived from
+  // the editor's pan and zoom while Camera is ON; the watch writes it to PulseLink's camera settings.
+  function camField() {
+    if (typeof IMG === 'undefined' || IMG.src !== 'camera' || !IMG.cur) return null;
+    const [, , bw, bh] = frameBox();
+    const base = Math.max(bw / IMG.cur.width, bh / IMG.cur.height), sc = base * IMG.zoom, dw = IMG.cur.width * sc, dh = IMG.cur.height * sc;
+    const cx = Math.round(1000 * (0.5 - IMG.panX / dw)), cy = Math.round(1000 * (0.5 - IMG.panY / dh));
+    return [Math.max(0, Math.min(1000, cx)), Math.max(0, Math.min(1000, cy)), Math.max(100, Math.min(400, Math.round(IMG.zoom * 100)))];
+  }
+  const layoutObj = () => { const o = { bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b }; const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   function renderList() {
     const l = $('list'); l.innerHTML = '';
@@ -1009,7 +1019,7 @@
     try {
       const j = await uploadLayout(id, layoutObj());
       let imgMsg;
-      if (IMG.show && hasSource() && IMG.masked) { await uploadImage(id, 1, true); imgMsg = IMG.cur ? 'image sent' : 'colour shape sent'; }
+      if (IMG.show && hasSource() && IMG.masked) { await uploadImage(id, 1, true); imgMsg = IMG.src === 'camera' ? 'camera frame + crop sent (the watch follows the live camera)' : IMG.cur ? 'image sent' : 'colour shape sent'; }
       else { await setWatchImageSlot(id, 0); imgMsg = 'no image'; }
       setStatus('syncstatus', `Sent: layout (${j.count} elements), ${imgMsg}. Your watch updates within 5 minutes.`, 'ok');
       loadWatchState();

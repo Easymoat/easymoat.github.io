@@ -1076,15 +1076,17 @@ async function captureAndUpload() {
     const png = cv.toDataURL('image/png');
     // 文字盤がカメラを使っている間: Face Composer のプレビュー用に、切り出し前のフル画像
     // (中央正方形、ズーム無し) を 320px・16 色で同送する。あくまで編集用の一時的な絵。
+    // 元の比率のフレーム全体 (長辺 320px)。文字盤ロック中、または Composer が編集中 (full_wanted) に送る。
     let fullPng = null;
-    if (camCfg && camCfg.wf_locked) {
+    if (camCfg && (camCfg.wf_locked || camCfg.full_wanted)) {
       try {
-        const fc = document.createElement('canvas'); fc.width = 320; fc.height = 320;
+        const fs_ = 320 / Math.max(vw, vh);
+        const fc = document.createElement('canvas'); fc.width = Math.max(1, Math.round(vw * fs_)); fc.height = Math.max(1, Math.round(vh * fs_));
         const fx = fc.getContext('2d');
-        fx.drawImage(video, bx, by, base, base, 0, 0, 320, 320);
+        fx.drawImage(video, 0, 0, vw, vh, 0, 0, fc.width, fc.height);
         if (typeof RgbQuant !== 'undefined') {
           const fq = new RgbQuant({ colors: 16, dithKern: 'FloydSteinberg', dithSerp: true });
-          fq.sample(fc); const fo = fq.reduce(fc); const fid = fx.createImageData(320, 320); fid.data.set(fo); fx.putImageData(fid, 0, 0);
+          fq.sample(fc); const fo = fq.reduce(fc); const fid = fx.createImageData(fc.width, fc.height); fid.data.set(fo); fx.putImageData(fid, 0, 0);
         }
         fullPng = fc.toDataURL('image/png');
       } catch (e) { fullPng = null; }

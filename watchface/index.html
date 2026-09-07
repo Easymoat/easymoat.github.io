@@ -213,7 +213,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 22:25</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 22:26</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1525,6 +1525,7 @@
     } catch (e) { camNote('Camera: ' + e.message, 'err'); }
   }
   function setCamera(on) {
+    if (on && !/^[0-9a-zA-Z-]{4,40}$/.test(plId())) { camNote('Enter the PulseLink Device ID (XXXX-XXXX) first.', 'err'); return; }   // stays OFF
     CAM.on = on; $('camon').classList.toggle('on', on); $('camon').textContent = 'Camera: ' + (on ? 'ON' : 'OFF');
     if (on) { CAM.prev = { cur: IMG.cur, src: IMG.src, k: IMG.k, fill: IMG.fill }; CAM.ver = ''; fetchCam(); CAM.timer = setInterval(fetchCam, 60000); }
     else {

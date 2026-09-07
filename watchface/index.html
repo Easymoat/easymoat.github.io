@@ -212,7 +212,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 15:00</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 22:02</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1114,7 +1114,7 @@
   // Frame shapes in the 320 master: square (default) and circle can be resized (size %) and moved
   // (cx, cy); the four half shapes are fixed halves of the dial. The image always fills the frame's
   // bounding box and can be panned inside it; outside the frame stays transparent = background colour.
-  const SHAPES = [['square', 'Square'], ['circle', 'Circle'], ['diamond', '45° square'], ['heart', '♥ Heart'], ['cardd', '♦ Diamond (card)'], ['spade', '♠ Spade'], ['club', '♣ Club'], ['star', '★ Star'],
+  const SHAPES = [['square', 'Square'], ['circle', 'Circle'], ['diamond', '45° square'], ['heart', '♥ Heart'], ['cardd', '♦ Diamond'], ['spade', '♠ Spade'], ['club', '♣ Club'], ['star', '★ Star'],
                   ['top', 'Top half'], ['bottom', 'Bottom half'], ['left', 'Left half'], ['right', 'Right half']];
   const CAN_SIZE = SHAPES.map(([k]) => k);   // every shape can be resized and moved (the halves too, since 2026-09-07)
   // Shapes whose outline pokes outside the round dial at 100 %: the size they are opened at (fits the dial).
@@ -1154,11 +1154,11 @@
     else if (k === 'diamond') { ctx.moveTo(bx + bw / 2, by); ctx.lineTo(bx + bw, by + bh / 2); ctx.lineTo(bx + bw / 2, by + bh); ctx.lineTo(bx, by + bh / 2); ctx.closePath(); }
     else if (k === 'cardd') {   // playing-card diamond: a taller rhombus with slightly curved sides
       const X = (u) => bx + u * bw, Y = (v) => by + v * bh;
-      ctx.moveTo(X(0.5), Y(0.02));
-      ctx.quadraticCurveTo(X(0.72), Y(0.28), X(0.9), Y(0.5));
-      ctx.quadraticCurveTo(X(0.72), Y(0.72), X(0.5), Y(0.98));
-      ctx.quadraticCurveTo(X(0.28), Y(0.72), X(0.1), Y(0.5));
-      ctx.quadraticCurveTo(X(0.28), Y(0.28), X(0.5), Y(0.02));
+      ctx.moveTo(X(0.5), Y(0));
+      ctx.quadraticCurveTo(X(0.72), Y(0.27), X(0.9), Y(0.5));
+      ctx.quadraticCurveTo(X(0.72), Y(0.73), X(0.5), Y(1));
+      ctx.quadraticCurveTo(X(0.28), Y(0.73), X(0.1), Y(0.5));
+      ctx.quadraticCurveTo(X(0.28), Y(0.27), X(0.5), Y(0));
       ctx.closePath();
     }
     else if (k === 'spade') {   // one outline: point on top, two lobes, a stem at the bottom
@@ -1216,8 +1216,14 @@
     }
     const base = Math.max(bw / IMG.cur.width, bh / IMG.cur.height), sc = base * IMG.zoom;
     const dw = IMG.cur.width * sc, dh = IMG.cur.height * sc;
-    const maxX = Math.max(0, (dw - bw) / 2), maxY = Math.max(0, (dh - bh) / 2);
-    IMG.panX = Math.max(-maxX, Math.min(maxX, IMG.panX)); IMG.panY = Math.max(-maxY, Math.min(maxY, IMG.panY));
+    // The picture may move as long as it still covers the visible part of the frame. For the half
+    // shapes that part is only half of the box, so the picture can slide across the hidden half.
+    let vx = bx, vy = by, vw = bw, vh = bh;
+    if (IMG.shape === 'top') vh = bh / 2; else if (IMG.shape === 'bottom') { vy = by + bh / 2; vh = bh / 2; }
+    else if (IMG.shape === 'left') vw = bw / 2; else if (IMG.shape === 'right') { vx = bx + bw / 2; vw = bw / 2; }
+    const x0 = bx + (bw - dw) / 2, y0 = by + (bh - dh) / 2;          // picture origin at pan 0
+    const minX = vx + vw - dw - x0, maxX = vx - x0, minY = vy + vh - dh - y0, maxY = vy - y0;
+    IMG.panX = Math.max(Math.min(minX, 0), Math.min(Math.max(maxX, 0), IMG.panX)); IMG.panY = Math.max(Math.min(minY, 0), Math.min(Math.max(maxY, 0), IMG.panY));
     // Outside the frame everything stays transparent, so the watch shows its background colour there.
     ctx.clearRect(0, 0, 320, 320);
     ctx.save();

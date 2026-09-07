@@ -212,7 +212,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 10:00</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 13:25</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -278,7 +278,7 @@
           <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span><button class="btn" id="imgbgapply" title="Copy this colour to the dial background (one-off; the dial is not linked to the image)">Use as dial background</button><button class="btn toggle" id="imgbgdial" title="Preview the photo against the dial's own background colour (follows the Layout background while ON; move the slider to go back to Auto)">Use dial background</button></div></div>
         </div>
       </div>
-      <div class="muted">Square and circle can be resized and moved on the dial; the half shapes are fixed to their half. Zoom and dragging the image inside the frame work for every shape. Shown at the chosen colour count with your layout on top.</div>
+      <div class="muted">Every shape can be resized (Size) and moved on the dial (Drag moves: Frame); the half shapes are halves of a circle the size of the frame. Zoom and dragging the image inside the frame work for every shape. Shown at the chosen colour count with your layout on top.</div>
     </div>
     <div class="shelfbox box">
       <div class="tier"><span class="num">3</span><span class="name">Collection</span><span class="what">Send the dial to the watch and keep finished dials</span></div>
@@ -1112,9 +1112,11 @@
   // Frame shapes in the 320 master: square (default) and circle can be resized (size %) and moved
   // (cx, cy); the four half shapes are fixed halves of the dial. The image always fills the frame's
   // bounding box and can be panned inside it; outside the frame stays transparent = background colour.
-  const SHAPES = [['square', 'Square'], ['circle', 'Circle'], ['diamond', 'Diamond (45° square)'], ['heart', '♥ Heart'], ['cardd', '♦ Diamond (card)'], ['spade', '♠ Spade'], ['club', '♣ Club'], ['star', '★ Star'],
+  const SHAPES = [['square', 'Square'], ['circle', 'Circle'], ['diamond', '45° square'], ['heart', '♥ Heart'], ['cardd', '♦ Diamond (card)'], ['spade', '♠ Spade'], ['club', '♣ Club'], ['star', '★ Star'],
                   ['top', 'Top half'], ['bottom', 'Bottom half'], ['left', 'Left half'], ['right', 'Right half']];
-  const CAN_SIZE = ['square', 'circle', 'diamond', 'heart', 'cardd', 'spade', 'club', 'star'];   // the half shapes are fixed
+  const CAN_SIZE = SHAPES.map(([k]) => k);   // every shape can be resized and moved (the halves too, since 2026-09-07)
+  // Shapes whose outline pokes outside the round dial at 100 %: the size they are opened at (fits the dial).
+  const SHAPE_FIT = { heart: 92, spade: 96, club: 96 };
   const IMG = { cur: null, src: null, k: 0, dirty: false, fromSlot: 0, bgMode: 'auto', shape: 'square', size: 100, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 32, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
   const imgApi = () => $('api').value.replace(/\/$/, '');
@@ -1137,11 +1139,6 @@
   }
   // Bounding box of the current frame, in the 320 master.
   function frameBox() {
-    const k = IMG.shape;
-    if (k === 'top') return [0, 0, 320, 160];
-    if (k === 'bottom') return [0, 160, 320, 160];
-    if (k === 'left') return [0, 0, 160, 320];
-    if (k === 'right') return [160, 0, 160, 320];
     const side = 320 * IMG.size / 100;
     return [IMG.cx - side / 2, IMG.cy - side / 2, side, side];
   }
@@ -1199,10 +1196,10 @@
       ctx.bezierCurveTo(X(1), Y(0.55), X(0.82), Y(0.74), X(0.5), Y(0.96));
       ctx.closePath();
     }
-    else if (k === 'top') { ctx.arc(160, 160, 160, P, 2 * P); ctx.closePath(); }
-    else if (k === 'bottom') { ctx.arc(160, 160, 160, 0, P); ctx.closePath(); }
-    else if (k === 'left') { ctx.arc(160, 160, 160, P / 2, 3 * P / 2); ctx.closePath(); }
-    else if (k === 'right') { ctx.arc(160, 160, 160, -P / 2, P / 2); ctx.closePath(); }
+    else if (k === 'top') { ctx.arc(bx + bw / 2, by + bh / 2, bw / 2, P, 2 * P); ctx.closePath(); }        // halves of the circle inscribed in the frame box
+    else if (k === 'bottom') { ctx.arc(bx + bw / 2, by + bh / 2, bw / 2, 0, P); ctx.closePath(); }
+    else if (k === 'left') { ctx.arc(bx + bw / 2, by + bh / 2, bw / 2, P / 2, 3 * P / 2); ctx.closePath(); }
+    else if (k === 'right') { ctx.arc(bx + bw / 2, by + bh / 2, bw / 2, -P / 2, P / 2); ctx.closePath(); }
     else { ctx.rect(bx, by, bw, bh); }
   }
   function redrawImg() {
@@ -1248,7 +1245,9 @@
   $('imgzoom').addEventListener('input', (e) => { IMG.zoom = parseFloat(e.target.value) || 1; redrawImg(); });
   $('imgsize').addEventListener('input', (e) => { IMG.size = parseInt(e.target.value, 10) || 100; $('imgsizev').textContent = IMG.size + '%'; redrawImg(); });
   SHAPES.forEach(([k, name]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = name; b.dataset.s = k; b.classList.toggle('on', k === IMG.shape);
-    b.addEventListener('click', () => { setShape(k); IMG.panX = 0; IMG.panY = 0; redrawImg(); }); $('imgshape').appendChild(b); });
+    b.addEventListener('click', () => { setShape(k); IMG.panX = 0; IMG.panY = 0;
+      const fit = SHAPE_FIT[k]; if (fit && IMG.size > fit) { IMG.size = fit; $('imgsize').value = fit; $('imgsizev').textContent = fit + '%'; }
+      redrawImg(); }); $('imgshape').appendChild(b); });
   function setShape(k) {
     IMG.shape = SHAPES.some(([x]) => x === k) ? k : 'square';
     document.querySelectorAll('#imgshape button').forEach((x) => x.classList.toggle('on', x.dataset.s === IMG.shape));

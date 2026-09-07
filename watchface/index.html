@@ -213,7 +213,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-08 00:10</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-08 06:07</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -770,7 +770,8 @@
     if (typeof IMG === 'undefined' || IMG.src !== 'camera' || !IMG.cur) return null;
     const [, , bw, bh] = frameBox();
     const base = Math.max(bw / IMG.cur.width, bh / IMG.cur.height), sc = base * IMG.zoom, dw = IMG.cur.width * sc, dh = IMG.cur.height * sc;
-    const cx = Math.round(1000 * (0.5 - IMG.panX / dw)), cy = Math.round(1000 * (0.5 - IMG.panY / dh));
+    const m = Math.min(dw, dh);   // the phone's pan is measured inside the centre square of its frame
+    const cx = Math.round(1000 * (0.5 - IMG.panX / m)), cy = Math.round(1000 * (0.5 - IMG.panY / m));
     return [Math.max(0, Math.min(1000, cx)), Math.max(0, Math.min(1000, cy)), Math.max(100, Math.min(400, Math.round(IMG.zoom * 100)))];
   }
   const layoutObj = () => { const o = { bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b }; const cam = camField(); if (cam) o.cam = cam; return o; };
@@ -1244,7 +1245,11 @@
       else if (r === 270) vw = bw / 2; else if (r === 90) { vx = bx + bw / 2; vw = bw / 2; }
     }
     const x0 = bx + (bw - dw) / 2, y0 = by + (bh - dh) / 2;          // picture origin at pan 0
-    const minX = vx + vw - dw - x0, maxX = vx - x0, minY = vy + vh - dh - y0, maxY = vy - y0;
+    let minX = vx + vw - dw - x0, maxX = vx - x0, minY = vy + vh - dh - y0, maxY = vy - y0;
+    if (IMG.src === 'camera') {   // the camera phone can only cut inside the centre square of its frame
+      const m = Math.min(dw, dh), lim = Math.max(0, (m - Math.max(bw, bh)) / 2);
+      minX = Math.max(minX, -lim); maxX = Math.min(maxX, lim); minY = Math.max(minY, -lim); maxY = Math.min(maxY, lim);
+    }
     IMG.panX = Math.max(Math.min(minX, 0), Math.min(Math.max(maxX, 0), IMG.panX)); IMG.panY = Math.max(Math.min(minY, 0), Math.min(Math.max(maxY, 0), IMG.panY));
     // Outside the frame everything stays transparent, so the watch shows its background colour there.
     ctx.clearRect(0, 0, 320, 320);
@@ -1522,7 +1527,7 @@
   async function fetchCam() {
     const id = plId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { camNote('Enter the PulseLink Device ID (XXXX-XXXX).', 'err'); return; }
     try {
-      const r = await fetch(`${PL_API}/cam-ping?device_id=${encodeURIComponent(id)}`); const j = await r.json();
+      const r = await fetch(`${PL_API}/cam-ping?device_id=${encodeURIComponent(id)}&full=1`); const j = await r.json();   // full=1: the camera phone also sends the whole frame
       if (!r.ok) throw new Error(j.error || r.status);
       const ov = String(j.ov || '0');
       if (ov === '0' || !j.uid) { camNote('No camera frame yet — the camera phone has not sent a picture.', 'err'); return; }

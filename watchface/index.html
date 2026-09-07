@@ -212,7 +212,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 13:25</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-07 13:37</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -272,6 +272,7 @@
           <div class="grp"><span class="lbl">Photos</span><div class="photos" id="photos"></div><div class="muted" id="imgslotnote"></div></div>
           <div class="grp"><span class="lbl">Actions</span>
             <div class="ctl"><label class="btn file" for="imgfile">Add photo…</label><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp" hidden><span class="muted" id="imgfilename">Stored as is (max 1024 px)</span><button class="btn danger" id="imgremove" disabled>Delete photo</button></div>
+            <div class="ctl" title="No photo: the frame shape is filled with one colour instead."><span class="muted">Fill colour</span><input type="color" id="imgfill" value="#3a7bd5"><button class="btn" id="imgfillon">Use colour (no photo)</button></div>
             <div class="status" id="imgstatus"></div></div>
           <div class="grp" title="How many colours the cut-out is reduced to when you Sync or Save. The watch can show at most 32."><span class="lbl">Colours on the watch</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div>
             <div class="muted">The watch shows a picture in at most 32 colours. 32 is the best look; fewer colours give a flatter, poster-like picture and a smaller file. Choose before Sync or Save — the preview on the left already shows the result.</div></div>
@@ -837,7 +838,7 @@
     LAYOUT_DIRTY = true;
     try { localStorage.setItem('faceComposer', JSON.stringify(st)); } catch (e) {}
     render();
-    if (typeof IMG !== 'undefined' && IMG.bgMode === 'dial' && IMG.cur) repaintQuality();   // photo preview follows the dial colour
+    if (typeof IMG !== 'undefined' && IMG.bgMode === 'dial' && hasSource()) repaintQuality();   // photo preview follows the dial colour
   }
 
   // ── Dragging ───────────────────────────────────────────────────────────────
@@ -1004,7 +1005,7 @@
     try {
       const j = await uploadLayout(id, layoutObj());
       let imgMsg;
-      if (IMG.show && IMG.cur && IMG.masked) { await uploadImage(id, 1, true); imgMsg = 'image sent'; }
+      if (IMG.show && hasSource() && IMG.masked) { await uploadImage(id, 1, true); imgMsg = IMG.cur ? 'image sent' : 'colour shape sent'; }
       else { await setWatchImageSlot(id, 0); imgMsg = 'no image'; }
       setStatus('syncstatus', `Sent: layout (${j.count} elements), ${imgMsg}. Your watch updates within 5 minutes.`, 'ok');
       loadWatchState();
@@ -1027,7 +1028,7 @@
     if (!SHELF.items.length) { wrap.innerHTML = '<span class="muted">Nothing saved yet — Save to collection keeps the dial above here.</span>'; return; }
     for (const it of SHELF.items) {
       const d = document.createElement('div'); d.className = 'item';
-      d.innerHTML = `<div class="mini"></div><span class="cap"><b>${(it.name || `Item ${it.n}`).replace(/</g, '&lt;')}</b></span><span class="cap">${it.kind === 'photo' ? 'photo' : it.kind === 'camera' ? 'camera' : 'no image'} · ${fmtTime(it.ts * 1000)}</span>
+      d.innerHTML = `<div class="mini"></div><span class="cap"><b>${(it.name || `Item ${it.n}`).replace(/</g, '&lt;')}</b></span><span class="cap">${it.kind === 'photo' ? 'photo' : it.kind === 'fill' ? 'colour shape' : it.kind === 'camera' ? 'camera' : 'no image'} · ${fmtTime(it.ts * 1000)}</span>
         <div class="row"><button class="btn" data-a="load" title="Put this item back into the editors above">Load</button><button class="btn primary" data-a="send" title="Send this item to the watch as it is">To watch</button><button class="btn danger" data-a="del">✕</button></div>`;
       d.querySelector('[data-a="load"]').addEventListener('click', () => loadShelfItem(it.n));
       d.querySelector('[data-a="send"]').addEventListener('click', () => sendShelfItem(it.n, d));
@@ -1041,13 +1042,13 @@
   }
   // The recipe = how the picture was framed (which photo, shape, size, position, zoom, colours, Auto).
   function currentRecipe() {
-    return { k: IMG.k || 0, shape: IMG.shape, size: IMG.size, cx: IMG.cx, cy: IMG.cy, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom, colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show };
+    return { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, size: IMG.size, cx: IMG.cx, cy: IMG.cy, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom, colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show };
   }
   $('shelfsave').addEventListener('click', async () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
-    const hasImg = !!(IMG.show && IMG.cur && IMG.masked);
+    const hasImg = !!(IMG.show && hasSource() && IMG.masked);
     if (hasImg && !IMG.reduced) renderQuality();
-    const body = { device_id: id, layout: layoutObj(), kind: hasImg ? 'photo' : 'none', recipe: currentRecipe(), name: $('shelfname').value.trim() };
+    const body = { device_id: id, layout: layoutObj(), kind: hasImg ? (IMG.cur ? 'photo' : 'fill') : 'none', recipe: currentRecipe(), name: $('shelfname').value.trim() };
     if (hasImg) body.image = (IMG.reduced || imgCv).toDataURL('image/png');
     setStatus('shelfstatus', 'Saving…');
     try { const r = await fetch($('api').value + '/shelf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -1061,6 +1062,7 @@
     setEditing('draft'); loadIntoEditor(c); commit();
     const rc = full.recipe || {};
     if (full.kind === 'none') { applyImgDraft({ none: true, show: rc.show !== false }); }
+    else if (full.kind === 'fill' && rc.fill) { applyImgDraft(Object.assign({}, rc)); }                    // colour shape: fully editable
     else if (rc.k && PHOTOS.list.some((p) => p.k === rc.k)) { applyImgDraft(Object.assign({}, rc)); }   // the photo is still on the shelf: fully editable
     else if (full.url) {   // photo gone: show the finished cut-out (frame changes only; no re-crop possible)
       applyImgDraft({ none: true }); const img = new Image(); img.crossOrigin = 'anonymous';
@@ -1117,7 +1119,9 @@
   const CAN_SIZE = SHAPES.map(([k]) => k);   // every shape can be resized and moved (the halves too, since 2026-09-07)
   // Shapes whose outline pokes outside the round dial at 100 %: the size they are opened at (fits the dial).
   const SHAPE_FIT = { heart: 92, spade: 96, club: 96 };
-  const IMG = { cur: null, src: null, k: 0, dirty: false, fromSlot: 0, bgMode: 'auto', shape: 'square', size: 100, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 32, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
+  // A "picture" is either a photo (IMG.cur) or a flat colour fill of the frame (IMG.fill, no photo).
+  const hasSource = () => !!(IMG.cur || IMG.fill);
+  const IMG = { cur: null, src: null, k: 0, fill: null, dirty: false, fromSlot: 0, bgMode: 'auto', shape: 'square', size: 100, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 32, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
   const imgApi = () => $('api').value.replace(/\/$/, '');
   const absUrl = (u) => (!u || /^https?:/.test(u)) ? u : new URL($('api').value).origin + u;   // server gives /api/wf/... paths
@@ -1126,13 +1130,13 @@
   // in the editor right now (frame, size, zoom, colour count). It never reads the server — what the
   // watch shows is whatever was last uploaded.
   function applyStageImage() {
-    const on = IMG.show && !!IMG.cur;
+    const on = IMG.show && hasSource();
     stage.classList.toggle('hasimg', on);
     if (on) { stage.style.backgroundImage = `url("${(IMG.reduced || imgCv).toDataURL('image/png')}")`; stage.style.backgroundSize = 'cover'; stage.style.backgroundPosition = 'center'; }
     else { stage.style.backgroundImage = ''; }
   }
   function clearImgPreview() {
-    IMG.cur = null; IMG.src = null; IMG.masked = null; IMG.reduced = null; IMG.dirty = false; IMG.fromSlot = 0;
+    IMG.cur = null; IMG.src = null; IMG.fill = null; IMG.masked = null; IMG.reduced = null; IMG.dirty = false; IMG.fromSlot = 0;
     imgCv.getContext('2d').clearRect(0, 0, 320, 320); $('imgQ').getContext('2d').clearRect(0, 0, 320, 320);
     $('imgbgrow').hidden = true;
     applyStageImage(); renderShowToggle();
@@ -1203,9 +1207,13 @@
     else { ctx.rect(bx, by, bw, bh); }
   }
   function redrawImg() {
-    if (!IMG.cur) return;
+    if (!hasSource()) return;
     const ctx = imgCv.getContext('2d');
     const [bx, by, bw, bh] = frameBox();
+    if (!IMG.cur) {   // colour fill: the frame shape in one colour, no photo
+      ctx.clearRect(0, 0, 320, 320); ctx.save(); framePath(ctx); ctx.clip(); ctx.fillStyle = IMG.fill; ctx.fillRect(0, 0, 320, 320); ctx.restore();
+      IMG.masked = imgCv.toDataURL('image/png'); applyStageImage(); IMG.reduced = null; paintQuality(); renderShowToggle(); IMG.dirty = true; $('imgbgrow').hidden = false; scheduleMeasure(); return;
+    }
     const base = Math.max(bw / IMG.cur.width, bh / IMG.cur.height), sc = base * IMG.zoom;
     const dw = IMG.cur.width * sc, dh = IMG.cur.height * sc;
     const maxX = Math.max(0, (dw - bw) / 2), maxY = Math.max(0, (dh - bh) / 2);
@@ -1235,7 +1243,7 @@
     img.src = URL.createObjectURL(f);
   });
   (() => { let drag = false, lx = 0, ly = 0;
-    imgCv.addEventListener('pointerdown', (e) => { if (!IMG.cur) return; drag = true; lx = e.clientX; ly = e.clientY; imgCv.setPointerCapture(e.pointerId); });
+    imgCv.addEventListener('pointerdown', (e) => { if (!hasSource()) return; drag = true; lx = e.clientX; ly = e.clientY; imgCv.setPointerCapture(e.pointerId); });
     imgCv.addEventListener('pointermove', (e) => { if (!drag) return; const k = 320 / imgCv.clientWidth, dx = (e.clientX - lx) * k, dy = (e.clientY - ly) * k; lx = e.clientX; ly = e.clientY;
       if (IMG.drag === 'frame' && CAN_SIZE.indexOf(IMG.shape) >= 0) {
         IMG.cx = Math.max(0, Math.min(320, IMG.cx + dx)); IMG.cy = Math.max(0, Math.min(320, IMG.cy + dy));   // frame and image move together
@@ -1271,7 +1279,7 @@
     const px = dev().w, kb = px * px * bppFor(IMG.colors) / 8 / 1000;
     const v = $('imgverdict'); v.className = 'verdict ' + (kb <= 150 ? 'ok' : kb <= 210 ? 'warn' : 'bad');
     v.textContent = `${px}px · ${IMG.colors} colors · ${kb.toFixed(0)} KB — ` + (kb <= 150 ? 'OK' : kb <= 210 ? 'borderline' : 'too big');
-    if (IMG.cur) renderQuality();
+    if (hasSource()) renderQuality();
   }
   function autoBgColorJS(pal, p) {
     if (!pal || pal.length < 2) return '#000000';
@@ -1288,7 +1296,7 @@
     return '#' + h2(f(ar)) + h2(f(ag)) + h2(f(ab));
   }
   function computeOptimalPalette(n) {
-    if (typeof RgbQuant === 'undefined' || !IMG.cur) return null;
+    if (typeof RgbQuant === 'undefined' || !hasSource()) return null;
     try { const q = new RgbQuant({ colors: n, dithKern: 'FloydSteinberg' }); q.sample(imgCv); const pal = q.palette(true); if (!pal || pal.length < 2) return null; return pal.map((c) => (c[0] << 16) | (c[1] << 8) | c[2]); } catch (e) { return null; }
   }
   function currentAutoBg() { return autoBgColorJS(computeOptimalPalette(IMG.colors), IMG.bgAuto); }
@@ -1336,7 +1344,7 @@
   });
   function renderShowToggle() {
     const b = $('imgshow'); b.classList.toggle('on', IMG.show); b.textContent = 'Show on dial: ' + (IMG.show ? 'ON' : 'OFF');
-    b.disabled = !IMG.cur;
+    b.disabled = !hasSource();
   }
   $('imgshow').addEventListener('click', () => { IMG.show = !IMG.show; renderShowToggle(); applyStageImage(); });
   // slots
@@ -1358,7 +1366,7 @@
   async function loadPhoto(k, keep) {
     const p = PHOTOS.list.find((x) => x.k === k); if (!p) return;
     const img = new Image(); img.crossOrigin = 'anonymous';
-    img.onload = () => { IMG.cur = img; IMG.src = 'photo'; IMG.k = k; IMG.fromSlot = 0;
+    img.onload = () => { IMG.cur = img; IMG.src = 'photo'; IMG.k = k; IMG.fill = null; IMG.fromSlot = 0;
       if (!keep) { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1'; }
       redrawImg(); IMG.dirty = true; renderPhotos(); $('imgfilename').textContent = p.name || `Photo ${k}`; };
     img.onerror = () => setStatus('imgstatus', 'Could not load photo ' + k + '.', 'err');
@@ -1378,6 +1386,12 @@
       await loadPhotos(); setStatus('imgstatus', `Photo ${j.k} added.`, 'ok'); loadPhoto(j.k); }
     catch (e) { setStatus('imgstatus', 'Could not add the photo: ' + e.message, 'err'); }
   }
+  function useFill(color) {
+    IMG.cur = null; IMG.src = 'fill'; IMG.k = 0; IMG.fill = color; IMG.panX = 0; IMG.panY = 0;
+    renderPhotos(); $('imgfilename').textContent = 'Colour fill ' + color.toUpperCase(); redrawImg();
+  }
+  $('imgfillon').addEventListener('click', () => useFill($('imgfill').value));
+  $('imgfill').addEventListener('input', (e) => { if (IMG.fill) useFill(e.target.value); });   // live while in fill mode
   $('imgremove').addEventListener('click', async () => {
     if (!IMG.k) return; const k = IMG.k;
     if (!window.confirm(`Delete photo ${k} from the shelf? Collection items made from it keep their cut-out, but cannot be re-adjusted.`)) return;
@@ -1388,8 +1402,9 @@
   });
   // ── Draft: image editor state ──
   function imgDraftState() {
-    const base = { k: IMG.k || 0, shape: IMG.shape, size: IMG.size, cx: IMG.cx, cy: IMG.cy, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom,
+    const base = { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, size: IMG.size, cx: IMG.cx, cy: IMG.cy, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom,
                    colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, src: IMG.src };
+    if (IMG.fill && !IMG.cur) return base;
     if (!IMG.cur) return Object.assign(base, { none: true });
     if (!IMG.k) {   // not a shelf photo (e.g. loaded from the collection): keep a downscaled copy of the picture itself
       try { const m = 1024, sc = Math.min(1, m / Math.max(IMG.cur.width, IMG.cur.height)); const c = document.createElement('canvas');
@@ -1410,6 +1425,7 @@
     IMG.show = d.show !== false;
     renderShowToggle();
     if (d.none) { clearImgPreview(); IMG.k = 0; renderPhotos(); return; }
+    if (d.fill && /^#[0-9a-f]{6}$/i.test(d.fill)) { $('imgfill').value = d.fill; useFill(d.fill); return; }
     if (d.k && PHOTOS.list.some((p) => p.k === d.k)) { loadPhoto(d.k, true); return; }   // shelf photo: the draft's framing goes on top
     if (d.data) {   // a picture kept inside the draft
       const img = new Image();

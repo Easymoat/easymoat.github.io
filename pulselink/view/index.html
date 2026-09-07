@@ -90,6 +90,9 @@
     <p class="hint" data-en="Setting the camera up? Setup mode shoots every 10 seconds for 5 minutes so you can check framing and brightness quickly on this page. It ends by itself and goes back to the normal 3-minute interval — press it again to extend." data-ja="カメラの設置中に。セットアップモードにすると5分間だけ10秒ごとに撮影するので、構図や明るさをこのページで素早く確認できます。時間が来れば自動で通常の3分間隔に戻ります（もう一度押せば延長）。">Setting the camera up? Setup mode shoots every 10 seconds for 5 minutes so you can check framing and brightness quickly on this page. It ends by itself and goes back to the normal 3-minute interval — press it again to extend.</p>
     <p class="hint" id="torchHint" style="display:none;" data-en="Torch is not available on this camera phone — the web torch API needs iOS 17.5+ or Android." data-ja="このカメラ端末ではライトを点けられません — Web のライト API は iOS 17.5 以降か Android が必要です。">Torch is not available on this camera phone — the web torch API needs iOS 17.5+ or Android.</p>
     <label data-en="Zoom (digital)" data-ja="ズーム（デジタル）">Zoom (digital)</label>
+    <p class="hint" id="wfNote" style="display:none; color:#B45309;"
+       data-en="A watch face is framing this camera. Zoom and position follow the watch face in use, so changes made here are replaced within a few minutes."
+       data-ja="この カメラの枠は文字盤が決めています。ズームと位置は使用中の文字盤に従うため、ここで変えても数分で戻ります。">A watch face is framing this camera.</p>
     <div class="seg" id="zoomSeg">
       <button data-v="100">1x</button>
       <button data-v="125">1.25x</button>
@@ -279,7 +282,7 @@ document.getElementById('devBtn').addEventListener('click', async function () {
 let mode = null;
 let camUid = '';
 let camVer = '0';
-let cfg = { paused: false, zoom: 100, brightness: 0, colors: 16, px: 320,
+let cfg = { paused: false, zoom: 100, brightness: 0, colors: 16, px: 320, pan_x: 500, pan_y: 500, wf_at: 0,
             screen_off: false, torch: false, torch_supported: null,
             night_mode: 'auto', night_active: false, facing: 'environment', facing_supported: null,
             motion_mode: 'med', motion_count: 0, motion_at: 0,
@@ -475,6 +478,12 @@ function renderControls() {
   const pb = document.getElementById('pauseBtn');
   pb.textContent = cfg.paused ? (ja() ? '再開する' : 'Resume') : (ja() ? '一時停止' : 'Pause');
   pb.classList.toggle('danger', !cfg.paused);
+  // 文字盤が枠を書き込んでいる間は、その旨を出す (最後の書き込みから 15 分)。
+  var wn = document.getElementById('wfNote');
+  if (wn) {
+    var recent = cfg.wf_at && (Date.now() - Number(cfg.wf_at) < 15 * 60 * 1000);
+    wn.style.display = recent ? '' : 'none';
+  }
   document.querySelectorAll('#zoomSeg button').forEach(function (x) {
     x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === (cfg.zoom || 100));
   });

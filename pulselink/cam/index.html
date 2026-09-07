@@ -60,7 +60,7 @@
 <div class="wrap">
   <h1>PulseLink Cam</h1>
   <p class="sub" data-en="Turn a spare iPhone into a watch-face camera. A photo is taken and sent to your watch every 3 minutes." data-ja="余った iPhone を文字盤カメラに。3分ごとに撮影してウォッチに送ります。">Turn a spare iPhone into a watch-face camera. A photo is taken and sent to your watch every 3 minutes.</p>
-  <p id="pageVer" style="color:#9CA3AF; font-size:11px; margin:-14px 0 16px;">v2026-09-05f</p>
+  <p id="pageVer" style="color:#9CA3AF; font-size:11px; margin:-14px 0 16px;">v2026-09-07a</p>
 
   <div class="card" id="loginCard">
     <h2 data-en="1. Connect your watch" data-ja="1. ウォッチをつなぐ">1. Connect your watch</h2>
@@ -461,7 +461,7 @@ document.getElementById('facingBtn').addEventListener('click', function () {
 // ─── リモート制御 (Viewer → サーバ → ここ、のステートリレー) ───
 // 30秒 (調整モード中は10秒) ごとに /user/cam-config をポーリングし、最終値を適用する。
 // paused はストリーム停止のみ (Wake Lock とポーリングは維持 = リモート再開が効く)。
-let camCfg = { paused: false, zoom: 100, brightness: 0, colors: 16, px: 320,
+let camCfg = { paused: false, zoom: 100, brightness: 0, colors: 16, px: 320, pan_x: 500, pan_y: 500,
                screen_off: false, torch: false, facing: 'environment',
                shoot_seq: 0, boost_until: 0 };
 renderFacingBtn();   // 初期ラベル (既定=背面)。以後は操作/ポーリングで更新。
@@ -575,7 +575,8 @@ async function pollCamConfig() {
     if (prev.torch !== camCfg.torch) { applyTorch(); }
     // 設定変更 (zoom/明るさ/色数) や「今すぐ撮影」→ 次の定期撮影を待たず前倒し
     const changed = (prev.zoom !== camCfg.zoom) || (prev.brightness !== camCfg.brightness)
-                 || (prev.colors !== camCfg.colors) || (prev.px !== camCfg.px);
+                 || (prev.colors !== camCfg.colors) || (prev.px !== camCfg.px)
+                 || (prev.pan_x !== camCfg.pan_x) || (prev.pan_y !== camCfg.pan_y);
     const shootReq = (camCfg.shoot_seq || 0) !== lastShootSeq;
     if (shootReq) { lastShootSeq = camCfg.shoot_seq || 0; }
     if (!camCfg.paused && (changed || shootReq)) {
@@ -960,8 +961,18 @@ async function captureAndUpload() {
     if (cv.width !== PX) { cv.width = PX; cv.height = PX; }
     // デジタルズーム: 切り出す正方形を 1/zoom に縮める (320px 出力なので ~2倍まで実質無劣化)
     const z = Math.max(100, Math.min(250, (camCfg.zoom || 100))) / 100;
-    const side = Math.min(vw, vh) / z;
-    const sx = (vw - side) / 2, sy = (vh - side) / 2;
+    const base = Math.min(vw, vh);          // 中央正方形 (pan の基準)
+    const side = base / z;
+    // 切り出しの中心 (pan_x/pan_y は中央正方形の中の 0..1000、500 = 中央)。
+    // 文字盤が「今使っている面の枠」を書き込むので、ここで実際の撮影に反映する。
+    // 枠が正方形からはみ出さないように内側へ寄せる。
+    const bx = (vw - base) / 2, by = (vh - base) / 2;
+    const px01 = Math.max(0, Math.min(1000, camCfg.pan_x == null ? 500 : camCfg.pan_x)) / 1000;
+    const py01 = Math.max(0, Math.min(1000, camCfg.pan_y == null ? 500 : camCfg.pan_y)) / 1000;
+    let sx = bx + base * px01 - side / 2;
+    let sy = by + base * py01 - side / 2;
+    sx = Math.max(bx, Math.min(bx + base - side, sx));
+    sy = Math.max(by, Math.min(by + base - side, sy));
     ctx.clearRect(0, 0, PX, PX);
     ctx.drawImage(video, sx, sy, side, side, 0, 0, PX, PX);
     // ─── 暗所のフレームスタッキング (ナイトモードの原理) ───

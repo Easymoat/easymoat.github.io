@@ -235,7 +235,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-08 22:51</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-08 23:02</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -277,14 +277,14 @@
     <div class="imgbox box">
       <div class="tier"><span class="num">2</span><span class="name">Photo</span><span class="what">Pick a photo and frame it for the dial</span></div>
       <div class="grp">
-        <div class="ctl"><span class="muted">The photo itself is never changed — the cut-out is made when you Sync or Save.</span></div></div>
+        <div class="ctl"><span class="muted">The photo itself is never changed — the cut-out is made when you save to the collection.</span></div></div>
       <div class="cols">
         <div class="grp"><span class="lbl">Preview</span>
           <div class="imgstage" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas><canvas id="imgQ" width="320" height="320"></canvas><div class="parts" id="imgParts"></div></div>
           <div class="ctl" id="imgsizerow">Size <input id="imgsize" type="range" min="30" max="100" step="1" value="100"><span class="muted" id="imgsizev">100%</span></div>
           <div class="ctl">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"></div>
           <div class="ctl" id="imgdragrow">Drag moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Image</button><button type="button" data-m="frame">Frame</button></span></div>
-          <div class="ctl"><button class="btn toggle on" id="imgshow" disabled title="While ON, the dial above shows the image exactly as it is here (frame, size, zoom, colours) and Sync to watch applies it. While OFF, Sync to watch turns the image off on the watch.">Show on dial: ON</button><button class="btn" id="imgreset">Reset</button><button class="btn" id="imgparts">Hide parts</button><button class="btn" id="imghide">Hide image</button></div>
+          <div class="ctl"><button class="btn toggle on" id="imgshow" disabled title="While ON, the dial above shows the image exactly as it is here (frame, size, zoom, colours) and it is saved with the dial. While OFF, the saved dial has no image.">Show on dial: ON</button><button class="btn" id="imgreset">Reset</button><button class="btn" id="imgparts">Hide parts</button><button class="btn" id="imghide">Hide image</button></div>
           <div class="ctl"><span class="onlyfor">For PulseLink users</span></div>
           <div class="ctl" title="Live camera from PulseLink: while ON, the latest camera frame replaces the picture in the editor (framed the same way)."><button class="btn toggle" id="camon">Camera: OFF</button><span class="muted">PL ID</span><input type="text" id="plid" placeholder="XXXX-XXXX" style="width:110px"><span class="status" id="camnote" style="flex:1 1 auto"></span></div>
         </div>
@@ -297,16 +297,16 @@
             <div class="ctl"><label class="btn file" for="imgfile">Add photo…</label><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp" hidden><span class="muted" id="imgfilename">Stored as is (max 1024 px)</span><button class="btn danger" id="imgremove" disabled>Delete photo</button></div>
             <div class="ctl" title="No photo: the frame shape is filled with one colour instead."><span class="muted">Fill colour</span><input type="color" id="imgfill" value="#3a7bd5"><span class="swatches" id="fillsw" title="Recently used fill colours"></span><button class="btn" id="imgfillon">Use colour (no photo)</button></div>
             <div class="status" id="imgstatus"></div></div>
-          <div class="grp" title="How many colours the cut-out is reduced to when you Sync or Save. The watch can show at most 32."><span class="lbl">Colours on the watch</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div>
+          <div class="grp" title="How many colours the cut-out is reduced to when you save. The watch can show at most 32."><span class="lbl">Colours on the watch</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div>
           </div>
           <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span><button class="btn" id="imgbgapply" title="Copy this colour to the dial background (one-off; the dial is not linked to the image)">Use as dial background</button><button class="btn toggle" id="imgbgdial" title="Preview the photo against the dial's own background colour (follows the Layout background while ON; move the slider to go back to Auto)">Use dial background</button></div></div>
         </div>
       </div>
     </div>
     <div class="shelfbox box">
-      <div class="tier"><span class="num">3</span><span class="name">Collection</span><span class="what">Finished dials, kept here for later</span></div>
+      <div class="tier"><span class="num">3</span><span class="name">Collection</span><span class="what">Save the dial, then send it to the watch from here</span></div>
       <div class="grp">
-        <div class="ctl"><span class="muted">Nothing here reaches the watch until you put it on a slot in step 4.</span></div>
+        <div class="ctl"><span class="muted">Everything on the watch comes from here: save the dial above, then use <b>To watch…</b> on it.</span></div>
         <div class="row" style="align-items:center;gap:10px"><input type="text" id="shelfname" placeholder="Name (optional)" style="width:180px"><button class="btn primary" id="shelfsave">Save to collection</button><span class="muted" id="shelfcount"></span></div>
         <div class="status" id="shelfstatus"></div>
       </div>
@@ -315,8 +315,7 @@
     <div class="watchbox box">
       <div class="tier"><span class="num">4</span><span class="name">On the watch</span><span class="what">The five faces the watch can show</span></div>
       <div class="grp">
-        <div class="ctl"><span class="muted">Each slot holds a copy. The watch follows changes here within 5 minutes.</span></div>
-        <div class="row" style="align-items:center;gap:10px"><button class="btn primary" id="sync">Sync the dial above…</button><span class="muted">then click the slot to put it on</span></div>
+        <div class="ctl"><span class="muted">Put a dial here with <b>To watch…</b> on a collection item above. Each slot holds a copy; the watch follows changes here within 5 minutes.</span></div>
         <div class="status" id="syncstatus"></div>
       </div>
       <div class="pickbar" id="pickbar" hidden></div>
@@ -972,7 +971,7 @@
   try { $('devid').value = localStorage.getItem('faceComposer.devid') || ''; } catch (e) {}
   const devId = () => { const v = $('devid').value.trim(); try { localStorage.setItem('faceComposer.devid', v); } catch (e) {} return v; };
   // ── Watch state, draft, collection ───────────────────────────────────────
-  // The server still keeps layout "faces" 1-3 for the watch contract; the Web writes only face 1 on Sync.
+  // The server still keeps layout "faces" 1-3 for the watch contract; the active slot is mirrored to face 1.
   const WATCH = { active: 1, faces: {}, seen: null };
   function faceLayout(f) { const c = sanitize(f); return c || null; }
   // Render one layout as a small dial (reuses makeEl by swapping `st` while it builds).
@@ -1040,29 +1039,6 @@
     LAYOUT_DIRTY = false;
     return j;
   }
-  // Sync: the dial exactly as shown goes to the watch slot the user clicks (layout + the framed photo, reduced).
-  $('sync').addEventListener('click', () => {
-    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('syncstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
-    startPick('dial', 0, 'the dial above');
-  });
-  async function syncDial(k) {
-    const id = devId();
-    setStatus('syncstatus', 'Sending…'); $('sync').disabled = true;
-    try {
-      const hasImg = !!(IMG.show && hasSource() && IMG.masked);
-      if (hasImg && !IMG.reduced) renderQuality();
-      const body = { device_id: id, slot: k, activate: true, layout: layoutObj(), name: 'Current dial',
-                     kind: hasImg ? (IMG.src === 'camera' ? 'camera' : IMG.cur ? 'photo' : 'fill') : 'none' };
-      if (hasImg) { body.image = (IMG.reduced || imgCv).toDataURL('image/png'); body.colors = IMG.colors; body.palette = (IMG.reducedPal && IMG.reducedPal.length >= 2) ? IMG.reducedPal : computeOptimalPalette(IMG.colors); }
-      const r = await fetch($('api').value + '/watch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
-      LAYOUT_DIRTY = false; IMG.dirty = false;
-      const imgMsg = !hasImg ? 'no image' : IMG.src === 'camera' ? 'camera frame + crop (the watch follows the live camera)' : IMG.cur ? 'image' : 'colour shape';
-      setStatus('syncstatus', `Slot ${k} now holds the dial above (${layoutObj().el.length} elements, ${imgMsg}) and is showing on the watch. It arrives within 5 minutes.`, 'ok');
-      loadWatchState(); loadWatchSlots();
-    } catch (e) { setStatus('syncstatus', 'Sync failed: ' + e.message, 'err'); } finally { $('sync').disabled = false; }
-  }
-
   // ── Collection: finished dials (layout + framed picture + recipe), explicit Save, up to 20 ──
   const SHELF = { items: [] };
   function itemMini(el, it, layout) {
@@ -1084,7 +1060,7 @@
         <div class="row"><button class="btn" data-a="load" title="Put this item back into the editors above">Edit</button><button class="btn primary" data-a="send" title="Put this item on one of the five watch slots — you choose which">To watch…</button></div>
         <span class="cap onw"></span><span class="cap del" data-a="del" title="Delete this item from the collection">Delete</span>`;
       d.querySelector('[data-a="load"]').addEventListener('click', () => loadShelfItem(it.n));
-      d.querySelector('[data-a="send"]').addEventListener('click', () => startPick('shelf', it.n, it.name || 'item ' + it.n));
+      d.querySelector('[data-a="send"]').addEventListener('click', () => startPick(it.n, it.name || 'item ' + it.n));
       d.querySelector('[data-a="del"]').addEventListener('click', () => removeShelfItem(it.n, it.name));
       wrap.appendChild(d);
       fetchShelfItem(it.n).then((full) => { if (full) itemMini(d.querySelector('.mini'), it, faceLayout(full.layout)); }).catch(() => {});
@@ -1116,7 +1092,7 @@
     setStatus('shelfstatus', 'Saving…');
     try { const r = await fetch($('api').value + '/shelf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error === 'shelf_full' ? `the collection is full (${j.max} items) — delete one first` : (j.error || r.status));
-      setStatus('shelfstatus', `Saved as ${body.name || 'item ' + j.n}.`, 'ok'); $('shelfname').value = ''; loadShelf(); }
+      setStatus('shelfstatus', `Saved as ${body.name || 'item ' + j.n} — use "To watch…" on it to put it on the watch.`, 'ok'); $('shelfname').value = ''; loadShelf(); }
     catch (e) { setStatus('shelfstatus', 'Save failed: ' + e.message, 'err'); }
   });
   async function loadShelfItem(n) {
@@ -1141,16 +1117,16 @@
     for (let i = 0; i < d.length; i += 4) { if (d[i + 3] === 0) continue; const key = (d[i] << 16) | (d[i + 1] << 8) | d[i + 2]; seen.set(key, (seen.get(key) || 0) + 1); if (seen.size > 64) break; }
     return [...seen.entries()].sort((a, b) => b[1] - a[1]).slice(0, 32).map((e) => e[0]);
   }
-  // ── The five watch slots (server /watch*): copies of collection items, or the dial from Sync ──
-  // Putting something on a slot is always two explicit clicks: "To watch…" / "Sync…" starts the choice,
+  // ── The five watch slots (server /watch*): copies of collection items ──
+  // Putting something on a slot is always two explicit clicks: "To watch…" on an item starts the choice,
   // then the user clicks the slot itself. Nothing is written until that second click.
   const WSLOTS = { active: 0, faces: {}, mini: {} };
-  const PICK = { on: false, kind: null, n: 0, label: '' };
+  const PICK = { on: false, n: 0, label: '' };
   const esc = (t) => String(t).replace(/</g, '&lt;');
 
-  function startPick(kind, n, label) {
+  function startPick(n, label) {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
-    PICK.on = true; PICK.kind = kind; PICK.n = n; PICK.label = label;
+    PICK.on = true; PICK.n = n; PICK.label = label;
     renderWatchSlots();
     document.querySelector('.watchbox').scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
@@ -1161,8 +1137,8 @@
     if (!PICK.on) return;
     const f = WSLOTS.faces[String(k)];
     if (f && !window.confirm(`Slot ${k} already holds "${f.name || 'Face'}". Replace it?`)) return;
-    const kind = PICK.kind, n = PICK.n; cancelPick();
-    if (kind === 'shelf') await sendShelfItem(n, k); else await syncDial(k);
+    const n = PICK.n; cancelPick();
+    await sendShelfItem(n, k);
   }
 
   function renderWatchSlots() {
@@ -1616,7 +1592,7 @@
     clearImgPreview(); IMG.k = 0; renderPhotos();
   }
   // Upload the editor image to a slot. activate=false stores it only (the Upload button);
-  // activate=true stores it and makes it the one the watch uses (Sync to watch).
+  // activate=true stores it and makes it the one the watch uses.
   async function uploadImage(id, slot, activate) {
     // Send the reduced (dithered) picture, not the full-colour master: the watch then receives exactly the
     // preview, and the palette below is the one those pixels use, so the Garmin proxy has nothing to re-quantise.

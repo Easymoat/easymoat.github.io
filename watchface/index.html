@@ -234,7 +234,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-08 22:16</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-08 22:19</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -270,17 +270,13 @@
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
           <div class="status" id="watchseen" title="When your watch last checked in, and whether it already has what was last sent"></div>
         </div>
-        <ul class="muted synchelp" id="synchelpR">
-          <li>Build the dial here, pick a photo below, then send it to the watch in step 4 at the bottom.</li>
-          <li>The watch checks for changes every 5 minutes, so allow up to 5 minutes after you send.</li>
-        </ul>
       </div>
     </div>
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
     <div class="imgbox box">
       <div class="tier"><span class="num">2</span><span class="name">Photo</span><span class="what">Pick a photo and frame it for the dial</span></div>
       <div class="grp">
-        <div class="ctl"><span class="muted">1. add a photo (kept as is, up to 10) &nbsp;·&nbsp; 2. pick it &nbsp;·&nbsp; 3. adjust the frame, zoom and colours (the dial above previews it live while "Show on dial" is ON). The cut-out is made only when you Sync or Save to collection, so the photo can always be adjusted again.</span></div></div>
+        <div class="ctl"><span class="muted">The photo itself is never changed — the cut-out is made when you Sync or Save.</span></div></div>
       <div class="cols">
         <div class="grp"><span class="lbl">Preview</span>
           <div class="imgstage" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas><canvas id="imgQ" width="320" height="320"></canvas><div class="parts" id="imgParts"></div></div>
@@ -294,23 +290,22 @@
         <div class="opts">
           <div class="grp" title="The shape of the image frame on the dial."><span class="lbl">Shape</span><div class="ctl"><span class="cb" id="imgshape"></span></div>
             <div class="ctl">Rotate <span class="cb"><button type="button" id="rotl" title="Turn the frame 45° anticlockwise">&#8634; 45°</button><button type="button" id="rotr" title="Turn the frame 45° clockwise">&#8635; 45°</button></span><span class="muted" id="rotv">0°</span></div>
-            <div class="muted">Shift+click a second shape to combine two (the picture shows through both). Rotation turns the frame in 45° steps; a rotated square is a diamond, a turned half circle faces any side.</div></div>
+            <div class="muted">Shift+click a second shape to combine two.</div></div>
           <div class="grp"><span class="lbl">Photos</span><div class="photos" id="photos"></div><div class="muted" id="imgslotnote"></div></div>
           <div class="grp"><span class="lbl">Actions</span>
             <div class="ctl"><label class="btn file" for="imgfile">Add photo…</label><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp" hidden><span class="muted" id="imgfilename">Stored as is (max 1024 px)</span><button class="btn danger" id="imgremove" disabled>Delete photo</button></div>
             <div class="ctl" title="No photo: the frame shape is filled with one colour instead."><span class="muted">Fill colour</span><input type="color" id="imgfill" value="#3a7bd5"><span class="swatches" id="fillsw" title="Recently used fill colours"></span><button class="btn" id="imgfillon">Use colour (no photo)</button></div>
             <div class="status" id="imgstatus"></div></div>
           <div class="grp" title="How many colours the cut-out is reduced to when you Sync or Save. The watch can show at most 32."><span class="lbl">Colours on the watch</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div>
-            <div class="muted">The watch shows a picture in at most 32 colours. 32 is the best look; fewer colours give a flatter, poster-like picture and a smaller file. Choose before Sync or Save — the preview on the left already shows the result.</div></div>
+          </div>
           <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span><button class="btn" id="imgbgapply" title="Copy this colour to the dial background (one-off; the dial is not linked to the image)">Use as dial background</button><button class="btn toggle" id="imgbgdial" title="Preview the photo against the dial's own background colour (follows the Layout background while ON; move the slider to go back to Auto)">Use dial background</button></div></div>
         </div>
       </div>
-      <div class="muted">Every shape can be resized (Size) and moved on the dial (Drag moves: Frame); the half shapes are halves of a circle the size of the frame. Zoom and dragging the image inside the frame work for every shape. Shown at the chosen colour count with your layout on top.</div>
     </div>
     <div class="shelfbox box">
       <div class="tier"><span class="num">3</span><span class="name">Collection</span><span class="what">Finished dials, kept here for later</span></div>
       <div class="grp">
-        <div class="ctl"><span class="muted">Saving keeps the dial above (layout + the photo as framed) as one item. It stays as it is even after you change the dial or delete the photo. <b>Nothing here reaches the watch until you put it on a slot in step 4.</b></span></div>
+        <div class="ctl"><span class="muted">Nothing here reaches the watch until you put it on a slot in step 4.</span></div>
         <div class="row" style="align-items:center;gap:10px"><input type="text" id="shelfname" placeholder="Name (optional)" style="width:180px"><button class="btn primary" id="shelfsave">Save to collection</button><span class="muted" id="shelfcount"></span></div>
         <div class="status" id="shelfstatus"></div>
       </div>
@@ -319,7 +314,7 @@
     <div class="watchbox box">
       <div class="tier"><span class="num">4</span><span class="name">On the watch</span><span class="what">The five faces the watch can show</span></div>
       <div class="grp">
-        <div class="ctl"><span class="muted">Each slot holds a copy, so it stays as it is even if you later change the dial or delete the collection item. The watch shows the slot marked <b>showing now</b>, and picks up every change here within 5 minutes.</span></div>
+        <div class="ctl"><span class="muted">Each slot holds a copy. The watch follows changes here within 5 minutes.</span></div>
         <div class="row" style="align-items:center;gap:10px"><button class="btn primary" id="sync">Sync the dial above…</button><span class="muted">then click the slot to put it on</span></div>
         <div class="status" id="syncstatus"></div>
       </div>
@@ -329,8 +324,7 @@
     <div class="drawer">
       <details class="box">
         <summary class="lbl" style="cursor:pointer">Layout JSON &amp; presets</summary>
-        <span class="muted">The layout in plain text: copy it to keep a backup, paste one in to move a dial to another
-        Device ID, or start from a preset. The watch never reads this box — it is the same data the Save button sends.</span>
+        <span class="muted">The layout in plain text — for backups, moving a dial to another Device ID, or presets.</span>
         <textarea id="json" spellcheck="false"></textarea>
         <div class="row">
           <button class="btn" id="copy">Copy</button>

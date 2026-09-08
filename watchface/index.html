@@ -235,7 +235,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-08 22:21</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-08 22:51</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1181,8 +1181,6 @@
         <span class="cap num">Slot ${k}${on ? ' · showing now' : ''}</span>
         <span class="cap"><b>${f ? esc(f.name || 'Face') : 'empty'}</b></span>
         <div class="row">${f ? (on ? '' : '<button class="btn primary" data-a="show" title="Make the watch show this slot">Show this</button>') + '<button class="btn" data-a="empty" title="Clear this slot">Empty</button>' : ''}</div>`;
-      const mini = d.querySelector('.mini'), cache = WSLOTS.mini[k];
-      if (f && cache && cache.v === f.v) { if (cache.url) mini.style.backgroundImage = `url("${cache.url}")`; if (cache.layout) { mini.style.backgroundColor = hex(cache.layout.bg); renderFaceMini(mini, cache.layout); } }
       if (PICK.on) d.addEventListener('click', () => pickSlot(k));
       else if (f) {
         const sh = d.querySelector('[data-a="show"]'); if (sh) sh.addEventListener('click', () => setWatchActive(k));
@@ -1190,6 +1188,13 @@
       }
       w.appendChild(d);
     }
+    // 幅の測定に DOM 接続が要るので、貼り付けたあとで描く (外れていると全部 0 幅になり位置がずれる)。
+    [...w.children].forEach((d, i) => {
+      const k = i + 1, f = WSLOTS.faces[String(k)], cache = WSLOTS.mini[k], mini = d.querySelector('.mini');
+      if (!f || !cache || cache.v !== f.v) return;
+      if (cache.url) mini.style.backgroundImage = `url("${cache.url}")`;
+      if (cache.layout) { mini.style.backgroundColor = hex(cache.layout.bg); renderFaceMini(mini, cache.layout); }
+    });
     markShelfOnWatch();
   }
   // The thumbnail of a slot comes from the copy the watch reads, so it shows what is really on the watch.

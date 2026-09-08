@@ -108,6 +108,7 @@
                  background: rgba(14,17,22,.74); color: var(--accent); font: 600 13px var(--sans); }
   .wslot.on .mini { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
   .wslot .num { font-family: var(--mono); }
+  .wslot .row { flex-wrap: wrap; justify-content: center; }
   .wslot.on .num { color: var(--accent); }
   .wslot.empty .mini { border-style: dashed; background: var(--panel-2); }
   /* Choosing a slot: every slot is a target, the mini says what clicking it will do. */
@@ -235,7 +236,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-08 23:02</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-08 23:16</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1156,11 +1157,11 @@
       d.innerHTML = `<div class="minibox"><div class="mini${f ? ' filled' : ''}"></div><span class="hint">${f ? 'Replace' : 'Put here'}</span></div>
         <span class="cap num">Slot ${k}${on ? ' · showing now' : ''}</span>
         <span class="cap"><b>${f ? esc(f.name || 'Face') : 'empty'}</b></span>
-        <div class="row">${f ? (on ? '' : '<button class="btn primary" data-a="show" title="Make the watch show this slot">Show this</button>') + '<button class="btn" data-a="empty" title="Clear this slot">Empty</button>' : ''}</div>`;
+        <div class="row">${f ? (on ? '' : '<button class="btn primary" data-a="show" title="Make the watch show this slot">Show on the Watch</button>') + '<button class="btn danger" data-a="empty" title="Delete this face from the watch (the collection item stays)">Delete</button>' : ''}</div>`;
       if (PICK.on) d.addEventListener('click', () => pickSlot(k));
       else if (f) {
         const sh = d.querySelector('[data-a="show"]'); if (sh) sh.addEventListener('click', () => setWatchActive(k));
-        d.querySelector('[data-a="empty"]').addEventListener('click', () => emptyWatchSlot(k, f.name));
+        d.querySelector('[data-a="empty"]').addEventListener('click', () => deleteWatchSlot(k, f.name));
       }
       w.appendChild(d);
     }
@@ -1193,10 +1194,10 @@
       if (!WSLOTS.mini[k] || WSLOTS.mini[k].v !== f.v) loadSlotMini(k, f.v);
     }
   }
-  async function emptyWatchSlot(k, name) {
-    if (!window.confirm(`Clear watch slot ${k}${name ? ` ("${name}")` : ''}?`)) return;
+  async function deleteWatchSlot(k, name) {
+    if (!window.confirm(`Delete slot ${k}${name ? ` ("${name}")` : ''} from the watch? The collection item stays.`)) return;
     await fetch($('api').value + '/watch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: devId(), slot: k, remove: true }) });
-    setStatus('syncstatus', `Slot ${k} is empty.`, 'ok'); loadWatchSlots(); loadWatchState();
+    setStatus('syncstatus', `Slot ${k} is empty now.`, 'ok'); loadWatchSlots(); loadWatchState();
   }
   async function setWatchActive(k) {
     const id = devId();

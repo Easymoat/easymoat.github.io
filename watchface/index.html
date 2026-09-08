@@ -108,7 +108,7 @@
                  background: rgba(14,17,22,.74); color: var(--accent); font: 600 13px var(--sans); }
   .wslot.on .mini { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
   .wslot .num { font-family: var(--mono); }
-  .wslot .row { flex-wrap: wrap; justify-content: center; }
+  .wslot .row { flex-direction: column; align-items: center; gap: 5px; }   /* Delete always on its own line */
   .wslot .showing { padding: 3px 8px; border: 2px solid var(--ok); border-radius: 5px; background: var(--ok); color: #05170c; font: 600 12px var(--sans); }
   .wslot.on .num { color: var(--accent); }
   .wslot.empty .mini { border-style: dashed; background: var(--panel-2); }
@@ -237,7 +237,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-08 23:22</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-08 23:27</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>

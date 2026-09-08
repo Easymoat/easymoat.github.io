@@ -237,7 +237,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-08 23:27</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-08 23:38</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1385,7 +1385,12 @@
       redrawImg(); });
     const end = () => { drag = false; }; imgCv.addEventListener('pointerup', end); imgCv.addEventListener('pointercancel', end); })();
   $('imgzoom').addEventListener('input', (e) => { IMG.zoom = parseFloat(e.target.value) || 1; redrawImg(); });
-  $('imgsize').addEventListener('input', (e) => { IMG.size = parseInt(e.target.value, 10) || 100; $('imgsizev').textContent = IMG.size + '%'; redrawImg(); });
+  function setSize(v) {
+    const n = Math.max(30, Math.min(100, v || 100)), r = n / (IMG.size || 100);
+    IMG.size = n; IMG.panX *= r; IMG.panY *= r;          // same part of the picture stays in the frame
+    $('imgsize').value = n; $('imgsizev').textContent = n + '%';
+  }
+  $('imgsize').addEventListener('input', (e) => { setSize(parseInt(e.target.value, 10)); redrawImg(); });
   SHAPES.forEach(([k, name]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = name; b.dataset.s = k; b.classList.toggle('on', k === IMG.shape);
     b.addEventListener('click', (ev) => {
       if (ev.shiftKey || ev.metaKey || ev.ctrlKey) {            // second shape: add, or remove if it is already selected
@@ -1394,7 +1399,7 @@
         else IMG.shape2 = k;
         setShape(IMG.shape, IMG.shape2);
       } else { setShape(k, null); IMG.panX = 0; IMG.panY = 0; }
-      const fit = SHAPE_FIT[k]; if (fit && IMG.size > fit) { IMG.size = fit; $('imgsize').value = fit; $('imgsizev').textContent = fit + '%'; }
+      const fit = SHAPE_FIT[k]; if (fit && IMG.size > fit) setSize(fit);
       redrawImg(); }); $('imgshape').appendChild(b); });
   function setShape(k, k2) {
     const [nk, rot] = normShape(k, IMG.rot); IMG.shape = nk; IMG.rot = rot;

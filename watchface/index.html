@@ -115,6 +115,7 @@
   .wslots.picking .wslot .mini { border-color: var(--accent); }
   .wslots.picking .wslot .hint { display: flex; }
   .wslots.picking .wslot:hover .mini { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
+  .pickbar[hidden] { display: none; }   /* display:flex would otherwise beat the hidden attribute */
   .pickbar { display: flex; align-items: center; gap: 14px; padding: 9px 14px; border: 2px solid var(--accent); border-radius: 8px;
              background: var(--panel-2); font-size: 13px; color: var(--ink); }
   .cap.onw { color: var(--accent); }
@@ -234,7 +235,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-08 22:19</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-08 22:21</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>

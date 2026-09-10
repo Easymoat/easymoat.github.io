@@ -228,7 +228,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-11 06:46</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-11 06:54</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1145,11 +1145,17 @@
       if (j.pl != null) { $('locpl').value = j.pl; }
       el.textContent = j.lat == null ? (locAutoOn() ? 'Not set — press the button so the forecast has a place.' : 'Not set — the watch must supply its own position.')
         : `${j.lat.toFixed(1)}, ${j.lon.toFixed(1)} · ${j.src === 'pulselink' ? 'following PulseLink' : j.src === 'web' ? 'from this browser' : 'from the watch'} ${fmtTime(j.ts * 1000)}`;
+      if (j.lat == null && j.pl) el.textContent = 'Following PulseLink — ' + PL_WHY[j.pl_state || ''];
       el.className = 'status';
     } catch (e) {}
   }
   // 一度許可した端末では、開くたびに黙って今の位置に更新する (旅先で Composer を開けば追従)。
   // 許可を求めるのはボタンを押した時だけ。permissions API が無いブラウザでは何もしない。
+  // なぜ PulseLink の位置が使えないのか、そのまま出す文。
+  const PL_WHY = { no_device: 'no PulseLink with that ID yet. Open PulseLink on the watch and check the ID in the You menu.',
+                   not_sharing: 'PulseLink has not shared a position. Turn location sharing on in PulseLink on the watch.',
+                   stale: 'its last position is over a day old, so the saved place is used instead.',
+                   bad_id: 'that ID is not valid.', '': 'waiting for a position.' };
   const LOC_AUTO = 'faceComposer.locauto';
   const locAutoOn = () => { try { return localStorage.getItem(LOC_AUTO) !== 'off'; } catch (e) { return true; } };
   async function refreshLocIfAllowed() {
@@ -1179,8 +1185,8 @@
         body: JSON.stringify({ device_id: id, pl_id: pl }) });
       const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error === 'bad_pl_id' ? 'that ID is not valid' : (j.error || r.status));
       if (!pl) setStatus('locnote', 'No longer following PulseLink.', 'ok');
-      else if (j.lat == null) setStatus('locnote', 'Following PulseLink — waiting for it to share a position.', 'ok');
-      else setStatus('locnote', `Following PulseLink · ${j.lat.toFixed(1)}, ${j.lon.toFixed(1)}`, 'ok');
+      else if (j.lat != null) setStatus('locnote', `Following PulseLink · ${j.lat.toFixed(1)}, ${j.lon.toFixed(1)}`, 'ok');
+      else setStatus('locnote', 'Following PulseLink — ' + PL_WHY[j.pl_state || ''], j.pl_state === 'stale' ? '' : 'err');
       setTimeout(loadLoc, 1200);
     } catch (e) { setStatus('locnote', 'Could not save: ' + e.message, 'err'); }
   });

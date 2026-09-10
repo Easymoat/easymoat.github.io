@@ -242,7 +242,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-10 13:51</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-10 13:52</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -720,7 +720,7 @@
     p.className = 'part'; p.dataset.t = t;
     if (d.dial) {
       p.className = 'part tgl'; p.title = 'Click to put it on the dial, click again to take it off';
-      p.innerHTML = `<span class="ico" style="color:#1D222B">${dialArt(+t, 1, 34, 34)}</span><span class="nm">${d.name}</span>`;
+      p.innerHTML = `<span class="ico" style="color:#1D222B">${dialArt(+t, 1, 26, 26)}</span><span class="nm">${d.name}</span>`;
       p.addEventListener('click', () => toggleDialPart(+t));
     }
     else p.innerHTML = `<span class="ico">${d.icon && d.icon !== 'stock' ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${d.icon === 'stock' ? '$' : d.sample}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;

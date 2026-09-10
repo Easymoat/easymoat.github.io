@@ -57,10 +57,11 @@
   .part .ico svg { max-height: 26px; }
   .part .nm { flex: 1; }
   .part .hint { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
-  /* 針と縁は置く場所が無い (中心固定) ので、掴んで運ぶのではなく入 / 切のボタン。*/
-  .part.sw { cursor: pointer; }
-  .part.sw.on { background: var(--ok); border-color: var(--ok); color: #05170c; font-weight: 600; }
-  .part.sw.on .ico { color: #05170c; }
+  /* 針と縁は置く場所が無い (中心固定) ので、掴んで運ぶのではなく入 / 切のボタン。
+     形も並びも他の部品と同じで、使用中だけ色が付く (.sw は色見本が使っている名前なので使わない)。*/
+  .part.tgl { cursor: pointer; }
+  .part.tgl.on { background: var(--ok); border-color: var(--ok); color: #05170c; }
+  .part.tgl.on .ico { color: #05170c; }
   .stagewrap { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 18px 16px 40px; }
   .stagebar { display: flex; flex-wrap: wrap; gap: 22px 40px; align-items: flex-start; justify-content: center;
               width: 100%; max-width: 1040px; padding: 12px 0 18px; }   /* no box: tier 1 reads as one area with the dial */
@@ -241,7 +242,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-10 13:45</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-10 13:51</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -718,7 +719,7 @@
     const p = document.createElement('div');
     p.className = 'part'; p.dataset.t = t;
     if (d.dial) {
-      p.className = 'part sw'; p.title = 'Click to put it on the dial, click again to take it off';
+      p.className = 'part tgl'; p.title = 'Click to put it on the dial, click again to take it off';
       p.innerHTML = `<span class="ico" style="color:#1D222B">${dialArt(+t, 1, 34, 34)}</span><span class="nm">${d.name}</span>`;
       p.addEventListener('click', () => toggleDialPart(+t));
     }
@@ -987,7 +988,7 @@
     clearSel(); commit();
   }
   function renderDialToggles() {
-    document.querySelectorAll('.part.sw').forEach((p) => {
+    document.querySelectorAll('.part.tgl').forEach((p) => {
       p.classList.toggle('on', st.el.some((e) => e[0] === +p.dataset.t));
     });
   }

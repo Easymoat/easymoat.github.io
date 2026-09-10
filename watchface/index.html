@@ -242,7 +242,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-10 13:52</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-10 13:54</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -402,16 +402,16 @@
     26: { name: 'Moon age',  grp: 'wx',    sample: moonAgeStr(), icon: 'moon',  iw: 26 },
     40: { name: 'Notifications', grp: 'clock', sample: '3',  icon: 'bell',      iw: 26 },
     // 50-54 / 60-64 = whole-dial parts: they sit at the centre, cover the dial and are not moved.
-    50: { name: 'Hands: bars',    grp: 'hands', dial: true },
-    51: { name: 'Hands: needles', grp: 'hands', dial: true },
-    52: { name: 'Hands: kite',    grp: 'hands', dial: true },
-    53: { name: 'Hands: outline', grp: 'hands', dial: true },
-    54: { name: 'Hands + second', grp: 'hands', dial: true },
-    60: { name: 'Rim: ticks',     grp: 'rim',   dial: true },
-    61: { name: 'Rim: dots',      grp: 'rim',   dial: true },
-    62: { name: 'Rim: 12 3 6 9',  grp: 'rim',   dial: true },
-    63: { name: 'Rim: ring',      grp: 'rim',   dial: true },
-    64: { name: 'Rim: arcs',      grp: 'rim',   dial: true },
+    50: { name: 'Hands: Bars',        grp: 'hands', dial: true },
+    51: { name: 'Hands: Needles',     grp: 'hands', dial: true },
+    52: { name: 'Hands: Kite',        grp: 'hands', dial: true },
+    53: { name: 'Hands: Outline',     grp: 'hands', dial: true },
+    54: { name: 'Hands: Bars + second', grp: 'hands', dial: true },
+    60: { name: 'Rim: Ticks',         grp: 'rim',   dial: true },
+    61: { name: 'Rim: Dots',          grp: 'rim',   dial: true },
+    62: { name: 'Rim: 12 3 6 9',      grp: 'rim',   dial: true },
+    63: { name: 'Rim: Ring',          grp: 'rim',   dial: true },
+    64: { name: 'Rim: Arcs',          grp: 'rim',   dial: true },
     30: { name: 'Stock 1',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
     31: { name: 'Stock 2',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
   };
@@ -720,7 +720,7 @@
     p.className = 'part'; p.dataset.t = t;
     if (d.dial) {
       p.className = 'part tgl'; p.title = 'Click to put it on the dial, click again to take it off';
-      p.innerHTML = `<span class="ico" style="color:#1D222B">${dialArt(+t, 1, 26, 26)}</span><span class="nm">${d.name}</span>`;
+      p.innerHTML = `<span class="ico" style="color:#1D222B">${dialArt(+t, 1, 26, 26)}</span><span class="nm">${d.name.replace(/^(Hands|Rim):\s*/, '')}</span>`;
       p.addEventListener('click', () => toggleDialPart(+t));
     }
     else p.innerHTML = `<span class="ico">${d.icon && d.icon !== 'stock' ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${d.icon === 'stock' ? '$' : d.sample}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;

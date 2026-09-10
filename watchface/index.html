@@ -105,39 +105,19 @@
   .photo.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
   .shelfbox { width: 100%; max-width: 1040px; gap: 14px; }
   .shelf { display: flex; flex-wrap: wrap; gap: 18px 22px; }
-  .watchbox { width: 100%; max-width: 1040px; gap: 14px; }
-  .wslots { display: flex; gap: 18px 22px; flex-wrap: wrap; }
-  .wslot { width: 150px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .minibox { position: relative; width: 124px; height: 124px; }
-  .wslot .hint { position: absolute; inset: 0; border-radius: 50%; display: none; align-items: center; justify-content: center;
-                 background: rgba(14,17,22,.74); color: var(--accent); font: 600 13px var(--sans); }
-  .wslot.on .mini { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
-  .wslot .num { font-family: var(--mono); }
-  .wslot .row { flex-direction: column; align-items: center; gap: 5px; }   /* Delete always on its own line */
-  .wslot .showing { padding: 3px 8px; border: 2px solid var(--ok); border-radius: 5px; background: var(--ok); color: #05170c; font: 600 12px var(--sans); }
-  .wslot.on .num { color: var(--accent); }
-  .wslot.empty .mini { border-style: dashed; background: var(--panel-2); }
-  /* Choosing a slot: every slot is a target, the mini says what clicking it will do. */
-  .wslots.picking .wslot { cursor: pointer; }
-  .wslots.picking .wslot .mini { border-color: var(--accent); }
-  .wslots.picking .wslot .hint { display: flex; }
-  .wslots.picking .wslot:hover .mini { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
-  .pickbar[hidden] { display: none; }   /* display:flex would otherwise beat the hidden attribute */
-  .pickbar { display: flex; align-items: center; gap: 14px; padding: 9px 14px; border: 2px solid var(--accent); border-radius: 8px;
-             background: var(--panel-2); font-size: 13px; color: var(--ink); }
   .cap.onw { color: var(--accent); }
   .cap.del { cursor: pointer; }
   .cap.del:hover { color: var(--danger); }
   .item { width: 150px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .item .mini, .wslot .mini { position: relative; width: 124px; height: 124px; border-radius: 50%; overflow: hidden; background: #000 center/cover no-repeat; border: 2px solid var(--line-2); }
-  .item.onwatch .mini, .wslot .mini.filled { border-color: var(--accent); }
-  .item .mini .inner, .wslot .mini .inner { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
-  .item .mini .inner .anchor, .item .mini .inner .grid, .wslot .mini .inner .anchor, .wslot .mini .inner .grid { display: none !important; }
-  .item .mini .inner .el, .wslot .mini .inner .el { outline: none !important; }
-  .item .cap, .wslot .cap { font: 11px var(--mono); color: var(--ink-3); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
-  .item .cap b, .wslot .cap b { color: var(--ink-2); font-weight: 500; }
-  .item .row, .wslot .row { gap: 6px; }
-  .item .btn, .wslot .btn { padding: 3px 8px; font-size: 12px; }
+  .item .mini { position: relative; width: 124px; height: 124px; border-radius: 50%; overflow: hidden; background: #000 center/cover no-repeat; border: 2px solid var(--line-2); }
+  .item.onwatch .mini { border-color: var(--accent); }
+  .item .mini .inner { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
+  .item .mini .inner .anchor, .item .mini .inner .grid { display: none !important; }
+  .item .mini .inner .el { outline: none !important; }
+  .item .cap { font: 11px var(--mono); color: var(--ink-3); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+  .item .cap b { color: var(--ink-2); font-weight: 500; }
+  .item .row { gap: 6px; }
+  .item .btn { padding: 3px 8px; font-size: 12px; }
   .faces { display: flex; gap: 14px; }
   .face { width: 124px; display: flex; flex-direction: column; align-items: center; gap: 7px; cursor: pointer; }
   .face .mini { position: relative; width: 124px; height: 124px; border-radius: 50%; overflow: hidden; background: #000;
@@ -242,7 +222,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-10 18:13</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-10 20:28</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -297,6 +277,7 @@
           <div class="ctl"><button class="btn toggle on" id="imgshow" disabled title="While ON, the dial above shows the image exactly as it is here (frame, size, zoom, colours) and it is saved with the dial. While OFF, the saved dial has no image.">Show on dial: ON</button><button class="btn" id="imgreset">Reset</button><button class="btn" id="imgparts">Hide parts</button><button class="btn" id="imghide">Hide image</button></div>
           <div class="ctl"><span class="onlyfor">For PulseLink users</span></div>
           <div class="ctl" title="Live camera from PulseLink: while ON, the latest camera frame replaces the picture in the editor (framed the same way)."><button class="btn toggle" id="camon">Camera: OFF</button><span class="muted">PL ID</span><input type="text" id="plid" placeholder="XXXX-XXXX" style="width:110px"><span class="status" id="camnote" style="flex:1 1 auto"></span></div>
+          <div class="ctl" id="camlocknote" hidden><span class="muted">The camera picture goes to the watch exactly as PulseLink sends it — set the angle in the PulseLink Viewer. Shape, size, zoom and rotation are off while the camera is on.</span></div>
         </div>
         <div class="opts">
           <div class="grp" title="The shape of the image frame on the dial."><span class="lbl">Shape</span><div class="ctl"><span class="cb" id="imgshape"></span></div>
@@ -317,20 +298,12 @@
     <div class="shelfbox box">
       <div class="tier"><span class="num">3</span><span class="name">Collection</span><span class="what">Save the dial, then send it to the watch from here</span></div>
       <div class="grp">
-        <div class="ctl"><span class="muted">Everything on the watch comes from here: save the dial above, then use <b>To watch…</b> on it.</span></div>
+        <div class="ctl"><span class="muted">Everything on the watch comes from here: save the dial above, then use <b>To watch</b> on it. The watch shows one dial — sending another replaces it, within 5 minutes.</span></div>
+        <div class="status" id="syncstatus"></div>
         <div class="row" style="align-items:center;gap:10px"><input type="text" id="shelfname" placeholder="Name (optional)" style="width:180px"><button class="btn primary" id="shelfsave">Save to collection</button><span class="muted" id="shelfcount"></span></div>
         <div class="status" id="shelfstatus"></div>
       </div>
       <div class="shelf" id="shelf"></div>
-    </div>
-    <div class="watchbox box">
-      <div class="tier"><span class="num">4</span><span class="name">On the watch</span><span class="what">The five faces the watch can show</span></div>
-      <div class="grp">
-        <div class="ctl"><span class="muted">Put a dial here with <b>To watch…</b> on a collection item above. Each slot holds a copy; the watch follows changes here within 5 minutes.</span></div>
-        <div class="status" id="syncstatus"></div>
-      </div>
-      <div class="pickbar" id="pickbar" hidden></div>
-      <div class="wslots" id="wslots"></div>
     </div>
     <div class="drawer">
       <details class="box">
@@ -877,6 +850,7 @@
   // that sits at the centre of the frame (0..1000) and the zoom (100 = whole picture … 400). Derived from
   // the editor's pan and zoom while Camera is ON; the watch writes it to PulseLink's camera settings.
   function camField() {
+    return null;   // 2026-09-10: the watch no longer crops the camera picture; the angle comes from PulseLink.
     if (typeof IMG === 'undefined' || IMG.src !== 'camera' || !IMG.cur) return null;
     const [, , bw, bh] = unionBox();
     const base = Math.max(bw / IMG.cur.width, bh / IMG.cur.height), sc = base * IMG.zoom, dw = IMG.cur.width * sc, dh = IMG.cur.height * sc;
@@ -1184,23 +1158,23 @@
     for (const it of SHELF.items) {
       const d = document.createElement('div'); d.className = 'item'; d.dataset.n = it.n;
       d.innerHTML = `<div class="mini"></div><span class="cap"><b>${(it.name || `Item ${it.n}`).replace(/</g, '&lt;')}</b></span><span class="cap">${it.kind === 'photo' ? 'photo' : it.kind === 'fill' ? 'colour shape' : it.kind === 'camera' ? 'camera' : 'no image'} · ${fmtTime(it.ts * 1000)}</span>
-        <div class="row"><button class="btn" data-a="load" title="Put this item back into the editors above">Edit</button><button class="btn primary" data-a="send" title="Put this item on one of the five watch slots — you choose which">To watch…</button></div>
+        <div class="row"><button class="btn" data-a="load" title="Put this item back into the editors above">Edit</button><button class="btn primary" data-a="send" title="Make this the dial your watch shows">To watch</button></div>
         <span class="cap onw"></span><span class="cap del" data-a="del" title="Delete this item from the collection">Delete</span>`;
       d.querySelector('[data-a="load"]').addEventListener('click', () => loadShelfItem(it.n));
-      d.querySelector('[data-a="send"]').addEventListener('click', () => startPick(it.n, it.name || 'item ' + it.n));
+      d.querySelector('[data-a="send"]').addEventListener('click', () => sendShelfItem(it.n));
       d.querySelector('[data-a="del"]').addEventListener('click', () => removeShelfItem(it.n, it.name));
       wrap.appendChild(d);
       fetchShelfItem(it.n).then((full) => { if (full) itemMini(d.querySelector('.mini'), it, faceLayout(full.layout)); }).catch(() => {});
     }
     markShelfOnWatch();
   }
-  // "on watch slot 2" under a collection item — which slots were filled from it.
+  // 実機に出ている品に「on the watch」と付ける。
   function markShelfOnWatch() {
+    const cur = WSLOTS.faces[String(WSLOTS.active || 1)] || WSLOTS.faces['1'] || null;
     document.querySelectorAll('.shelf .item').forEach((d) => {
-      const n = Number(d.dataset.n), slots = [];
-      for (let k = 1; k <= 5; k++) { const f = WSLOTS.faces[String(k)]; if (f && Number(f.shelf) === n) slots.push(k); }
-      const el = d.querySelector('.onw'); if (el) el.textContent = slots.length ? `on watch slot ${slots.join(', ')}` : '';
-      d.classList.toggle('onwatch', slots.length > 0);
+      const on = !!(cur && Number(cur.shelf) === Number(d.dataset.n));
+      const el = d.querySelector('.onw'); if (el) el.textContent = on ? 'on the watch' : '';
+      d.classList.toggle('onwatch', on);
     });
   }
   async function fetchShelfItem(n) {
@@ -1244,107 +1218,30 @@
     for (let i = 0; i < d.length; i += 4) { if (d[i + 3] === 0) continue; const key = (d[i] << 16) | (d[i + 1] << 8) | d[i + 2]; seen.set(key, (seen.get(key) || 0) + 1); if (seen.size > 64) break; }
     return [...seen.entries()].sort((a, b) => b[1] - a[1]).slice(0, 32).map((e) => e[0]);
   }
-  // ── The five watch slots (server /watch*): copies of collection items ──
-  // Putting something on a slot is always two explicit clicks: "To watch…" on an item starts the choice,
-  // then the user clicks the slot itself. Nothing is written until that second click.
-  const WSLOTS = { active: 0, faces: {}, mini: {} };
-  const PICK = { on: false, n: 0, label: '' };
-  const esc = (t) => String(t).replace(/</g, '&lt;');
-  // 絵札の作り直しの鍵。カメラの面は絵だけ差し替わるので、絵の版も見る。
+  // ── 実機の 1 面 (server /watch, slot 1) ──
+  // 2026-09-10 の要件縮小: 実機に置ける面は 1 つだけ。棚の品を送ると前の面と入れ替わる。
+  const WSLOTS = { active: 0, faces: {} };
   const miniKey = (f) => String(f.v) + '/' + String(f.img_v || '');
-
-  function startPick(n, label) {
-    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
-    PICK.on = true; PICK.n = n; PICK.label = label;
-    renderWatchSlots();
-    document.querySelector('.watchbox').scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-  function cancelPick() { PICK.on = false; renderWatchSlots(); }
-  document.addEventListener('keydown', (e) => { if (PICK.on && e.key === 'Escape') { e.stopPropagation(); cancelPick(); } }, true);
-
-  async function pickSlot(k) {
-    if (!PICK.on) return;
-    const f = WSLOTS.faces[String(k)];
-    if (f && !window.confirm(`Slot ${k} already holds "${f.name || 'Face'}". Replace it?`)) return;
-    const n = PICK.n; cancelPick();
-    await sendShelfItem(n, k);
-  }
-
-  function renderWatchSlots() {
-    const w = $('wslots'), bar = $('pickbar');
-    w.classList.toggle('picking', PICK.on);
-    bar.hidden = !PICK.on;
-    if (PICK.on) {
-      bar.innerHTML = `<span>Click the slot that should hold <b>${esc(PICK.label)}</b>. A filled slot asks before it is replaced.</span><button class="btn" id="pickcancel">Cancel</button>`;
-      $('pickcancel').addEventListener('click', cancelPick);
-    } else bar.innerHTML = '';
-    w.innerHTML = '';
-    for (let k = 1; k <= 5; k++) {
-      const f = WSLOTS.faces[String(k)], on = WSLOTS.active === k, d = document.createElement('div');
-      d.className = 'wslot' + (f ? '' : ' empty') + (on ? ' on' : '');
-      d.innerHTML = `<div class="minibox"><div class="mini${f ? ' filled' : ''}"></div><span class="hint">${f ? 'Replace' : 'Put here'}</span></div>
-        <span class="cap num">Slot ${k}</span>
-        <span class="cap"><b>${f ? esc(f.name || 'Face') : 'empty'}</b></span>
-        <div class="row">${f ? (on ? '<span class="showing" title="The watch is showing this slot">Showing</span>' : '<button class="btn primary" data-a="show" title="Make the watch show this slot">Show on the Watch</button>') + '<button class="btn danger" data-a="empty" title="Delete this face from the watch (the collection item stays)">Delete</button>' : ''}</div>`;
-      if (PICK.on) d.addEventListener('click', () => pickSlot(k));
-      else if (f) {
-        const sh = d.querySelector('[data-a="show"]'); if (sh) sh.addEventListener('click', () => setWatchActive(k));
-        d.querySelector('[data-a="empty"]').addEventListener('click', () => deleteWatchSlot(k, f.name));
-      }
-      w.appendChild(d);
-    }
-    // 幅の測定に DOM 接続が要るので、貼り付けたあとで描く (外れていると全部 0 幅になり位置がずれる)。
-    [...w.children].forEach((d, i) => {
-      const k = i + 1, f = WSLOTS.faces[String(k)], cache = WSLOTS.mini[k], mini = d.querySelector('.mini');
-      if (!f || !cache || cache.v !== miniKey(f)) return;
-      if (cache.url) mini.style.backgroundImage = `url("${cache.url}")`;
-      if (cache.layout) { mini.style.backgroundColor = hex(cache.layout.bg); renderFaceMini(mini, cache.layout); }
-    });
-    markShelfOnWatch();
-  }
-  // The thumbnail of a slot comes from the copy the watch reads, so it shows what is really on the watch.
-  async function loadSlotMini(k, v) {
-    try {
-      const r = await fetch(`${$('api').value}/watch-face?device_id=${encodeURIComponent(devId())}&slot=${k}`);
-      if (!r.ok) return; const j = await r.json();
-      WSLOTS.mini[k] = { v, url: j.img && j.img.url ? absUrl(j.img.url) : '', layout: faceLayout(j.layout) };
-      renderWatchSlots();
-    } catch (e) {}
-  }
   async function loadWatchSlots() {
     const id = devId();
-    if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { WSLOTS.active = 0; WSLOTS.faces = {}; WSLOTS.mini = {}; PICK.on = false; renderWatchSlots(); return; }
-    try { const r = await fetch($('api').value + '/watch?device_id=' + encodeURIComponent(id)); if (!r.ok) return; const j = await r.json();
-      WSLOTS.active = j.active || 0; WSLOTS.faces = j.faces || {};
+    if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { WSLOTS.active = 0; WSLOTS.faces = {}; markShelfOnWatch(); return; }
+    try {
+      const r = await fetch($('api').value + '/watch?device_id=' + encodeURIComponent(id)); if (!r.ok) return;
+      const j = await r.json(); WSLOTS.active = j.active || 0; WSLOTS.faces = j.faces || {};
       if (j.seen && j.seen.ts && (!WATCH.seen || j.seen.ts > (WATCH.seen.ts || 0))) { WATCH.seen = j.seen; renderWatchSeen(); }
     } catch (e) { return; }
-    renderWatchSlots();
-    for (let k = 1; k <= 5; k++) {
-      const f = WSLOTS.faces[String(k)];
-      if (!f) { delete WSLOTS.mini[k]; continue; }
-      if (!WSLOTS.mini[k] || WSLOTS.mini[k].v !== miniKey(f)) loadSlotMini(k, miniKey(f));
-    }
+    markShelfOnWatch();
   }
-  async function deleteWatchSlot(k, name) {
-    if (!window.confirm(`Delete slot ${k}${name ? ` ("${name}")` : ''} from the watch? The collection item stays.`)) return;
-    await fetch($('api').value + '/watch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: devId(), slot: k, remove: true }) });
-    setStatus('syncstatus', `Slot ${k} is empty now.`, 'ok'); loadWatchSlots(); loadWatchState();
-  }
-  async function setWatchActive(k) {
-    const id = devId();
-    try { const r = await fetch($('api').value + '/watch-active', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, slot: k }) });
-      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
-      setStatus('syncstatus', `The watch now shows slot ${k}. It changes within 5 minutes.`, 'ok'); loadWatchSlots(); loadWatchState(); }
-    catch (e) { setStatus('syncstatus', 'Switch failed: ' + e.message, 'err'); }
-  }
-  // Copy a collection item into a watch slot (the server duplicates layout + picture + palette) and show it.
-  async function sendShelfItem(n, k) {
-    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('syncstatus', 'Enter the Device ID first.', 'err');
+  // 棚の品をそのまま実機の面にする (他の面は消える)。
+  async function sendShelfItem(n) {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('syncstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
+    const name = (SHELF.items.find((i) => i.n === n) || {}).name || 'item ' + n;
     setStatus('syncstatus', 'Sending…');
     try {
-      const r = await fetch($('api').value + '/watch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, slot: k, from_shelf: n, activate: true }) });
+      const r = await fetch($('api').value + '/watch', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device_id: id, slot: 1, from_shelf: n, activate: true, only: true }) });
       const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
-      setStatus('syncstatus', `Slot ${k} now holds "${(SHELF.items.find((i) => i.n === n) || {}).name || 'item ' + n}" and is showing on the watch. It arrives within 5 minutes.`, 'ok');
+      setStatus('syncstatus', `Your watch now shows "${name}". It arrives within 5 minutes.`, 'ok');
       loadWatchSlots(); loadWatchState();
     } catch (e) { setStatus('syncstatus', 'Send failed: ' + e.message, 'err'); }
   }
@@ -1798,28 +1695,44 @@
   async function fetchCam() {
     const id = plId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { camNote('Enter the PulseLink Device ID (XXXX-XXXX).', 'err'); return; }
     try {
-      const r = await fetch(`${PL_API}/cam-ping?device_id=${encodeURIComponent(id)}&full=1`); const j = await r.json();   // full=1: the camera phone also sends the whole frame
+      const r = await fetch(`${PL_API}/cam-ping?device_id=${encodeURIComponent(id)}`); const j = await r.json();
       if (!r.ok) throw new Error(j.error || r.status);
       const ov = String(j.ov || '0');
       if (ov === '0' || !j.uid) { camNote('No camera frame yet — the camera phone has not sent a picture.', 'err'); return; }
       if (ov === CAM.ver && IMG.src === 'camera') { camNote(`Live camera · frame ${fmtTime(Number(ov))}`, 'ok'); return; }
-      // Prefer the camera's full frame (320 px / 16 colours, sent by the camera phone while the watch face
-      // holds the camera) so the editor can frame it; fall back to the cropped frame the watch gets.
+      // 2026-09-10: the watch shows the camera picture exactly as PulseLink sends it. The editor takes the
+      // same square frame and does not re-frame it — the angle is set in the PulseLink Viewer instead.
       const img = new Image(); img.crossOrigin = 'anonymous';
-      const load = (u) => new Promise((res, rej) => { img.onload = () => res(true); img.onerror = () => rej(new Error('frame_load')); img.src = u; });
-      try { await load(`${PL_API}/compass-image/${encodeURIComponent(j.uid)}_s6_full.png?v=${ov}&c=1`); }
-      catch (e) { await load(`${PL_API}/compass-image/${encodeURIComponent(j.uid)}_s6.png?v=${ov}&c=1`); }
+      await new Promise((res, rej) => { img.onload = () => res(true); img.onerror = () => rej(new Error('frame_load')); img.src = `${PL_API}/compass-image/${encodeURIComponent(j.uid)}_s6.png?v=${ov}&c=1`; });
       CAM.ver = ov; IMG.cur = img; IMG.src = 'camera'; IMG.k = 0; IMG.fill = null; IMG.fromSlot = 0;
-      renderPhotos(); $('imgfilename').textContent = 'Live camera'; redrawImg();
+      camFixed();
+      renderPhotos(); $('imgfilename').textContent = 'Live camera (framed in PulseLink)'; redrawImg();
       camNote(`Live camera · frame ${fmtTime(Number(ov))}`, 'ok');
     } catch (e) { camNote('Camera: ' + e.message, 'err'); }
+  }
+  // カメラの絵は PL のまま出す: 枠は画面いっぱいの四角、拡大も移動も回転もしない。
+  function camFixed() {
+    setShape('square', null); IMG.rot = 0; IMG.rot2 = null; IMG.size = 100; IMG.size2 = null;
+    IMG.cx = 160; IMG.cy = 160; IMG.zoom = 1; IMG.panX = 0; IMG.panY = 0;
+    $('imgzoom').value = '1'; renderShapeSel();
+  }
+  // カメラ中は形・大きさ・回転・拡大・移動の操作を止める (PL の Viewer 側で決める)。
+  function renderCamLock() {
+    const lock = CAM.on;
+    ['imgsize', 'imgzoom'].forEach((id) => { $(id).disabled = lock; });
+    document.querySelectorAll('#imgshape button, #rotl, #rotr, #imgdrag button, #shapesel button').forEach((b) => { b.disabled = lock; });
+    $('imgsizerow').style.opacity = lock ? '.45' : '';
+    $('imgdragrow').style.opacity = lock ? '.45' : '';
+    $('camlocknote').hidden = !lock;
   }
   function setCamera(on) {
     if (on && !/^[0-9a-zA-Z-]{4,40}$/.test(plId())) { camNote('Enter the PulseLink Device ID (XXXX-XXXX) first.', 'err'); return; }   // stays OFF
     CAM.on = on; $('camon').classList.toggle('on', on); $('camon').textContent = 'Camera: ' + (on ? 'ON' : 'OFF');
+    renderCamLock();
     if (on) { CAM.prev = { cur: IMG.cur, src: IMG.src, k: IMG.k, fill: IMG.fill }; CAM.ver = ''; fetchCam(); CAM.timer = setInterval(fetchCam, 60000); }
     else {
       clearInterval(CAM.timer); CAM.timer = null; camNote('');
+      renderCamLock();
       const p = CAM.prev; CAM.prev = null;
       if (p && p.cur && p.src !== 'camera') { IMG.cur = p.cur; IMG.src = p.src; IMG.k = p.k; IMG.fill = p.fill; renderPhotos(); $('imgfilename').textContent = p.k ? `Photo ${p.k}` : (p.fill ? 'Colour fill ' + p.fill.toUpperCase() : ''); redrawImg(); }
       else if (p && p.fill) { useFill(p.fill); }

@@ -167,6 +167,7 @@
   .btn.file { display: inline-block; }
   .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
   .btn.toggle.on { background: var(--ok); border-color: var(--ok); color: #05170c; font-weight: 600; }
+  .btn.toggle.on:disabled { opacity: 1; }   /* 状態表示 (Showing) は薄くしない */
   .btn.primary:hover { filter: brightness(1.08); background: var(--accent); }
   .btn.primary:disabled { filter: none; }
   .btn.danger { color: var(--danger); border-color: var(--danger); }
@@ -222,7 +223,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-10 20:28</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-10 21:17</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1168,12 +1169,21 @@
     }
     markShelfOnWatch();
   }
-  // 実機に出ている品に「on the watch」と付ける。
+  // 実機に出ている品は、その品のボタンが「Showing」(緑) になる。
   function markShelfOnWatch() {
     const cur = WSLOTS.faces[String(WSLOTS.active || 1)] || WSLOTS.faces['1'] || null;
     document.querySelectorAll('.shelf .item').forEach((d) => {
       const on = !!(cur && Number(cur.shelf) === Number(d.dataset.n));
-      const el = d.querySelector('.onw'); if (el) el.textContent = on ? 'on the watch' : '';
+      const b = d.querySelector('[data-a="send"]');
+      if (b) {
+        b.textContent = on ? 'Showing' : 'To watch';
+        b.classList.toggle('primary', !on);
+        b.classList.toggle('toggle', on);
+        b.classList.toggle('on', on);
+        b.disabled = on;
+        b.title = on ? 'This is the dial your watch shows' : 'Make this the dial your watch shows';
+      }
+      const el = d.querySelector('.onw'); if (el) el.textContent = '';
       d.classList.toggle('onwatch', on);
     });
   }
@@ -1242,6 +1252,7 @@
         body: JSON.stringify({ device_id: id, slot: 1, from_shelf: n, activate: true, only: true }) });
       const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
       setStatus('syncstatus', `Your watch now shows "${name}". It arrives within 5 minutes.`, 'ok');
+      WSLOTS.active = 1; WSLOTS.faces = { '1': { v: j.v, shelf: n, kind: 'photo' } }; markShelfOnWatch();
       loadWatchSlots(); loadWatchState();
     } catch (e) { setStatus('syncstatus', 'Send failed: ' + e.message, 'err'); }
   }

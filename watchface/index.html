@@ -223,7 +223,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-10 23:40</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-11 00:57</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -329,7 +329,8 @@
     <div class="group" title="Text height in px on a 454 dial: S / M / L. Sent to the watch with the layout."><span class="lbl">Text size (px)</span><div class="ctl"><span class="pxs" id="tx"></span></div></div>
     <div class="group" title="Clock height in px on a 454 dial: S / M / L."><span class="lbl">Time size (px)</span><div class="ctl"><span class="pxs" id="tm"></span></div></div>
     <div class="group" title="Icon height in px on a 454 dial: S / M / L. Independent of the text size — use it to balance the look on devices whose text is fixed to S/M/L."><span class="lbl">Icon size (px)</span><div class="ctl"><span class="pxs" id="ic"></span><span class="stp" title="Move every icon up or down against the numbers (px on a 454 dial, + is down)."><span class="sml">&#8597;</span><button class="step" type="button" id="iodn">&minus;</button><input type="number" id="io" min="-20" max="20"><button class="step" type="button" id="ioup">+</button></span></div></div>
-    <div class="group" title="Faux bold: text drawn twice with a 1–2 px offset (Roboto has no bold on the watch)."><span class="lbl">Style</span><div class="ctl"><label><input type="checkbox" id="bold"> bold</label></div></div>
+    <div class="group" title="Faux bold: text drawn twice with a 1–2 px offset (Roboto has no bold on the watch)."><span class="lbl">Style</span><div class="ctl"><label><input type="checkbox" id="bold"> bold</label></div>
+      <div class="ctl" title="Unit for the Wind part. The same choice as MarketWatch and PulseLink; m/s is their default too.">Wind <span class="cb" id="windunit"></span></div></div>
     <div class="group"><span class="lbl">Elements</span><div class="list" id="list"></div></div>
   </aside>
 </main>
@@ -351,6 +352,8 @@
   function moonAgeStr() { return moonAge().toFixed(1); }
   function moonPhaseDeg() { return (moonAge() / SYNODIC) * 360; }
   function moonPhase() { const f = moonAge() / SYNODIC; return (f < 0.04 || f > 0.96) ? 0 : f < 0.21 ? 1 : f < 0.29 ? 2 : f < 0.46 ? 3 : f < 0.54 ? 4 : f < 0.71 ? 5 : f < 0.79 ? 6 : 7; }
+  // 風速の単位 (MW WeatherBar.windValueIn と同じ並び)。見本は「弱い風」を各単位で表した値。
+  const WIND_UNITS = { 0: ['m/s', '3'], 1: ['km/h', '12'], 2: ['mph', '7'], 3: ['kn', '6'] };
   const TYPES = {
     1:  { name: 'Time',      grp: 'clock', sample: '10:08',  icon: null,        iw: 0 },
     2:  { name: 'Date',      grp: 'clock', sample: 'Fri Sep 4', icon: null,     iw: 0 },
@@ -365,7 +368,7 @@
     17: { name: 'Respiration', grp: 'body', sample: '14',    icon: 'breath',    iw: 26 },
     20: { name: 'Weather',   grp: 'wx',    sample: '23°',    icon: 'weather',   iw: 34 },
     21: { name: 'Humidity',  grp: 'wx',    sample: '55%',    icon: 'humidity',  iw: 20 },
-    22: { name: 'Wind km/h', grp: 'wx',    sample: '12',     icon: 'wind',      iw: 26 },
+    22: { name: 'Wind',      grp: 'wx',    sample: '3',      icon: 'wind',      iw: 26 },
     23: { name: 'Pressure',  grp: 'wx',    sample: '1013',   icon: 'pressure',  iw: 26 },
     24: { name: 'Altitude',  grp: 'wx',    sample: '45m',    icon: 'altitude',  iw: 30 },
     // 27-29 = Open-Meteo forecast fetched by the watch's background service (server /api/wf/forecast), 2026-09-06
@@ -614,6 +617,7 @@
   try { const s = JSON.parse(localStorage.getItem('faceComposer') || 'null'); if (s && Array.isArray(s.el)) st = Object.assign(st, s); } catch (e) {}
   st.tx = intArr3(st.tx, 10, 200, DEF_TX) || DEF_TX.slice(); st.tm = intArr3(st.tm, 10, 200, DEF_TM) || DEF_TM.slice();
   st.ic = intArr3(st.ic, 6, 120, DEF_IC) || DEF_IC.slice(); st.b = st.b === 1 ? 1 : 0;
+  st.wu = WIND_UNITS[st.wu] ? st.wu : 0;
   if (!Number.isInteger(st.io) || st.io < -20 || st.io > 20) st.io = DEF_IO;
   // 3 or 4 integers in range → 4 (a 3-entry table gets the XL default appended); anything else → null
   function intArr3(v, lo, hi, def) { lo = lo || 10; hi = hi || 200; def = def || DEF_TX;
@@ -733,7 +737,7 @@
   }
   function renderSizes() {
     document.querySelectorAll('.pxs input').forEach((inp) => { inp.value = st[inp.dataset.key][+inp.dataset.i]; });
-    $('bold').checked = st.b === 1; $('io').value = st.io;
+    $('bold').checked = st.b === 1; $('io').value = st.io; renderWindUnit();
     // Devices without a vector font ignore the px you type and use three fixed system fonts.
     const vec = isVector(), p = prof();
     ['tx', 'tm'].forEach((key) => { $(key).style.opacity = vec ? '1' : '0.45'; });
@@ -744,6 +748,15 @@
     }
   }
   $('bold').addEventListener('change', (ev) => { st.b = ev.target.checked ? 1 : 0; commit(); });
+  Object.keys(WIND_UNITS).forEach((u) => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = WIND_UNITS[u][0]; b.dataset.u = u;
+    b.addEventListener('click', () => { st.wu = Number(u); TYPES[22].sample = WIND_UNITS[u][1]; renderWindUnit(); commit(); });
+    $('windunit').appendChild(b);
+  });
+  function renderWindUnit() {
+    document.querySelectorAll('#windunit button').forEach((b) => b.classList.toggle('on', Number(b.dataset.u) === (st.wu || 0)));
+    TYPES[22].sample = WIND_UNITS[st.wu || 0][1];
+  }
   const setIo = (v) => { v = Math.round(v); if (v >= -20 && v <= 20) { st.io = v; commit(); } else { $('io').value = st.io; } };
   $('io').addEventListener('change', (ev) => setIo(+ev.target.value));
   $('iodn').addEventListener('click', () => setIo(st.io - 1));
@@ -859,7 +872,7 @@
     const cx = Math.round(1000 * (0.5 - IMG.panX / dw)), cy = Math.round(1000 * (0.5 - IMG.panY / dh));
     return [Math.max(0, Math.min(1000, cx)), Math.max(0, Math.min(1000, cy)), Math.max(100, Math.min(400, Math.round(IMG.zoom * 100)))];
   }
-  const layoutObj = () => { const o = { bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b }; const cam = camField(); if (cam) o.cam = cam; return o; };
+  const layoutObj = () => { const o = { bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0 }; const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   function renderList() {
     const l = $('list'); l.innerHTML = '';
@@ -922,7 +935,7 @@
   // The draft holds the layout AND the image editor: slot, shape, size, position, zoom, colours, Auto
   // shade, Show on dial, and — for an image chosen from a file — the picture itself (downscaled JPEG),
   // so Back to draft restores the dial exactly. imgDraftState / applyImgDraft live with the image code.
-  const draftKeys = () => ({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, img: imgDraftState(), savedAt: Date.now() });
+  const draftKeys = () => ({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, img: imgDraftState(), savedAt: Date.now() });
   function saveDraft() {
     const d = draftKeys();
     try { localStorage.setItem('faceComposer.draft', JSON.stringify(d)); return true; }
@@ -1037,7 +1050,8 @@
     const bg = Number.isInteger(j.bg) && j.bg >= 0 && j.bg <= 0xFFFFFF ? j.bg : 0;
     return { bg, el, tx: intArr3(j.tx, 10, 200, DEF_TX) || DEF_TX.slice(), tm: intArr3(j.tm, 10, 200, DEF_TM) || DEF_TM.slice(),
              ic: intArr3(j.ic, 6, 120, DEF_IC) || DEF_IC.slice(),
-             io: (Number.isInteger(j.io) && j.io >= -20 && j.io <= 20) ? j.io : DEF_IO, b: Number(j.b) === 1 ? 1 : 0 };
+             io: (Number.isInteger(j.io) && j.io >= -20 && j.io <= 20) ? j.io : DEF_IO, b: Number(j.b) === 1 ? 1 : 0,
+             wu: (Number.isInteger(j.wu) && j.wu >= 0 && j.wu <= 3) ? j.wu : 0 };
   }
 
   // ── Server sync ────────────────────────────────────────────────────────────
@@ -1068,7 +1082,7 @@
       div.style.top = (py - h / 2) + 'px';
     });
   }
-  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; clearSel(); pushBgHist(st.bg); }
+  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; clearSel(); pushBgHist(st.bg); }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
   function renderWatchSeen() {
     const el = $('watchseen'); if (!el) return;

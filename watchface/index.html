@@ -228,7 +228,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-11 05:59</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-11 06:46</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -265,7 +265,8 @@
           <div class="row" style="align-items:center;gap:14px"><div class="field" style="grid-template-columns:auto 140px;gap:10px"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX"></div></div>
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
           <div class="status" id="watchseen" title="When your watch last checked in, and whether it already has what was last sent"></div>
-          <div class="ctl" title="Where the weather parts get their forecast. Once allowed, opening this page updates it, so it follows you when you travel."><button class="btn" id="locset">Set forecast location</button><button class="btn danger" id="locclear" title="Forget the saved place so only the watch's own position is used (for testing the watch's GPS). Automatic updates stop until you press Set again.">Reset</button><span class="status" id="locnote" style="flex:1 1 auto"></span></div>
+          <div class="ctl" title="Where the weather parts get their forecast. Once allowed, opening this page updates it, so it follows you when you travel."><button class="btn" id="locset">Set forecast location</button><button class="btn danger" id="locclear" title="Forget the saved place so only the watch's own position is used (for testing the watch's GPS). Automatic updates stop until you press Set again.">Reset</button></div>
+          <div class="ctl" title="If PulseLink runs on this watch and shares its position, the forecast follows that position — no need to open this page when you travel."><span class="muted">or follow PulseLink</span><input type="text" id="locpl" placeholder="XXXX-XXXX" style="width:110px"><button class="btn" id="locplset">Follow</button><span class="status" id="locnote" style="flex:1 1 auto"></span></div>
         </div>
       </div>
     </div>
@@ -1141,8 +1142,9 @@
     try {
       const r = await fetch($('api').value + '/loc?device_id=' + encodeURIComponent(id)); if (!r.ok) return;
       const j = await r.json();
+      if (j.pl != null) { $('locpl').value = j.pl; }
       el.textContent = j.lat == null ? (locAutoOn() ? 'Not set — press the button so the forecast has a place.' : 'Not set — the watch must supply its own position.')
-        : `${j.lat.toFixed(1)}, ${j.lon.toFixed(1)} · ${j.src === 'web' ? 'from this browser' : 'from the watch'} ${fmtTime(j.ts * 1000)}`;
+        : `${j.lat.toFixed(1)}, ${j.lon.toFixed(1)} · ${j.src === 'pulselink' ? 'following PulseLink' : j.src === 'web' ? 'from this browser' : 'from the watch'} ${fmtTime(j.ts * 1000)}`;
       el.className = 'status';
     } catch (e) {}
   }
@@ -1166,6 +1168,22 @@
       }, () => {}, { maximumAge: 600000, timeout: 10000 });
     } catch (e) {}
   }
+  // PulseLink のウォッチの位置に追従する (PL の You メニューにある Device ID)
+  $('locplset').addEventListener('click', async () => {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('locnote', 'Enter the Device ID first.', 'err');
+    const pl = $('locpl').value.trim();
+    if (pl && !/^[0-9a-zA-Z-]{4,40}$/.test(pl)) return setStatus('locnote', 'That PulseLink ID does not look right (XXXX-XXXX).', 'err');
+    try { localStorage.setItem('faceComposer.locpl', pl); } catch (e) {}
+    try {
+      const r = await fetch($('api').value + '/loc', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device_id: id, pl_id: pl }) });
+      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error === 'bad_pl_id' ? 'that ID is not valid' : (j.error || r.status));
+      if (!pl) setStatus('locnote', 'No longer following PulseLink.', 'ok');
+      else if (j.lat == null) setStatus('locnote', 'Following PulseLink — waiting for it to share a position.', 'ok');
+      else setStatus('locnote', `Following PulseLink · ${j.lat.toFixed(1)}, ${j.lon.toFixed(1)}`, 'ok');
+      setTimeout(loadLoc, 1200);
+    } catch (e) { setStatus('locnote', 'Could not save: ' + e.message, 'err'); }
+  });
   $('locclear').addEventListener('click', async () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('locnote', 'Enter the Device ID first.', 'err');
     try { localStorage.setItem(LOC_AUTO, 'off'); } catch (e) {}
@@ -1752,6 +1770,7 @@
   const PL_API = 'https://mlbwatch-server.onrender.com/api/pulselink';
   const CAM = { on: false, timer: null, ver: '', prev: null };
   try { $('plid').value = localStorage.getItem('faceComposer.plid') || ''; } catch (e) {}
+  try { const v = localStorage.getItem('faceComposer.locpl'); if (v && !$('locpl').value) $('locpl').value = v; } catch (e) {}
   const plId = () => { const v = $('plid').value.trim(); try { localStorage.setItem('faceComposer.plid', v); } catch (e) {} return v; };
   function camNote(msg, cls) { const el = $('camnote'); el.textContent = msg; el.title = msg; el.className = 'status ' + (cls || ''); }
   async function fetchCam() {

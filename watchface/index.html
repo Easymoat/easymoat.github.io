@@ -242,7 +242,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-10 13:54</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-10 15:01</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1247,6 +1247,8 @@
   const WSLOTS = { active: 0, faces: {}, mini: {} };
   const PICK = { on: false, n: 0, label: '' };
   const esc = (t) => String(t).replace(/</g, '&lt;');
+  // 絵札の作り直しの鍵。カメラの面は絵だけ差し替わるので、絵の版も見る。
+  const miniKey = (f) => String(f.v) + '/' + String(f.img_v || '');
 
   function startPick(n, label) {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
@@ -1291,7 +1293,7 @@
     // 幅の測定に DOM 接続が要るので、貼り付けたあとで描く (外れていると全部 0 幅になり位置がずれる)。
     [...w.children].forEach((d, i) => {
       const k = i + 1, f = WSLOTS.faces[String(k)], cache = WSLOTS.mini[k], mini = d.querySelector('.mini');
-      if (!f || !cache || cache.v !== f.v) return;
+      if (!f || !cache || cache.v !== miniKey(f)) return;
       if (cache.url) mini.style.backgroundImage = `url("${cache.url}")`;
       if (cache.layout) { mini.style.backgroundColor = hex(cache.layout.bg); renderFaceMini(mini, cache.layout); }
     });
@@ -1314,7 +1316,7 @@
     for (let k = 1; k <= 5; k++) {
       const f = WSLOTS.faces[String(k)];
       if (!f) { delete WSLOTS.mini[k]; continue; }
-      if (!WSLOTS.mini[k] || WSLOTS.mini[k].v !== f.v) loadSlotMini(k, f.v);
+      if (!WSLOTS.mini[k] || WSLOTS.mini[k].v !== miniKey(f)) loadSlotMini(k, miniKey(f));
     }
   }
   async function deleteWatchSlot(k, name) {

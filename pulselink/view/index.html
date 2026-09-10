@@ -42,6 +42,9 @@
   .tool-nav a { color: var(--accent); text-decoration: none; margin: 0 8px; white-space: nowrap; }
   .tool-nav a:hover { text-decoration: underline; }
   .tool-nav .all { display: block; margin-top: 8px; font-weight: 600; }
+    /* 画像の下に置いた操作。カード全体は中央揃え (.camview) だが、説明文は左揃えの方が読める。
+       幅は画像に合わせて、丸いプレビューの真下に収まるようにする。 */
+    #frameBox { text-align:left; max-width:min(80vw,400px); margin:14px auto 0; }
     .pad { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin:6px 0 2px; }
     .pad button { padding:12px 0; font-size:17px; line-height:1; border:1px solid #CBD5E1; border-radius:8px;
                   background:#fff; color:#0F172A; cursor:pointer; }
@@ -78,6 +81,33 @@
     <div class="badge" id="srcBadge">Camera</div>
     <div><img id="camImg" alt="camera"></div>
     <div class="meta" id="metaLine">—</div>
+    <!-- ★アングルとズームは画像のすぐ下に置く (2026-09-10 ユーザー指示)。1 手ごとに次のコマを
+         待って確認する操作なので、押すボタンと結果の絵が同じ視野に入っている必要がある。
+         own (自分のカメラ) の時だけ出す。他人のカメラを見ている時は操作できない。 -->
+    <div id="frameBox" style="display:none;">
+      <label data-en="Angle (what the square shows)" data-ja="アングル（切り出す位置）">Angle (what the square shows)</label>
+      <p class="hint" data-en="The picture is square but the camera sees wider, so you can slide the square around. Press a direction, wait for the next shot, then adjust again. Setup mode makes this quick." data-ja="写真は正方形ですが、カメラはもっと広く写しています。その正方形をどこから切り出すかを動かせます。方向を押して次の撮影を待ち、また調整してください。セットアップモードにすると早く確認できます。">The picture is square but the camera sees wider, so you can slide the square around.</p>
+      <div class="pad" id="panPad">
+        <button data-dx="-1" data-dy="-1" aria-label="up left">↖</button>
+        <button data-dx="0"  data-dy="-1" aria-label="up">↑</button>
+        <button data-dx="1"  data-dy="-1" aria-label="up right">↗</button>
+        <button data-dx="-1" data-dy="0"  aria-label="left">←</button>
+        <button data-c="1" aria-label="center" data-en="Center" data-ja="中央">Center</button>
+        <button data-dx="1"  data-dy="0"  aria-label="right">→</button>
+        <button data-dx="-1" data-dy="1"  aria-label="down left">↙</button>
+        <button data-dx="0"  data-dy="1"  aria-label="down">↓</button>
+        <button data-dx="1"  data-dy="1"  aria-label="down right">↘</button>
+      </div>
+      <p class="hint" id="panNow"></p>
+      <label data-en="Zoom (digital)" data-ja="ズーム（デジタル）">Zoom (digital)</label>
+      <div class="seg" id="zoomSeg">
+        <button data-v="100">1x</button>
+        <button data-v="125">1.25x</button>
+        <button data-v="150">1.5x</button>
+        <button data-v="200">2x</button>
+        <button data-v="250">2.5x</button>
+      </div>
+    </div>
   </div>
 
   <div class="card" id="ctrlCard" style="display:none;">
@@ -94,28 +124,6 @@
     <button class="btn" id="setupBtn" style="background:#0E7490;">Setup mode</button>
     <p class="hint" data-en="Setting the camera up? Setup mode shoots every 10 seconds for 5 minutes so you can check framing and brightness quickly on this page. It ends by itself and goes back to the normal 3-minute interval — press it again to extend." data-ja="カメラの設置中に。セットアップモードにすると5分間だけ10秒ごとに撮影するので、構図や明るさをこのページで素早く確認できます。時間が来れば自動で通常の3分間隔に戻ります（もう一度押せば延長）。">Setting the camera up? Setup mode shoots every 10 seconds for 5 minutes so you can check framing and brightness quickly on this page. It ends by itself and goes back to the normal 3-minute interval — press it again to extend.</p>
     <p class="hint" id="torchHint" style="display:none;" data-en="Torch is not available on this camera phone — the web torch API needs iOS 17.5+ or Android." data-ja="このカメラ端末ではライトを点けられません — Web のライト API は iOS 17.5 以降か Android が必要です。">Torch is not available on this camera phone — the web torch API needs iOS 17.5+ or Android.</p>
-    <label data-en="Zoom (digital)" data-ja="ズーム（デジタル）">Zoom (digital)</label>
-    <div class="seg" id="zoomSeg">
-      <button data-v="100">1x</button>
-      <button data-v="125">1.25x</button>
-      <button data-v="150">1.5x</button>
-      <button data-v="200">2x</button>
-      <button data-v="250">2.5x</button>
-    </div>
-    <label data-en="Angle (what the square shows)" data-ja="アングル（切り出す位置）">Angle (what the square shows)</label>
-    <p class="hint" data-en="The picture is square but the camera sees wider, so you can slide the square around. Press a direction, wait for the next shot, then adjust again. Setup mode makes this quick." data-ja="写真は正方形ですが、カメラはもっと広く写しています。その正方形をどこから切り出すかを動かせます。方向を押して次の撮影を待ち、また調整してください。セットアップモードにすると早く確認できます。">The picture is square but the camera sees wider, so you can slide the square around.</p>
-    <div class="pad" id="panPad">
-      <button data-dx="-1" data-dy="-1" aria-label="up left">↖</button>
-      <button data-dx="0"  data-dy="-1" aria-label="up">↑</button>
-      <button data-dx="1"  data-dy="-1" aria-label="up right">↗</button>
-      <button data-dx="-1" data-dy="0"  aria-label="left">←</button>
-      <button data-c="1" aria-label="center" data-en="Center" data-ja="中央">Center</button>
-      <button data-dx="1"  data-dy="0"  aria-label="right">→</button>
-      <button data-dx="-1" data-dy="1"  aria-label="down left">↙</button>
-      <button data-dx="0"  data-dy="1"  aria-label="down">↓</button>
-      <button data-dx="1"  data-dy="1"  aria-label="down right">↘</button>
-    </div>
-    <p class="hint" id="panNow"></p>
     <label data-en="Brightness" data-ja="明るさ">Brightness</label>
     <div class="seg" id="brSeg">
       <button data-v="-2">-2</button>
@@ -336,6 +344,7 @@ async function initSource() {
     }
     document.getElementById('viewCard').style.display = (mode != null) ? '' : 'none';
     document.getElementById('ctrlCard').style.display = (mode === 'own') ? '' : 'none';
+    document.getElementById('frameBox').style.display = (mode === 'own') ? '' : 'none';
     document.getElementById('noneCard').style.display = (mode == null) ? '' : 'none';
     const badge = document.getElementById('srcBadge');
     badge.textContent = (mode === 'crew') ? (ja() ? 'Leader のカメラ' : "Leader's camera")

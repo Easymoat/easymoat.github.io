@@ -57,6 +57,10 @@
   .part .ico svg { max-height: 26px; }
   .part .nm { flex: 1; }
   .part .hint { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+  /* 針と縁は置く場所が無い (中心固定) ので、掴んで運ぶのではなく入 / 切のボタン。*/
+  .part.sw { cursor: pointer; }
+  .part.sw.on { background: var(--ok); border-color: var(--ok); color: #05170c; font-weight: 600; }
+  .part.sw.on .ico { color: #05170c; }
   .stagewrap { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 18px 16px 40px; }
   .stagebar { display: flex; flex-wrap: wrap; gap: 22px 40px; align-items: flex-start; justify-content: center;
               width: 100%; max-width: 1040px; padding: 12px 0 18px; }   /* no box: tier 1 reads as one area with the dial */
@@ -237,7 +241,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-09 13:19</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-10 13:45</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -713,9 +717,13 @@
     if (d.hidden) continue;   // retired parts stay renderable but are not offered
     const p = document.createElement('div');
     p.className = 'part'; p.dataset.t = t;
-    if (d.dial) p.innerHTML = `<span class="ico" style="color:#1D222B">${dialArt(+t, 1, 34, 34)}</span><span class="nm">${d.name}</span>`;
+    if (d.dial) {
+      p.className = 'part sw'; p.title = 'Click to put it on the dial, click again to take it off';
+      p.innerHTML = `<span class="ico" style="color:#1D222B">${dialArt(+t, 1, 34, 34)}</span><span class="nm">${d.name}</span>`;
+      p.addEventListener('click', () => toggleDialPart(+t));
+    }
     else p.innerHTML = `<span class="ico">${d.icon && d.icon !== 'stock' ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${d.icon === 'stock' ? '$' : d.sample}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
-    p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +t));
+    if (!d.dial) p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +t));
     $('parts-' + d.grp).appendChild(p);
   }
   for (const [k, d] of Object.entries(DEVICES)) { const o = document.createElement('option'); o.value = k; o.textContent = d.name; $('dev').appendChild(o); }
@@ -793,7 +801,7 @@
     $('empty').hidden = st.el.length > 0;
     renderBgHist();
     $('bgpick').value = hex(st.bg).toLowerCase();
-    renderInspector(); renderList(); renderJson(); renderSizes(); renderImgParts();
+    renderInspector(); renderList(); renderJson(); renderSizes(); renderImgParts(); renderDialToggles();
   }
   // Layout overlay on the image editor: a non-interactive copy of the stage scaled to the 260 px
   // circle (body text ×TEXT_BOOST like the watch). Toggled with the "parts" button.
@@ -971,12 +979,23 @@
     drag = { i, items: selIdx().map((k) => ({ i: k, dx: st.el[k][1] - p.x, dy: st.el[k][2] - p.y })), fromPalette: false, moved: false };
     ev.target.closest('.el')?.setPointerCapture?.(ev.pointerId);
   }
+  // 針と縁は入 / 切。同じ組の中では 1 つだけ (針を 2 種類同時には置かない)。
+  function toggleDialPart(t) {
+    const grp = TYPES[t].grp, was = st.el.findIndex((e) => e[0] === t);
+    st.el = st.el.filter((e) => !(TYPES[e[0]] && TYPES[e[0]].dial && TYPES[e[0]].grp === grp));
+    if (was < 0) st.el.push([t, 500, 500, 0, 1, 0, 0, -1]);
+    clearSel(); commit();
+  }
+  function renderDialToggles() {
+    document.querySelectorAll('.part.sw').forEach((p) => {
+      p.classList.toggle('on', st.el.some((e) => e[0] === +p.dataset.t));
+    });
+  }
   function startPaletteDrag(ev, t) {
     ev.preventDefault();
     const d = TYPES[t];
     const e = [t, 500, 500, 0, t === 1 ? 2 : 1, 0, d.icon ? 1 : 0, -1];
     st.el.push(e); setSel(st.el.length - 1, false);
-    if (d.dial) { commit(); return; }                        // hands / rim: always centred, nothing to drag
     const p = stagePoint(ev); e[1] = clamp(p.x); e[2] = clamp(p.y);
     drag = { i: sel, items: [{ i: sel, dx: 0, dy: 0 }], fromPalette: true, moved: false };
     render();

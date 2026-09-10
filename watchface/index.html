@@ -223,7 +223,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-10 21:56</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-10 23:40</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -260,7 +260,7 @@
           <div class="row" style="align-items:center;gap:14px"><div class="field" style="grid-template-columns:auto 140px;gap:10px"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX"></div></div>
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
           <div class="status" id="watchseen" title="When your watch last checked in, and whether it already has what was last sent"></div>
-          <div class="ctl" title="Where the weather parts get their forecast. Only needed when the watch cannot supply its own position."><button class="btn" id="locset">Set forecast location</button><span class="status" id="locnote" style="flex:1 1 auto"></span></div>
+          <div class="ctl" title="Where the weather parts get their forecast. Once allowed, opening this page updates it, so it follows you when you travel."><button class="btn" id="locset">Set forecast location</button><span class="status" id="locnote" style="flex:1 1 auto"></span></div>
         </div>
       </div>
     </div>
@@ -1122,9 +1122,26 @@
     try {
       const r = await fetch($('api').value + '/loc?device_id=' + encodeURIComponent(id)); if (!r.ok) return;
       const j = await r.json();
-      el.textContent = j.lat == null ? 'Not set — the watch uses its own position.'
-        : `${j.lat.toFixed(1)}, ${j.lon.toFixed(1)} (${j.src === 'web' ? 'set here' : 'from the watch'})`;
+      el.textContent = j.lat == null ? 'Not set — press the button so the forecast has a place.'
+        : `${j.lat.toFixed(1)}, ${j.lon.toFixed(1)} · ${j.src === 'web' ? 'from this browser' : 'from the watch'} ${fmtTime(j.ts * 1000)}`;
       el.className = 'status';
+    } catch (e) {}
+  }
+  // 一度許可した端末では、開くたびに黙って今の位置に更新する (旅先で Composer を開けば追従)。
+  // 許可を求めるのはボタンを押した時だけ。permissions API が無いブラウザでは何もしない。
+  async function refreshLocIfAllowed() {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return;
+    if (!navigator.geolocation || !navigator.permissions) return;
+    try {
+      const st = await navigator.permissions.query({ name: 'geolocation' });
+      if (st.state !== 'granted') return;
+      navigator.geolocation.getCurrentPosition(async (p) => {
+        try {
+          const r = await fetch($('api').value + '/loc', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ device_id: id, lat: p.coords.latitude, lon: p.coords.longitude }) });
+          const j = await r.json(); if (j && j.ok) loadLoc();
+        } catch (e) {}
+      }, () => {}, { maximumAge: 600000, timeout: 10000 });
     } catch (e) {}
   }
   $('locset').addEventListener('click', () => {
@@ -1263,7 +1280,7 @@
     catch (e) { setStatus('shelfstatus', 'Delete failed: ' + e.message, 'err'); }
   }
 
-  document.fonts?.ready.then(() => { positionAll(); loadShelf(); loadWatchSlots(); loadLoc(); });
+  document.fonts?.ready.then(() => { positionAll(); loadShelf(); loadWatchSlots(); loadLoc(); refreshLocIfAllowed(); });
   // ── Background image (ported from easymoat.com/pulselink/image/; keyed by this Device ID, /api/wf/image*) ──
   // src: where the editor image came from — 'file' (chosen by the user; kept while switching slots so it
   // can be uploaded to any slot) or 'slot' (loaded from the server; cleared when an empty slot is picked).
@@ -1693,7 +1710,7 @@
     const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
     return j;
   }
-  $('devid').addEventListener('change', () => { IMG.k = 0; clearImgPreview(); loadPhotos(); loadShelf(); loadWatchSlots(); loadWatchState(); loadLoc(); });
+  $('devid').addEventListener('change', () => { IMG.k = 0; clearImgPreview(); loadPhotos(); loadShelf(); loadWatchSlots(); loadWatchState(); loadLoc(); refreshLocIfAllowed(); });
   $('imgparts').addEventListener('click', () => { const a = $('imgParts'); a.hidden = !a.hidden; $('imgparts').textContent = a.hidden ? 'Show parts' : 'Hide parts'; });
   $('imghide').addEventListener('click', () => { const st_ = $('imgstage'); st_.classList.toggle('noimg'); $('imghide').textContent = st_.classList.contains('noimg') ? 'Show image' : 'Hide image'; });
 

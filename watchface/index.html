@@ -134,6 +134,11 @@
   .imgbox .cols { display: grid; grid-template-columns: 320px 1fr; gap: 40px; align-items: start; }
   .imgbox .opts { display: flex; flex-direction: column; gap: 20px; }
   .imgbox .cb button { height: 28px; min-width: 40px; }
+  #windunit { display: inline-flex; gap: 6px; }
+  #windunit button { background: var(--panel-2); border: 2px solid var(--line-2); border-radius: 5px; padding: 3px 9px;
+                     cursor: pointer; color: var(--ink); font: 12px var(--mono); }
+  #windunit button:hover { border-color: var(--ink-2); }
+  #windunit button.on { background: var(--ok); border-color: var(--ok); color: #05170c; font-weight: 600; }
   .imgstage { position: relative; width: 320px; height: 320px; border-radius: 50%; background: #000; overflow: hidden; touch-action: none; cursor: grab; }
   .imgstage canvas { width: 320px; height: 320px; display: block; }
   .imgstage #imgQ { position: absolute; left: 0; top: 0; pointer-events: none; }
@@ -223,7 +228,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-11 00:57</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-11 05:59</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -260,7 +265,7 @@
           <div class="row" style="align-items:center;gap:14px"><div class="field" style="grid-template-columns:auto 140px;gap:10px"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX"></div></div>
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
           <div class="status" id="watchseen" title="When your watch last checked in, and whether it already has what was last sent"></div>
-          <div class="ctl" title="Where the weather parts get their forecast. Once allowed, opening this page updates it, so it follows you when you travel."><button class="btn" id="locset">Set forecast location</button><span class="status" id="locnote" style="flex:1 1 auto"></span></div>
+          <div class="ctl" title="Where the weather parts get their forecast. Once allowed, opening this page updates it, so it follows you when you travel."><button class="btn" id="locset">Set forecast location</button><button class="btn danger" id="locclear" title="Forget the saved place so only the watch's own position is used (for testing the watch's GPS). Automatic updates stop until you press Set again.">Reset</button><span class="status" id="locnote" style="flex:1 1 auto"></span></div>
         </div>
       </div>
     </div>
@@ -1136,15 +1141,18 @@
     try {
       const r = await fetch($('api').value + '/loc?device_id=' + encodeURIComponent(id)); if (!r.ok) return;
       const j = await r.json();
-      el.textContent = j.lat == null ? 'Not set — press the button so the forecast has a place.'
+      el.textContent = j.lat == null ? (locAutoOn() ? 'Not set — press the button so the forecast has a place.' : 'Not set — the watch must supply its own position.')
         : `${j.lat.toFixed(1)}, ${j.lon.toFixed(1)} · ${j.src === 'web' ? 'from this browser' : 'from the watch'} ${fmtTime(j.ts * 1000)}`;
       el.className = 'status';
     } catch (e) {}
   }
   // 一度許可した端末では、開くたびに黙って今の位置に更新する (旅先で Composer を開けば追従)。
   // 許可を求めるのはボタンを押した時だけ。permissions API が無いブラウザでは何もしない。
+  const LOC_AUTO = 'faceComposer.locauto';
+  const locAutoOn = () => { try { return localStorage.getItem(LOC_AUTO) !== 'off'; } catch (e) { return true; } };
   async function refreshLocIfAllowed() {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return;
+    if (!locAutoOn()) return;   // Reset のあとは、こちらから位置を送らない
     if (!navigator.geolocation || !navigator.permissions) return;
     try {
       const st = await navigator.permissions.query({ name: 'geolocation' });
@@ -1158,11 +1166,23 @@
       }, () => {}, { maximumAge: 600000, timeout: 10000 });
     } catch (e) {}
   }
+  $('locclear').addEventListener('click', async () => {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('locnote', 'Enter the Device ID first.', 'err');
+    try { localStorage.setItem(LOC_AUTO, 'off'); } catch (e) {}
+    try {
+      const r = await fetch($('api').value + '/loc', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device_id: id, remove: true }) });
+      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
+      setStatus('locnote', 'Forgotten — the forecast now needs the watch\'s own position.', 'ok');
+      setTimeout(loadLoc, 1200);
+    } catch (e) { setStatus('locnote', 'Could not clear: ' + e.message, 'err'); }
+  });
   $('locset').addEventListener('click', () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('locnote', 'Enter the Device ID first.', 'err');
     if (!navigator.geolocation) return setStatus('locnote', 'This browser has no location.', 'err');
     setStatus('locnote', 'Asking the browser…');
     navigator.geolocation.getCurrentPosition(async (p) => {
+      try { localStorage.setItem(LOC_AUTO, 'on'); } catch (e) {}
       try {
         const r = await fetch($('api').value + '/loc', { method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ device_id: id, lat: p.coords.latitude, lon: p.coords.longitude }) });

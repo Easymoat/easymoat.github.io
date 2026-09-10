@@ -1069,28 +1069,21 @@ async function captureAndUpload() {
         palette = pal.map(function (c) { return (c[0] << 16) | (c[1] << 8) | c[2]; });
       }
     }
-    // 円形マスク (既存の画像パイプラインと同じ形式。丸画面では角は見えない)。
+    // ★同送する full は「円マスクを掛ける前の四角」にする (2026-09-10)。
+    // PL 本体は丸画面のリング内に描くので角は見えず、これまでは角の画素を捨てていた。
+    // その結果、Face Composer で枠を縮めると「四角の中の写真」ではなく小さい円になっていた。
+    // 捨てたあとでは復元できないので、捨てる前に 1 枚取る。
+    // 切り出し・色数・px は本体用とまったく同じ = 文字盤には PL と同じ絵がそのまま届く。
+    // (旧仕様の full = 元比率のフレーム全体・16 色 は Composer が使わなくなったので置き換える)
+    let fullPng = null;
+    if (camCfg && (camCfg.wf_locked || camCfg.full_wanted)) {
+      try { fullPng = cv.toDataURL('image/png'); } catch (e) { fullPng = null; }
+    }
+    // 円形マスク (PL 本体の画像パイプラインと同じ形式。丸画面では角は見えない)。
     ctx.globalCompositeOperation = 'destination-in';
     ctx.beginPath(); ctx.arc(PX / 2, PX / 2, PX / 2, 0, Math.PI * 2); ctx.fill();
     ctx.globalCompositeOperation = 'source-over';
     const png = cv.toDataURL('image/png');
-    // 文字盤がカメラを使っている間: Face Composer のプレビュー用に、切り出し前のフル画像
-    // (中央正方形、ズーム無し) を 320px・16 色で同送する。あくまで編集用の一時的な絵。
-    // 元の比率のフレーム全体 (長辺 320px)。文字盤ロック中、または Composer が編集中 (full_wanted) に送る。
-    let fullPng = null;
-    if (camCfg && (camCfg.wf_locked || camCfg.full_wanted)) {
-      try {
-        const fs_ = 320 / Math.max(vw, vh);
-        const fc = document.createElement('canvas'); fc.width = Math.max(1, Math.round(vw * fs_)); fc.height = Math.max(1, Math.round(vh * fs_));
-        const fx = fc.getContext('2d');
-        fx.drawImage(video, 0, 0, vw, vh, 0, 0, fc.width, fc.height);
-        if (typeof RgbQuant !== 'undefined') {
-          const fq = new RgbQuant({ colors: 16, dithKern: 'FloydSteinberg', dithSerp: true });
-          fq.sample(fc); const fo = fq.reduce(fc); const fid = fx.createImageData(fc.width, fc.height); fid.data.set(fo); fx.putImageData(fid, 0, 0);
-        }
-        fullPng = fc.toDataURL('image/png');
-      } catch (e) { fullPng = null; }
-    }
     // サムネイル更新
     const th = document.getElementById('thumb');
     if (th.width !== PX) { th.width = PX; th.height = PX; }

@@ -42,6 +42,11 @@
   .tool-nav a { color: var(--accent); text-decoration: none; margin: 0 8px; white-space: nowrap; }
   .tool-nav a:hover { text-decoration: underline; }
   .tool-nav .all { display: block; margin-top: 8px; font-weight: 600; }
+    .pad { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin:6px 0 2px; }
+    .pad button { padding:12px 0; font-size:17px; line-height:1; border:1px solid #CBD5E1; border-radius:8px;
+                  background:#fff; color:#0F172A; cursor:pointer; }
+    .pad button:active { background:#E2E8F0; }
+    .pad button[data-c] { font-size:13px; }
 </style>
 </head>
 <body>
@@ -90,9 +95,6 @@
     <p class="hint" data-en="Setting the camera up? Setup mode shoots every 10 seconds for 5 minutes so you can check framing and brightness quickly on this page. It ends by itself and goes back to the normal 3-minute interval — press it again to extend." data-ja="カメラの設置中に。セットアップモードにすると5分間だけ10秒ごとに撮影するので、構図や明るさをこのページで素早く確認できます。時間が来れば自動で通常の3分間隔に戻ります（もう一度押せば延長）。">Setting the camera up? Setup mode shoots every 10 seconds for 5 minutes so you can check framing and brightness quickly on this page. It ends by itself and goes back to the normal 3-minute interval — press it again to extend.</p>
     <p class="hint" id="torchHint" style="display:none;" data-en="Torch is not available on this camera phone — the web torch API needs iOS 17.5+ or Android." data-ja="このカメラ端末ではライトを点けられません — Web のライト API は iOS 17.5 以降か Android が必要です。">Torch is not available on this camera phone — the web torch API needs iOS 17.5+ or Android.</p>
     <label data-en="Zoom (digital)" data-ja="ズーム（デジタル）">Zoom (digital)</label>
-    <p class="hint" id="wfNote" style="display:none; color:#B45309;"
-       data-en="A watch face is using this camera. Zoom, position, picture size and colours follow the watch face in use, so they cannot be changed here for now."
-       data-ja="このカメラは文字盤が使っています。ズーム・位置・撮影サイズ・色数は使用中の文字盤に従うため、今はここから変えられません。">A watch face is using this camera.</p>
     <div class="seg" id="zoomSeg">
       <button data-v="100">1x</button>
       <button data-v="125">1.25x</button>
@@ -100,6 +102,20 @@
       <button data-v="200">2x</button>
       <button data-v="250">2.5x</button>
     </div>
+    <label data-en="Angle (what the square shows)" data-ja="アングル（切り出す位置）">Angle (what the square shows)</label>
+    <p class="hint" data-en="The picture is square but the camera sees wider, so you can slide the square around. Press a direction, wait for the next shot, then adjust again. Setup mode makes this quick." data-ja="写真は正方形ですが、カメラはもっと広く写しています。その正方形をどこから切り出すかを動かせます。方向を押して次の撮影を待ち、また調整してください。セットアップモードにすると早く確認できます。">The picture is square but the camera sees wider, so you can slide the square around.</p>
+    <div class="pad" id="panPad">
+      <button data-dx="-1" data-dy="-1" aria-label="up left">↖</button>
+      <button data-dx="0"  data-dy="-1" aria-label="up">↑</button>
+      <button data-dx="1"  data-dy="-1" aria-label="up right">↗</button>
+      <button data-dx="-1" data-dy="0"  aria-label="left">←</button>
+      <button data-c="1" aria-label="center" data-en="Center" data-ja="中央">Center</button>
+      <button data-dx="1"  data-dy="0"  aria-label="right">→</button>
+      <button data-dx="-1" data-dy="1"  aria-label="down left">↙</button>
+      <button data-dx="0"  data-dy="1"  aria-label="down">↓</button>
+      <button data-dx="1"  data-dy="1"  aria-label="down right">↘</button>
+    </div>
+    <p class="hint" id="panNow"></p>
     <label data-en="Brightness" data-ja="明るさ">Brightness</label>
     <div class="seg" id="brSeg">
       <button data-v="-2">-2</button>
@@ -442,6 +458,20 @@ document.getElementById('setupBtn').addEventListener('click', function () {
 document.querySelectorAll('#zoomSeg button').forEach(function (b) {
   b.addEventListener('click', function () { sendCfg({ zoom: parseInt(b.getAttribute('data-v'), 10) }); });
 });
+// アングル: 切り出す正方形をフレームの中で動かす (pan_x / pan_y は 0..1000、500 = 中央)。
+// 1 押しで 5%。カメラ側は枠がフレームからはみ出さないように内側へ寄せるので、
+// 端まで行ったあとに押しても写る範囲は変わらない (害はない)。
+var PAN_STEP = 50;
+document.querySelectorAll('#panPad button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    if (b.getAttribute('data-c')) { sendCfg({ pan_x: 500, pan_y: 500 }); return; }
+    var dx = parseInt(b.getAttribute('data-dx'), 10) || 0;
+    var dy = parseInt(b.getAttribute('data-dy'), 10) || 0;
+    var nx = Math.max(0, Math.min(1000, (cfg.pan_x == null ? 500 : cfg.pan_x) + dx * PAN_STEP));
+    var ny = Math.max(0, Math.min(1000, (cfg.pan_y == null ? 500 : cfg.pan_y) + dy * PAN_STEP));
+    sendCfg({ pan_x: nx, pan_y: ny });
+  });
+});
 document.querySelectorAll('#brSeg button').forEach(function (b) {
   b.addEventListener('click', function () { sendCfg({ brightness: parseInt(b.getAttribute('data-v'), 10) }); });
 });
@@ -478,21 +508,19 @@ function renderControls() {
   const pb = document.getElementById('pauseBtn');
   pb.textContent = cfg.paused ? (ja() ? '再開する' : 'Resume') : (ja() ? '一時停止' : 'Pause');
   pb.classList.toggle('danger', !cfg.paused);
-  // 文字盤が枠を書き込んでいる間は、その旨を出す (最後の書き込みから 15 分)。
-  var wn = document.getElementById('wfNote');
-  if (wn) {
-    var recent = cfg.wf_locked || (cfg.wf_at && (Date.now() - Number(cfg.wf_at) < 15 * 60 * 1000));
-    wn.style.display = recent ? '' : 'none';
-  }
-  // 文字盤がカメラを使っている間、ズームは文字盤の枠で決まる (Viewer からは変えられない)。
-  var wfLock = !!cfg.wf_locked;
-  var lockTitle = wfLock ? (ja() ? '文字盤がカメラを使っています' : 'The watch face is using the camera') : '';
+  // ★文字盤によるロックは廃止 (2026-09-10)。アングルの調整はこのページの仕事になり、
+  // 文字盤は届いた絵をそのまま出すだけになったので、ここを塞ぐ理由が無くなった。
   document.querySelectorAll('#zoomSeg button').forEach(function (x) {
     x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === (cfg.zoom || 100));
-    x.disabled = wfLock; x.title = lockTitle;
   });
-  // 撮影サイズと色数も文字盤の値で決まる (押しても上書きされるので、ロック中は押せなくする)
-  document.querySelectorAll('#colorSeg button, #pxSeg button').forEach(function (x) { x.disabled = wfLock; x.title = lockTitle; });
+  // 切り出し位置の現在値 (500,500 = 中央)。押した結果が次の撮影で反映される。
+  var pn = document.getElementById('panNow');
+  if (pn) {
+    var cx = Math.round(((cfg.pan_x == null ? 500 : cfg.pan_x) / 10));
+    var cy = Math.round(((cfg.pan_y == null ? 500 : cfg.pan_y) / 10));
+    pn.textContent = (ja() ? '今の位置: 横 ' + cx + '% / 縦 ' + cy + '%（50 / 50 が中央）'
+                           : 'Now: ' + cx + '% across, ' + cy + '% down (50 / 50 is centre)');
+  }
   document.querySelectorAll('#brSeg button').forEach(function (x) {
     x.classList.toggle('active', parseInt(x.getAttribute('data-v'), 10) === (cfg.brightness || 0));
   });

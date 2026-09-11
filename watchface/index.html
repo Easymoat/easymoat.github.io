@@ -99,6 +99,10 @@
   .el .anchor { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); border: 1px solid #000; display: none; }
   .el.sel .anchor { display: block; }
   .el.ghost { opacity: .85; pointer-events: none; }
+  /* 針と縁は画面全体の絵。板では当たり判定を持たず、描いた線の上だけで拾う。
+     写真プレビューへ複製された分は親 (.imgstage .parts) の pointer-events:none がそのまま効く。*/
+  .el.dialpart { pointer-events: none; }
+  #stage .el.dialpart svg * { pointer-events: auto; }
   .empty { color: var(--ink-3); font-size: 13px; text-align: center; max-width: 34ch; }
   .drawer { width: 100%; max-width: 1040px; display: grid; grid-template-columns: 1fr; gap: 24px; }
   /* The rail sits beside the dial; when the window is too narrow it wraps ABOVE the dial (wrap-reverse)
@@ -239,7 +243,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 04:48</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 04:56</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -925,10 +929,12 @@
     div.dataset.i = i;
     div.style.color = PALETTE[c] || PALETTE[0];
     if (def.dial) {   // hands / rim: one drawing over the whole dial, colour from the element
+      // 画面全体を覆うので、当たり判定は「描かれた線の上」だけにする。板のまま置くと
+      // 下の部品が選べず、写真のドラッグも拾えなくなる (2026-09-12 の不具合)。
       const dv = dev();
-      div.style.width = dv.w + 'px'; div.style.height = dv.h + 'px'; div.style.pointerEvents = 'none';
+      div.classList.add('dialpart');
+      div.style.width = dv.w + 'px'; div.style.height = dv.h + 'px';
       div.innerHTML = dialArt(t, s, dv.w, dv.h) + '<span class="anchor"></span>';
-      div.style.pointerEvents = 'auto';
       div.addEventListener('pointerdown', (ev) => startMove(ev, i));
       return div;
     }

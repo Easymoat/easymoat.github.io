@@ -243,7 +243,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 05:17</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 08:33</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -263,7 +263,7 @@
     <div class="tier"><span class="num">1</span><span class="name">Layout</span><span class="what">Build the dial: parts, sizes, colours</span></div>
     <div class="stagebar">
       <div class="grp"><span class="lbl">Device</span><div class="ctl"><select id="dev"></select></div></div>
-      <div class="grp"><span class="lbl">Grid</span><div class="ctl"><select id="grid"><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label></div></div>
+      <div class="grp"><span class="lbl">Grid</span><div class="ctl"><select id="grid"><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label><span class="cb units" id="gridcol" title="Grid colour. Bright is easier to see on a black or dark dial."></span></div></div>
       <div class="grp" id="selgrp"><span class="lbl">Selected part</span><div id="insp"><span class="muted">Click an element on the dial.</span></div></div>
       <div class="grp" id="fixednote" hidden style="flex-basis:100%"><div class="ctl"><span class="muted" id="fixednotetxt"></span></div></div>
     </div>
@@ -420,6 +420,7 @@
     53: { name: 'Hands: Outline',     grp: 'hands', dial: true },
     54: { name: 'Hands: Bars + second', grp: 'hands', dial: true, hidden: true },   // 秒針はやめた (2026-09-11)
     55: { name: 'Hands: Rim marks',   grp: 'hands', dial: true },
+    56: { name: 'Hands: Classic',     grp: 'hands', dial: true },
     60: { name: 'Rim: Ticks',         grp: 'rim',   dial: true },
     61: { name: 'Rim: Dots',          grp: 'rim',   dial: true },
     62: { name: 'Rim: 12 3 6 9',      grp: 'rim',   dial: true },
@@ -638,7 +639,7 @@
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
-  let st = { dev: 'fr965', grid: 50, showGrid: true, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0 };
+  let st = { dev: 'fr965', grid: 50, showGrid: true, gridBright: false, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0 };
   // Selection: `sel` is the primary (last clicked) element, `selSet` every selected index.
   // Shift / Cmd / Ctrl + click adds or removes one; the Selected panel, dragging, arrows and
   // Delete act on all of them.
@@ -706,6 +707,11 @@
       52: (k) => g(T.h, kite(122 * k.l, 30 * k.w, 26)) + g(T.m, kite(182 * k.l, 22 * k.w, 26)) + cap(7 * k.w),
       53: (k) => g(T.h, hollow(120 * k.l, 20 * k.w, 20, 4 * k.w)) + g(T.m, hollow(180 * k.l, 15 * k.w, 20, 4 * k.w)) + cap(8 * k.w),
       54: (k) => g(T.h, bar(118 * k.l, 15 * k.w, 20)) + g(T.m, bar(178 * k.l, 11 * k.w, 20)) + sec(196 * k.l, 3.5 * k.w) + cap(9 * k.w),
+      // MW / PL の標準の針 (StocksView スタイル 0): 時針は半径の 55% で太さ 6、
+      // 分針は 86% で太さ 3、中心に半径 4 の点。寸法をそのまま写した。
+      56: (k) => g(T.h, `<line x1="${R}" y1="${R}" x2="${R}" y2="${R - R * 0.55 * k.l}" stroke="currentColor" stroke-width="${6 * k.w}" stroke-linecap="round"/>`)
+              + g(T.m, `<line x1="${R}" y1="${R}" x2="${R}" y2="${R - R * 0.86 * k.l}" stroke="currentColor" stroke-width="${3 * k.w}" stroke-linecap="round"/>`)
+              + cap(4 * k.w),
       // MW / PL の Rim marks: 中心から伸びず、縁に沿って動く短い針。
       // 時針 = 菱形カイト (内寄り 32% が最大幅)、分針 = 丸窓針 (リング + 軸)。寸法は MW と同じ。
       55: (k) => {
@@ -900,8 +906,10 @@
       let g = `<svg class="grid" width="${d.w}" height="${d.h}">`;
       for (let u = step; u < 1000; u += step) {
         const major = u === 500;
-        g += `<line x1="${u*sx}" y1="0" x2="${u*sx}" y2="${d.h}" stroke="${major ? '#3A4356' : '#1E2430'}" stroke-width="1"/>`;
-        g += `<line x1="0" y1="${u*sy}" x2="${d.w}" y2="${u*sy}" stroke="${major ? '#3A4356' : '#1E2430'}" stroke-width="1"/>`;
+        // 暗い文字盤では既定の線が沈むので、明るい灰青も選べる (白は部品と紛れるので使わない)。
+        const gc = st.gridBright ? (major ? '#9AA8BC' : '#6B7A8F') : (major ? '#3A4356' : '#1E2430');
+        g += `<line x1="${u*sx}" y1="0" x2="${u*sx}" y2="${d.h}" stroke="${gc}" stroke-width="1"/>`;
+        g += `<line x1="0" y1="${u*sy}" x2="${d.w}" y2="${u*sy}" stroke="${gc}" stroke-width="1"/>`;
       }
       g += '</svg>';
       stage.insertAdjacentHTML('beforeend', g);
@@ -1147,6 +1155,15 @@
   $('dev').addEventListener('change', (ev) => { st.dev = ev.target.value; commit(); });
   $('grid').addEventListener('change', (ev) => { st.grid = +ev.target.value; commit(); });
   $('showgrid').addEventListener('change', (ev) => { st.showGrid = ev.target.checked; commit(); });
+  [['Dim', false], ['Bright', true]].forEach(([label, on]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.dataset.br = on ? '1' : '0';
+    b.addEventListener('click', () => { st.gridBright = on; renderGridCol(); render(); });
+    $('gridcol').appendChild(b);
+  });
+  function renderGridCol() {
+    document.querySelectorAll('#gridcol button').forEach((b) => b.classList.toggle('on', (b.dataset.br === '1') === !!st.gridBright));
+  }
+  renderGridCol();
 
   // ── JSON / presets ─────────────────────────────────────────────────────────
   const setStatus = (id, msg, cls) => { const s = $(id); s.textContent = msg; s.title = msg; s.className = 'status ' + (cls || ''); };

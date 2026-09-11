@@ -228,7 +228,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-11 23:33</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 04:21</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -404,12 +404,13 @@
     52: { name: 'Hands: Kite',        grp: 'hands', dial: true },
     53: { name: 'Hands: Outline',     grp: 'hands', dial: true },
     54: { name: 'Hands: Bars + second', grp: 'hands', dial: true, hidden: true },   // 秒針はやめた (2026-09-11)
+    55: { name: 'Hands: Rim marks',   grp: 'hands', dial: true },
     60: { name: 'Rim: Ticks',         grp: 'rim',   dial: true },
     61: { name: 'Rim: Dots',          grp: 'rim',   dial: true },
     62: { name: 'Rim: 12 3 6 9',      grp: 'rim',   dial: true },
     63: { name: 'Rim: Ring',          grp: 'rim',   dial: true },
     64: { name: 'Rim: Arcs',          grp: 'rim',   dial: true },
-    65: { name: 'Rim: Marks',         grp: 'rim',   dial: true },
+    65: { name: 'Rim: Marks',         grp: 'rim',   dial: true, hidden: true },   // Ticks と同じだった (2026-09-12 取り下げ)
     30: { name: 'Stock 1',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
     31: { name: 'Stock 2',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
   };
@@ -690,6 +691,21 @@
       52: (k) => g(T.h, kite(122 * k.l, 30 * k.w, 26)) + g(T.m, kite(182 * k.l, 22 * k.w, 26)) + cap(7 * k.w),
       53: (k) => g(T.h, hollow(120 * k.l, 20 * k.w, 20, 4 * k.w)) + g(T.m, hollow(180 * k.l, 15 * k.w, 20, 4 * k.w)) + cap(8 * k.w),
       54: (k) => g(T.h, bar(118 * k.l, 15 * k.w, 20)) + g(T.m, bar(178 * k.l, 11 * k.w, 20)) + sec(196 * k.l, 3.5 * k.w) + cap(9 * k.w),
+      // MW / PL の Rim marks: 中心から伸びず、縁に沿って動く短い針。
+      // 時針 = 菱形カイト (内寄り 32% が最大幅)、分針 = 丸窓針 (リング + 軸)。寸法は MW と同じ。
+      55: (k) => {
+        const ro = (R - 2 - 25) * 1.0, inner = ro - 44 * k.l, hw = 9.5 * k.w, ringR = 9 * k.w;
+        const kiteAt = (ri, rout, halfW) => {
+          const fat = ri + (rout - ri) * 0.32;
+          return `<polygon points="${R},${R - ri} ${R + halfW},${R - fat} ${R},${R - rout} ${R - halfW},${R - fat}"/>`;
+        };
+        const pomme = (ri, rout) => {
+          const rc = ri + ringR;
+          return `<line x1="${R}" y1="${R - rc}" x2="${R}" y2="${R - rout}" stroke="currentColor" stroke-width="${4 * k.w}"/>`
+               + `<circle cx="${R}" cy="${R - rc}" r="${ringR}" fill="none" stroke="currentColor" stroke-width="${3 * k.w}"/>`;
+        };
+        return g(T.h, kiteAt(inner + 1, ro + 6 * k.w, hw)) + g(T.m, pomme(inner, ro + 6 * k.w));
+      },
       // rim
       60: (k) => ticks(60, 10 * k.l, 3 * k.w, 5, 22 * k.l, 6 * k.w),
       // MW / PL の Rim marks と同じ形: 縁から内側へ 60 本、5 本ごとに長く太く。

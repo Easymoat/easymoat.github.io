@@ -77,6 +77,7 @@
   .stagebar { display: flex; flex-wrap: wrap; gap: 22px 40px; align-items: flex-start; justify-content: center;
               width: 100%; max-width: 1040px; padding: 12px 0 18px; }   /* no box: tier 1 reads as one area with the dial */
   .grp { display: flex; flex-direction: column; gap: 10px; }
+  .devrow { display: flex; align-items: flex-start; gap: 28px; }   /* Device と Grid は横並び */
   .grp[hidden] { display: none; }   /* the .grp display rule would otherwise beat the default [hidden] */
   .grp > .lbl { font-size: 10px; }
   .ctl { display: flex; align-items: center; gap: 14px; min-height: 28px; color: var(--ink-2); font-size: 13px; flex-wrap: wrap; }
@@ -101,7 +102,8 @@
   .el.ghost { opacity: .85; pointer-events: none; }
   /* 針と縁は画面全体の絵。板では当たり判定を持たず、描いた線の上だけで拾う。
      写真プレビューへ複製された分は親 (.imgstage .parts) の pointer-events:none がそのまま効く。*/
-  .el.dialpart { pointer-events: none; }
+  .el.dialpart { pointer-events: none; padding: 0; margin: 0; }   /* 余白ぶん横が詰まって右側の隙間が広く見えていた */
+  .el.dialpart svg { flex: 0 0 auto; }
   #stage .el.dialpart svg * { pointer-events: auto; }
   .empty { color: var(--ink-3); font-size: 13px; text-align: center; max-width: 34ch; }
   .drawer { width: 100%; max-width: 1040px; display: grid; grid-template-columns: 1fr; gap: 24px; }
@@ -243,7 +245,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 08:33</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 08:46</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -262,8 +264,10 @@
   <section class="stagewrap">
     <div class="tier"><span class="num">1</span><span class="name">Layout</span><span class="what">Build the dial: parts, sizes, colours</span></div>
     <div class="stagebar">
+      <div class="devrow">
       <div class="grp"><span class="lbl">Device</span><div class="ctl"><select id="dev"></select></div></div>
       <div class="grp"><span class="lbl">Grid</span><div class="ctl"><select id="grid"><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label><span class="cb units" id="gridcol" title="Grid colour. Bright is easier to see on a black or dark dial."></span></div></div>
+      </div>
       <div class="grp" id="selgrp"><span class="lbl">Selected part</span><div id="insp"><span class="muted">Click an element on the dial.</span></div></div>
       <div class="grp" id="fixednote" hidden style="flex-basis:100%"><div class="ctl"><span class="muted" id="fixednotetxt"></span></div></div>
     </div>

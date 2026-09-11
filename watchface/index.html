@@ -219,6 +219,11 @@
   .li { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
   .li:hover { background: var(--panel-2); } .li.on { background: var(--panel-2); outline: 1px solid var(--line-2); }
   .li .xy { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+  /* プレビューだけで隠す印。文字盤の中身は変わらない (実機には出る)。*/
+  .li .eye { font-size: 12px; color: var(--ink-3); cursor: pointer; width: 14px; text-align: center; }
+  .li .eye:hover { color: var(--ink); }
+  .li.dim { opacity: .5; }
+  .li.dim .eye { color: var(--accent); }
   .li.hd { cursor: default; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); padding-bottom: 2px; border-bottom: 1px solid var(--line); border-radius: 0; }
   .li.hd:hover { background: transparent; } .li.hd .xy { font-size: 10px; letter-spacing: .08em; }
   .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
@@ -238,7 +243,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 04:33</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 04:39</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -905,7 +910,7 @@
       g += '</svg>';
       stage.insertAdjacentHTML('beforeend', g);
     }
-    st.el.forEach((e, i) => stage.appendChild(makeEl(e, i, k)));
+    st.el.forEach((e, i) => { if (!HIDDEN.has(i)) stage.appendChild(makeEl(e, i, k)); });
     positionAll();
     $('empty').hidden = st.el.length > 0;
     renderBgHist();
@@ -995,13 +1000,17 @@
   }
   const layoutObj = () => { const o = { bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0 }; const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
+  // 編集中だけプレビューから外す部品 (重なって選びにくい時に使う)。
+  // 文字盤の中身は変わらないので、保存しても実機にはそのまま出る。
+  const HIDDEN = new Set();
+  function toggleHidden(i) { if (HIDDEN.has(i)) { HIDDEN.delete(i); } else { HIDDEN.add(i); } render(); }
   function renderList() {
     const l = $('list'); l.innerHTML = '';
-    if (st.el.length) { const hd = document.createElement('div'); hd.className = 'li hd'; hd.innerHTML = `<span class="dot" style="visibility:hidden"></span>Part<span class="xy">X, Y</span>`; l.appendChild(hd); }
+    if (st.el.length) { const hd = document.createElement('div'); hd.className = 'li hd'; hd.innerHTML = `<span class="dot" style="visibility:hidden"></span>Part<span class="xy">X, Y</span><span class="eye">●</span>`; l.appendChild(hd); }
     st.el.forEach((e, i) => {
-      const li = document.createElement('div'); li.className = 'li' + (isSel(i) ? ' on' : '');
-      li.innerHTML = `<span class="dot" style="background:${PALETTE[e[5]]}"></span>${TYPES[e[0]]?.name || e[0]}<span class="xy">${e[1]},${e[2]}</span>`;
-      li.addEventListener('click', (ev) => { setSel(i, addKey(ev)); render(); });
+      const li = document.createElement('div'); li.className = 'li' + (isSel(i) ? ' on' : '') + (HIDDEN.has(i) ? ' dim' : '');
+      li.innerHTML = `<span class="dot" style="background:${PALETTE[e[5]]}"></span>${TYPES[e[0]]?.name || e[0]}<span class="xy">${e[1]},${e[2]}</span><span class="eye" title="Show or hide this part in the dial above (only here — the watch still shows it)">${HIDDEN.has(i) ? '◌' : '●'}</span>`;
+      li.addEventListener('click', (ev) => { if (ev.target.classList.contains('eye')) { toggleHidden(i); return; } setSel(i, addKey(ev)); render(); });
       l.appendChild(li);
     });
     if (!st.el.length) l.innerHTML = '<span class="muted">None yet.</span>';
@@ -1206,7 +1215,7 @@
       div.style.top = (py - h / 2) + 'px';
     });
   }
-  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; clearSel(); pushBgHist(st.bg); }
+  function loadIntoEditor(c) { HIDDEN.clear(); st.bg = c.bg; st.el = c.el; st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; clearSel(); pushBgHist(st.bg); }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
   function renderWatchSeen() {
     const el = $('watchseen'); if (!el) return;

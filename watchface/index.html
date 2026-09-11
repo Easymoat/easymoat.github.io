@@ -228,7 +228,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-11 23:15</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-11 23:33</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -403,12 +403,13 @@
     51: { name: 'Hands: Needles',     grp: 'hands', dial: true },
     52: { name: 'Hands: Kite',        grp: 'hands', dial: true },
     53: { name: 'Hands: Outline',     grp: 'hands', dial: true },
-    54: { name: 'Hands: Bars + second', grp: 'hands', dial: true },
+    54: { name: 'Hands: Bars + second', grp: 'hands', dial: true, hidden: true },   // 秒針はやめた (2026-09-11)
     60: { name: 'Rim: Ticks',         grp: 'rim',   dial: true },
     61: { name: 'Rim: Dots',          grp: 'rim',   dial: true },
     62: { name: 'Rim: 12 3 6 9',      grp: 'rim',   dial: true },
     63: { name: 'Rim: Ring',          grp: 'rim',   dial: true },
     64: { name: 'Rim: Arcs',          grp: 'rim',   dial: true },
+    65: { name: 'Rim: Marks',         grp: 'rim',   dial: true },
     30: { name: 'Stock 1',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
     31: { name: 'Stock 2',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
   };
@@ -691,6 +692,16 @@
       54: (k) => g(T.h, bar(118 * k.l, 15 * k.w, 20)) + g(T.m, bar(178 * k.l, 11 * k.w, 20)) + sec(196 * k.l, 3.5 * k.w) + cap(9 * k.w),
       // rim
       60: (k) => ticks(60, 10 * k.l, 3 * k.w, 5, 22 * k.l, 6 * k.w),
+      // MW / PL の Rim marks と同じ形: 縁から内側へ 60 本、5 本ごとに長く太く。
+      65: (k) => {
+        let o = '';
+        const ro = R - 2;
+        for (let i = 0; i < 60; i++) {
+          const hour = (i % 5 === 0), len = (hour ? 12 : 6) * k.l, w = (hour ? 4 : 2) * k.w;
+          o += g(i * 6, `<rect x="${R - w / 2}" y="${R - ro}" width="${w}" height="${len}"/>`);
+        }
+        return o;
+      },
       61: (k) => { let o = ''; for (let i = 0; i < 12; i++) o += g(i * 30, `<circle cx="${R}" cy="${16 + 4 * k.l}" r="${(i % 3 ? 4 : 7) * k.w}"/>`); return o; },
       62: (k) => [[12, 0], [3, 90], [6, 180], [9, 270]].map(([n, a]) => {
             const rad = (a - 90) * Math.PI / 180, rr = R - 30 * k.l;

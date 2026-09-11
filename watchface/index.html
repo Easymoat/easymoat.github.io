@@ -57,6 +57,9 @@
   .group.fold.shut > .lbl { color: var(--ink-3); }
   .group.fold > .lbl .cnt { margin-left: auto; font: 11px var(--mono); color: var(--ink-3); }
   .group.fold.shut > :not(.lbl) { display: none; }
+  .group.off { display: none; }
+  #grpshow { flex-wrap: wrap; }
+  #grpshow button { padding: 2px 7px; font-size: 11px; }
   .part { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); cursor: grab; user-select: none; touch-action: none; }
   .part:hover { border-color: var(--line-2); }
   .part:active { cursor: grabbing; }
@@ -235,14 +238,15 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 04:28</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 04:33</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
 
 <main>
   <aside class="left">
-    <div class="group"><span class="lbl">Parts</span><span class="muted">Drag onto the dial, or click to drop at center.</span></div>
+    <div class="group"><span class="lbl">Parts</span><span class="muted">Drag onto the dial, or click to drop at center.</span>
+      <div class="ctl" title="Which groups appear in this list. Turning one off only hides it here — dials that already use those parts are untouched."><span class="cb units" id="grpshow"></span></div></div>
     <div class="group"><span class="lbl">Clock</span><div class="parts" id="parts-clock"></div></div>
     <div class="group"><span class="lbl">Body</span><div class="parts" id="parts-body"></div></div>
     <div class="group"><span class="lbl">Weather</span><div class="parts" id="parts-wx"></div></div>
@@ -775,6 +779,32 @@
       if (cnt) { cnt.textContent = gp.classList.contains('shut') ? String(n) : ''; }
     });
   }
+  // どの群を編集画面に出すか。文字盤の中身とは無関係で、このブラウザにだけ憶える。
+  const SHOW_KEY = 'faceComposer.groups';
+  function readShown() { try { return JSON.parse(localStorage.getItem(SHOW_KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function setupGroupPicker() {
+    const shown = readShown(), wrap = $('grpshow');
+    document.querySelectorAll('aside.left .group.fold').forEach((gp) => {
+      const name = gp.querySelector('.lbl').firstChild.textContent.trim();
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = name; b.dataset.g = name;
+      b.title = 'Show or hide the ' + name + ' group';
+      b.addEventListener('click', () => {
+        const f = readShown(); f[name] = !(f[name] === false) ? false : true;
+        try { localStorage.setItem(SHOW_KEY, JSON.stringify(f)); } catch (e) {}
+        renderGroupPicker();
+      });
+      wrap.appendChild(b);
+    });
+    renderGroupPicker();
+  }
+  function renderGroupPicker() {
+    const shown = readShown();
+    document.querySelectorAll('aside.left .group.fold').forEach((gp) => {
+      const name = gp.querySelector('.lbl').firstChild.textContent.trim();
+      gp.classList.toggle('off', shown[name] === false);
+    });
+    document.querySelectorAll('#grpshow button').forEach((b) => b.classList.toggle('on', shown[b.dataset.g] !== false));
+  }
   for (const [t, d] of Object.entries(TYPES)) {
     if (d.hidden) continue;   // retired parts stay renderable but are not offered
     const p = document.createElement('div');
@@ -789,6 +819,7 @@
     $('parts-' + d.grp).appendChild(p);
   }
   setupFolds();
+  setupGroupPicker();
   for (const [k, d] of Object.entries(DEVICES)) { const o = document.createElement('option'); o.value = k; o.textContent = d.name; $('dev').appendChild(o); }
   $('dev').value = st.dev; $('grid').value = String(st.grid); $('showgrid').checked = st.showGrid;
   let bgHist = [];

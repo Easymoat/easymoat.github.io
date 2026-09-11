@@ -228,7 +228,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-11 22:35</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-11 23:15</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -370,8 +370,12 @@
     { key: 'pu', id: 'pressunit', t: 23, opts: { 0: ['hPa', '1013'], 1: ['inHg', '29.92'], 2: ['mmHg', '760'] } },
     { key: 'du', id: 'distunit',  t: 24, opts: { 0: ['m', '45m'], 1: ['ft', '148ft'] } },
   ];
+  // 大きい数字の時計用サイズ表 (tm) を使う種別: 1 時刻 / 4 時刻+秒 / 5 秒
+  const isClock = (t) => t === 1 || t === 4 || t === 5;
   const TYPES = {
     1:  { name: 'Time',      grp: 'clock', sample: '10:08',  icon: null,        iw: 0 },
+    4:  { name: 'Time + sec',  grp: 'clock', sample: '10:08:30', icon: null,      iw: 0 },
+    5:  { name: 'Seconds',     grp: 'clock', sample: '30',      icon: null,      iw: 0 },
     2:  { name: 'Date',      grp: 'clock', sample: 'Fri Sep 4', icon: null,     iw: 0 },
     3:  { name: 'Battery',   grp: 'clock', sample: '85%',    icon: 'battery',   iw: 28 },
     10: { name: 'Heart rate',grp: 'body',  sample: '72',     icon: 'heart',     iw: 26 },
@@ -652,11 +656,11 @@
   function effPx(t, sz) {
     const p = prof(), s = (sz < 0 || sz > SIZE_MAX) ? 1 : sz;
     if (p[2] === 1) {
-      const px = Math.round((t === 1 ? st.tm : st.tx)[s] * p[1] / 454);
-      return t === 1 ? px : Math.round(px * TEXT_BOOST);
+      const px = Math.round((isClock(t) ? st.tm : st.tx)[s] * p[1] / 454);
+      return isClock(t) ? px : Math.round(px * TEXT_BOOST);
     }
     const f = Math.min(s, 2);   // fixed system fonts come in three steps: XL draws as L
-    return t === 1 ? p[6 + f] : p[3 + f];
+    return isClock(t) ? p[6 + f] : p[3 + f];
   }
 
   // ── Hands and Rim: whole-dial parts (drawn as one SVG on a 454 grid, centred, not draggable) ──
@@ -1005,7 +1009,7 @@
   function startPaletteDrag(ev, t) {
     ev.preventDefault();
     const d = TYPES[t];
-    const e = [t, 500, 500, 0, t === 1 ? 2 : 1, 0, d.icon ? 1 : 0, -1];
+    const e = [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, d.icon ? 1 : 0, -1];
     st.el.push(e); setSel(st.el.length - 1, false);
     const p = stagePoint(ev); e[1] = clamp(p.x); e[2] = clamp(p.y);
     drag = { i: sel, items: [{ i: sel, dx: 0, dy: 0 }], fromPalette: true, moved: false };

@@ -153,7 +153,7 @@
   .cb.units button { background: var(--panel-2); border: 2px solid var(--line-2); border-radius: 5px; padding: 3px 9px;
                      cursor: pointer; color: var(--ink); font: 12px var(--mono); }
   .cb.units button:hover { border-color: var(--ink-2); }
-  .cb.units button.on { background: var(--ok); border-color: var(--ok); color: #05170c; font-weight: 600; }
+  .cb.units button.on { background: var(--ok); border-color: var(--ok); color: #05170c; }
   .imgstage { position: relative; width: 320px; height: 320px; border-radius: 50%; background: #000; overflow: hidden; touch-action: none; cursor: grab; }
   .imgstage canvas { width: 320px; height: 320px; display: block; }
   .imgstage #imgQ { position: absolute; left: 0; top: 0; pointer-events: none; }
@@ -243,7 +243,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 04:56</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 05:17</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -287,7 +287,7 @@
     </div>
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
     <div class="imgbox box">
-      <div class="tier"><span class="num">2</span><span class="name">Photo</span><span class="what">Pick a photo and frame it for the dial</span></div>
+      <div class="tier"><span class="num">2</span><span class="name">Image</span><span class="what">Pick a photo and frame it for the dial</span></div>
       <div class="grp">
         <div class="ctl"><span class="muted">The photo itself is never changed — the cut-out is made when you save to the collection.</span></div></div>
       <div class="cols">
@@ -695,7 +695,7 @@
       let o = '';
       for (let i = 0; i < n; i++) {
         const big = every && i % every === 0, l = big ? longLen : len, t = big ? longW : w;
-        o += g(i * 360 / n, `<rect x="${R - t / 2}" y="8" width="${t}" height="${l}" rx="${t / 2}"/>`);
+        o += g(i * 360 / n, `<rect x="${R - t / 2}" y="2" width="${t}" height="${l}" rx="${t / 2}"/>`);
       }
       return o;
     };
@@ -709,7 +709,7 @@
       // MW / PL の Rim marks: 中心から伸びず、縁に沿って動く短い針。
       // 時針 = 菱形カイト (内寄り 32% が最大幅)、分針 = 丸窓針 (リング + 軸)。寸法は MW と同じ。
       55: (k) => {
-        const ro = (R - 2 - 25) * 1.0, inner = ro - 44 * k.l, hw = 9.5 * k.w, ringR = 9 * k.w;
+        const ro = R - 40, inner = ro - 44 * k.l, hw = 9.5 * k.w, ringR = 9 * k.w;   // 縁から 40px 内側 (2026-09-12 に 27 から)
         const kiteAt = (ri, rout, halfW) => {
           const fat = ri + (rout - ri) * 0.32;
           return `<polygon points="${R},${R - ri} ${R + halfW},${R - fat} ${R},${R - rout} ${R - halfW},${R - fat}"/>`;
@@ -733,12 +733,12 @@
         }
         return o;
       },
-      61: (k) => { let o = ''; for (let i = 0; i < 12; i++) o += g(i * 30, `<circle cx="${R}" cy="${16 + 4 * k.l}" r="${(i % 3 ? 4 : 7) * k.w}"/>`); return o; },
+      61: (k) => { let o = ''; for (let i = 0; i < 12; i++) { const r = (i % 3 ? 4 : 7) * k.w; o += g(i * 30, `<circle cx="${R}" cy="${3 + r}" r="${r}"/>`); } return o; },
       62: (k) => [[12, 0], [3, 90], [6, 180], [9, 270]].map(([n, a]) => {
-            const rad = (a - 90) * Math.PI / 180, rr = R - 30 * k.l;
+            const rad = (a - 90) * Math.PI / 180, rr = R - 22 * k.l;
             return `<text x="${(R + rr * Math.cos(rad)).toFixed(1)}" y="${(R + rr * Math.sin(rad)).toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-family="var(--watch)" font-weight="600" font-size="${(38 * k.w).toFixed(1)}" fill="currentColor">${n}</text>`; }).join(''),
-      63: (k) => `<circle cx="${R}" cy="${R}" r="${R - 8 - 3 * k.w}" fill="none" stroke="currentColor" stroke-width="${5 * k.w}"/>` + ticks(4, 0, 0, 1, 26 * k.l, 7 * k.w),
-      64: (k) => { let o = ''; const rr = R - 12 - 4 * k.w, sw = 12 * k.w;
+      63: (k) => `<circle cx="${R}" cy="${R}" r="${R - 2 - 2.5 * k.w}" fill="none" stroke="currentColor" stroke-width="${5 * k.w}"/>` + ticks(4, 0, 0, 1, 26 * k.l, 7 * k.w),
+      64: (k) => { let o = ''; const sw = 12 * k.w, rr = R - 3 - sw / 2;
             for (let i = 0; i < 4; i++) { const a0 = i * 90 - 12, a1 = i * 90 + 12, p = (a) => [R + rr * Math.cos((a - 90) * Math.PI / 180), R + rr * Math.sin((a - 90) * Math.PI / 180)];
               const [x0, y0] = p(a0), [x1, y1] = p(a1);
               o += `<path d="M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${rr} ${rr} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round"/>`; }

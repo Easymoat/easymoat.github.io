@@ -245,7 +245,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 08:46</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 08:55</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -685,84 +685,107 @@
     return isClock(t) ? p[6 + f] : p[3 + f];
   }
 
-  // ── Hands and Rim: whole-dial parts (drawn as one SVG on a 454 grid, centred, not draggable) ──
-  // The preview shows 10:08:30, the same time as the Time sample.
-  const DIAL_ART = (() => {
-    const R = 227, T = { h: 304, m: 48, s: 180 };   // 10:08:30
+  // ── 針と縁 ────────────────────────────────────────────────────────────
+  // 数値の仕様を先に作り、プレビューの SVG も実機へ送る hd / rm も同じ数値から作る
+  // (二重に持つと必ずずれるため、2026-09-12 に一本化)。座標は 454 の盤面、中心 227。
+  //   針の空間: [横, 長さ] = 12 時を向いた状態で、長さ + が先端側・横 + が右。長さは中心からの距離。
+  //   針 = [0, 点…] 塗り / [1, 線幅, 点…] 輪郭 / [2, リング半径, リング線幅, 軸の太さ, リング中心, 外端] 丸窓
+  //   縁 = [0 目盛り n,every,上端から,長さ,幅,長さ2,幅2] / [1 点 n,every,上端から,半径,半径2]
+  //        / [2 円環 半径,線幅] / [3 円弧 n,半径,線幅,半角] / [4 数字 半径,文字高]
+  const DIAL_SCALE = [{ l: 0.86, w: 0.7 }, { l: 1, w: 1 }, { l: 1.08, w: 1.35 }, { l: 1.14, w: 1.75 }];
+  const DIAL = (() => {
+    const R = 227, T = { h: 304, m: 48 };            // プレビューの時刻 10:08
+    const r1 = (v) => Math.round(v * 10) / 10;
+    const barPts = (len, w, back) => [-w / 2, -back, w / 2, -back, w / 2, len, -w / 2, len].map(r1);
+    const kitePts = (len, w, back) => [0, len, w / 2, len * 0.62, 0, -back, -w / 2, len * 0.62].map(r1);
+    const needlePts = (len, w) => [0, len, w / 2, -14, -w / 2, -14].map(r1);
+    const spanKite = (ri, ro, hw) => { const fat = ri + (ro - ri) * 0.32; return [0, ri, hw, fat, 0, ro, -hw, fat].map(r1); };
+
+    // 針の仕様 [キャップ半径, 時針, 分針]
+    function hands(t, k) {
+      const L = (v) => v * k.l, W = (v) => v * k.w;
+      if (t === 50) return [r1(W(9)), [0].concat(barPts(L(118), W(15), 20)), [0].concat(barPts(L(178), W(11), 20))];
+      if (t === 51) return [r1(W(8)), [0].concat(needlePts(L(120), W(17))), [0].concat(needlePts(L(180), W(12)))];
+      if (t === 52) return [r1(W(7)), [0].concat(kitePts(L(122), W(30), 26)), [0].concat(kitePts(L(182), W(22), 26))];
+      if (t === 53) return [r1(W(8)), [1, r1(W(4))].concat(barPts(L(120), W(20), 20)), [1, r1(W(4))].concat(barPts(L(180), W(15), 20))];
+      if (t === 55) {                                   // Rim marks: 縁に沿う短い針
+        const ro = R - 40, inner = ro - L(44), hw = W(9.5), ringR = W(9), out = ro + W(6);
+        return [0, [0].concat(spanKite(inner + 1, out, hw)), [2, r1(ringR), r1(W(3)), r1(W(4)), r1(inner + ringR), r1(out)]];
+      }
+      if (t === 56) return [r1(W(4)), [0].concat(barPts(L(R * 0.55), W(6), 0)), [0].concat(barPts(L(R * 0.86), W(3), 0))];
+      return null;
+    }
+    // 縁の仕様 (複数可)
+    function rim(t, k) {
+      const L = (v) => v * k.l, W = (v) => v * k.w;
+      if (t === 60) return [[0, 60, 5, 2, r1(L(10)), r1(W(3)), r1(L(22)), r1(W(6))]];
+      if (t === 61) return [[1, 12, 3, 3, r1(W(4)), r1(W(7))]];
+      if (t === 62) return [[4, r1(R - L(22)), r1(W(38))]];
+      if (t === 63) return [[2, r1(R - 2 - W(2.5)), r1(W(5))], [0, 4, 1, 2, r1(L(26)), r1(W(7)), r1(L(26)), r1(W(7))]];
+      if (t === 64) return [[3, 4, r1(R - 3 - W(6)), r1(W(12)), 12]];
+      return null;
+    }
+
+    // ── 仕様 → SVG (プレビュー) ──
     const g = (a, inner) => `<g transform="rotate(${a} ${R} ${R})">${inner}</g>`;
-    const bar = (len, w, back) => `<rect x="${R - w / 2}" y="${R - len}" width="${w}" height="${len + back}" rx="${w / 2}"/>`;
-    const needle = (len, w) => `<polygon points="${R},${R - len} ${R + w / 2},${R + 14} ${R - w / 2},${R + 14}"/>`;
-    const kite = (len, w, back) => `<polygon points="${R},${R - len} ${R + w / 2},${R - len * 0.62} ${R},${R + back} ${R - w / 2},${R - len * 0.62}"/>`;
-    const hollow = (len, w, back, sw) => `<rect x="${R - w / 2}" y="${R - len}" width="${w}" height="${len + back}" rx="${w / 2}" fill="none" stroke="currentColor" stroke-width="${sw}"/>`;
-    const cap = (r) => `<circle cx="${R}" cy="${R}" r="${r}"/>`;
-    const sec = (len, w) => g(T.s, `<rect x="${R - w / 2}" y="${R - len}" width="${w}" height="${len + 46}" rx="${w / 2}"/><circle cx="${R}" cy="${R + 38}" r="${w * 2.4}"/>`);
-    const ticks = (n, len, w, every, longLen, longW) => {
+    const P = (pts, from) => { let o = []; for (let i = from; i < pts.length; i += 2) o.push(`${r1(R + pts[i])},${r1(R - pts[i + 1])}`); return o.join(' '); };
+    function handSvg(spec, ang) {
+      if (!spec || !spec.length) return '';
+      if (spec[0] === 0) return g(ang, `<polygon points="${P(spec, 1)}"/>`);
+      if (spec[0] === 1) return g(ang, `<polygon points="${P(spec, 2)}" fill="none" stroke="currentColor" stroke-width="${spec[1]}" stroke-linejoin="round"/>`);
+      if (spec[0] === 2) {
+        const [, ringR, ringPen, shaftW, rc, ro] = spec;
+        return g(ang, `<line x1="${R}" y1="${R - rc}" x2="${R}" y2="${R - ro}" stroke="currentColor" stroke-width="${shaftW}"/>`
+                    + `<circle cx="${R}" cy="${R - rc}" r="${ringR}" fill="none" stroke="currentColor" stroke-width="${ringPen}"/>`);
+      }
+      return '';
+    }
+    function rimSvg(list) {
       let o = '';
-      for (let i = 0; i < n; i++) {
-        const big = every && i % every === 0, l = big ? longLen : len, t = big ? longW : w;
-        o += g(i * 360 / n, `<rect x="${R - t / 2}" y="2" width="${t}" height="${l}" rx="${t / 2}"/>`);
+      for (const e of list || []) {
+        if (e[0] === 0) {                                   // 目盛り
+          const [, n, every, top, len, w, len2, w2] = e;
+          for (let i = 0; i < n; i++) {
+            const big = every && (i % every === 0), l = big ? len2 : len, t = big ? w2 : w;
+            o += g(i * 360 / n, `<rect x="${r1(R - t / 2)}" y="${top}" width="${t}" height="${l}" rx="${r1(t / 2)}"/>`);
+          }
+        } else if (e[0] === 1) {                            // 点
+          const [, n, every, top, rad, rad2] = e;
+          for (let i = 0; i < n; i++) { const r = (every && i % every === 0) ? rad2 : rad; o += g(i * 360 / n, `<circle cx="${R}" cy="${r1(top + r)}" r="${r}"/>`); }
+        } else if (e[0] === 2) {                            // 円環
+          o += `<circle cx="${R}" cy="${R}" r="${e[1]}" fill="none" stroke="currentColor" stroke-width="${e[2]}"/>`;
+        } else if (e[0] === 3) {                            // 円弧
+          const [, n, rr, sw, half] = e;
+          for (let i = 0; i < n; i++) {
+            const a0 = i * 360 / n - half, a1 = i * 360 / n + half;
+            const p = (a) => [R + rr * Math.cos((a - 90) * Math.PI / 180), R + rr * Math.sin((a - 90) * Math.PI / 180)];
+            const [x0, y0] = p(a0), [x1, y1] = p(a1);
+            o += `<path d="M ${r1(x0)} ${r1(y0)} A ${rr} ${rr} 0 0 1 ${r1(x1)} ${r1(y1)}" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round"/>`;
+          }
+        } else if (e[0] === 4) {                            // 数字 12 / 3 / 6 / 9
+          const [, rr, hgt] = e;
+          [[12, 0], [3, 90], [6, 180], [9, 270]].forEach(([num, a]) => {
+            const rad = (a - 90) * Math.PI / 180;
+            o += `<text x="${r1(R + rr * Math.cos(rad))}" y="${r1(R + rr * Math.sin(rad))}" text-anchor="middle" dominant-baseline="central" font-family="var(--watch)" font-weight="600" font-size="${hgt}" fill="currentColor">${num}</text>`;
+          });
+        }
       }
       return o;
-    };
-    return {
-      // hands
-      50: (k) => g(T.h, bar(118 * k.l, 15 * k.w, 20)) + g(T.m, bar(178 * k.l, 11 * k.w, 20)) + cap(9 * k.w),
-      51: (k) => g(T.h, needle(120 * k.l, 17 * k.w)) + g(T.m, needle(180 * k.l, 12 * k.w)) + cap(8 * k.w),
-      52: (k) => g(T.h, kite(122 * k.l, 30 * k.w, 26)) + g(T.m, kite(182 * k.l, 22 * k.w, 26)) + cap(7 * k.w),
-      53: (k) => g(T.h, hollow(120 * k.l, 20 * k.w, 20, 4 * k.w)) + g(T.m, hollow(180 * k.l, 15 * k.w, 20, 4 * k.w)) + cap(8 * k.w),
-      54: (k) => g(T.h, bar(118 * k.l, 15 * k.w, 20)) + g(T.m, bar(178 * k.l, 11 * k.w, 20)) + sec(196 * k.l, 3.5 * k.w) + cap(9 * k.w),
-      // MW / PL の標準の針 (StocksView スタイル 0): 時針は半径の 55% で太さ 6、
-      // 分針は 86% で太さ 3、中心に半径 4 の点。寸法をそのまま写した。
-      56: (k) => g(T.h, `<line x1="${R}" y1="${R}" x2="${R}" y2="${R - R * 0.55 * k.l}" stroke="currentColor" stroke-width="${6 * k.w}" stroke-linecap="round"/>`)
-              + g(T.m, `<line x1="${R}" y1="${R}" x2="${R}" y2="${R - R * 0.86 * k.l}" stroke="currentColor" stroke-width="${3 * k.w}" stroke-linecap="round"/>`)
-              + cap(4 * k.w),
-      // MW / PL の Rim marks: 中心から伸びず、縁に沿って動く短い針。
-      // 時針 = 菱形カイト (内寄り 32% が最大幅)、分針 = 丸窓針 (リング + 軸)。寸法は MW と同じ。
-      55: (k) => {
-        const ro = R - 40, inner = ro - 44 * k.l, hw = 9.5 * k.w, ringR = 9 * k.w;   // 縁から 40px 内側 (2026-09-12 に 27 から)
-        const kiteAt = (ri, rout, halfW) => {
-          const fat = ri + (rout - ri) * 0.32;
-          return `<polygon points="${R},${R - ri} ${R + halfW},${R - fat} ${R},${R - rout} ${R - halfW},${R - fat}"/>`;
-        };
-        const pomme = (ri, rout) => {
-          const rc = ri + ringR;
-          return `<line x1="${R}" y1="${R - rc}" x2="${R}" y2="${R - rout}" stroke="currentColor" stroke-width="${4 * k.w}"/>`
-               + `<circle cx="${R}" cy="${R - rc}" r="${ringR}" fill="none" stroke="currentColor" stroke-width="${3 * k.w}"/>`;
-        };
-        return g(T.h, kiteAt(inner + 1, ro + 6 * k.w, hw)) + g(T.m, pomme(inner, ro + 6 * k.w));
-      },
-      // rim
-      60: (k) => ticks(60, 10 * k.l, 3 * k.w, 5, 22 * k.l, 6 * k.w),
-      // MW / PL の Rim marks と同じ形: 縁から内側へ 60 本、5 本ごとに長く太く。
-      65: (k) => {
-        let o = '';
-        const ro = R - 2;
-        for (let i = 0; i < 60; i++) {
-          const hour = (i % 5 === 0), len = (hour ? 12 : 6) * k.l, w = (hour ? 4 : 2) * k.w;
-          o += g(i * 6, `<rect x="${R - w / 2}" y="${R - ro}" width="${w}" height="${len}"/>`);
-        }
-        return o;
-      },
-      61: (k) => { let o = ''; for (let i = 0; i < 12; i++) { const r = (i % 3 ? 4 : 7) * k.w; o += g(i * 30, `<circle cx="${R}" cy="${3 + r}" r="${r}"/>`); } return o; },
-      62: (k) => [[12, 0], [3, 90], [6, 180], [9, 270]].map(([n, a]) => {
-            const rad = (a - 90) * Math.PI / 180, rr = R - 22 * k.l;
-            return `<text x="${(R + rr * Math.cos(rad)).toFixed(1)}" y="${(R + rr * Math.sin(rad)).toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-family="var(--watch)" font-weight="600" font-size="${(38 * k.w).toFixed(1)}" fill="currentColor">${n}</text>`; }).join(''),
-      63: (k) => `<circle cx="${R}" cy="${R}" r="${R - 2 - 2.5 * k.w}" fill="none" stroke="currentColor" stroke-width="${5 * k.w}"/>` + ticks(4, 0, 0, 1, 26 * k.l, 7 * k.w),
-      64: (k) => { let o = ''; const sw = 12 * k.w, rr = R - 3 - sw / 2;
-            for (let i = 0; i < 4; i++) { const a0 = i * 90 - 12, a1 = i * 90 + 12, p = (a) => [R + rr * Math.cos((a - 90) * Math.PI / 180), R + rr * Math.sin((a - 90) * Math.PI / 180)];
-              const [x0, y0] = p(a0), [x1, y1] = p(a1);
-              o += `<path d="M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${rr} ${rr} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round"/>`; }
-            return o; },
-    };
+    }
+    function svgFor(t, k) {
+      const h = hands(t, k);
+      if (h) return handSvg(h[1], T.h) + handSvg(h[2], T.m) + (h[0] > 0 ? `<circle cx="${R}" cy="${R}" r="${h[0]}"/>` : '');
+      return rimSvg(rim(t, k));
+    }
+    return { R, hands, rim, svgFor };
   })();
-  const DIAL_SCALE = [{ l: 0.86, w: 0.7 }, { l: 1, w: 1 }, { l: 1.08, w: 1.35 }, { l: 1.14, w: 1.75 }];
   // One dial part as an <svg> that fills the dial; colour comes from the element (currentColor).
   function dialArt(t, s, w, h) {
-    const f = DIAL_ART[t]; if (!f) return '';
     const k = DIAL_SCALE[Math.min(Math.max(s, 0), 3)];
-    return `<svg width="${w}" height="${h}" viewBox="0 0 454 454" fill="currentColor" style="display:block">${f(k)}</svg>`;
+    const inner = DIAL.svgFor(t, k);
+    if (!inner) return '';
+    return `<svg width="${w}" height="${h}" viewBox="0 0 454 454" fill="currentColor" style="display:block">${inner}</svg>`;
   }
-
   // ── Palette ────────────────────────────────────────────────────────────────
   // 左の部品の群は畳める。開いているかはこのブラウザに憶える (文字盤の中身とは無関係)。
   const FOLD_KEY = 'faceComposer.folds';
@@ -1008,7 +1031,19 @@
     const cx = Math.round(1000 * (0.5 - IMG.panX / dw)), cy = Math.round(1000 * (0.5 - IMG.panY / dh));
     return [Math.max(0, Math.min(1000, cx)), Math.max(0, Math.min(1000, cy)), Math.max(100, Math.min(400, Math.round(IMG.zoom * 100)))];
   }
-  const layoutObj = () => { const o = { bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0 }; const cam = camField(); if (cam) o.cam = cam; return o; };
+  // 実機へ渡す針と縁の形。S/M/L はここで数値に畳む (実機は解釈しない)。色と重なり順は el の行のまま。
+  function dialFields() {
+    const out = {};
+    for (const e of st.el) {
+      const k = DIAL_SCALE[Math.min(Math.max(e[4], 0), 3)];
+      const h = DIAL.hands(e[0], k);
+      if (h && !out.hd) { out.hd = h; continue; }
+      const r = DIAL.rim(e[0], k);
+      if (r) { out.rm = (out.rm || []).concat(r); }
+    }
+    return out;
+  }
+  const layoutObj = () => { const o = Object.assign({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0 }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   function renderList() {
     const l = $('list'); l.innerHTML = '';

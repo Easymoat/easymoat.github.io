@@ -50,6 +50,13 @@
   #insp > div:first-child { display: inline-block; margin-right: 18px; }
   .group { display: flex; flex-direction: column; gap: 6px; }
   .parts { display: grid; grid-template-columns: 1fr; gap: 4px; }
+  /* 部品の群は畳める。見出しをクリックで開閉し、状態はこのブラウザに憶える。*/
+  .group.fold > .lbl { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 6px; }
+  .group.fold > .lbl::before { content: "▾"; font-size: 10px; color: var(--ink-3); width: 9px; }
+  .group.fold.shut > .lbl::before { content: "▸"; }
+  .group.fold.shut > .lbl { color: var(--ink-3); }
+  .group.fold > .lbl .cnt { margin-left: auto; font: 11px var(--mono); color: var(--ink-3); }
+  .group.fold.shut > :not(.lbl) { display: none; }
   .part { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); cursor: grab; user-select: none; touch-action: none; }
   .part:hover { border-color: var(--line-2); }
   .part:active { cursor: grabbing; }
@@ -228,7 +235,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 04:21</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 04:28</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -739,6 +746,35 @@
   }
 
   // ── Palette ────────────────────────────────────────────────────────────────
+  // 左の部品の群は畳める。開いているかはこのブラウザに憶える (文字盤の中身とは無関係)。
+  const FOLD_KEY = 'faceComposer.folds';
+  function readFolds() { try { return JSON.parse(localStorage.getItem(FOLD_KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function setupFolds() {
+    const folds = readFolds();
+    document.querySelectorAll('aside.left .group').forEach((gp) => {
+      const lbl = gp.querySelector('.lbl'), parts = gp.querySelector('.parts');
+      if (!lbl || !parts) return;                       // 見出しだけの群 (Parts の説明) は対象外
+      const name = lbl.textContent.trim();
+      gp.classList.add('fold');
+      const cnt = document.createElement('span'); cnt.className = 'cnt'; lbl.appendChild(cnt);
+      if (folds[name]) { gp.classList.add('shut'); }
+      lbl.title = 'Click to fold this group away';
+      lbl.addEventListener('click', () => {
+        gp.classList.toggle('shut');
+        const f = readFolds(); f[name] = gp.classList.contains('shut');
+        try { localStorage.setItem(FOLD_KEY, JSON.stringify(f)); } catch (e) {}
+        renderFoldCounts();
+      });
+    });
+    renderFoldCounts();
+  }
+  // 畳んでいる時は「中に何個あるか」を見出しに出す (開かずに中身の量が分かる)。
+  function renderFoldCounts() {
+    document.querySelectorAll('aside.left .group.fold').forEach((gp) => {
+      const n = gp.querySelectorAll('.part').length, cnt = gp.querySelector('.lbl .cnt');
+      if (cnt) { cnt.textContent = gp.classList.contains('shut') ? String(n) : ''; }
+    });
+  }
   for (const [t, d] of Object.entries(TYPES)) {
     if (d.hidden) continue;   // retired parts stay renderable but are not offered
     const p = document.createElement('div');
@@ -752,6 +788,7 @@
     if (!d.dial) p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +t));
     $('parts-' + d.grp).appendChild(p);
   }
+  setupFolds();
   for (const [k, d] of Object.entries(DEVICES)) { const o = document.createElement('option'); o.value = k; o.textContent = d.name; $('dev').appendChild(o); }
   $('dev').value = st.dev; $('grid').value = String(st.grid); $('showgrid').checked = st.showGrid;
   let bgHist = [];

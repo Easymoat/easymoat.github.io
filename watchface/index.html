@@ -55,8 +55,12 @@
   .group.fold > .lbl::before { content: "▾"; font-size: 10px; color: var(--ink-3); width: 9px; }
   .group.fold.shut > .lbl::before { content: "▸"; }
   .group.fold.shut > .lbl { color: var(--ink-3); }
-  .group.fold > .lbl .cnt { margin-left: auto; font: 11px var(--mono); color: var(--ink-3); }
+  .group.fold > .lbl .cnt { font: 11px var(--mono); color: var(--ink-3); }
   .group.fold.shut > :not(.lbl) { display: none; }
+  /* その群の部品を丸い文字盤のプレビューに出すか。文字盤の中身と実機は変わらない。*/
+  .group.fold > .lbl .eye { margin-left: auto; font-size: 12px; color: var(--ok); cursor: pointer; padding: 0 2px; }
+  .group.fold > .lbl .eye.off { color: var(--ink-3); }
+  .group.fold > .lbl .eye:hover { color: var(--ink); }
   .part { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); cursor: grab; user-select: none; touch-action: none; }
   .part:hover { border-color: var(--line-2); }
   .part:active { cursor: grabbing; }
@@ -235,7 +239,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 04:45</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 04:48</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -748,6 +752,12 @@
   // ── Palette ────────────────────────────────────────────────────────────────
   // 左の部品の群は畳める。開いているかはこのブラウザに憶える (文字盤の中身とは無関係)。
   const FOLD_KEY = 'faceComposer.folds';
+  // プレビューから外している群 (編集用。レイアウトの中身は変わらないので実機には出る)。
+  const PV_KEY = 'faceComposer.preview';
+  const PV_OFF = new Set();
+  try { (JSON.parse(localStorage.getItem(PV_KEY) || '[]') || []).forEach((g) => PV_OFF.add(g)); } catch (e) {}
+  const savePv = () => { try { localStorage.setItem(PV_KEY, JSON.stringify([...PV_OFF])); } catch (e) {} };
+  const hiddenInPreview = (t) => { const d = TYPES[t]; return !!(d && PV_OFF.has(d.grp)); };
   function readFolds() { try { return JSON.parse(localStorage.getItem(FOLD_KEY) || '{}') || {}; } catch (e) { return {}; } }
   function setupFolds() {
     const folds = readFolds();
@@ -757,6 +767,16 @@
       const name = lbl.textContent.trim();
       gp.classList.add('fold');
       const cnt = document.createElement('span'); cnt.className = 'cnt'; lbl.appendChild(cnt);
+      // 目のボタン: この群の部品をプレビューに出すか (畳む操作とは別)
+      const grp = parts.id.replace('parts-', '');
+      const eye = document.createElement('span'); eye.className = 'eye'; eye.dataset.grp = grp;
+      eye.title = 'Show or hide these parts in the dial preview (the watch still shows them)';
+      eye.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        if (PV_OFF.has(grp)) { PV_OFF.delete(grp); } else { PV_OFF.add(grp); }
+        savePv(); renderEyes(); render();
+      });
+      lbl.appendChild(eye);
       if (folds[name]) { gp.classList.add('shut'); }
       lbl.title = 'Click to fold this group away';
       lbl.addEventListener('click', () => {
@@ -766,7 +786,15 @@
         renderFoldCounts();
       });
     });
+    renderEyes();
     renderFoldCounts();
+  }
+  // 目の印。出す = ● (緑) / 出さない = ◌ (灰)
+  function renderEyes() {
+    document.querySelectorAll('aside.left .group.fold .eye').forEach((e) => {
+      const off = PV_OFF.has(e.dataset.grp);
+      e.classList.toggle('off', off); e.textContent = off ? '◌' : '●';
+    });
   }
   // 畳んでいる時は「中に何個あるか」を見出しに出す (開かずに中身の量が分かる)。
   function renderFoldCounts() {
@@ -874,7 +902,7 @@
       g += '</svg>';
       stage.insertAdjacentHTML('beforeend', g);
     }
-    st.el.forEach((e, i) => stage.appendChild(makeEl(e, i, k)));
+    st.el.forEach((e, i) => { if (!hiddenInPreview(e[0])) stage.appendChild(makeEl(e, i, k)); });
     positionAll();
     $('empty').hidden = st.el.length > 0;
     renderBgHist();

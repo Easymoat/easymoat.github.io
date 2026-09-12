@@ -245,7 +245,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 08:55</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 09:05</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -425,6 +425,7 @@
     54: { name: 'Hands: Bars + second', grp: 'hands', dial: true, hidden: true },   // 秒針はやめた (2026-09-11)
     55: { name: 'Hands: Rim marks',   grp: 'hands', dial: true },
     56: { name: 'Hands: Classic',     grp: 'hands', dial: true },
+    57: { name: 'Hands: Outline round', grp: 'hands', dial: true },
     60: { name: 'Rim: Ticks',         grp: 'rim',   dial: true },
     61: { name: 'Rim: Dots',          grp: 'rim',   dial: true },
     62: { name: 'Rim: 12 3 6 9',      grp: 'rim',   dial: true },
@@ -699,6 +700,14 @@
     const barPts = (len, w, back) => [-w / 2, -back, w / 2, -back, w / 2, len, -w / 2, len].map(r1);
     const kitePts = (len, w, back) => [0, len, w / 2, len * 0.62, 0, -back, -w / 2, len * 0.62].map(r1);
     const needlePts = (len, w) => [0, len, w / 2, -14, -w / 2, -14].map(r1);
+    // 角丸の棒 (両端が半円) の輪郭。円弧は seg 分割の点で近似する = 実機も同じ点を辿るだけで済む。
+    const roundBarPts = (len, w, back, seg) => {
+      const hw = w / 2, c1 = -back + hw, c2 = len - hw, pts = [];
+      pts.push(hw, c1);
+      for (let i = 0; i <= seg; i++) { const a = Math.PI * i / seg; pts.push(hw * Math.cos(a), c2 + hw * Math.sin(a)); }
+      for (let i = 0; i <= seg; i++) { const a = Math.PI * (1 + i / seg); pts.push(hw * Math.cos(a), c1 + hw * Math.sin(a)); }
+      return pts.map(r1);
+    };
     const spanKite = (ri, ro, hw) => { const fat = ri + (ro - ri) * 0.32; return [0, ri, hw, fat, 0, ro, -hw, fat].map(r1); };
 
     // 針の仕様 [キャップ半径, 時針, 分針]
@@ -712,6 +721,8 @@
         const ro = R - 40, inner = ro - L(44), hw = W(9.5), ringR = W(9), out = ro + W(6);
         return [0, [0].concat(spanKite(inner + 1, out, hw)), [2, r1(ringR), r1(W(3)), r1(W(4)), r1(inner + ringR), r1(out)]];
       }
+      if (t === 57) return [r1(W(8)), [1, r1(W(4))].concat(roundBarPts(L(120), W(20), 20, 6)),
+                                       [1, r1(W(4))].concat(roundBarPts(L(180), W(15), 20, 6))];
       if (t === 56) return [r1(W(4)), [0].concat(barPts(L(R * 0.55), W(6), 0)), [0].concat(barPts(L(R * 0.86), W(3), 0))];
       return null;
     }

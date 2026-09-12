@@ -248,7 +248,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 15:41</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 15:59</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -437,7 +437,8 @@
     63: { name: 'Rim: Ring',          grp: 'rim',   dial: true },
     64: { name: 'Rim: Arcs',          grp: 'rim',   dial: true },
     66: { name: 'Rim: Arcs long',     grp: 'rim',   dial: true },
-    67: { name: 'Rim: Arcs corners',  grp: 'rim',   dial: true },
+    67: { name: 'Rim: Corners long',  grp: 'rim',   dial: true },
+    68: { name: 'Rim: Corners',       grp: 'rim',   dial: true },
     65: { name: 'Rim: Marks',         grp: 'rim',   dial: true, hidden: true },   // Ticks と同じだった (2026-09-12 取り下げ)
     30: { name: 'Stock 1',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
     31: { name: 'Stock 2',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
@@ -709,6 +710,7 @@
     64: { deg: [0, 90, 180, 270], half: 12, dir: [1, -1, -1, 1], lbl: ['0', '3', '6', '9'] },
     66: { deg: [0, 90, 180, 270], half: 30, dir: [1, -1, -1, 1], lbl: ['0', '3', '6', '9'] },
     67: { deg: [45, 135, 225, 315], half: 24, dir: [-1, -1, 1, 1], lbl: ['1:30', '4:30', '7:30', '10:30'] },
+    68: { deg: [45, 135, 225, 315], half: 12, dir: [-1, -1, 1, 1], lbl: ['1:30', '4:30', '7:30', '10:30'] },
   };
   const meterName = (id) => (METERS.find((m) => m[0] === id) || [0, '—'])[1];
   const meterRatio = (id) => (METERS.find((m) => m[0] === id) || [0, '', 0])[2];
@@ -751,7 +753,7 @@
       if (t === 61) return [[1, 12, 3, 3, r1(W(4)), r1(W(7))]];
       if (t === 62) return [[4, r1(R - L(22)), r1(W(38))]];
       if (t === 63) return [[2, r1(R - 2 - W(2.5)), r1(W(5))], [0, 4, 1, 2, r1(L(26)), r1(W(7)), r1(L(26)), r1(W(7))]];
-      if (t === 64 || t === 66 || t === 67) {
+      if (ARCSET[t]) {
         const A = ARCSET[t];                              // 位置・長さ・向き
         const mt = (arguments[2] || [0, 0, 0, 0]);
         const rr = r1(R - 3 - W(6)), sw = r1(W(12));

@@ -156,6 +156,9 @@
                      cursor: pointer; color: var(--ink); font: 12px var(--mono); }
   .cb.units button:hover { border-color: var(--ink-2); }
   .cb.units button.on { background: var(--ok); border-color: var(--ok); color: #05170c; }
+  .mts { display: flex; gap: 10px; flex-wrap: wrap; }
+  .mts .mt { display: flex; align-items: center; gap: 4px; font: 11px var(--mono); color: var(--ink-3); }
+  .mts select { height: 26px; font-size: 12px; }
   .imgstage { position: relative; width: 320px; height: 320px; border-radius: 50%; background: #000; overflow: hidden; touch-action: none; cursor: grab; }
   .imgstage canvas { width: 320px; height: 320px; display: block; }
   .imgstage #imgQ { position: absolute; left: 0; top: 0; pointer-events: none; }
@@ -245,7 +248,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 09:05</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 14:08</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -644,7 +647,7 @@
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
-  let st = { dev: 'fr965', grid: 50, showGrid: true, gridBright: false, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0 };
+  let st = { dev: 'fr965', grid: 50, showGrid: true, gridBright: false, mt: [0, 0, 0, 0], bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0 };
   // Selection: `sel` is the primary (last clicked) element, `selSet` every selected index.
   // Shift / Cmd / Ctrl + click adds or removes one; the Selected panel, dragging, arrows and
   // Delete act on all of them.
@@ -694,6 +697,11 @@
   //   縁 = [0 目盛り n,every,上端から,長さ,幅,長さ2,幅2] / [1 点 n,every,上端から,半径,半径2]
   //        / [2 円環 半径,線幅] / [3 円弧 n,半径,線幅,半角] / [4 数字 半径,文字高]
   const DIAL_SCALE = [{ l: 0.86, w: 0.7 }, { l: 1, w: 1 }, { l: 1.08, w: 1.35 }, { l: 1.14, w: 1.75 }];
+  // 弧のメーターに出せる指標。id は部品の種別と同じ。ratio はプレビュー用の見本の割合。
+  const METERS = [[0, 'none', 0], [3, 'Battery', 0.85], [10, 'Heart rate', 0.2], [11, 'Steps', 0.84],
+                  [15, 'Body Battery', 0.75], [16, 'Stress', 0.32], [21, 'Humidity', 0.55], [28, 'Rain today', 0.4]];
+  const meterName = (id) => (METERS.find((m) => m[0] === id) || [0, '—'])[1];
+  const meterRatio = (id) => (METERS.find((m) => m[0] === id) || [0, '', 0])[2];
   const DIAL = (() => {
     const R = 227, T = { h: 304, m: 48 };            // プレビューの時刻 10:08
     const r1 = (v) => Math.round(v * 10) / 10;
@@ -727,13 +735,18 @@
       return null;
     }
     // 縁の仕様 (複数可)
-    function rim(t, k) {
+    function rim(t, k, mt) {
       const L = (v) => v * k.l, W = (v) => v * k.w;
       if (t === 60) return [[0, 60, 5, 2, r1(L(10)), r1(W(3)), r1(L(22)), r1(W(6))]];
       if (t === 61) return [[1, 12, 3, 3, r1(W(4)), r1(W(7))]];
       if (t === 62) return [[4, r1(R - L(22)), r1(W(38))]];
       if (t === 63) return [[2, r1(R - 2 - W(2.5)), r1(W(5))], [0, 4, 1, 2, r1(L(26)), r1(W(7)), r1(L(26)), r1(W(7))]];
-      if (t === 64) return [[3, 4, r1(R - 3 - W(6)), r1(W(12)), 12]];
+      if (t === 64) {
+        // 指標を選んでいない間は飾りの弧のまま。1 つでも選べば弧ごとの「メーター」で送る。
+        const mt = (arguments[2] || [0, 0, 0, 0]);
+        if (!mt.some((m) => m)) { return [[3, 4, r1(R - 3 - W(6)), r1(W(12)), 12]]; }
+        return [0, 1, 2, 3].map((i) => [5, i * 90, 12, r1(R - 3 - W(6)), r1(W(12)), mt[i] || 0]);
+      }
       return null;
     }
 
@@ -773,6 +786,14 @@
             const [x0, y0] = p(a0), [x1, y1] = p(a1);
             o += `<path d="M ${r1(x0)} ${r1(y0)} A ${rr} ${rr} 0 0 1 ${r1(x1)} ${r1(y1)}" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round"/>`;
           }
+        } else if (e[0] === 5) {                            // メーターの弧 (track + 実測ぶん)
+          const [, cdeg, half, rr, sw, metric] = e;
+          const p = (a) => [R + rr * Math.cos((a - 90) * Math.PI / 180), R + rr * Math.sin((a - 90) * Math.PI / 180)];
+          const arc = (a0, a1, op) => { const [x0, y0] = p(a0), [x1, y1] = p(a1);
+            return `<path d="M ${r1(x0)} ${r1(y0)} A ${rr} ${rr} 0 0 1 ${r1(x1)} ${r1(y1)}" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" opacity="${op}"/>`; };
+          o += arc(cdeg - half, cdeg + half, 0.28);
+          const ratio = metric ? meterRatio(metric) : 0;
+          if (ratio > 0.02) { o += arc(cdeg - half, cdeg - half + 2 * half * ratio, 1); }
         } else if (e[0] === 4) {                            // 数字 12 / 3 / 6 / 9
           const [, rr, hgt] = e;
           [[12, 0], [3, 90], [6, 180], [9, 270]].forEach(([num, a]) => {
@@ -783,17 +804,17 @@
       }
       return o;
     }
-    function svgFor(t, k) {
+    function svgFor(t, k, mt) {
       const h = hands(t, k);
       if (h) return handSvg(h[1], T.h) + handSvg(h[2], T.m) + (h[0] > 0 ? `<circle cx="${R}" cy="${R}" r="${h[0]}"/>` : '');
-      return rimSvg(rim(t, k));
+      return rimSvg(rim(t, k, mt));
     }
     return { R, hands, rim, svgFor };
   })();
   // One dial part as an <svg> that fills the dial; colour comes from the element (currentColor).
   function dialArt(t, s, w, h) {
     const k = DIAL_SCALE[Math.min(Math.max(s, 0), 3)];
-    const inner = DIAL.svgFor(t, k);
+    const inner = DIAL.svgFor(t, k, st.mt);
     if (!inner) return '';
     return `<svg width="${w}" height="${h}" viewBox="0 0 454 454" fill="currentColor" style="display:block">${inner}</svg>`;
   }
@@ -1003,7 +1024,8 @@
       for (let c = 0; c < def.strip; c++) cells.push(`${icon}<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px;${c < def.strip - 1 ? `margin-right:${(GAP * 2 * ki).toFixed(1)}px` : ''}">${temps[c]}</span>`);
       div.innerHTML = cells.join('') + '<span class="anchor"></span>';
     } else {
-      div.innerHTML = icon + `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px">${def.sample}</span><span class="anchor"></span>`;
+      const showVal = !(f & 2);   // f の bit 1 = 値を出さない (アイコンだけ)
+      div.innerHTML = icon + (showVal ? `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px">${def.sample}</span>` : '') + '<span class="anchor"></span>';
     }
     div.addEventListener('pointerdown', (ev) => startMove(ev, i));
     return div;
@@ -1049,12 +1071,12 @@
       const k = DIAL_SCALE[Math.min(Math.max(e[4], 0), 3)];
       const h = DIAL.hands(e[0], k);
       if (h && !out.hd) { out.hd = h; continue; }
-      const r = DIAL.rim(e[0], k);
+      const r = DIAL.rim(e[0], k, st.mt);
       if (r) { out.rm = (out.rm || []).concat(r); }
     }
     return out;
   }
-  const layoutObj = () => { const o = Object.assign({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0 }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
+  const layoutObj = () => { const o = Object.assign({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   function renderList() {
     const l = $('list'); l.innerHTML = '';
@@ -1087,7 +1109,15 @@
         ${seg('Size', SIZES, same(4) ? e[4] : -9, 4)}
         ${anyIcon ? seg('Icon size', ['Auto'].concat(SIZES), sameIs ? isOf(e) : -9, 7, -1) : ''}
         <div class="field"><span>Color</span><span class="swatches">${PALETTE.map((c, i) => `<button class="sw ${same(5) && i === e[5] ? 'on' : ''}" data-c="${i}" title="${PALETTE_NAMES[i]}" style="background:${c}"></button>`).join('')}</span></div>
-        ${anyIcon ? `<div class="field"><span>Icon</span><label><input type="checkbox" id="ficon" ${all.some((x) => TYPES[x[0]]?.icon && (x[6] & 1)) ? 'checked' : ''}> show</label></div>` : ''}
+        ${all.some((x) => x[0] === 64) ? `<div class="field" title="Each arc can be a meter. Pick what it measures; none = plain arc."><span>Meters</span><span class="mts">${
+          ['12', '3', '6', '9'].map((pos, i) => `<label class="mt"><span>${pos}</span><select data-i="${i}">${
+            METERS.map(([id, nm]) => `<option value="${id}" ${(st.mt || [])[i] === id ? 'selected' : ''}>${nm}</option>`).join('')
+          }</select></label>`).join('')
+        }</span></div>` : ''}
+        ${anyIcon ? `<div class="field"><span>Show</span><span class="cb units" id="fshow">${
+          [['Icon + value', 1], ['Icon only', 3], ['Value only', 0]].map(([lbl, v]) =>
+            `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 3) === v) ? 'on' : ''}">${lbl}</button>`).join('')
+        }</span></div>` : ''}
         <div class="row" style="margin-top:6px"><button class="btn" id="dup">Duplicate</button><button class="btn danger" id="del">Remove</button></div>
       </div>
       <div class="muted hint">${none ? 'Shift+click (or Cmd/Ctrl+click) selects several parts.' : multi ? `${all.length} parts selected — Anchor, Size, Icon size, Color and Icon apply to all of them.` : 'Shift+click adds another part to the selection.'}</div>`;
@@ -1098,7 +1128,13 @@
     if (fy) fy.addEventListener('change', (ev) => { e[2] = clamp(+ev.target.value); commit(); });
     box.querySelectorAll('.seg').forEach((sg) => sg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => each((x) => { const k = +sg.dataset.key; while (x.length < 8) x.push(-1); x[k] = +b.dataset.v; }))));
     box.querySelectorAll('.sw').forEach((b) => b.addEventListener('click', () => each((x) => { x[5] = +b.dataset.c; })));
-    const fi = $('ficon'); if (fi) fi.addEventListener('change', () => each((x) => { if (TYPES[x[0]]?.icon) x[6] = fi.checked ? (x[6] | 1) : (x[6] & ~1); }));
+    document.querySelectorAll('.mts select').forEach((sel) => sel.addEventListener('change', () => {
+      const i = Number(sel.dataset.i); st.mt = (st.mt || [0, 0, 0, 0]).slice(); st.mt[i] = Number(sel.value); commit();
+    }));
+    document.querySelectorAll('#fshow button').forEach((b) => b.addEventListener('click', () => {
+      const v = Number(b.dataset.v);
+      each((x) => { if (TYPES[x[0]]?.icon) { x[6] = (x[6] & ~3) | v; } });
+    }));
     $('dup').addEventListener('click', () => {   // copies of every selected element, one grid step down, and the copies become the selection
       const start = st.el.length; all.forEach((x) => { const c = x.slice(); c[2] = clamp(c[2] + st.grid); st.el.push(c); });
       selSet.clear(); for (let i = start; i < st.el.length; i++) selSet.add(i); sel = st.el.length - 1; commit(); });
@@ -1245,7 +1281,8 @@
              wu: (Number.isInteger(j.wu) && j.wu >= 0 && j.wu <= 3) ? j.wu : 0,
              tu: (Number.isInteger(j.tu) && j.tu >= 0 && j.tu <= 1) ? j.tu : 0,
              pu: (Number.isInteger(j.pu) && j.pu >= 0 && j.pu <= 2) ? j.pu : 0,
-             du: (Number.isInteger(j.du) && j.du >= 0 && j.du <= 1) ? j.du : 0 };
+             du: (Number.isInteger(j.du) && j.du >= 0 && j.du <= 1) ? j.du : 0,
+             mt: (Array.isArray(j.mt) && j.mt.length === 4 && j.mt.every((m) => METERS.some((x) => x[0] === m))) ? j.mt.slice() : [0, 0, 0, 0] };
   }
 
   // ── Server sync ────────────────────────────────────────────────────────────
@@ -1276,7 +1313,7 @@
       div.style.top = (py - h / 2) + 'px';
     });
   }
-  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; clearSel(); pushBgHist(st.bg); }
+  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); clearSel(); pushBgHist(st.bg); }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
   function renderWatchSeen() {
     const el = $('watchseen'); if (!el) return;

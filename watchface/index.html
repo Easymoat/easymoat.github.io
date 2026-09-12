@@ -248,7 +248,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 15:30</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 15:41</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -436,6 +436,8 @@
     62: { name: 'Rim: 12 3 6 9',      grp: 'rim',   dial: true },
     63: { name: 'Rim: Ring',          grp: 'rim',   dial: true },
     64: { name: 'Rim: Arcs',          grp: 'rim',   dial: true },
+    66: { name: 'Rim: Arcs long',     grp: 'rim',   dial: true },
+    67: { name: 'Rim: Arcs corners',  grp: 'rim',   dial: true },
     65: { name: 'Rim: Marks',         grp: 'rim',   dial: true, hidden: true },   // Ticks と同じだった (2026-09-12 取り下げ)
     30: { name: 'Stock 1',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
     31: { name: 'Stock 2',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
@@ -702,6 +704,12 @@
   // 弧のメーターに出せる指標。id は部品の種別と同じ。ratio はプレビュー用の見本の割合。
   const METERS = [[0, 'none', 0], [3, 'Battery', 0.85], [11, 'Steps', 0.84],
                   [15, 'Body Battery', 0.75], [16, 'Stress', 0.32], [21, 'Humidity', 0.55], [28, 'Rain today', 0.4]];
+  // 弧の並び。deg = 中心角 (12 時が 0、時計回り)、half = 半角、dir = 伸びる向き、lbl = Meters の見出し
+  const ARCSET = {
+    64: { deg: [0, 90, 180, 270], half: 12, dir: [1, -1, -1, 1], lbl: ['0', '3', '6', '9'] },
+    66: { deg: [0, 90, 180, 270], half: 30, dir: [1, -1, -1, 1], lbl: ['0', '3', '6', '9'] },
+    67: { deg: [45, 135, 225, 315], half: 24, dir: [-1, -1, 1, 1], lbl: ['1:30', '4:30', '7:30', '10:30'] },
+  };
   const meterName = (id) => (METERS.find((m) => m[0] === id) || [0, '—'])[1];
   const meterRatio = (id) => (METERS.find((m) => m[0] === id) || [0, '', 0])[2];
   const DIAL = (() => {
@@ -743,13 +751,16 @@
       if (t === 61) return [[1, 12, 3, 3, r1(W(4)), r1(W(7))]];
       if (t === 62) return [[4, r1(R - L(22)), r1(W(38))]];
       if (t === 63) return [[2, r1(R - 2 - W(2.5)), r1(W(5))], [0, 4, 1, 2, r1(L(26)), r1(W(7)), r1(L(26)), r1(W(7))]];
-      if (t === 64) {
-        // 指標を選んでいない間は飾りの弧のまま。1 つでも選べば弧ごとの「メーター」で送る。
+      if (t === 64 || t === 66 || t === 67) {
+        const A = ARCSET[t];                              // 位置・長さ・向き
         const mt = (arguments[2] || [0, 0, 0, 0]);
-        if (!mt.some((m) => m)) { return [[3, 4, r1(R - 3 - W(6)), r1(W(12)), 12]]; }
-        // 0 時と 9 時は時計回り、3 時と 6 時は反時計回り (左右・上下で伸びる向きを揃える)。
-        const dir = [1, -1, -1, 1];
-        return [0, 1, 2, 3].map((i) => [5, i * 90, 12, r1(R - 3 - W(6)), r1(W(12)), mt[i] || 0, dir[i]]);
+        const rr = r1(R - 3 - W(6)), sw = r1(W(12));
+        // 指標を選んでいない間は飾りの弧のまま。1 つでも選べば弧ごとの「メーター」で送る。
+        if (!mt.some((m) => m)) {
+          if (t === 64) { return [[3, 4, rr, sw, A.half]]; }   // 均等 4 本は種別 3 で足りる
+          return A.deg.map((d, i) => [5, d, A.half, rr, sw, 0, A.dir[i]]);
+        }
+        return A.deg.map((d, i) => [5, d, A.half, rr, sw, mt[i] || 0, A.dir[i]]);
       }
       return null;
     }
@@ -1121,8 +1132,8 @@
           [['Icon + value', 1], ['Icon only', 3], ['Value only', 0]].map(([lbl, v]) =>
             `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 3) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none ? 'disabled' : ''}>${lbl}</button>`).join('')
         }</span></div>`}
-        ${all.some((x) => x[0] === 64) ? `<div class="field" title="Each arc can be a meter. Pick what it measures; none = plain arc."><span>Meters</span><span class="mts">${
-          ['0', '3', '6', '9'].map((pos, i) => `<label class="mt"><span>${pos}</span><select data-i="${i}">${
+        ${all.some((x) => ARCSET[x[0]]) ? `<div class="field" title="Each arc can be a meter. Pick what it measures; none = plain arc."><span>Meters</span><span class="mts">${
+          (ARCSET[(all.find((x) => ARCSET[x[0]]) || [])[0]] || ARCSET[64]).lbl.map((pos, i) => `<label class="mt"><span>${pos}</span><select data-i="${i}">${
             METERS.map(([id, nm]) => `<option value="${id}" ${(st.mt || [])[i] === id ? 'selected' : ''}>${nm}</option>`).join('')
           }</select></label>`).join('')
         }</span></div>` : ''}

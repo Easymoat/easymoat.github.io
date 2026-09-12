@@ -248,7 +248,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 23:06</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 01:41</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1121,6 +1121,7 @@
     const isOf = (x) => (Number.isInteger(x[7]) && x[7] >= 0 && x[7] <= SIZE_MAX) ? x[7] : -1;
     const sameIs = all.every((x) => isOf(x) === isOf(e));
     const anyIcon = all.some((x) => TYPES[x[0]]?.icon);
+    const arcEl = st.el.find((x) => ARCSET[x[0]]);   // Meters は弧が文字盤にある間ずっと出す (選択に関係なく)
     box.innerHTML = `
       <div style="font-weight:600;margin-bottom:8px">${none ? '<span class="muted" style="font-weight:400">No part selected — click one on the dial (Shift+click for several)</span>' : multi ? `${all.length} elements <span class="kbd">changes apply to all</span>` : `${def.name} <span class="kbd">type ${e[0]}</span>`}</div>
       <div class="group">
@@ -1134,24 +1135,25 @@
           [['Icon + value', 1], ['Icon only', 3], ['Value only', 0]].map(([lbl, v]) =>
             `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 3) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none ? 'disabled' : ''}>${lbl}</button>`).join('')
         }</span></div>`}
-        ${all.some((x) => ARCSET[x[0]]) ? `<div class="field" title="Each arc can be a meter. Pick what it measures; none = plain arc."><span>Meters</span><span class="mts">${
-          (ARCSET[(all.find((x) => ARCSET[x[0]]) || [])[0]] || ARCSET[64]).lbl.map((pos, i) => `<label class="mt"><span>${pos}</span><select data-i="${i}">${
+        ${arcEl ? `<div class="field" title="Each arc can be a meter. Pick what it measures; none = plain arc."><span>Meters</span><span class="mts">${
+          ARCSET[arcEl[0]].lbl.map((pos, i) => `<label class="mt"><span>${pos}</span><select data-i="${i}">${
             METERS.map(([id, nm]) => `<option value="${id}" ${(st.mt || [])[i] === id ? 'selected' : ''}>${nm}</option>`).join('')
           }</select></label>`).join('')
         }</span></div>` : ''}
         <div class="row" style="margin-top:6px"><button class="btn" id="dup">Duplicate</button><button class="btn danger" id="del">Remove</button></div>
       </div>
       <div class="muted hint">${none ? 'Shift+click (or Cmd/Ctrl+click) selects several parts.' : multi ? `${all.length} parts selected — Anchor, Size, Icon size, Color and Icon apply to all of them.` : 'Shift+click adds another part to the selection.'}</div>`;
-    if (none) { box.querySelectorAll('input, button').forEach((b) => { b.disabled = true; }); return; }
+    const bindMeters = () => document.querySelectorAll('.mts select').forEach((sel) => sel.addEventListener('change', () => {
+      const i = Number(sel.dataset.i); st.mt = (st.mt || [0, 0, 0, 0]).slice(); st.mt[i] = Number(sel.value); commit();
+    }));
+    if (none) { box.querySelectorAll('input, button').forEach((b) => { b.disabled = true; }); bindMeters(); return; }
     const each = (fn) => { all.forEach(fn); commit(); };
     const fx = $('fx'), fy = $('fy');
     if (fx) fx.addEventListener('change', (ev) => { e[1] = clamp(+ev.target.value); commit(); });
     if (fy) fy.addEventListener('change', (ev) => { e[2] = clamp(+ev.target.value); commit(); });
     box.querySelectorAll('.seg').forEach((sg) => sg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => each((x) => { const k = +sg.dataset.key; while (x.length < 8) x.push(-1); x[k] = +b.dataset.v; }))));
     box.querySelectorAll('.sw').forEach((b) => b.addEventListener('click', () => each((x) => { x[5] = +b.dataset.c; })));
-    document.querySelectorAll('.mts select').forEach((sel) => sel.addEventListener('change', () => {
-      const i = Number(sel.dataset.i); st.mt = (st.mt || [0, 0, 0, 0]).slice(); st.mt[i] = Number(sel.value); commit();
-    }));
+    bindMeters();
     document.querySelectorAll('#fshow button').forEach((b) => b.addEventListener('click', () => {
       const v = Number(b.dataset.v);
       each((x) => { if (TYPES[x[0]]?.icon) { x[6] = (x[6] & ~3) | v; } });

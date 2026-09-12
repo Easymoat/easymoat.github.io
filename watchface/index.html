@@ -248,7 +248,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 16:11</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 20:23</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1521,13 +1521,16 @@
   $('shelfsave').addEventListener('click', async () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
     const hasImg = !!(IMG.show && hasSource() && IMG.masked);
+    // 絵のない品はウォッチでも絵なしになる。意図しない「絵なし」で保存してしまうのを防ぐ。
+    if (!hasImg && CAM.on && !IMG.cur) return setStatus('shelfstatus', 'No camera frame in the editor yet — this would be saved without a picture. Press Camera again once a frame appears.', 'err');
     if (hasImg && !IMG.reduced) renderQuality();
     const body = { device_id: id, layout: layoutObj(), kind: hasImg ? (IMG.src === 'camera' ? 'camera' : IMG.cur ? 'photo' : 'fill') : 'none', recipe: currentRecipe(), name: $('shelfname').value.trim() };
     if (hasImg) { body.image = (IMG.reduced || imgCv).toDataURL('image/png'); body.palette = (IMG.reducedPal && IMG.reducedPal.length >= 2) ? IMG.reducedPal : computeOptimalPalette(IMG.colors); }
     setStatus('shelfstatus', 'Saving…');
     try { const r = await fetch($('api').value + '/shelf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error === 'shelf_full' ? `the collection is full (${j.max} items) — delete one first` : (j.error || r.status));
-      setStatus('shelfstatus', `Saved as ${body.name || 'item ' + j.n} — use "To watch…" on it to put it on the watch.`, 'ok'); $('shelfname').value = ''; loadShelf(); }
+      const note = hasImg ? '' : (hasSource() ? ' (saved without the picture — Show is off)' : ' (no picture)');
+      setStatus('shelfstatus', `Saved as ${body.name || 'item ' + j.n}${note} — use "To watch…" on it to put it on the watch.`, hasImg ? 'ok' : 'err'); $('shelfname').value = ''; loadShelf(); }
     catch (e) { setStatus('shelfstatus', 'Save failed: ' + e.message, 'err'); }
   });
   async function loadShelfItem(n) {
@@ -1569,14 +1572,16 @@
   // 棚の品をそのまま実機の面にする (他の面は消える)。
   async function sendShelfItem(n) {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('syncstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
-    const name = (SHELF.items.find((i) => i.n === n) || {}).name || 'item ' + n;
+    const it = SHELF.items.find((i) => i.n === n) || {};
+    const name = it.name || 'item ' + n;
     setStatus('syncstatus', 'Sending…');
     try {
       const r = await fetch($('api').value + '/watch', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ device_id: id, slot: 1, from_shelf: n, activate: true, only: true }) });
       const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
-      setStatus('syncstatus', `Your watch now shows "${name}". It arrives within 5 minutes.`, 'ok');
-      WSLOTS.active = 1; WSLOTS.faces = { '1': { v: j.v, shelf: n, kind: 'photo' } }; markShelfOnWatch();
+      const nopic = !it.kind || it.kind === 'none';
+      setStatus('syncstatus', `Your watch now shows "${name}"${nopic ? ' — this item has no picture, so the watch shows the dial only' : ''}. It arrives within 5 minutes.`, nopic ? 'err' : 'ok');
+      WSLOTS.active = 1; WSLOTS.faces = { '1': { v: j.v, shelf: n, kind: it.kind || 'none' } }; markShelfOnWatch();
       loadWatchSlots(); loadWatchState();
     } catch (e) { setStatus('syncstatus', 'Send failed: ' + e.message, 'err'); }
   }

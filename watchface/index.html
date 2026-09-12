@@ -248,7 +248,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 15:20</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 15:30</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1198,8 +1198,9 @@
   function toggleDialPart(t) {
     const grp = TYPES[t].grp, was = st.el.findIndex((e) => e[0] === t);
     st.el = st.el.filter((e) => !(TYPES[e[0]] && TYPES[e[0]].dial && TYPES[e[0]].grp === grp));
-    if (was < 0) st.el.push([t, 500, 500, 0, 1, 0, 0, -1]);
-    clearSel(); commit();
+    if (was < 0) { st.el.push([t, 500, 500, 0, 1, 0, 0, -1]); setSel(st.el.length - 1, false); }
+    else { clearSel(); }
+    commit();
   }
   function renderDialToggles() {
     document.querySelectorAll('.part.tgl').forEach((p) => {
@@ -1303,7 +1304,8 @@
   function faceLayout(f) { const c = sanitize(f); return c || null; }
   // Render one layout as a small dial (reuses makeEl by swapping `st` while it builds).
   function renderFaceMini(el, lay) {
-    const d = dev(), sc = 124 / d.w, keep = st;
+    // 枠線の内側 (clientWidth) に合わせる。124 固定だと border ぶんはみ出して右と下が切れる。
+    const d = dev(), side = el.clientWidth || 124, sc = side / d.w, keep = st;
     el.innerHTML = '';
     if (!el.style.backgroundImage) el.style.background = hex(lay.bg);
     const inner = document.createElement('div');

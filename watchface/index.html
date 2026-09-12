@@ -153,7 +153,7 @@
   .imgbox .cb button { height: 28px; min-width: 40px; }
   .cb.units { display: inline-flex; gap: 6px; }
   .cb.units button { background: var(--panel-2); border: 2px solid var(--line-2); border-radius: 5px; padding: 3px 9px;
-                     cursor: pointer; color: var(--ink); font: 12px var(--mono); }
+                     cursor: pointer; color: var(--ink); font: 12px var(--mono); white-space: nowrap; }
   .cb.units button:hover { border-color: var(--ink-2); }
   .cb.units button.on { background: var(--ok); border-color: var(--ok); color: #05170c; }
   .mts { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -248,7 +248,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 15:09</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 15:20</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -392,7 +392,7 @@
     { key: 'tu', id: 'tempunit',  t: 20, opts: { 0: ['°C', '23°'], 1: ['°F', '73°'] } },
     { key: 'pu', id: 'pressunit', t: 23, opts: { 0: ['hPa', '1013'], 1: ['inHg', '29.92'], 2: ['mmHg', '760'] } },
     { key: 'du', id: 'distunit',  t: 24, opts: { 0: ['m', '45m'], 1: ['ft', '148ft'] } },
-    { key: 'hf', id: 'hourfmt',   t: 0,  opts: { 0: ['Device', ''], 1: ['12 h', ''], 2: ['24 h', ''] } },
+    { key: 'hf', id: 'hourfmt',   t: 0,  opts: { 0: ['Auto', ''], 1: ['12', ''], 2: ['24', ''] } },
   ];
   // 大きい数字の時計用サイズ表 (tm) を使う種別: 1 時刻 / 4 時刻+秒 / 5 秒
   const isClock = (t) => t === 1 || t === 4 || t === 5;
@@ -700,7 +700,7 @@
   //        / [2 円環 半径,線幅] / [3 円弧 n,半径,線幅,半角] / [4 数字 半径,文字高]
   const DIAL_SCALE = [{ l: 0.86, w: 0.7 }, { l: 1, w: 1 }, { l: 1.08, w: 1.35 }, { l: 1.14, w: 1.75 }];
   // 弧のメーターに出せる指標。id は部品の種別と同じ。ratio はプレビュー用の見本の割合。
-  const METERS = [[0, 'none', 0], [3, 'Battery', 0.85], [10, 'Heart rate', 0.2], [11, 'Steps', 0.84],
+  const METERS = [[0, 'none', 0], [3, 'Battery', 0.85], [11, 'Steps', 0.84],
                   [15, 'Body Battery', 0.75], [16, 'Stress', 0.32], [21, 'Humidity', 0.55], [28, 'Rain today', 0.4]];
   const meterName = (id) => (METERS.find((m) => m[0] === id) || [0, '—'])[1];
   const meterRatio = (id) => (METERS.find((m) => m[0] === id) || [0, '', 0])[2];
@@ -796,7 +796,7 @@
           const p = (a) => [R + rr * Math.cos((a - 90) * Math.PI / 180), R + rr * Math.sin((a - 90) * Math.PI / 180)];
           const arc = (a0, a1, op) => { const [x0, y0] = p(a0), [x1, y1] = p(a1);
             return `<path d="M ${r1(x0)} ${r1(y0)} A ${rr} ${rr} 0 0 1 ${r1(x1)} ${r1(y1)}" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" opacity="${op}"/>`; };
-          o += arc(cdeg - half, cdeg + half, 0.28);
+          o += arc(cdeg - half, cdeg + half, 0.45);   // 薄すぎると小さい絵で消えるので 0.45
           const ratio = metric ? meterRatio(metric) : 0;
           if (ratio > 0.02) {
             const from = cdeg - half * dir, to = from + 2 * half * ratio * dir;

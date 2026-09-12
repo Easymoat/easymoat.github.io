@@ -248,7 +248,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 20:23</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-12 23:06</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -329,7 +329,7 @@
       <div class="grp">
         <div class="ctl"><span class="muted">Everything on the watch comes from here: save the dial above, then use <b>To watch</b> on it. The watch shows one dial — sending another replaces it, within 5 minutes.</span></div>
         <div class="status" id="syncstatus"></div>
-        <div class="row" style="align-items:center;gap:10px"><input type="text" id="shelfname" placeholder="Name (optional)" style="width:180px"><button class="btn primary" id="shelfsave">Save to collection</button><span class="muted" id="shelfcount"></span></div>
+        <div class="row" style="align-items:center;gap:10px"><input type="text" id="shelfname" placeholder="Name (optional)" style="width:180px"><button class="btn primary" id="shelfsave">Save to collection</button><span class="muted" id="shelfcount"></span><span class="status err" id="shelfnopic" hidden>No picture in the dial — it will be saved without one</span></div>
         <div class="status" id="shelfstatus"></div>
       </div>
       <div class="shelf" id="shelf"></div>
@@ -1889,7 +1889,10 @@
     st.bg = parseInt(IMG.autoBg.slice(1), 16) || 0; pushBgHist(st.bg); commit();
     setStatus('imgstatus', `Dial background set to ${IMG.autoBg.toUpperCase()}.`, 'ok');
   });
+  // 絵が入っていない状態は保存前から見えていないといけない (無音で kind:none になるのを防ぐ)。
+  function renderNoPic() { const el = $('shelfnopic'); if (el) el.hidden = !!(IMG.show && hasSource() && IMG.masked); }
   function renderShowToggle() {
+    renderNoPic();
     const b = $('imgshow'); b.classList.toggle('on', IMG.show); b.textContent = 'Show on dial: ' + (IMG.show ? 'ON' : 'OFF');
     b.disabled = !hasSource();
   }

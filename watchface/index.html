@@ -259,7 +259,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 18:54</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 19:33</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1106,7 +1106,9 @@
       g += '</svg>';
       stage.insertAdjacentHTML('beforeend', g);
     }
-    st.el.forEach((e, i) => { if (!hiddenInPreview(e[0])) stage.appendChild(makeEl(e, i, k)); });
+    // 縁 (Rim) は一番下に敷く: 弧が他の部品に重なっても文字やアイコンが隠れない。
+    const order = st.el.map((e, i) => [e, i]).sort((a, b) => (TYPES[a[0][0]]?.grp === 'rim' ? 0 : 1) - (TYPES[b[0][0]]?.grp === 'rim' ? 0 : 1));
+    order.forEach(([e, i]) => { if (!hiddenInPreview(e[0])) stage.appendChild(makeEl(e, i, k)); });
     positionAll();
     $('empty').hidden = st.el.length > 0;
     renderBgHist();
@@ -1581,11 +1583,12 @@
     inner.style.width = d.w + 'px'; inner.style.height = d.h + 'px'; inner.style.transform = `scale(${sc})`;
     try {
       st = Object.assign({}, keep, lay);
-      lay.el.forEach((e, i) => inner.appendChild(makeEl(e, i, d.w / 454)));
+      lay.el.map((e, i) => [e, i]).sort((a, b) => (TYPES[a[0][0]]?.grp === 'rim' ? 0 : 1) - (TYPES[b[0][0]]?.grp === 'rim' ? 0 : 1))
+        .forEach(([e, i]) => inner.appendChild(makeEl(e, i, d.w / 454)));   // 縁は一番下
     } finally { st = keep; }
     el.appendChild(inner);
-    inner.querySelectorAll('.el').forEach((div, i) => {
-      const e = lay.el[i]; if (!e) return;
+    inner.querySelectorAll('.el').forEach((div) => {
+      const e = lay.el[+div.dataset.i]; if (!e) return;
       const px = e[1] * d.w / 1000, py = e[2] * d.h / 1000;
       const { left, top } = boxPos(e, px, py, div.dataset.lw ? +div.dataset.lw : div.offsetWidth, div.dataset.lh ? +div.dataset.lh : div.offsetHeight);
       div.style.left = left + 'px'; div.style.top = top + 'px';

@@ -159,6 +159,9 @@
                      cursor: pointer; color: var(--ink); font: 12px var(--mono); white-space: nowrap; }
   .cb.units button:hover { border-color: var(--ink-2); }
   .cb.units button.on { background: var(--ok); border-color: var(--ok); color: #05170c; }
+  .cb.units.step { align-items: center; }
+  .cb.units.step button { min-width: 28px; padding: 3px 0; text-align: center; }
+  .cb.units.step b { min-width: 42px; text-align: center; font-weight: 600; }
   .mts { display: flex; gap: 10px; flex-wrap: wrap; }
   .mts .mt { display: flex; align-items: center; gap: 4px; font: 11px var(--mono); color: var(--ink-3); }
   .mts select { height: 26px; font-size: 12px; }
@@ -251,7 +254,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 09:23</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 10:02</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -260,11 +263,11 @@
   <aside class="left">
     <div class="group"><span class="lbl">Parts</span><span class="muted">Drag onto the dial, or click to drop at center.</span></div>
     <div class="group"><span class="lbl">Clock</span><div class="parts" id="parts-clock"></div></div>
+    <div class="group"><span class="lbl">Lines</span><div class="parts" id="parts-line"></div></div>
     <div class="group"><span class="lbl">Body</span><div class="parts" id="parts-body"></div></div>
     <div class="group"><span class="lbl">Weather</span><div class="parts" id="parts-wx"></div></div>
     <div class="group"><span class="lbl">Hands</span><div class="parts" id="parts-hands"></div></div>
     <div class="group"><span class="lbl">Rim</span><div class="parts" id="parts-rim"></div></div>
-    <div class="group"><span class="lbl">Lines</span><div class="parts" id="parts-line"></div></div>
     <div class="group"><span class="lbl">Markets</span><div class="parts" id="parts-mkt"></div><span class="muted">Values come from MarketWatch complications (next step).</span></div>
   </aside>
 
@@ -446,10 +449,10 @@
     65: { name: 'Rim: Marks',         grp: 'rim',   dial: true, hidden: true },   // Ticks と同じだった (2026-09-12 取り下げ)
     // 70-73 = 線。グリッドに沿って引く飾り。line = 向き (0 縦 / 1 横 / 2 斜め \\ / 3 斜め /)。
     // 長さは el の 9 番目 (幅の千分率)、太さは s (0..2)。
-    70: { name: 'Vertical',   grp: 'line', line: 0 },
-    71: { name: 'Horizontal', grp: 'line', line: 1 },
-    72: { name: 'Diagonal \\', grp: 'line', line: 2 },
-    73: { name: 'Diagonal /', grp: 'line', line: 3 },
+    71: { name: 'Line',       grp: 'line', line: 1 },   // パレットに出るのはこれ 1 つ。向きは編集欄で変える
+    70: { name: 'Line |',     grp: 'line', line: 0, hidden: true },
+    72: { name: 'Line \\',    grp: 'line', line: 2, hidden: true },
+    73: { name: 'Line /',     grp: 'line', line: 3, hidden: true },
     30: { name: 'Stock 1',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
     31: { name: 'Stock 2',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
   };
@@ -682,6 +685,8 @@
   // Shift / Cmd / Ctrl + click adds or removes one; the Selected panel, dragging, arrows and
   // Delete act on all of them.
   let sel = -1; const selSet = new Set();
+  // 揃える前の位置 (1 回だけ戻せる)。要素の数が変わったら捨てる。
+  let ALIGN_UNDO = null;
   const isSel = (i) => selSet.has(i);
   const selIdx = () => [...selSet].filter((i) => st.el[i]).sort((a, b) => a - b);
   function clearSel() { sel = -1; selSet.clear(); }
@@ -927,7 +932,7 @@
       p.innerHTML = `<span class="ico" style="color:#1D222B">${dialArt(+t, 1, 26, 26)}</span><span class="nm">${d.name.replace(/^(Hands|Rim):\s*/, '')}</span>`;
       p.addEventListener('click', () => toggleDialPart(+t));
     }
-    else if (d.line != null) p.innerHTML = `<span class="ico" style="color:#1D222B">${lineArt(d.line, 22, 3).svg}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
+    else if (d.line != null) p.innerHTML = `<span class="ico" style="color:#1D222B">${lineArt(d.line, 22, 3).svg}</span><span class="nm">Line</span><span class="hint">${t}</span>`;
     else p.innerHTML = `<span class="ico">${d.icon && d.icon !== 'stock' ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${d.icon === 'stock' ? '$' : d.sample}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     if (!d.dial) p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +t));
     $('parts-' + d.grp).appendChild(p);
@@ -1152,6 +1157,8 @@
     const def = TYPES[e[0]];
     const same = (k) => all.every((x) => x[k] === e[k]);   // highlight a value only when every selected element has it
     const seg = (label, vals, cur, key, base) => { base = base || 0; return `<div class="field"><span>${label}</span><span class="seg" data-key="${key}">${vals.map((v, i) => `<button class="${i + base === cur ? 'on' : ''}" data-v="${i + base}">${v}</button>`).join('')}</span></div>`; };
+    // 線の位置と長さは +/- で動かす (グリッド 1 目盛りずつ)。値は全部そろっている時だけ出す。
+    const stepRow = (label, key, val, ttl) => `<div class="field" title="${ttl}"><span>${label}</span><span class="cb units step" data-step="${key}"><button type="button" data-d="-1">&minus;</button><b>${val == null ? '—' : val}</b><button type="button" data-d="1">+</button></span></div>`;
     const isOf = (x) => (Number.isInteger(x[7]) && x[7] >= 0 && x[7] <= SIZE_MAX) ? x[7] : -1;
     const sameIs = all.every((x) => isOf(x) === isOf(e));
     const anyIcon = all.some((x) => TYPES[x[0]]?.icon);
@@ -1161,14 +1168,14 @@
     box.innerHTML = `
       <div style="font-weight:600;margin-bottom:8px">${none ? '<span class="muted" style="font-weight:400">No part selected — click one on the dial (Shift+click for several)</span>' : multi ? `${all.length} elements <span class="kbd">changes apply to all</span>` : `${def.name} <span class="kbd">type ${e[0]}</span>`}</div>
       <div class="group">
-        <div class="field"><span>X</span><input type="number" id="fx" min="0" max="1000" step="${st.grid}" value="${none || multi ? '' : e[1]}" ${multi ? 'disabled title="Several parts selected: drag or use the arrow keys to move them together"' : ''}></div>
-        <div class="field"><span>Y</span><input type="number" id="fy" min="0" max="1000" step="${st.grid}" value="${none || multi ? '' : e[2]}" ${multi ? 'disabled' : ''}></div>
+        ${allLine && !none ? stepRow('X', 1, multi ? null : e[1], 'Move left / right by one grid step') : `<div class="field"><span>X</span><input type="number" id="fx" min="0" max="1000" step="${st.grid}" value="${none || multi ? '' : e[1]}" ${multi ? 'disabled title="Several parts selected: drag or use the arrow keys to move them together"' : ''}></div>`}
+        ${allLine && !none ? stepRow('Y', 2, multi ? null : e[2], 'Move up / down by one grid step') : `<div class="field"><span>Y</span><input type="number" id="fy" min="0" max="1000" step="${st.grid}" value="${none || multi ? '' : e[2]}" ${multi ? 'disabled' : ''}></div>`}
         ${allLine ? `
         <div class="field" title="Which way the line runs"><span>Direction</span><span class="cb units" id="fdir">${
           [[70, '&#9474;'], [71, '&#9472;'], [72, '&#9586;'], [73, '&#9585;']].map(([tt, lb]) =>
             `<button type="button" data-t="${tt}" class="${all.every((x) => x[0] === tt) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>
-        <div class="field" title="Length in thousandths of the dial width; the arrows step by the grid"><span>Length</span><input type="number" id="flen" min="${LINE_LEN_MIN}" max="1000" step="${st.grid}" value="${sameLen ? lineLen(e) : ''}"></div>
+        ${stepRow('Length', 8, sameLen ? lineLen(e) : null, 'Longer / shorter by one grid step')}
         ${seg('Thickness', ['Thin', 'Medium', 'Thick'], same(4) ? e[4] : -9, 4)}
         ` : `
         ${seg('Anchor', ['Center', 'Left', 'Right'], same(3) ? e[3] : -1, 3)}
@@ -1180,37 +1187,51 @@
           [['Icon + value', 1], ['Icon only', 3], ['Value only', 0]].map(([lbl, v]) =>
             `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 3) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none ? 'disabled' : ''}>${lbl}</button>`).join('')
         }</span></div>`}
+        <div class="field" title="Line the selected parts up on the one you clicked last (the highlighted row in the list)"><span>Align</span><span class="cb units" id="falign"><button type="button" data-v="x" ${multi ? '' : 'disabled'}>Same X &#8597;</button><button type="button" data-v="y" ${multi ? '' : 'disabled'}>Same Y &#8596;</button><button type="button" data-v="undo" ${ALIGN_UNDO ? '' : 'disabled'}>Undo</button></span></div>
         ${arcEl ? `<div class="field" title="Each arc can be a meter. Pick what it measures; none = plain arc."><span>Meters</span><span class="mts">${
           ARCSET[arcEl[0]].lbl.map((pos, i) => `<label class="mt"><span>${pos}</span><select data-i="${i}">${
             METERS.map(([id, nm]) => `<option value="${id}" ${(st.mt || [])[i] === id ? 'selected' : ''}>${nm}</option>`).join('')
           }</select></label>`).join('')
         }</span></div>` : ''}
-        ${multi ? `<div class="field" title="Line the selected parts up on the one you clicked last (the highlighted row in the list)"><span>Align</span><span class="cb units" id="falign"><button type="button" data-v="x">Same X &#8597;</button><button type="button" data-v="y">Same Y &#8596;</button></span></div>` : ''}
         <div class="row" style="margin-top:6px"><button class="btn" id="dup">Duplicate</button><button class="btn danger" id="del">Remove</button></div>
       </div>
       <div class="muted hint">${none ? 'Shift+click (or Cmd/Ctrl+click) selects several parts.' : multi ? `${all.length} parts selected — Anchor, Size, Icon size, Color and Icon apply to all of them.` : 'Shift+click adds another part to the selection.'}</div>`;
     const bindMeters = () => document.querySelectorAll('.mts select').forEach((sel) => sel.addEventListener('change', () => {
       const i = Number(sel.dataset.i); st.mt = (st.mt || [0, 0, 0, 0]).slice(); st.mt[i] = Number(sel.value); commit();
     }));
-    if (none) { box.querySelectorAll('input, button').forEach((b) => { b.disabled = true; }); bindMeters(); return; }
+    // 揃える / 戻す。Meters と同じく常に出しておく (選ぶ前から場所が動かない)。
+    const bindAlign = () => document.querySelectorAll('#falign button').forEach((b) => b.addEventListener('click', () => {
+      if (b.dataset.v === 'undo') {
+        const u = ALIGN_UNDO; if (!u || u.n !== st.el.length) { ALIGN_UNDO = null; return render(); }
+        u.items.forEach(([i, x, y]) => { const el = st.el[i]; if (el) { el[1] = x; el[2] = y; } });
+        ALIGN_UNDO = null; commit(); return;
+      }
+      const idxs = selIdx(); if (idxs.length < 2) return;
+      const ref = st.el[sel] || st.el[idxs[0]], k = b.dataset.v === 'x' ? 1 : 2;
+      ALIGN_UNDO = { n: st.el.length, items: idxs.map((i) => [i, st.el[i][1], st.el[i][2]]) };
+      idxs.forEach((i) => { st.el[i][k] = ref[k]; });
+      commit();
+    }));
+    if (none) {
+      box.querySelectorAll('input, button').forEach((b) => { b.disabled = true; });
+      const u = box.querySelector('#falign button[data-v="undo"]'); if (u && ALIGN_UNDO) u.disabled = false;
+      bindMeters(); bindAlign(); return;
+    }
     const each = (fn) => { all.forEach(fn); commit(); };
     const fx = $('fx'), fy = $('fy');
     if (fx) fx.addEventListener('change', (ev) => { e[1] = clamp(+ev.target.value); commit(); });
     if (fy) fy.addEventListener('change', (ev) => { e[2] = clamp(+ev.target.value); commit(); });
     box.querySelectorAll('.seg').forEach((sg) => sg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => each((x) => { const k = +sg.dataset.key; while (x.length < 8) x.push(-1); x[k] = +b.dataset.v; }))));
     box.querySelectorAll('.sw').forEach((b) => b.addEventListener('click', () => each((x) => { x[5] = +b.dataset.c; })));
-    bindMeters();
-    const fl = $('flen');
-    if (fl) fl.addEventListener('change', (ev) => {
-      const v = Math.max(LINE_LEN_MIN, Math.min(1000, Math.round(+ev.target.value || 0)));
-      each((x) => { while (x.length < 8) x.push(-1); x[8] = v; });
-    });
+    bindMeters(); bindAlign();
+    box.querySelectorAll('.step').forEach((sp) => sp.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+      const k = Number(sp.dataset.step), d = Number(b.dataset.d) * st.grid;
+      each((x) => {
+        if (k === 8) { while (x.length < 8) x.push(-1); x[8] = Math.max(LINE_LEN_MIN, Math.min(1000, lineLen(x) + d)); }
+        else { x[k] = clamp(snapGrid(x[k]) + d); }
+      });
+    })));
     document.querySelectorAll('#fdir button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isLine(x[0])) x[0] = +b.dataset.t; })));
-    // 揃える基準 = 最後に触れた部品 (一覧で光っている行)。
-    document.querySelectorAll('#falign button').forEach((b) => b.addEventListener('click', () => {
-      const ref = st.el[sel] || all[0], k = b.dataset.v === 'x' ? 1 : 2;
-      each((x) => { x[k] = ref[k]; });
-    }));
     document.querySelectorAll('#fshow button').forEach((b) => b.addEventListener('click', () => {
       const v = Number(b.dataset.v);
       each((x) => { if (TYPES[x[0]]?.icon) { x[6] = (x[6] & ~3) | v; } });

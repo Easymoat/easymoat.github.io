@@ -259,7 +259,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 20:40</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 20:48</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -679,7 +679,7 @@
     pressure: () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="3"/><g stroke="currentColor" stroke-width="3"><line x1="0" y1="-10" x2="0" y2="-7"/><line x1="0" y1="0" x2="5" y2="-5"/></g><circle cx="0" cy="0" r="2" fill="currentColor"/></svg>`,
     altitude: () => `<svg width="30" height="24" viewBox="-15 -13 30 24"><polygon points="-15,11 -6,-13 1,2 7,-8 15,11" fill="currentColor"/></svg>`,
     // Body Battery: 電池の輪郭 + 稲妻。中身の量は数値で読めるので、背景色で抜く塗りはやめた。
-    bodybat:  () => `<svg width="16" height="26" viewBox="-8 -13 16 26"><rect x="-7" y="-10" width="14" height="22" rx="3" ${sw} stroke-width="2"/><rect x="-3" y="-13" width="6" height="2" fill="currentColor"/><polygon points="2.5,-7 -3.5,1.5 0,1.5 -2.5,8.5 3.5,0 0,0" fill="currentColor"/></svg>`,
+    bodybat:  () => `<svg width="16" height="26" viewBox="-8 -13 16 26"><rect x="-7" y="-10" width="14" height="22" rx="3" ${sw} stroke-width="2"/><rect x="-3" y="-13" width="6" height="3" fill="currentColor"/><polygon points="2.5,-7 -3.5,1.5 0,1.5 -2.5,8.5 3.5,0 0,0" fill="currentColor"/></svg>`,
     stress:   () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="2"/><polygon points="4,-10 -5,1 0,1 -4,10 5,-1 0,-1" fill="currentColor"/></svg>`,
     breath:   () => { const pts = []; for (let i = 0; i <= 13; i++) { const x = -13 + 2 * i; pts.push(`${x},${(-10 * Math.sin(2 * Math.PI * (x + 13) / 26)).toFixed(2)}`); }
                       return `<svg width="26" height="26" viewBox="-13 -13 26 26"><polyline points="${pts.join(' ')}" ${sw} stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></svg>`; },
@@ -1169,7 +1169,7 @@
     const ki = (st.ic[Math.min(si, st.ic.length - 1)] / ICON_ART) * k, iody = st.io * k;
     div.style.gap = (GAP * ki) + 'px';
     const icon = (f & 1) && def.icon
-      ? (def.icon === 'stock' ? `<span class="ico">$</span>` : `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:translateY(${iody}px) scale(${ki});">${ICONS[def.icon](hex(st.bg))}</span>`)
+      ? (def.icon === 'stock' ? `<span class="ico">$</span>` : `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:translateY(${iody}px) scale(${ki});">${ICONS[def.icon]()}</span>`)
       : '';
     if (def.strip) {
       const temps = ['29°', '28°', '27°'], cells = [];

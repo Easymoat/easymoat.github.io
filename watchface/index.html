@@ -259,7 +259,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 17:48</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 17:55</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -325,7 +325,7 @@
           <div class="grp" title="The shape of the image frame on the dial."><span class="lbl">Shape</span><div class="ctl"><span class="cb" id="imgshape"></span></div>
             <div class="ctl" id="shapeselrow" hidden title="Size and Rotate change the shape chosen here.">Adjust <span class="cb" id="shapesel"></span></div>
             <div class="ctl">Rotate <span class="cb"><button type="button" id="rotl" title="Turn the frame 45° anticlockwise">&#8634; 45°</button><button type="button" id="rotr" title="Turn the frame 45° clockwise">&#8635; 45°</button></span><span class="muted" id="rotv">0°</span></div>
-            <div class="muted">Shift+click a second shape to combine two; each keeps its own size and angle.</div></div>
+            <div class="muted">Shift+click to add a second shape — the same shape twice is fine. Each keeps its own size and angle.</div></div>
           <div class="grp"><span class="lbl">Photos</span><div class="photos" id="photos"></div><div class="muted" id="imgslotnote"></div></div>
           <div class="grp"><span class="lbl">Actions</span>
             <div class="ctl"><label class="btn file" for="imgfile">Add photo…</label><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp" hidden><span class="muted" id="imgfilename">Stored as is (max 1024 px)</span><button class="btn danger" id="imgremove" disabled>Delete photo</button></div>
@@ -2056,28 +2056,30 @@
     const two = !!IMG.shape2, name = (k) => (SHAPES.find(([x]) => x === k) || [, k])[1];
     if (!two) IMG.sel = 1;
     $('shapeselrow').hidden = !two;
-    $('shapesel').innerHTML = two ? [1, 2].map((i) => `<button type="button" data-i="${i}" class="${IMG.sel === i ? 'on' : ''}">${name(i === 1 ? IMG.shape : IMG.shape2)}</button>`).join('') : '';
+    const same = two && IMG.shape2 === IMG.shape;   // 同じ形が 2 つ: どちらを触っているか分かるよう番号を付ける
+    $('shapesel').innerHTML = two ? [1, 2].map((i) => `<button type="button" data-i="${i}" class="${IMG.sel === i ? 'on' : ''}">${name(i === 1 ? IMG.shape : IMG.shape2)}${same ? ' ' + i : ''}</button>`).join('') : '';
     if (two) $('shapesel').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { IMG.sel = Number(b.dataset.i); renderShapeSel(); }));
-    $('imgsizewho').textContent = two ? name(IMG.sel === 1 ? IMG.shape : IMG.shape2) : '';
+    $('imgsizewho').textContent = two ? name(IMG.sel === 1 ? IMG.shape : IMG.shape2) + (same ? ' ' + IMG.sel : '') : '';
     $('imgsize').value = sizeOf(IMG.sel); $('imgsizev').textContent = sizeOf(IMG.sel) + '%';
     $('rotv').textContent = rotOf(IMG.sel) + '°';
   }
   SHAPES.forEach(([k, name]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = name; b.dataset.s = k; b.classList.toggle('on', k === IMG.shape);
     b.addEventListener('click', (ev) => {
-      if (ev.shiftKey || ev.metaKey || ev.ctrlKey) {            // second shape: add, or remove if it is already selected
-        if (k === IMG.shape2) IMG.shape2 = null;
-        else if (k === IMG.shape) { if (IMG.shape2) { IMG.shape = IMG.shape2; IMG.shape2 = null; } }
-        else IMG.shape2 = k;
-        setShape(IMG.shape, IMG.shape2);
+      if (ev.shiftKey || ev.metaKey || ev.ctrlKey) {            // 2 つ目: 押すたびに足す / 外す。同じ形も 2 つ重ねられる
+        setShape(IMG.shape, (k === IMG.shape2) ? null : k);   // 先に IMG.shape2 を書き換えると初期値の設定が飛ぶ
       } else { setShape(k, null); IMG.panX = 0; IMG.panY = 0; }
       const fit = SHAPE_FIT[k]; const which = k === IMG.shape2 ? 2 : 1; if (fit && sizeOf(which) > fit) setSize(fit, which);
       redrawImg(); }); $('imgshape').appendChild(b); });
   function setShape(k, k2) {
     const [nk, rot] = normShape(k, IMG.rot); IMG.shape = nk; IMG.rot = rot;
     const had = IMG.shape2;
-    IMG.shape2 = (k2 && k2 !== IMG.shape && SHAPES.some(([x]) => x === k2)) ? k2 : null;
+    IMG.shape2 = (k2 && SHAPES.some(([x]) => x === k2)) ? k2 : null;   // 同じ形を 2 つ重ねてもよい
     if (!IMG.shape2) { IMG.size2 = null; IMG.rot2 = null; IMG.sel = 1; }
-    else if (!had) { IMG.size2 = IMG.size; IMG.rot2 = IMG.rot; }   // starts where the first shape is
+    else if (!had) {
+      IMG.size2 = IMG.size;
+      // 同じ形どうしは重ねただけでは見た目が変わらないので、2 つ目を 45° 回した位置から始める。
+      IMG.rot2 = (IMG.shape2 === IMG.shape && IMG.shape !== 'circle') ? (IMG.rot + 45) % 360 : IMG.rot;
+    }
     document.querySelectorAll('#imgshape button').forEach((x) => x.classList.toggle('on', x.dataset.s === IMG.shape || x.dataset.s === IMG.shape2));
     renderShapeSel();
     $('imgsizerow').hidden = false; $('imgdragrow').hidden = false;

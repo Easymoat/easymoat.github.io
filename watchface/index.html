@@ -259,7 +259,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 17:35</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 17:48</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1964,7 +1964,25 @@
   // サーバがカメラの面を作り直す時も同じ順序 (明るさ → 彩度) で計算すれば同じ絵になる。
   const brOf = () => (Number.isFinite(IMG.br) ? Math.max(20, Math.min(180, IMG.br)) : 100);
   const saOf = () => (Number.isFinite(IMG.sa) ? Math.max(0, Math.min(200, IMG.sa)) : 100);
-  const toneFilter = () => (brOf() === 100 && saOf() === 100) ? '' : `brightness(${brOf() / 100}) saturate(${saOf() / 100})`;
+  // 画素を直に計算する (canvas の filter は古い Safari などで無視されるため)。
+  // 式は CSS の brightness → saturate と同じで、サーバがカメラの面を作り直す時も同じ順序で計算する。
+  function applyTone(ctx) {
+    const br = brOf() / 100, sa = saOf() / 100;
+    if (br === 1 && sa === 1) return;
+    const im = ctx.getImageData(0, 0, 320, 320), d = im.data;
+    const rr = 0.213 + 0.787 * sa, rg = 0.715 - 0.715 * sa, rb = 0.072 - 0.072 * sa;
+    const gr = 0.213 - 0.213 * sa, gg = 0.715 + 0.285 * sa, gb = 0.072 - 0.072 * sa;
+    const br_ = 0.213 - 0.213 * sa, bg = 0.715 - 0.715 * sa, bb = 0.072 + 0.928 * sa;
+    for (let i = 0; i < d.length; i += 4) {
+      if (!d[i + 3]) continue;
+      const r = d[i] * br, g = d[i + 1] * br, b = d[i + 2] * br;
+      const R = rr * r + rg * g + rb * b, G = gr * r + gg * g + gb * b, B = br_ * r + bg * g + bb * b;
+      d[i] = R < 0 ? 0 : R > 255 ? 255 : R;
+      d[i + 1] = G < 0 ? 0 : G > 255 ? 255 : G;
+      d[i + 2] = B < 0 ? 0 : B > 255 ? 255 : B;
+    }
+    ctx.putImageData(im, 0, 0);
+  }
   function renderTone() {
     $('imgbr').value = brOf(); $('imgsa').value = saOf();
     $('imgbrv').textContent = brOf() + '%'; $('imgsav').textContent = saOf() + '%';
@@ -1995,13 +2013,12 @@
     ctx.clearRect(0, 0, 320, 320);
     // No fill behind the picture: transparent stays transparent (= the watch's background colour).
     // Two shapes: the picture is drawn through each, which gives their union without winding trouble.
-    const tone = toneFilter();
     for (const [k, i] of frameShapes()) {
       ctx.save(); framePath(ctx, k, i); ctx.clip();
-      if (tone) ctx.filter = tone;                  // 明るさ・彩度 (実機へ送る絵にも同じ式でかかる)
       ctx.drawImage(IMG.cur, bx + (bw - dw) / 2 + IMG.panX, by + (bh - dh) / 2 + IMG.panY, dw, dh);
       ctx.restore();
     }
+    applyTone(ctx);                                  // 明るさ・彩度 (実機へ送る絵にも同じ式でかかる)
     IMG.masked = imgCv.toDataURL('image/png');
     applyStageImage();                 // live: the dial follows every edit at once
     IMG.reduced = null; paintQuality();   // keep the preview lit (Auto colour + raw image) — no black flash while dragging

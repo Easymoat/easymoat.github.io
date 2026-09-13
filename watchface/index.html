@@ -259,7 +259,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 12:28</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 13:06</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -613,7 +613,7 @@
   // 4 size steps S/M/L/XL (3 → 4 on 2026-09-06); older 3-entry tables are padded with the XL default.
   const SIZES = ['S', 'M', 'L', 'XL'], SIZE_MAX = 3;
   // 線 (70-73)。太さは 454 の盤面での px、長さは幅の千分率 (x/y と同じ物差し)。
-  const LINE_W = [2, 4, 7], LINE_LEN_DEF = 200, LINE_LEN_MIN = 20;
+  const LINE_W = [3, 5, 7], LINE_LEN_DEF = 200, LINE_LEN_MIN = 20;   // 奇数 = 実機で端の丸めがぴったり合う
   const isLine = (t) => !!(TYPES[t] && TYPES[t].line != null);
   const lineLen = (e) => { const v = Number(e[8]); return Number.isFinite(v) && v >= LINE_LEN_MIN ? Math.min(1000, Math.round(v)) : LINE_LEN_DEF; };
   // 線の絵。len/lw は px。向き 0 縦 / 1 横 / 2 斜め \\ / 3 斜め /。箱は線の外接矩形。
@@ -765,6 +765,9 @@
   const DIAL = (() => {
     const R = 227, T = { h: 304, m: 48 };            // プレビューの時刻 10:08
     const r1 = (v) => Math.round(v * 10) / 10;
+    // 線や弧の太さは奇数の整数で渡す。実機の塗り円は半径 r で 2r+1 px を覆うので、幅 W に
+    // ぴったり合う半径 (W-1)/2 が整数になるのは W が奇数の時だけ (端の丸めが 1px ずれない)。
+    const odd = (v) => Math.max(1, Math.round((v - 1) / 2) * 2 + 1);
     const barPts = (len, w, back) => [-w / 2, -back, w / 2, -back, w / 2, len, -w / 2, len].map(r1);
     const kitePts = (len, w, back) => [0, len, w / 2, len * 0.62, 0, -back, -w / 2, len * 0.62].map(r1);
     const needlePts = (len, w) => [0, len, w / 2, -14, -w / 2, -14].map(r1);
@@ -784,27 +787,27 @@
       if (t === 50) return [r1(W(9)), [0].concat(barPts(L(118), W(15), 20)), [0].concat(barPts(L(178), W(11), 20))];
       if (t === 51) return [r1(W(8)), [0].concat(needlePts(L(120), W(17))), [0].concat(needlePts(L(180), W(12)))];
       if (t === 52) return [r1(W(7)), [0].concat(kitePts(L(122), W(30), 26)), [0].concat(kitePts(L(182), W(22), 26))];
-      if (t === 53) return [r1(W(8)), [1, r1(W(4))].concat(barPts(L(120), W(20), 20)), [1, r1(W(4))].concat(barPts(L(180), W(15), 20))];
+      if (t === 53) return [r1(W(8)), [1, odd(W(4))].concat(barPts(L(120), W(20), 20)), [1, odd(W(4))].concat(barPts(L(180), W(15), 20))];
       if (t === 55) {                                   // Rim marks: 縁に沿う短い針
         const ro = R - 40, inner = ro - L(44), hw = W(9.5), ringR = W(9), out = ro + W(6);
-        return [0, [0].concat(spanKite(inner + 1, out, hw)), [2, r1(ringR), r1(W(3)), r1(W(4)), r1(inner + ringR), r1(out)]];
+        return [0, [0].concat(spanKite(inner + 1, out, hw)), [2, r1(ringR), odd(W(3)), odd(W(4)), r1(inner + ringR), r1(out)]];
       }
-      if (t === 57) return [r1(W(8)), [1, r1(W(4))].concat(roundBarPts(L(120), W(20), 20, 6)),
-                                       [1, r1(W(4))].concat(roundBarPts(L(180), W(15), 20, 6))];
+      if (t === 57) return [r1(W(8)), [1, odd(W(4))].concat(roundBarPts(L(120), W(20), 20, 6)),
+                                       [1, odd(W(4))].concat(roundBarPts(L(180), W(15), 20, 6))];
       if (t === 56) return [r1(W(4)), [0].concat(barPts(L(R * 0.55), W(6), 0)), [0].concat(barPts(L(R * 0.86), W(3), 0))];
       return null;
     }
     // 縁の仕様 (複数可)
     function rim(t, k, mt, mc) {
       const L = (v) => v * k.l, W = (v) => v * k.w;
-      if (t === 60) return [[0, 60, 5, 2, r1(L(10)), r1(W(3)), r1(L(22)), r1(W(6))]];
+      if (t === 60) return [[0, 60, 5, 2, r1(L(10)), odd(W(3)), r1(L(22)), odd(W(6))]];
       if (t === 61) return [[1, 12, 3, 3, r1(W(4)), r1(W(7))]];
       if (t === 62) return [[4, r1(R - L(22)), r1(W(38))]];
-      if (t === 63) return [[2, r1(R - 2 - W(2.5)), r1(W(5))], [0, 4, 1, 2, r1(L(26)), r1(W(7)), r1(L(26)), r1(W(7))]];
+      if (t === 63) return [[2, r1(R - 2 - W(2.5)), odd(W(5))], [0, 4, 1, 2, r1(L(26)), odd(W(7)), r1(L(26)), odd(W(7))]];
       if (ARCSET[t]) {
         const A = ARCSET[t];                              // 位置・長さ・向き
         const mt = (arguments[2] || [0, 0, 0, 0]), mcol = (arguments[3] || [-1, -1, -1, -1]);
-        const rr = r1(R - 3 - W(6)), sw = r1(W(12));
+        const rr = r1(R - 3 - W(6)), sw = odd(W(11));
         const col = (i) => (Number.isInteger(mcol[i]) && mcol[i] >= 0 ? mcol[i] : -1);   // -1 = 部品の色
         // 指標を選んでいない間は飾りの弧のまま。1 つでも選べば弧ごとの「メーター」で送る。
         if (!mt.some((m) => m)) {

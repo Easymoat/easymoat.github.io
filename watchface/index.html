@@ -259,7 +259,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 10:59</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 11:07</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1173,9 +1173,13 @@
     });
     if (!st.el.length) l.innerHTML = '<span class="muted">None yet.</span>';
   }
-  // 選んだ色を控え (10..14) に入れて、その index を返す。基本色と同じ色ならその index。
-  // 控えを詰め替えるときは、使っていない一番古い枠を空けてから入れる (他の部品の色が変わらない)。
-  function useColor(str) {
+  let COLOR_NOTE = '';   // 控えの枠が足りずに他の部品の色まで変わった時だけ出す一言
+  // 選んだ色を控え (10..14) の枠に入れて、その index を返す。基本色や控えに同じ色があればその index。
+  // 枠は詰め替えない (詰め替えると他の部品の色が動く)。入れる枠の選び方:
+  //   1. 他の部品が使っていない枠 (今いじっている部品が使っている枠は残す = 元の色を控えに残せる)
+  //   2. 無ければ、今いじっている部品だけが使っている枠 (変わるのはその部品だけ)
+  //   3. それも無ければ、使っている部品が一番少ない枠
+  function useColor(str, idxs) {
     const rgb = parseInt(String(str).replace('#', ''), 16);
     if (!Number.isInteger(rgb)) return 0;
     const base = PALETTE.slice(0, PC_BASE).findIndex((c) => parseInt(c.slice(1), 16) === rgb);
@@ -1183,15 +1187,20 @@
     const pc = (st.pc || DEF_PC).slice();
     const at = pc.indexOf(rgb);
     if (at >= 0) return PC_BASE + at;
-    const used = new Set(st.el.map((x) => x[5]));
-    let drop = PC_N - 1;                                  // 既定は一番古い枠
-    for (let i = PC_N - 1; i >= 0; i--) if (!used.has(PC_BASE + i)) { drop = i; break; }
-    const next = [rgb].concat(pc.filter((_, i) => i !== drop));
-    const map = {};
-    pc.forEach((c, i) => { const n = next.indexOf(c); if (n >= 0) map[PC_BASE + i] = PC_BASE + n; });
-    st.el.forEach((x) => { if (map[x[5]] != null) x[5] = map[x[5]]; });
-    st.pc = next;
-    return PC_BASE;
+    const mine = new Set(idxs || []);
+    const cnt = new Array(PC_N).fill(0);                 // 「今いじっている部品以外」が使っている数
+    st.el.forEach((x, i) => { const k = x[5] - PC_BASE; if (!mine.has(i) && k >= 0 && k < PC_N) cnt[k]++; });
+    const own = new Set();                               // 今いじっている部品が使っている枠
+    (idxs || []).forEach((i) => { const k = st.el[i] && st.el[i][5] - PC_BASE; if (k >= 0 && k < PC_N) own.add(k); });
+    let slot = -1;
+    for (let i = PC_N - 1; i >= 0; i--) if (cnt[i] === 0 && !own.has(i)) { slot = i; break; }
+    if (slot < 0) for (let i = PC_N - 1; i >= 0; i--) if (cnt[i] === 0) { slot = i; break; }
+    if (slot < 0) {                                      // 5 枠すべてが他の部品に使われている: 一番使用数の少ない枠を取る
+      slot = 0; for (let i = 1; i < PC_N; i++) if (cnt[i] < cnt[slot]) slot = i;
+      COLOR_NOTE = `The 5 recent colours were all in use — ${cnt[slot]} other part${cnt[slot] === 1 ? '' : 's'} changed colour.`;
+    }
+    pc[slot] = rgb; st.pc = pc;
+    return PC_BASE + slot;
   }
   function renderInspector() {
     const box = $('insp'); let idx = selIdx(), e = st.el[sel];
@@ -1245,7 +1254,7 @@
           }</select></label>`).join('')
         }</span></div>` : ''}
       </div>
-      <div class="muted hint">${none ? 'Shift+click (or Cmd/Ctrl+click) selects several parts.' : multi ? `${all.length} parts selected — Anchor, Size, Icon size, Color and Icon apply to all of them.` : 'Shift+click adds another part to the selection.'}</div>`;
+      <div class="muted hint">${COLOR_NOTE ? `<span class="status err">${COLOR_NOTE}</span> ` : ''}${none ? 'Shift+click (or Cmd/Ctrl+click) selects several parts.' : multi ? `${all.length} parts selected — Anchor, Size, Icon size, Color and Icon apply to all of them.` : 'Shift+click adds another part to the selection.'}</div>`;
     const bindMeters = () => document.querySelectorAll('.mts select').forEach((sel) => sel.addEventListener('change', () => {
       const i = Number(sel.dataset.i); st.mt = (st.mt || [0, 0, 0, 0]).slice(); st.mt[i] = Number(sel.value); commit();
     }));
@@ -1262,6 +1271,7 @@
       idxs.forEach((i) => { st.el[i][k] = ref[k]; });
       commit();
     }));
+    COLOR_NOTE = '';
     if (none) {
       box.querySelectorAll('input, button').forEach((b) => { b.disabled = true; });
       const u = box.querySelector('#falign button[data-v="undo"]'); if (u && ALIGN_UNDO) u.disabled = false;
@@ -1274,7 +1284,7 @@
     box.querySelectorAll('.seg').forEach((sg) => sg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => each((x) => { const k = +sg.dataset.key; while (x.length < 8) x.push(-1); x[k] = +b.dataset.v; }))));
     box.querySelectorAll('.sw').forEach((b) => b.addEventListener('click', () => each((x) => { x[5] = +b.dataset.c; })));
     const fp = $('fpick');
-    if (fp) fp.addEventListener('change', (ev) => { const i = useColor(ev.target.value); each((x) => { x[5] = i; }); });
+    if (fp) fp.addEventListener('change', (ev) => { const i = useColor(ev.target.value, selIdx()); each((x) => { x[5] = i; }); });
     bindMeters(); bindAlign();
     box.querySelectorAll('.step').forEach((sp) => sp.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
       const k = Number(sp.dataset.step), d = Number(b.dataset.d) * st.grid;

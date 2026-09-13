@@ -259,7 +259,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 18:13</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 18:54</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1193,7 +1193,10 @@
       const { left, top } = boxPos(e, px, py, w, h);
       div.style.left = left + 'px'; div.style.top = top + 'px';
       const an = div.querySelector('.anchor');
-      an.style.left = (px - left - 3.5) + 'px'; an.style.top = (py - top - 3.5) + 'px';
+      // .el は margin:-2px なので、中の絶対配置の基準は left/top より 2px 外側から始まる。
+      // その 2px を足さないと黄色い点が左上へ 2px ずれる (線と針の部品は margin 0)。
+      const m = (div.classList.contains('linepart') || div.classList.contains('dialpart')) ? 0 : 2;
+      an.style.left = (px - left + m - 3.5) + 'px'; an.style.top = (py - top + m - 3.5) + 'px';
       let oob = false;
       if (TYPES[e[0]] && TYPES[e[0]].dial) { div.classList.remove('oob'); return; }
       if (d.round) {

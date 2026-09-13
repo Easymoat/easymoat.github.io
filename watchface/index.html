@@ -259,7 +259,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 19:33</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 19:40</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1106,9 +1106,7 @@
       g += '</svg>';
       stage.insertAdjacentHTML('beforeend', g);
     }
-    // 縁 (Rim) は一番下に敷く: 弧が他の部品に重なっても文字やアイコンが隠れない。
-    const order = st.el.map((e, i) => [e, i]).sort((a, b) => (TYPES[a[0][0]]?.grp === 'rim' ? 0 : 1) - (TYPES[b[0][0]]?.grp === 'rim' ? 0 : 1));
-    order.forEach(([e, i]) => { if (!hiddenInPreview(e[0])) stage.appendChild(makeEl(e, i, k)); });
+    elOrder(st.el).forEach(([e, i]) => { if (!hiddenInPreview(e[0])) stage.appendChild(makeEl(e, i, k)); });
     positionAll();
     $('empty').hidden = st.el.length > 0;
     renderBgHist();
@@ -1234,8 +1232,11 @@
     }
     return out;
   }
-  // 実機へ渡す el。線だけ 10 番目に太さ (454 盤面の実 px) を足す = 太さを変えても実機のビルドは不要。
-  const elOut = () => st.el.map((e) => (isLine(e[0])
+  // 描く順 = 配列の順 (実機も同じ)。縁 (Rim) だけは必ず先頭に寄せて、弧を他の部品の下に敷く。
+  const elOrder = (list) => (list || []).map((e, i) => [e, i])
+    .sort((a, b) => (TYPES[a[0][0]] && TYPES[a[0][0]].grp === 'rim' ? 0 : 1) - (TYPES[b[0][0]] && TYPES[b[0][0]].grp === 'rim' ? 0 : 1));
+  // 実機へ渡す el。並びは上と同じ。線だけ 10 番目に太さ (454 盤面の実 px) を足す = 太さを変えても実機のビルドは不要。
+  const elOut = () => elOrder(st.el).map(([e]) => (isLine(e[0])
     ? e.slice(0, 8).concat([lineLen(e), linePen(e[4])]) : e));
   const layoutObj = () => { const o = Object.assign({ bg: st.bg, el: elOut(), pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined, mc: (st.mc || []).some((c) => c >= 0) ? st.mc : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
@@ -1583,8 +1584,7 @@
     inner.style.width = d.w + 'px'; inner.style.height = d.h + 'px'; inner.style.transform = `scale(${sc})`;
     try {
       st = Object.assign({}, keep, lay);
-      lay.el.map((e, i) => [e, i]).sort((a, b) => (TYPES[a[0][0]]?.grp === 'rim' ? 0 : 1) - (TYPES[b[0][0]]?.grp === 'rim' ? 0 : 1))
-        .forEach(([e, i]) => inner.appendChild(makeEl(e, i, d.w / 454)));   // 縁は一番下
+      elOrder(lay.el).forEach(([e, i]) => inner.appendChild(makeEl(e, i, d.w / 454)));
     } finally { st = keep; }
     el.appendChild(inner);
     inner.querySelectorAll('.el').forEach((div) => {

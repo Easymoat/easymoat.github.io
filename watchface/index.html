@@ -255,7 +255,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 10:25</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 10:32</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -613,7 +613,8 @@
     const bw = Math.max(w, lw), bh = Math.max(h, lw), cx = bw / 2, cy = bh / 2;
     const hx = dir === 0 ? 0 : dir === 1 ? len / 2 : side / 2, hy = dir === 0 ? len / 2 : dir === 1 ? 0 : side / 2;
     const [x1, y1, x2, y2] = dir === 3 ? [cx - hx, cy + hy, cx + hx, cy - hy] : [cx - hx, cy - hy, cx + hx, cy + hy];
-    const l = (st_, wd) => `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${st_}" stroke-width="${wd.toFixed(1)}"/>`;
+    // 端は丸める: 端点を中心にした半径 (太さ/2) の丸が、線どうしの接点の隙間 (角の欠け) を埋める。
+    const l = (st_, wd) => `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${st_}" stroke-width="${wd.toFixed(1)}" stroke-linecap="round"/>`;
     return { w: bw, h: bh, svg: `<svg width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" style="display:block;overflow:visible">${l('transparent', Math.max(lw, 14))}${l('currentColor', lw)}</svg>` };
   }
   const DEF_TX = [26, 36, 48, 60], DEF_TM = [52, 68, 84, 100], DEF_IC = [19, 26, 35, 44], DEF_IO = 0, ICON_ART = 26, FONT_EM = 1.17, GAP = 6;

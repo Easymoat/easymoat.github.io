@@ -259,7 +259,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 16:54</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 17:35</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -314,6 +314,7 @@
           <div class="imgstage" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas><canvas id="imgQ" width="320" height="320"></canvas><div class="parts" id="imgParts"></div></div>
           <div class="ctl" id="imgsizerow">Size <span class="muted" id="imgsizewho"></span> <input id="imgsize" type="range" min="30" max="100" step="1" value="100"><span class="muted" id="imgsizev">100%</span></div>
           <div class="ctl">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"></div>
+          <div class="ctl" title="Only the cut-out changes — the stored photo is never touched.">Brightness <input id="imgbr" type="range" min="20" max="180" step="1" value="100"><span class="muted" id="imgbrv">100%</span> Saturation <input id="imgsa" type="range" min="0" max="200" step="1" value="100"><span class="muted" id="imgsav">100%</span><button class="btn" id="imgtone">Reset</button></div>
           <div class="ctl" id="imgdragrow">Drag moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Image</button><button type="button" data-m="frame">Frame</button></span></div>
           <div class="ctl"><button class="btn toggle on" id="imgshow" disabled title="While ON, the dial above shows the image exactly as it is here (frame, size, zoom, colours) and it is saved with the dial. While OFF, the saved dial has no image.">Show on dial: ON</button><button class="btn" id="imgreset">Reset</button><button class="btn" id="imgparts">Hide parts</button><button class="btn" id="imghide">Hide image</button></div>
           <div class="ctl"><span class="onlyfor">For PulseLink users</span></div>
@@ -1766,7 +1767,7 @@
   }
   // The recipe = how the picture was framed (which photo, shape, size, position, zoom, colours, Auto).
   function currentRecipe() {
-    return { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, shape2: IMG.shape2 || null, rot: IMG.rot, rot2: IMG.shape2 ? rotOf(2) : undefined, size: IMG.size, size2: IMG.shape2 ? sizeOf(2) : undefined, cx: IMG.cx, cy: IMG.cy, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom, colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, plId: IMG.src === 'camera' ? plId() : undefined };
+    return { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, shape2: IMG.shape2 || null, rot: IMG.rot, rot2: IMG.shape2 ? rotOf(2) : undefined, size: IMG.size, size2: IMG.shape2 ? sizeOf(2) : undefined, cx: IMG.cx, cy: IMG.cy, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom, colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, br: brOf(), sa: saOf(), plId: IMG.src === 'camera' ? plId() : undefined };
   }
   $('shelfsave').addEventListener('click', async () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
@@ -1959,6 +1960,15 @@
     ctx.restore();
   }
   const frameShapes = () => IMG.shape2 ? [[IMG.shape, 1], [IMG.shape2, 2]] : [[IMG.shape, 1]];
+  // 明るさ (br) と彩度 (sa) は % で持つ。100 = 元のまま。canvas の filter は CSS と同じ式なので、
+  // サーバがカメラの面を作り直す時も同じ順序 (明るさ → 彩度) で計算すれば同じ絵になる。
+  const brOf = () => (Number.isFinite(IMG.br) ? Math.max(20, Math.min(180, IMG.br)) : 100);
+  const saOf = () => (Number.isFinite(IMG.sa) ? Math.max(0, Math.min(200, IMG.sa)) : 100);
+  const toneFilter = () => (brOf() === 100 && saOf() === 100) ? '' : `brightness(${brOf() / 100}) saturate(${saOf() / 100})`;
+  function renderTone() {
+    $('imgbr').value = brOf(); $('imgsa').value = saOf();
+    $('imgbrv').textContent = brOf() + '%'; $('imgsav').textContent = saOf() + '%';
+  }
   function redrawImg() {
     if (!hasSource()) return;
     const ctx = imgCv.getContext('2d');
@@ -1985,8 +1995,10 @@
     ctx.clearRect(0, 0, 320, 320);
     // No fill behind the picture: transparent stays transparent (= the watch's background colour).
     // Two shapes: the picture is drawn through each, which gives their union without winding trouble.
+    const tone = toneFilter();
     for (const [k, i] of frameShapes()) {
       ctx.save(); framePath(ctx, k, i); ctx.clip();
+      if (tone) ctx.filter = tone;                  // 明るさ・彩度 (実機へ送る絵にも同じ式でかかる)
       ctx.drawImage(IMG.cur, bx + (bw - dw) / 2 + IMG.panX, by + (bh - dh) / 2 + IMG.panY, dw, dh);
       ctx.restore();
     }
@@ -2062,6 +2074,11 @@
   $('rotr').addEventListener('click', () => rotateFrame(45));
   document.querySelectorAll('#imgdrag button').forEach((b) => b.addEventListener('click', () => {
     IMG.drag = b.dataset.m; document.querySelectorAll('#imgdrag button').forEach((x) => x.classList.toggle('on', x === b)); }));
+  ['imgbr', 'imgsa'].forEach((id) => $(id).addEventListener('input', (ev) => {
+    if (id === 'imgbr') IMG.br = +ev.target.value; else IMG.sa = +ev.target.value;
+    renderTone(); if (hasSource()) redrawImg();
+  }));
+  $('imgtone').addEventListener('click', () => { IMG.br = 100; IMG.sa = 100; renderTone(); if (hasSource()) redrawImg(); });
   $('imgreset').addEventListener('click', () => { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; IMG.size = 100; IMG.size2 = null; IMG.cx = 160; IMG.cy = 160; IMG.rot = 0; IMG.rot2 = null; IMG.shape2 = null; setShape(IMG.shape, null);
     $('imgzoom').value = '1'; redrawImg(); });
   // colours
@@ -2218,7 +2235,7 @@
   // ── Draft: image editor state ──
   function imgDraftState() {
     const base = { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, shape2: IMG.shape2 || null, rot: IMG.rot, rot2: IMG.shape2 ? rotOf(2) : null, size: IMG.size, size2: IMG.shape2 ? sizeOf(2) : null, cx: IMG.cx, cy: IMG.cy, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom,
-                   colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, src: IMG.src };
+                   colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, br: brOf(), sa: saOf(), src: IMG.src };
     if (IMG.fill && !IMG.cur) return base;
     if (!IMG.cur) return Object.assign(base, { none: true });
     if (!IMG.k) {   // not a shelf photo (e.g. loaded from the collection): keep a downscaled copy of the picture itself
@@ -2242,6 +2259,9 @@
     if (COLOR_STEPS.includes(d.colors)) { IMG.colors = d.colors; document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === IMG.colors)); }
     IMG.bgAuto = Math.max(0, Math.min(100, Number(d.bgAuto) || 0)); $('imgbg').value = IMG.bgAuto;
     IMG.show = d.show !== false;
+    IMG.br = Number.isFinite(Number(d.br)) ? Math.max(20, Math.min(180, Number(d.br))) : 100;
+    IMG.sa = Number.isFinite(Number(d.sa)) ? Math.max(0, Math.min(200, Number(d.sa))) : 100;
+    renderTone();
     renderShowToggle();
     if (d.none) { clearImgPreview(); IMG.k = 0; renderPhotos(); return; }
     if (d.fill && /^#[0-9a-f]{6}$/i.test(d.fill)) { $('imgfill').value = d.fill; useFill(d.fill); return; }

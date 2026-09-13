@@ -259,7 +259,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 19:40</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 20:40</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -673,13 +673,13 @@
     cal:      () => `<svg width="20" height="26" viewBox="-10 -13 20 26"><polygon points="0,-13 2,-10 5,-5 3,-2 1,-1 4,2 8,5 9,8 5,11 0,12 -5,11 -9,8 -8,5 -5,1 -4,-5" ${sw} stroke-width="2" stroke-linejoin="round"/></svg>`,
     weight:   () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><rect x="-11.5" y="-11.5" width="23" height="23" rx="2" ${sw} stroke-width="3"/><circle cx="0" cy="-3" r="5" ${sw} stroke-width="3"/><line x1="0" y1="-3" x2="0" y2="-6" stroke="currentColor" stroke-width="2"/><circle cx="0" cy="-3" r="1" fill="currentColor"/></svg>`,
     weather:  () => `<svg width="34" height="30" viewBox="-17 -15 34 30"><circle cx="0" cy="0" r="9" fill="currentColor"/><g stroke="currentColor" stroke-width="2"><line x1="0" y1="-15" x2="0" y2="-11"/><line x1="0" y1="15" x2="0" y2="11"/><line x1="-17" y1="0" x2="-13" y2="0"/><line x1="17" y1="0" x2="13" y2="0"/><line x1="-12" y1="-12" x2="-9" y2="-9"/><line x1="12" y1="-12" x2="9" y2="-9"/><line x1="-12" y1="12" x2="-9" y2="9"/><line x1="12" y1="12" x2="9" y2="9"/></g></svg>`,
-    humidity: (bg) => `<svg width="20" height="26" viewBox="-10 -13 20 26"><polygon points="0,-13 -9,3 9,3" fill="currentColor"/><circle cx="0" cy="4" r="9" fill="currentColor"/><line x1="-4" y1="10" x2="4" y2="-2" stroke="${bg}" stroke-width="2"/><circle cx="-4" cy="0" r="2" fill="${bg}"/><circle cx="4" cy="8" r="2" fill="${bg}"/></svg>`,
+    // 湿度: しずくは輪郭だけ (中は塗らない)。抜きを背景色で塗ると写真の上で背景色の穴に見えるため。
+    humidity: () => `<svg width="20" height="26" viewBox="-10 -13 20 26"><path d="M 0 -12 L 6.93 0 A 8 8 0 1 1 -6.93 0 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><line x1="-3.5" y1="8" x2="3.5" y2="0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="-3.5" cy="1" r="1.7" fill="currentColor"/><circle cx="3.5" cy="7" r="1.7" fill="currentColor"/></svg>`,
     wind:     () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><polygon points="${arrow(0,0,225)}" fill="currentColor"/></svg>`,
     pressure: () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="3"/><g stroke="currentColor" stroke-width="3"><line x1="0" y1="-10" x2="0" y2="-7"/><line x1="0" y1="0" x2="5" y2="-5"/></g><circle cx="0" cy="0" r="2" fill="currentColor"/></svg>`,
     altitude: () => `<svg width="30" height="24" viewBox="-15 -13 30 24"><polygon points="-15,11 -6,-13 1,2 7,-8 15,11" fill="currentColor"/></svg>`,
-    bodybat:  (bg) => { const h = 15, id = 'bb' + (++uid);   // sample level 75% of the 20px well
-                        const bolt = '2,-8 -4,1 0,1 -2,8 4,-1 0,-1';
-                        return `<svg width="16" height="26" viewBox="-8 -13 16 26"><defs><clipPath id="${id}f"><rect x="-6" y="${11-h}" width="12" height="${h}"/></clipPath><clipPath id="${id}e"><rect x="-6" y="-9" width="12" height="${20-h}"/></clipPath></defs><rect x="-7" y="-10" width="14" height="22" rx="3" ${sw} stroke-width="2"/><rect x="-3" y="-13" width="6" height="2" fill="currentColor"/><rect x="-6" y="${11-h}" width="12" height="${h}" fill="currentColor"/><polygon points="${bolt}" fill="${bg}" clip-path="url(#${id}f)"/><polygon points="${bolt}" fill="currentColor" clip-path="url(#${id}e)"/></svg>`; },
+    // Body Battery: 電池の輪郭 + 稲妻。中身の量は数値で読めるので、背景色で抜く塗りはやめた。
+    bodybat:  () => `<svg width="16" height="26" viewBox="-8 -13 16 26"><rect x="-7" y="-10" width="14" height="22" rx="3" ${sw} stroke-width="2"/><rect x="-3" y="-13" width="6" height="2" fill="currentColor"/><polygon points="2.5,-7 -3.5,1.5 0,1.5 -2.5,8.5 3.5,0 0,0" fill="currentColor"/></svg>`,
     stress:   () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="2"/><polygon points="4,-10 -5,1 0,1 -4,10 5,-1 0,-1" fill="currentColor"/></svg>`,
     breath:   () => { const pts = []; for (let i = 0; i <= 13; i++) { const x = -13 + 2 * i; pts.push(`${x},${(-10 * Math.sin(2 * Math.PI * (x + 13) / 26)).toFixed(2)}`); }
                       return `<svg width="26" height="26" viewBox="-13 -13 26 26"><polyline points="${pts.join(' ')}" ${sw} stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></svg>`; },
@@ -731,6 +731,12 @@
   try { const q = new URLSearchParams(location.search).get('api'); if (q) $('api').value = q; } catch (e) {}
   const stage = $('stage');
   const hex = (n) => '#' + n.toString(16).padStart(6, '0').toUpperCase();
+  // 2 色を混ぜる (t = 1 つ目の割合)。メーターの下地は実機と同じ「色 45 : 背景 55」で塗る。
+  function mix(c1, c2, t) {
+    const v = (c) => { const n = parseInt(String(c).replace('#', ''), 16) || 0; return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+    const a = v(c1), b = v(c2);
+    return '#' + [0, 1, 2].map((i) => Math.round(a[i] * t + b[i] * (1 - t)).toString(16).padStart(2, '0')).join('').toUpperCase();
+  }
   // 部品の色 index → 実際の色。10..14 は面ごとの控え (st.pc)。
   const colOf = (i) => {
     const pc = st.pc || DEF_PC, k = i - PC_BASE;
@@ -916,15 +922,17 @@
         } else if (e[0] === 5) {                            // メーターの弧 (track + 実測ぶん)
           const [, cdeg, half, rr, sw, metric, dirIn, colIn] = e;
           const dir = (dirIn === -1) ? -1 : 1;
-          const stroke = (Number.isInteger(colIn) && colIn >= 0) ? colOf(colIn) : 'currentColor';
+          const stroke = (Number.isInteger(colIn) && colIn >= 0) ? colOf(colIn) : (elCol || 'currentColor');
+          // 下地は実機と同じ「色 45 : 背景 55」の 1 色で塗る (透過にすると写真の上で実機と色が変わる)。
+          const track = mix(stroke === 'currentColor' ? hex(st.bg) : stroke, hex(st.bg), 0.45);
           const p = (a) => [R + rr * Math.cos((a - 90) * Math.PI / 180), R + rr * Math.sin((a - 90) * Math.PI / 180)];
-          const arc = (a0, a1, op) => { const [x0, y0] = p(a0), [x1, y1] = p(a1);
-            return `<path d="M ${r1(x0)} ${r1(y0)} A ${rr} ${rr} 0 0 1 ${r1(x1)} ${r1(y1)}" fill="none" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" opacity="${op}"/>`; };
-          o += arc(cdeg - half, cdeg + half, 0.45);   // 薄すぎると小さい絵で消えるので 0.45
+          const arc = (a0, a1, col) => { const [x0, y0] = p(a0), [x1, y1] = p(a1);
+            return `<path d="M ${r1(x0)} ${r1(y0)} A ${rr} ${rr} 0 0 1 ${r1(x1)} ${r1(y1)}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round"/>`; };
+          o += arc(cdeg - half, cdeg + half, track);
           const ratio = metric ? meterRatio(metric) : 0;
           if (ratio > 0.02) {
             const from = cdeg - half * dir, to = from + 2 * half * ratio * dir;
-            o += (dir > 0) ? arc(from, to, 1) : arc(to, from, 1);
+            o += (dir > 0) ? arc(from, to, stroke) : arc(to, from, stroke);
           }
         } else if (e[0] === 4) {                            // 数字 12 / 3 / 6 / 9
           const [, rr, hgt] = e;
@@ -936,7 +944,9 @@
       }
       return o;
     }
-    function svgFor(t, k, mt, mc) {
+    let elCol = '';                                   // 部品の色 (下地の混色に使う)
+    function svgFor(t, k, mt, mc, col) {
+      elCol = col || '';
       const h = hands(t, k);
       if (h) return handSvg(h[1], T.h) + handSvg(h[2], T.m) + (h[0] > 0 ? `<circle cx="${R}" cy="${R}" r="${h[0]}"/>` : '');
       return rimSvg(rim(t, k, mt, mc));
@@ -944,9 +954,9 @@
     return { R, hands, rim, svgFor };
   })();
   // One dial part as an <svg> that fills the dial; colour comes from the element (currentColor).
-  function dialArt(t, s, w, h) {
+  function dialArt(t, s, w, h, col) {
     const k = DIAL_SCALE[Math.min(Math.max(s, 0), 3)];
-    const inner = DIAL.svgFor(t, k, st.mt, st.mc);
+    const inner = DIAL.svgFor(t, k, st.mt, st.mc, col);
     if (!inner) return '';
     return `<svg width="${w}" height="${h}" viewBox="0 0 454 454" fill="currentColor" style="display:block">${inner}</svg>`;
   }
@@ -1010,7 +1020,7 @@
     p.className = 'part'; p.dataset.t = t;
     if (d.dial) {
       p.className = 'part tgl'; p.title = 'Click to put it on the dial, click again to take it off';
-      p.innerHTML = `<span class="ico" style="color:#1D222B">${dialArt(+t, 1, 26, 26)}</span><span class="nm">${d.name.replace(/^(Hands|Rim):\s*/, '')}</span>`;
+      p.innerHTML = `<span class="ico" style="color:#1D222B">${dialArt(+t, 1, 26, 26, '#1D222B')}</span><span class="nm">${d.name.replace(/^(Hands|Rim):\s*/, '')}</span>`;
       p.addEventListener('click', () => toggleDialPart(+t));
     }
     else if (d.line != null) p.innerHTML = `<span class="ico" style="color:#1D222B">${lineArt(d.line, 22, 3).svg}</span><span class="nm">Line</span><span class="hint">${t}</span>`;
@@ -1134,7 +1144,7 @@
       const dv = dev();
       div.classList.add('dialpart');
       div.style.width = dv.w + 'px'; div.style.height = dv.h + 'px';
-      div.innerHTML = dialArt(t, s, dv.w, dv.h) + '<span class="anchor"></span>';
+      div.innerHTML = dialArt(t, s, dv.w, dv.h, colOf(c)) + '<span class="anchor"></span>';
       div.addEventListener('pointerdown', (ev) => startMove(ev, i));
       return div;
     }

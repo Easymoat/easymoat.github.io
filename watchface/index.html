@@ -236,6 +236,8 @@
   .swatches .sep { width: 1px; height: 20px; background: var(--line-2); margin: 0 3px; }   /* 基本色 | 使った色 */
 
   .kbd { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+  #elcount { font-family: var(--mono); font-size: 10px; color: var(--ink-3); }
+  #elcount.over { color: var(--danger); font-weight: 700; }
   .list { display: flex; flex-direction: column; gap: 3px; }   /* grows with the dial: every element stays visible */
   .li { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
   .li:hover { background: var(--panel-2); } .li.on { background: var(--panel-2); outline: 1px solid var(--line-2); }
@@ -259,7 +261,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 06:22</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 06:48</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -377,7 +379,7 @@
       <div class="ctl" title="Unit for the Pressure part.">Pressure <span class="cb units" id="pressunit"></span></div>
       <div class="ctl" title="Unit for the Altitude part.">Distance <span class="cb units" id="distunit"></span></div>
       <div class="ctl" title="Clock format. Device = follow the watch's own setting.">Hours <span class="cb units" id="hourfmt"></span></div></div>
-    <div class="group"><span class="lbl">Elements</span><div class="list" id="list"></div></div>
+    <div class="group"><span class="lbl">Elements <span id="elcount" class="cnt"></span></span><div class="list" id="list"></div></div>
   </aside>
 </main>
 
@@ -619,6 +621,7 @@
   const DIAL_PX = 520;   // on-screen size of the big dial (the layout itself stays in device px)
   // 4 size steps S/M/L/XL (3 → 4 on 2026-09-06); older 3-entry tables are padded with the XL default.
   const SIZES = ['S', 'M', 'L', 'XL'], SIZE_MAX = 3;
+  const EL_MAX = 24;   // 実機が受け取れる部品の数 (サーバも同じ値で弾く)
   // 線 (70-73)。太さは 454 の盤面での px、長さは幅の千分率 (x/y と同じ物差し)。
   const LINE_W = [3, 5, 7], LINE_LEN_DEF = 200, LINE_LEN_MIN = 20;   // 奇数 = 実機で端の丸めがぴったり合う
   const isLine = (t) => !!(TYPES[t] && TYPES[t].line != null);
@@ -1287,6 +1290,8 @@
     bb: teamOf() ? { lg: 'mlb', tm: teamOf() } : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   function renderList() {
+    const n = st.el.length, ec = $('elcount');
+    if (ec) { ec.textContent = `${n} / ${EL_MAX}`; ec.className = 'cnt' + (n > EL_MAX ? ' over' : ''); }
     const l = $('list'); l.innerHTML = '';
     if (st.el.length) { const hd = document.createElement('div'); hd.className = 'li hd'; hd.innerHTML = `<span class="dot" style="visibility:hidden"></span>Part<span class="xy">X, Y</span>`; l.appendChild(hd); }
     st.el.forEach((e, i) => {
@@ -1521,6 +1526,7 @@
   }
   // 針と縁は入 / 切。同じ組の中では 1 つだけ (針を 2 種類同時には置かない)。
   function toggleDialPart(t) {
+    if (st.el.length >= EL_MAX && !st.el.some((x) => x[0] === t)) { setStatus('shelfstatus', `The watch takes ${EL_MAX} parts — remove one before adding another.`, 'err'); return; }
     const grp = TYPES[t].grp, was = st.el.findIndex((e) => e[0] === t);
     st.el = st.el.filter((e) => !(TYPES[e[0]] && TYPES[e[0]].dial && TYPES[e[0]].grp === grp));
     if (was < 0) { st.el.push([t, 500, 500, 0, 1, 0, 0, -1]); setSel(st.el.length - 1, false); }
@@ -1534,6 +1540,7 @@
   }
   function startPaletteDrag(ev, t) {
     ev.preventDefault();
+    if (st.el.length >= EL_MAX) { setStatus('shelfstatus', `The watch takes ${EL_MAX} parts — remove one before adding another.`, 'err'); return; }
     const d = TYPES[t];
     const e = isLine(t) ? [t, 500, 500, 0, 1, 0, 0, -1, LINE_LEN_DEF] : [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, d.icon ? 1 : 0, -1];
     st.el.push(e); setSel(st.el.length - 1, false);
@@ -1608,7 +1615,7 @@
     return pc;
   }
   function sanitize(j) {
-    if (!j || !Array.isArray(j.el) || j.el.length > 24) return null;
+    if (!j || !Array.isArray(j.el) || j.el.length > EL_MAX) return null;
     const el = [];
     for (const e of j.el) {
       if (!Array.isArray(e) || e.length < 7) return null;
@@ -1845,6 +1852,7 @@
   }
   $('shelfsave').addEventListener('click', async () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
+    if (st.el.length > EL_MAX) return setStatus('shelfstatus', `Too many parts: ${st.el.length}. The watch takes ${EL_MAX} — remove ${st.el.length - EL_MAX} and save again.`, 'err');
     const hasImg = !!(IMG.show && hasSource() && IMG.masked);
     // 絵のない品はウォッチでも絵なしになる。意図しない「絵なし」で保存してしまうのを防ぐ。
     if (!hasImg && CAM.on && !IMG.cur) return setStatus('shelfstatus', 'No camera frame in the editor yet — this would be saved without a picture. Press Camera again once a frame appears.', 'err');
@@ -1853,7 +1861,9 @@
     if (hasImg) { body.image = (IMG.reduced || imgCv).toDataURL('image/png'); body.palette = (IMG.reducedPal && IMG.reducedPal.length >= 2) ? IMG.reducedPal : computeOptimalPalette(IMG.colors); }
     setStatus('shelfstatus', 'Saving…');
     try { const r = await fetch($('api').value + '/shelf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error === 'shelf_full' ? `the collection is full (${j.max} items) — delete one first` : (j.error || r.status));
+      const j = await r.json();
+      if (!r.ok || !j.ok) throw new Error(j.error === 'shelf_full' ? `the collection is full (${j.max} items) — delete one first`
+        : j.error === 'bad_layout' ? `the watch cannot take this dial (${st.el.length} parts, limit ${EL_MAX})` : (j.error || r.status));
       const note = hasImg ? '' : (hasSource() ? ' (saved without the picture — Show is off)' : ' (no picture)');
       setStatus('shelfstatus', `Saved as ${body.name || 'item ' + j.n}${note} — use "To watch…" on it to put it on the watch.`, hasImg ? 'ok' : 'err'); $('shelfname').value = ''; loadShelf(); }
     catch (e) { setStatus('shelfstatus', 'Save failed: ' + e.message, 'err'); }

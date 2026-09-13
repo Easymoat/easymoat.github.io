@@ -254,7 +254,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 10:02</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 10:15</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1090,25 +1090,36 @@
     div.addEventListener('pointerdown', (ev) => startMove(ev, i));
     return div;
   }
+  // 箱の左上。線は a の意味が違う (0 中心 / 1 始点 / 2 終点) ので、線の向きに沿ってずらす。
+  function boxPos(e, px, py, w, h) {
+    const a = e[3];
+    if (isLine(e[0])) {
+      if (a !== 1 && a !== 2) return { left: px - w / 2, top: py - h / 2 };
+      const dir = TYPES[e[0]].line, sg = a === 1 ? 1 : -1;      // 始点なら中心は半ベクトルぶん先
+      const hx = dir === 0 ? 0 : w / 2, hy = dir === 1 ? 0 : h / 2;
+      const cx = px + sg * hx, cy = dir === 3 ? py - sg * hy : py + sg * hy;   // ／ だけ上下が逆
+      return { left: cx - w / 2, top: cy - h / 2 };
+    }
+    return { left: a === 1 ? px : a === 2 ? px - w : px - w / 2, top: py - h / 2 };
+  }
   function positionAll() {
     const d = dev();
     stage.querySelectorAll('.el').forEach((div) => {
       const e = st.el[+div.dataset.i]; if (!e) return;
-      const [, x, y, a] = e;
-      const px = x * d.w / 1000, py = y * d.h / 1000;
+      const px = e[1] * d.w / 1000, py = e[2] * d.h / 1000;
       const w = div.offsetWidth, h = div.offsetHeight;
-      const left = a === 1 ? px : a === 2 ? px - w : px - w / 2;
-      div.style.left = left + 'px'; div.style.top = (py - h / 2) + 'px';
+      const { left, top } = boxPos(e, px, py, w, h);
+      div.style.left = left + 'px'; div.style.top = top + 'px';
       const an = div.querySelector('.anchor');
-      an.style.left = (px - left - 3.5) + 'px'; an.style.top = (h / 2 - 3.5) + 'px';
+      an.style.left = (px - left - 3.5) + 'px'; an.style.top = (py - top - 3.5) + 'px';
       let oob = false;
       if (TYPES[e[0]] && TYPES[e[0]].dial) { div.classList.remove('oob'); return; }
       if (d.round) {
         const r = d.w / 2, cx = d.w / 2, cy = d.h / 2;
-        for (const [qx, qy] of [[left, py - h/2], [left + w, py - h/2], [left, py + h/2], [left + w, py + h/2]]) {
+        for (const [qx, qy] of [[left, top], [left + w, top], [left, top + h], [left + w, top + h]]) {
           if (Math.hypot(qx - cx, qy - cy) > r) oob = true;
         }
-      } else { oob = left < 0 || py - h/2 < 0 || left + w > d.w || py + h/2 > d.h; }
+      } else { oob = left < 0 || top < 0 || left + w > d.w || top + h > d.h; }
       div.classList.toggle('oob', oob);
     });
   }
@@ -1171,6 +1182,7 @@
         ${allLine && !none ? stepRow('X', 1, multi ? null : e[1], 'Move left / right by one grid step') : `<div class="field"><span>X</span><input type="number" id="fx" min="0" max="1000" step="${st.grid}" value="${none || multi ? '' : e[1]}" ${multi ? 'disabled title="Several parts selected: drag or use the arrow keys to move them together"' : ''}></div>`}
         ${allLine && !none ? stepRow('Y', 2, multi ? null : e[2], 'Move up / down by one grid step') : `<div class="field"><span>Y</span><input type="number" id="fy" min="0" max="1000" step="${st.grid}" value="${none || multi ? '' : e[2]}" ${multi ? 'disabled' : ''}></div>`}
         ${allLine ? `
+        ${seg('Anchor', ['Center', 'Start', 'End'], same(3) ? e[3] : -1, 3)}
         <div class="field" title="Which way the line runs"><span>Direction</span><span class="cb units" id="fdir">${
           [[70, '&#9474;'], [71, '&#9472;'], [72, '&#9586;'], [73, '&#9585;']].map(([tt, lb]) =>
             `<button type="button" data-t="${tt}" class="${all.every((x) => x[0] === tt) ? 'on' : ''}">${lb}</button>`).join('')
@@ -1413,10 +1425,9 @@
     el.appendChild(inner);
     inner.querySelectorAll('.el').forEach((div, i) => {
       const e = lay.el[i]; if (!e) return;
-      const [, x, y, a] = e, px = x * d.w / 1000, py = y * d.h / 1000;
-      const w = div.offsetWidth, h = div.offsetHeight;
-      div.style.left = (a === 1 ? px : a === 2 ? px - w : px - w / 2) + 'px';
-      div.style.top = (py - h / 2) + 'px';
+      const px = e[1] * d.w / 1000, py = e[2] * d.h / 1000;
+      const { left, top } = boxPos(e, px, py, div.offsetWidth, div.offsetHeight);
+      div.style.left = left + 'px'; div.style.top = top + 'px';
     });
   }
   function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); clearSel(); pushBgHist(st.bg); }

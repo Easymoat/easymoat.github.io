@@ -259,7 +259,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 14:12</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 14:47</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -778,10 +778,18 @@
     // **その機種の実 px で奇数**になるように 454 基準の値を逆算して送る (奇数でないと、端の
     // 丸め = 半径 (W-1)/2 の塗り円が 1px ずれる)。四捨五入でも切り捨てでも同じ値になるよう
     // わずかに上へ振っておく。
+    const scOf = () => (((typeof dev === 'function' ? dev().w : 454) || 454) / 454);
     const odd = (v) => {
-      const w = (typeof dev === 'function' ? dev().w : 454) || 454, sc = w / 454;
+      const sc = scOf();
       const px = Math.max(1, Math.round((v * sc - 1) / 2) * 2 + 1);   // 実機で出したい奇数 px
       return Math.round((px + 0.15) / sc * 10) / 10;                  // 454 基準へ戻す
+    };
+    // 半径も実機の実 px で整数にする。奇数幅の線は「半径 ± (幅-1)/2」の画素に乗るので、
+    // 半径が半端だと端の丸めが本体の中心からずれる。
+    const rad = (v) => {
+      const sc = scOf();
+      const px = Math.max(1, Math.round(v * sc));
+      return Math.round((px + 0.15) / sc * 10) / 10;
     };
     const barPts = (len, w, back) => [-w / 2, -back, w / 2, -back, w / 2, len, -w / 2, len].map(r1);
     const kitePts = (len, w, back) => [0, len, w / 2, len * 0.62, 0, -back, -w / 2, len * 0.62].map(r1);
@@ -818,11 +826,11 @@
       if (t === 60) return [[0, 60, 5, 2, r1(L(10)), odd(W(3)), r1(L(22)), odd(W(6))]];
       if (t === 61) return [[1, 12, 3, 3, r1(W(4)), r1(W(7))]];
       if (t === 62) return [[4, r1(R - L(22)), r1(W(38))]];
-      if (t === 63) return [[2, r1(R - 2 - W(2.5)), odd(W(5))], [0, 4, 1, 2, r1(L(26)), odd(W(7)), r1(L(26)), odd(W(7))]];
+      if (t === 63) return [[2, rad(R - 2 - W(2.5)), odd(W(5))], [0, 4, 1, 2, r1(L(26)), odd(W(7)), r1(L(26)), odd(W(7))]];
       if (ARCSET[t]) {
         const A = ARCSET[t];                              // 位置・長さ・向き
         const mt = (arguments[2] || [0, 0, 0, 0]), mcol = (arguments[3] || [-1, -1, -1, -1]);
-        const rr = r1(R - 3 - W(6)), sw = odd(W(11));
+        const rr = rad(R - 3 - W(6)), sw = odd(W(11));
         const col = (i) => (Number.isInteger(mcol[i]) && mcol[i] >= 0 ? mcol[i] : -1);   // -1 = 部品の色
         // 指標を選んでいない間は飾りの弧のまま。1 つでも選べば弧ごとの「メーター」で送る。
         if (!mt.some((m) => m)) {

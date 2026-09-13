@@ -248,7 +248,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 02:24</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 09:01</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2066,7 +2066,8 @@
   }
   // カメラ中に変わるのは絵の中身だけ。枠 (形・大きさ・位置・拡大・移動) は他の写真と同じに使える。
   function renderCamLock() { $('camlocknote').hidden = !CAM.on; }
-  // カメラを入れた時の初期の枠 = 画面いっぱいの四角 (以前と同じ)。以後の調整はそのまま残る。
+  // 枠がまだ無いとき (絵を 1 枚も入れていない) だけの初期値 = 画面いっぱいの四角。
+  // 写真で作った枠があるならそれを引き継ぐ (カメラ → 写真と同じ扱い)。
   function camSquare() {
     setShape('square', null); IMG.rot = 0; IMG.rot2 = null; IMG.size = 100; IMG.size2 = null;
     IMG.cx = 160; IMG.cy = 160; IMG.zoom = 1; IMG.panX = 0; IMG.panY = 0;
@@ -2076,7 +2077,7 @@
     if (on && !/^[0-9a-zA-Z-]{4,40}$/.test(plId())) { camNote('Enter the PulseLink Device ID (XXXX-XXXX) first.', 'err'); return; }   // stays OFF
     CAM.on = on; $('camon').classList.toggle('on', on); $('camon').textContent = 'Camera: ' + (on ? 'ON' : 'OFF');
     renderCamLock();
-    if (on) { CAM.prev = { cur: IMG.cur, src: IMG.src, k: IMG.k, fill: IMG.fill }; CAM.ver = ''; camSquare(); fetchCam(); CAM.timer = setInterval(fetchCam, 60000); }
+    if (on) { CAM.prev = { cur: IMG.cur, src: IMG.src, k: IMG.k, fill: IMG.fill }; CAM.ver = ''; if (!hasSource()) camSquare(); fetchCam(); CAM.timer = setInterval(fetchCam, 60000); }
     else {
       clearInterval(CAM.timer); CAM.timer = null; camNote('');
       renderCamLock();

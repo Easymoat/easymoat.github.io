@@ -259,7 +259,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 13:53</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 14:12</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -537,6 +537,7 @@
     vivoactive6: [390,390,1,30,45,53,97,130,148],
   };
   const DEVICES = {
+    px466: { name: "466 px device (466)", w: 466, h: 466, round: true },   // 新機種用 (2026-09-13)
     approachs7047mm: { name: "Approach S70 47mm (454)", w: 454, h: 454, round: true },
     d2mach2: { name: "D2 Mach 2 (454)", w: 454, h: 454, round: true },
     d2mach2pro: { name: "D2 Mach 2 Pro (454)", w: 454, h: 454, round: true },
@@ -623,8 +624,9 @@
   };
   const lineLen = (e) => { const v = Number(e[8]); return Number.isFinite(v) && v >= LINE_LEN_MIN ? Math.min(1000, Math.round(v)) : LINE_LEN_DEF; };
   // 線の絵。len/lw は px。向き 0 縦 / 1 横 / 2 斜め \\ / 3 斜め /。箱は線の外接矩形。
+  // 長さは「グリッドを何目盛りぶん進むか」= 斜めは縦にも横にも len だけ進む (端がグリッドに乗る)。
   function lineArt(dir, len, lw) {
-    const dg = dir >= 2, side = dg ? len / Math.SQRT2 : 0;
+    const side = dir >= 2 ? len : 0;
     const w = dir === 0 ? lw : dir === 1 ? len : side, h = dir === 0 ? len : dir === 1 ? lw : side;
     const bw = Math.max(w, lw), bh = Math.max(h, lw), cx = bw / 2, cy = bh / 2;
     const hx = dir === 0 ? 0 : dir === 1 ? len / 2 : side / 2, hy = dir === 0 ? len / 2 : dir === 1 ? 0 : side / 2;
@@ -1097,6 +1099,7 @@
       const dv = dev(), art = lineArt(def.line, lineLen(e) * dv.w / 1000, linePen(s) * k);
       div.classList.add('linepart');
       div.style.width = art.w + 'px'; div.style.height = art.h + 'px';
+      div.dataset.lw = art.w; div.dataset.lh = art.h;   // 端を合わせるので、箱は整数に丸めず小数のまま置く
       div.innerHTML = art.svg + '<span class="anchor"></span>';
       div.addEventListener('pointerdown', (ev) => startMove(ev, i));
       return div;
@@ -1143,7 +1146,7 @@
     stage.querySelectorAll('.el').forEach((div) => {
       const e = st.el[+div.dataset.i]; if (!e) return;
       const px = e[1] * d.w / 1000, py = e[2] * d.h / 1000;
-      const w = div.offsetWidth, h = div.offsetHeight;
+      const w = div.dataset.lw ? +div.dataset.lw : div.offsetWidth, h = div.dataset.lh ? +div.dataset.lh : div.offsetHeight;
       const { left, top } = boxPos(e, px, py, w, h);
       div.style.left = left + 'px'; div.style.top = top + 'px';
       const an = div.querySelector('.anchor');
@@ -1268,7 +1271,7 @@
           [[70, '&#9474;'], [71, '&#9472;'], [72, '&#9586;'], [73, '&#9585;']].map(([tt, lb]) =>
             `<button type="button" data-t="${tt}" class="${all.every((x) => x[0] === tt) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>
-        ${stepRow('Length', 8, sameLen ? lineLen(e) : null, 'Longer / shorter by one grid step')}
+        ${stepRow('Length', 8, sameLen ? lineLen(e) : null, 'How far the line reaches, in grid steps — a diagonal goes this far across and this far down')}
         ${seg('Thickness', ['Thin', 'Medium', 'Thick'], same(4) ? e[4] : -9, 4)}
         ` : `
         ${seg('Anchor', ['Center', 'Left', 'Right'], same(3) ? e[3] : -1, 3)}
@@ -1538,7 +1541,7 @@
     inner.querySelectorAll('.el').forEach((div, i) => {
       const e = lay.el[i]; if (!e) return;
       const px = e[1] * d.w / 1000, py = e[2] * d.h / 1000;
-      const { left, top } = boxPos(e, px, py, div.offsetWidth, div.offsetHeight);
+      const { left, top } = boxPos(e, px, py, div.dataset.lw ? +div.dataset.lw : div.offsetWidth, div.dataset.lh ? +div.dataset.lh : div.offsetHeight);
       div.style.left = left + 'px'; div.style.top = top + 'px';
     });
   }

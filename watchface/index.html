@@ -259,7 +259,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 16:41</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 16:54</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -791,28 +791,33 @@
       const px = Math.max(1, Math.round(v * sc));
       return Math.round((px + 0.15) / sc * 10) / 10;
     };
-    // 弧の端は実機では整数画素の塗り円で描かれる。端点が画素の格子から 0.5px 付近に落ちると
-    // 片側だけ 1px はみ出して「膨らんで」見えるので、中心角を ±0.5°・半角を ±0.3° の範囲で
-    // 動かし、両端が一番格子に乗る角度を選ぶ (0.1° 刻み = サーバの小数 1 桁に収まる)。
-    // 中心が 45 の倍数の弧 (12/3/6/9 や斜め 4 本) は、その軸に対して左右対称な配置そのものが
-    // 設計なので中心角は動かさず、半角だけを合わせる。
+    // 弧の端は実機では整数画素の塗り円で描かれ、しかも drawArc は角度を整数度へ切り捨てる。
+    // したがって端の角度は必ず整数度で渡す。そのうえで「端点が画素の格子からどれだけ離れるか」が
+    // 小さくなるように、半径を ±2px、両端の角度を ±1° の範囲で選ぶ (0.5px 付近だと端の丸が
+    // 片側だけ 1px はみ出して見える)。中心が 45 の倍数の配置は軸対称そのものが設計なので、
+    // 半角だけを動かして左右対称を保つ。
     const ARCFIT = new Map();
     function arcFit(base, half, rPx, cPx) {
       const key = `${base}|${half}|${rPx}|${cPx}`;
       if (ARCFIT.has(key)) return ARCFIT.get(key);
-      const off = (a) => { const t = a * Math.PI / 180, x = cPx + rPx * Math.sin(t), y = cPx - rPx * Math.cos(t);
+      const off = (r, a) => { const t = a * Math.PI / 180, x = cPx + r * Math.sin(t), y = cPx - r * Math.cos(t);
         return Math.hypot(x - Math.round(x), y - Math.round(y)); };
-      const free = (base % 45) !== 0;
-      let bestD = 0, bestH = half, bestM = Infinity;
-      for (let i = free ? -5 : 0; i <= (free ? 5 : 0); i++) {
-        const d = i / 10;
-        for (let j = -3; j <= 3; j++) {
-          const h = Math.round((half + j / 10) * 10) / 10;
-          const m = Math.max(off(base + d - h), off(base + d + h));
-          if (m < bestM - 1e-9) { bestM = m; bestD = d; bestH = h; }
+      const axis = (base % 45) === 0;           // 12/3/6/9 や斜め 4 本: 中心角は動かさない
+      const e0 = Math.round(base - half), e1 = Math.round(base + half);
+      let best = null;
+      for (let dr = -2; dr <= 2; dr++) {
+        const r = rPx + dr; if (r < 20) continue;
+        for (let i = -1; i <= 1; i++) {
+          for (let j = -1; j <= 1; j++) {
+            if (axis && i !== -j) continue;      // 軸対称は両端を同じだけ広げる / 狭める
+            const a = e0 + i, z = e1 + j; if (z - a < 4) continue;
+            const m = Math.max(off(r, a), off(r, z));
+            const cost = Math.abs(dr) + Math.abs(i) + Math.abs(j);
+            if (!best || m < best.m - 1e-9 || (Math.abs(m - best.m) < 1e-9 && cost < best.cost)) best = { m, cost, r, a, z };
+          }
         }
       }
-      const out = { d: bestD, half: bestH };
+      const out = { rPx: best.r, ctr: (best.a + best.z) / 2, half: (best.z - best.a) / 2 };
       ARCFIT.set(key, out);
       return out;
     }
@@ -855,12 +860,12 @@
       if (ARCSET[t]) {
         const A = ARCSET[t];                              // 位置・長さ・向き
         const mt = (arguments[2] || [0, 0, 0, 0]), mcol = (arguments[3] || [-1, -1, -1, -1]);
-        const rr = rad(R - 3 - W(6)), sw = odd(W(11));
+        const sw = odd(W(11));
         const col = (i) => (Number.isInteger(mcol[i]) && mcol[i] >= 0 ? mcol[i] : -1);   // -1 = 部品の色
-        // 端が画素の格子に乗る角度へ寄せる。左右上下の対称は崩さない (第 1・3 象限は +、第 2・4 は -)。
-        const sc = scOf(), fit = arcFit(A.deg[0], A.half, Math.round(rr * sc), Math.round(227 * sc));
-        const hf = fit.half;
-        const ang = (d) => Math.round((d + fit.d * (Math.floor(d / 90) % 2 === 0 ? 1 : -1)) * 10) / 10;
+        // 端が画素の格子に乗る半径と角度を選ぶ。左右上下の対称は崩さない (第 1・3 象限は +、第 2・4 は -)。
+        const sc = scOf(), fit = arcFit(A.deg[0], A.half, Math.round((R - 3 - W(6)) * sc), Math.round(227 * sc));
+        const rr = Math.round((fit.rPx + 0.15) / sc * 10) / 10, hf = fit.half, sh = fit.ctr - A.deg[0];
+        const ang = (d) => Math.round((d + sh * (Math.floor(d / 90) % 2 === 0 ? 1 : -1)) * 10) / 10;
         // 指標を選んでいない間は飾りの弧のまま。1 つでも選べば弧ごとの「メーター」で送る。
         if (!mt.some((m) => m)) {
           if (t === 64 && !mcol.some((c) => c >= 0)) { return [[3, 4, rr, sw, hf]]; }   // 均等 4 本・色も同じなら種別 3 で足りる

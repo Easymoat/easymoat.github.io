@@ -231,6 +231,11 @@
   .pxs .step:hover, .stp .step:hover { background: var(--line); } .pxs .step:active, .stp .step:active { background: var(--line-2); }
   .sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line-2); cursor: pointer; padding: 0; box-sizing: border-box; }
   .sw.on { border-color: var(--panel); box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); transform: scale(1.1); }
+  .swatches .sep { width: 1px; height: 20px; background: var(--line-2); margin: 0 3px; }   /* 基本色 | 使った色 */
+  .swatches .pick { width: 26px; height: 24px; padding: 0; border: 2px solid var(--line-2); border-radius: 5px;
+                    background: var(--panel-2); cursor: pointer; margin-left: 4px; }
+  .swatches .pick::-webkit-color-swatch-wrapper { padding: 2px; }
+  .swatches .pick::-webkit-color-swatch { border: 0; border-radius: 3px; }
   .kbd { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
   .list { display: flex; flex-direction: column; gap: 3px; }   /* grows with the dial: every element stays visible */
   .li { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
@@ -255,7 +260,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 10:32</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 10:55</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -384,6 +389,10 @@
                    '#000000','#555555','#AA0000','#00AA00','#0000FF','#AA00FF','#FFAAAA'];
   const PALETTE_NAMES = ['White','Gray','Red','Orange','Yellow','Green','Cyan','Blue','Magenta',
                          'Black','Dark gray','Dark red','Dark green','Dark blue','Purple','Pink'];
+  // 色の 10 番以降は「使った色」の控え (5 つ)。既定は昔からの 5 色なので、古い面は見た目が変わらない。
+  // 実機はこの 5 つを layout の pc で受け取る (0-9 は実機側の固定色)。
+  const DEF_PC = [0x555555, 0xAA0000, 0x00AA00, 0x0000FF, 0xAA00FF];
+  const PC_N = 5, PC_BASE = 10;
   const BG_HIST_MAX = 5;   // the 5 round swatches = recently used background colours (newest first)
   // Moon age in days (reference new moon 2000-01-06 18:14 UTC, synodic month 29.530588853 d) —
   // same formula as WfData.moonAge / moonPhase. Phase 0 new … 4 full (northern hemisphere, lit from the right).
@@ -682,7 +691,7 @@
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
-  let st = { dev: 'fr965', grid: 50, showGrid: true, gridBright: false, mt: [0, 0, 0, 0], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0 };
+  let st = { dev: 'fr965', grid: 50, showGrid: true, gridBright: false, mt: [0, 0, 0, 0], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
   // Selection: `sel` is the primary (last clicked) element, `selSet` every selected index.
   // Shift / Cmd / Ctrl + click adds or removes one; the Selected panel, dragging, arrows and
   // Delete act on all of them.
@@ -711,6 +720,9 @@
   try { const q = new URLSearchParams(location.search).get('api'); if (q) $('api').value = q; } catch (e) {}
   const stage = $('stage');
   const hex = (n) => '#' + n.toString(16).padStart(6, '0').toUpperCase();
+  // 部品の色 index → 実際の色。10..14 は面ごとの控え (st.pc)。
+  const colOf = (i) => (i >= PC_BASE && i < PC_BASE + PC_N)
+    ? hex(((st.pc || DEF_PC)[i - PC_BASE]) || 0) : (PALETTE[i] || PALETTE[0]);
   const dev = () => DEVICES[st.dev] || DEVICES.fr965;
   const prof = () => DEVPROF[st.dev] || DEVPROF.fr965;
   const isVector = () => prof()[2] === 1;
@@ -1048,7 +1060,7 @@
     const div = document.createElement('div');
     div.className = 'el' + (isSel(i) ? ' sel' : '');
     div.dataset.i = i;
-    div.style.color = PALETTE[c] || PALETTE[0];
+    div.style.color = colOf(c);
     if (def.dial) {   // hands / rim: one drawing over the whole dial, colour from the element
       // 画面全体を覆うので、当たり判定は「描かれた線の上」だけにする。板のまま置くと
       // 下の部品が選べず、写真のドラッグも拾えなくなる (2026-09-12 の不具合)。
@@ -1149,18 +1161,38 @@
     }
     return out;
   }
-  const layoutObj = () => { const o = Object.assign({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
+  const layoutObj = () => { const o = Object.assign({ bg: st.bg, el: st.el, pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   function renderList() {
     const l = $('list'); l.innerHTML = '';
     if (st.el.length) { const hd = document.createElement('div'); hd.className = 'li hd'; hd.innerHTML = `<span class="dot" style="visibility:hidden"></span>Part<span class="xy">X, Y</span>`; l.appendChild(hd); }
     st.el.forEach((e, i) => {
       const li = document.createElement('div'); li.className = 'li' + (isSel(i) ? ' on' : '');
-      li.innerHTML = `<span class="dot" style="background:${PALETTE[e[5]]}"></span>${TYPES[e[0]]?.name || e[0]}<span class="xy">${e[1]},${e[2]}</span>`;
+      li.innerHTML = `<span class="dot" style="background:${colOf(e[5])}"></span>${TYPES[e[0]]?.name || e[0]}<span class="xy">${e[1]},${e[2]}</span>`;
       li.addEventListener('click', (ev) => { setSel(i, addKey(ev)); render(); });
       l.appendChild(li);
     });
     if (!st.el.length) l.innerHTML = '<span class="muted">None yet.</span>';
+  }
+  // 選んだ色を控え (10..14) に入れて、その index を返す。基本色と同じ色ならその index。
+  // 控えを詰め替えるときは、使っていない一番古い枠を空けてから入れる (他の部品の色が変わらない)。
+  function useColor(str) {
+    const rgb = parseInt(String(str).replace('#', ''), 16);
+    if (!Number.isInteger(rgb)) return 0;
+    const base = PALETTE.slice(0, PC_BASE).findIndex((c) => parseInt(c.slice(1), 16) === rgb);
+    if (base >= 0) return base;
+    const pc = (st.pc || DEF_PC).slice();
+    const at = pc.indexOf(rgb);
+    if (at >= 0) return PC_BASE + at;
+    const used = new Set(st.el.map((x) => x[5]));
+    let drop = PC_N - 1;                                  // 既定は一番古い枠
+    for (let i = PC_N - 1; i >= 0; i--) if (!used.has(PC_BASE + i)) { drop = i; break; }
+    const next = [rgb].concat(pc.filter((_, i) => i !== drop));
+    const map = {};
+    pc.forEach((c, i) => { const n = next.indexOf(c); if (n >= 0) map[PC_BASE + i] = PC_BASE + n; });
+    st.el.forEach((x) => { if (map[x[5]] != null) x[5] = map[x[5]]; });
+    st.pc = next;
+    return PC_BASE;
   }
   function renderInspector() {
     const box = $('insp'); let idx = selIdx(), e = st.el[sel];
@@ -1200,7 +1232,11 @@
           [['Icon + value', 1], ['Icon only', 3], ['Value only', 0]].map(([lbl, v]) =>
             `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 3) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none ? 'disabled' : ''}>${lbl}</button>`).join('')
         }</span></div>`}
-        <div class="field"><span>Color</span><span class="swatches">${PALETTE.map((c, i) => `<button class="sw ${same(5) && i === e[5] ? 'on' : ''}" data-c="${i}" title="${PALETTE_NAMES[i]}" style="background:${c}"></button>`).join('')}</span></div>
+        <div class="field"><span>Color</span><span class="swatches">${
+          PALETTE.slice(0, PC_BASE).map((c, i) => `<button class="sw ${same(5) && i === e[5] ? 'on' : ''}" data-c="${i}" title="${PALETTE_NAMES[i]}" style="background:${c}"></button>`).join('')
+        }<span class="sep"></span>${
+          (st.pc || DEF_PC).map((c, i) => `<button class="sw ${same(5) && PC_BASE + i === e[5] ? 'on' : ''}" data-c="${PC_BASE + i}" title="Recently used ${hex(c)}" style="background:${hex(c)}"></button>`).join('')
+        }<input type="color" class="pick" id="fpick" value="${colOf(e[5])}" title="Pick any colour — it is kept in the 5 recent swatches"></span></div>
         <div class="brk"></div>
         <div class="field" title="Line the selected parts up on the one you clicked last (the highlighted row in the list)"><span>Align</span><span class="cb units" id="falign"><button type="button" data-v="x" ${multi ? '' : 'disabled'}>Same X &#8597;</button><button type="button" data-v="y" ${multi ? '' : 'disabled'}>Same Y &#8596;</button><button type="button" data-v="undo" ${ALIGN_UNDO ? '' : 'disabled'}>Undo</button></span></div>
         <div class="row" style="margin-top:6px"><button class="btn" id="dup">Duplicate</button><button class="btn danger" id="del">Remove</button></div>
@@ -1238,6 +1274,8 @@
     if (fy) fy.addEventListener('change', (ev) => { e[2] = clamp(+ev.target.value); commit(); });
     box.querySelectorAll('.seg').forEach((sg) => sg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => each((x) => { const k = +sg.dataset.key; while (x.length < 8) x.push(-1); x[k] = +b.dataset.v; }))));
     box.querySelectorAll('.sw').forEach((b) => b.addEventListener('click', () => each((x) => { x[5] = +b.dataset.c; })));
+    const fp = $('fpick');
+    if (fp) fp.addEventListener('change', (ev) => { const i = useColor(ev.target.value); each((x) => { x[5] = i; }); });
     bindMeters(); bindAlign();
     box.querySelectorAll('.step').forEach((sp) => sp.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
       const k = Number(sp.dataset.step), d = Number(b.dataset.d) * st.grid;
@@ -1391,6 +1429,7 @@
       const n = e.slice(0, 8).map(Number); if (n.length < 8) n.push(-1);
       if (!TYPES[n[0]] || n.some((v) => !Number.isInteger(v))) return null;
       if (n[1] < 0 || n[1] > 1000 || n[2] < 0 || n[2] > 1000 || n[3] < 0 || n[3] > 2 || n[4] < 0 || n[4] > SIZE_MAX || n[5] < 0 || n[5] >= PALETTE.length || n[6] < 0 || n[6] > 3 || n[7] < -1 || n[7] > SIZE_MAX) return null;
+      if (isLine(n[0])) { const L = Number(e[8]); n.push(Number.isFinite(L) && L >= LINE_LEN_MIN && L <= 1000 ? Math.round(L) : LINE_LEN_DEF); }   // 線は 9 番目の長さを落とさない
       el.push(n);
     }
     const bg = Number.isInteger(j.bg) && j.bg >= 0 && j.bg <= 0xFFFFFF ? j.bg : 0;
@@ -1402,7 +1441,8 @@
              pu: (Number.isInteger(j.pu) && j.pu >= 0 && j.pu <= 2) ? j.pu : 0,
              du: (Number.isInteger(j.du) && j.du >= 0 && j.du <= 1) ? j.du : 0,
              hf: (Number.isInteger(j.hf) && j.hf >= 0 && j.hf <= 2) ? j.hf : 0,
-             mt: (Array.isArray(j.mt) && j.mt.length === 4 && j.mt.every((m) => METERS.some((x) => x[0] === m))) ? j.mt.slice() : [0, 0, 0, 0] };
+             mt: (Array.isArray(j.mt) && j.mt.length === 4 && j.mt.every((m) => METERS.some((x) => x[0] === m))) ? j.mt.slice() : [0, 0, 0, 0],
+             pc: (Array.isArray(j.pc) && j.pc.length === PC_N && j.pc.every((c) => Number.isInteger(c) && c >= 0 && c <= 0xFFFFFF)) ? j.pc.slice() : DEF_PC.slice() };
   }
 
   // ── Server sync ────────────────────────────────────────────────────────────
@@ -1433,7 +1473,7 @@
       div.style.left = left + 'px'; div.style.top = top + 'px';
     });
   }
-  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); clearSel(); pushBgHist(st.bg); }
+  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); clearSel(); pushBgHist(st.bg); }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
   function renderWatchSeen() {
     const el = $('watchseen'); if (!el) return;

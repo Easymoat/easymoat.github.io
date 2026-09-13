@@ -259,7 +259,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 00:22</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 06:22</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -273,6 +273,7 @@
     <div class="group"><span class="lbl">Weather</span><div class="parts" id="parts-wx"></div></div>
     <div class="group"><span class="lbl">Hands</span><div class="parts" id="parts-hands"></div></div>
     <div class="group"><span class="lbl">Rim</span><div class="parts" id="parts-rim"></div></div>
+    <div class="group"><span class="lbl">Baseball</span><div class="parts" id="parts-bb"></div><span class="muted">Pick your team in Selected part. MLB only.</span></div>
     <div class="group"><span class="lbl">Markets</span><div class="parts" id="parts-mkt"></div><span class="muted">Drop one on the dial, then type its ticker in Selected part.</span></div>
   </aside>
 
@@ -465,6 +466,9 @@
     70: { name: 'Line |',     grp: 'line', line: 0, hidden: true },
     72: { name: 'Line \\',    grp: 'line', line: 2, hidden: true },
     73: { name: 'Line /',     grp: 'line', line: 3, hidden: true },
+    // 野球 (MLB)。応援チームは面ごとに 1 つ (layout の bb)。32 = 対戦とスコア、33 = 状態。
+    32: { name: 'Game',      grp: 'bb',    sample: 'NYY 3-5 BOS', icon: null,   iw: 0, bb: 1 },
+    33: { name: 'Status',    grp: 'bb',    sample: 'Top 7',       icon: null,   iw: 0, bb: 1 },
     // 銘柄は面ごとに 2 つ持つ (layout の st)。部品は st[0] / st[1] を指すだけ。
     30: { name: 'Stock 1',   grp: 'mkt',   sample: '229.35', icon: 'stock',     iw: 0, stk: 0 },
     31: { name: 'Stock 2',   grp: 'mkt',   sample: '229.35', icon: 'stock',     iw: 0, stk: 1 },
@@ -620,6 +624,13 @@
   const isLine = (t) => !!(TYPES[t] && TYPES[t].line != null);
   // 株の部品 (30/31)。銘柄は面ごとの st.stk[0|1]、f の bit2 = 値を変化率にする。
   const isStock = (t) => !!(TYPES[t] && TYPES[t].stk != null);
+  // MLB 30 球団 (statsapi のチーム ID)。実機へ渡すのは ID だけ。
+  const MLB_TEAMS = [[109,'AZ','Arizona Diamondbacks'],[133,'ATH','Athletics'],[144,'ATL','Atlanta Braves'],[110,'BAL','Baltimore Orioles'],[111,'BOS','Boston Red Sox'],[112,'CHC','Chicago Cubs'],[145,'CWS','Chicago White Sox'],[113,'CIN','Cincinnati Reds'],[114,'CLE','Cleveland Guardians'],[115,'COL','Colorado Rockies'],[116,'DET','Detroit Tigers'],[117,'HOU','Houston Astros'],[118,'KC','Kansas City Royals'],[108,'LAA','Los Angeles Angels'],[119,'LAD','Los Angeles Dodgers'],[146,'MIA','Miami Marlins'],[158,'MIL','Milwaukee Brewers'],[142,'MIN','Minnesota Twins'],[121,'NYM','New York Mets'],[147,'NYY','New York Yankees'],[143,'PHI','Philadelphia Phillies'],[134,'PIT','Pittsburgh Pirates'],[135,'SD','San Diego Padres'],[137,'SF','San Francisco Giants'],[136,'SEA','Seattle Mariners'],[138,'STL','St. Louis Cardinals'],[139,'TB','Tampa Bay Rays'],[140,'TEX','Texas Rangers'],[141,'TOR','Toronto Blue Jays'],[120,'WSH','Washington Nationals']];
+  const isBall = (t) => !!(TYPES[t] && TYPES[t].bb);
+  const teamOf = () => Number((st.bb || {}).tm) || 0;
+  const teamAbbr = () => { const r = MLB_TEAMS.find((x) => x[0] === teamOf()); return r ? r[1] : 'NYY'; };
+  // 見本は選んだチームで組む (実機は試合が無ければ次の試合、無ければ空)。
+  const ballSample = (t) => (t === 32 ? `${teamAbbr()} 3-5 BOS` : 'Top 7');
   const STK_UP = '#55FF55', STK_DOWN = '#FF5555';   // 上げ / 下げの色 (実機と共通、パレット 5 と 2)
   const STKQ = {};                                  // 入力した銘柄の下見 (名前と値。プレビュー用、面には保存しない)
   function loadStock(sym) {
@@ -722,7 +733,7 @@
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
-  let st = { dev: 'fr965', grid: 50, showGrid: true, gridBright: false, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], stk: ['', ''], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
+  let st = { dev: 'fr965', grid: 50, showGrid: true, gridBright: false, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], stk: ['', ''], bb: { lg: 'mlb', tm: 0 }, hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
   // Selection: `sel` is the primary (last clicked) element, `selSet` every selected index.
   // Shift / Cmd / Ctrl + click adds or removes one; the Selected panel, dragging, arrows and
   // Delete act on all of them.
@@ -1157,7 +1168,9 @@
     div.className = 'el' + (isSel(i) ? ' sel' : '');
     div.dataset.i = i;
     // 株の部品で「上げ下げで色を変える」を選んでいる間は、分かっていればその向きの色で描く。
-    div.style.color = (isStock(t) && (f & 8)) ? (stkInfo(t) ? (stkInfo(t).u < 0 ? STK_DOWN : stkInfo(t).u > 0 ? STK_UP : colOf(c)) : STK_UP) : colOf(c);
+    div.style.color = (isStock(t) && (f & 8)) ? (stkInfo(t) ? (stkInfo(t).u < 0 ? STK_DOWN : stkInfo(t).u > 0 ? STK_UP : colOf(c)) : STK_UP)
+                    : (isBall(t) && (f & 8)) ? STK_UP                     // 見本は進行中 (緑)
+                    : colOf(c);
     if (def.dial) {   // hands / rim: one drawing over the whole dial, colour from the element
       // 画面全体を覆うので、当たり判定は「描かれた線の上」だけにする。板のまま置くと
       // 下の部品が選べず、写真のドラッグも拾えなくなる (2026-09-12 の不具合)。
@@ -1197,7 +1210,7 @@
       div.innerHTML = cells.join('') + '<span class="anchor"></span>';
     } else {
       const showVal = !(f & 2);   // f の bit 1 = 値を出さない (アイコンだけ)
-      const sample = isStock(t) ? stkValue(t, f) : def.sample;
+      const sample = isStock(t) ? stkValue(t, f) : isBall(t) ? ballSample(t) : def.sample;
       div.innerHTML = icon + (showVal ? `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px">${sample}</span>` : '') + '<span class="anchor"></span>';
     }
     div.addEventListener('pointerdown', (ev) => startMove(ev, i));
@@ -1270,7 +1283,8 @@
   const elOut = () => elOrder(st.el).map(([e]) => (isLine(e[0])
     ? e.slice(0, 8).concat([lineLen(e), linePen(e[4])]) : e));
   const layoutObj = () => { const o = Object.assign({ bg: st.bg, el: elOut(), pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined, mc: (st.mc || []).some((c) => c >= 0) ? st.mc : undefined,
-    st: (st.stk || []).some((v) => v) ? (st.stk || ['', '']).slice(0, 2).map(stkClean) : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
+    st: (st.stk || []).some((v) => v) ? (st.stk || ['', '']).slice(0, 2).map(stkClean) : undefined,
+    bb: teamOf() ? { lg: 'mlb', tm: teamOf() } : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   function renderList() {
     const l = $('list'); l.innerHTML = '';
@@ -1341,6 +1355,7 @@
     const arcEl = st.el.find((x) => ARCSET[x[0]]);   // Meters は弧が文字盤にある間ずっと出す (選択に関係なく)
     const allLine = all.every((x) => isLine(x[0]));   // 線だけを選んでいる時は線の操作に差し替える
     const allStock = !none && all.every((x) => isStock(x[0])) && all.every((x) => x[0] === e[0]);   // 同じ銘柄の部品だけ
+    const allBall = !none && all.every((x) => isBall(x[0]));
     const sameLen = all.every((x) => lineLen(x) === lineLen(e));
     box.innerHTML = `
       <div style="font-weight:600;margin-bottom:8px">${none ? '<span class="muted" style="font-weight:400">No part selected — click one on the dial (Shift+click for several)</span>' : multi ? `${all.length} elements <span class="kbd">changes apply to all</span>` : `${def.name} <span class="kbd">type ${e[0]}</span>`}</div>
@@ -1360,6 +1375,10 @@
         ${seg('Size', SIZES, same(4) ? e[4] : -9, 4)}
         ${seg('Icon size', ['Auto'].concat(SIZES), anyIcon ? (sameIs ? isOf(e) : -9) : -9, 7, -1)}
         `}
+        ${allBall ? `<div class="field" title="The team whose game is shown (MLB)"><span>Team</span><select id="fteam">${
+          ['<option value="0">— pick a team —</option>'].concat(MLB_TEAMS.map(([id, ab, nm]) => `<option value="${id}" ${teamOf() === id ? 'selected' : ''}>${ab} · ${nm}</option>`)).join('')
+        }</select></div>
+        <div class="field" title="Green while the game is on, orange when it is over — instead of the colour below"><span>State</span><span class="cb units" id="fbbc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep colour</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By state</button></span></div>` : ''}
         ${allStock ? `<div class="field" title="Ticker as Yahoo Finance writes it — 7203.T for Tokyo, ^GSPC for an index"><span>Symbol</span><input type="text" id="fstk" value="${stkOf(e[0])}" placeholder="AAPL" style="width:110px" maxlength="12"></div>
         <div class="field" title="What the number shows"><span>Value</span><span class="cb units" id="fstkv"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 4)) ? 'on' : ''}">Price</button><button type="button" data-v="4" class="${all.every((x) => (x[6] & 4)) ? 'on' : ''}">Change %</button></span></div>
         <div class="field" title="Ticker (AAPL) or the company name as the data provider writes it"><span>Label</span><span class="cb units" id="fstkn"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 16)) ? 'on' : ''}">Symbol</button><button type="button" data-v="16" class="${all.every((x) => (x[6] & 16)) ? 'on' : ''}">Name</button></span></div>
@@ -1440,6 +1459,9 @@
     document.querySelectorAll('#fstkv button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStock(x[0])) x[6] = (x[6] & ~4) | (+b.dataset.v); })));
     document.querySelectorAll('#fstkc button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStock(x[0])) x[6] = (x[6] & ~8) | (+b.dataset.v); })));
     document.querySelectorAll('#fstkn button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStock(x[0])) x[6] = (x[6] & ~16) | (+b.dataset.v); })));
+    document.querySelectorAll('#fbbc button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isBall(x[0])) x[6] = (x[6] & ~8) | (+b.dataset.v); })));
+    const ft = $('fteam');
+    if (ft) ft.addEventListener('change', (ev) => { st.bb = { lg: 'mlb', tm: Number(ev.target.value) || 0 }; commit(); });
     document.querySelectorAll('#fshow button').forEach((b) => b.addEventListener('click', () => {
       const v = Number(b.dataset.v);
       each((x) => { if (TYPES[x[0]]?.icon) { x[6] = (x[6] & ~3) | v; } });
@@ -1606,6 +1628,7 @@
              du: (Number.isInteger(j.du) && j.du >= 0 && j.du <= 1) ? j.du : 0,
              hf: (Number.isInteger(j.hf) && j.hf >= 0 && j.hf <= 2) ? j.hf : 0,
              mt: (Array.isArray(j.mt) && j.mt.length === 4 && j.mt.every((m) => METERS.some((x) => x[0] === m))) ? j.mt.slice() : [0, 0, 0, 0],
+             bb: (j.bb && Number(j.bb.tm) > 0) ? { lg: 'mlb', tm: Number(j.bb.tm) } : { lg: 'mlb', tm: 0 },
              stk: (Array.isArray(j.st) && j.st.length <= 2) ? [stkClean(j.st[0]), stkClean(j.st[1])] : ['', ''],
              pc: (Array.isArray(j.pc) && j.pc.length >= 1 && j.pc.length <= PC_MAX && j.pc.every((c) => Number.isInteger(c) && c >= 0 && c <= 0xFFFFFF)) ? j.pc.slice() : legacyPc(el),
              mc: (Array.isArray(j.mc) && j.mc.length === 4 && j.mc.every((c) => Number.isInteger(c) && c >= -1 && c <= PC_BASE + PC_MAX)) ? j.mc.slice() : [-1, -1, -1, -1] };
@@ -1639,7 +1662,7 @@
       div.style.left = left + 'px'; div.style.top = top + 'px';
     });
   }
-  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stk.forEach(loadStock); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); clearSel(); pushBgHist(st.bg); }
+  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stk.forEach(loadStock); st.bb = c.bb || { lg: 'mlb', tm: 0 }; st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); clearSel(); pushBgHist(st.bg); }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
   function renderWatchSeen() {
     const el = $('watchseen'); if (!el) return;

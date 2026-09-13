@@ -220,7 +220,9 @@
   .seg button:last-child { border-right: 0; }
   .seg button.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
   .swatches { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  #bgpick { width: 34px; height: 26px; padding: 0 2px; border: 1px solid var(--line-2); border-radius: 5px; background: var(--panel-2); cursor: pointer; margin-right: 6px; }
+  #bgpick, .swatches .pick { width: 34px; height: 26px; padding: 0 2px; border: 1px solid var(--line-2); border-radius: 5px; background: var(--panel-2); cursor: pointer; }
+  #bgpick { margin-right: 6px; }
+  .swatches .pick { margin-left: 6px; }
   .pxs { display: inline-flex; gap: 18px; }
   .stp { display: inline-flex; align-items: center; gap: 6px; }
   .stp .sml { font: 600 11px var(--mono); color: var(--ink-3); width: 14px; text-align: center; margin-right: 2px; }
@@ -232,10 +234,7 @@
   .sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line-2); cursor: pointer; padding: 0; box-sizing: border-box; }
   .sw.on { border-color: var(--panel); box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); transform: scale(1.1); }
   .swatches .sep { width: 1px; height: 20px; background: var(--line-2); margin: 0 3px; }   /* 基本色 | 使った色 */
-  .swatches .pick { width: 26px; height: 24px; padding: 0; border: 2px solid var(--line-2); border-radius: 5px;
-                    background: var(--panel-2); cursor: pointer; margin-left: 4px; }
-  .swatches .pick::-webkit-color-swatch-wrapper { padding: 2px; }
-  .swatches .pick::-webkit-color-swatch { border: 0; border-radius: 3px; }
+
   .kbd { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
   .list { display: flex; flex-direction: column; gap: 3px; }   /* grows with the dial: every element stays visible */
   .li { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
@@ -260,7 +259,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 10:55</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 10:59</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>

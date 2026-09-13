@@ -259,7 +259,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 23:39</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 23:45</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -620,6 +620,7 @@
   const isLine = (t) => !!(TYPES[t] && TYPES[t].line != null);
   // 株の部品 (30/31)。銘柄は面ごとの st.stk[0|1]、f の bit2 = 値を変化率にする。
   const isStock = (t) => !!(TYPES[t] && TYPES[t].stk != null);
+  const STK_UP = '#55FF55', STK_DOWN = '#FF5555';   // 上げ / 下げの色 (実機と共通、パレット 5 と 2)
   const stkOf = (t) => (isStock(t) ? ((st.stk || [])[TYPES[t].stk] || '') : '');
   const stkClean = (v) => String(v || '').trim().toUpperCase().replace(/[^A-Z0-9.\-^=]/g, '').slice(0, 12);
   // 線の太さ (454 基準)。実機で奇数 px になる値に直して送る = 端の丸めがぴったり合う。
@@ -1141,7 +1142,8 @@
     const div = document.createElement('div');
     div.className = 'el' + (isSel(i) ? ' sel' : '');
     div.dataset.i = i;
-    div.style.color = colOf(c);
+    // 株の部品で「上げ下げで色を変える」を選んでいる間は、見本は上げ (緑) で描く。
+    div.style.color = (isStock(t) && (f & 8)) ? STK_UP : colOf(c);
     if (def.dial) {   // hands / rim: one drawing over the whole dial, colour from the element
       // 画面全体を覆うので、当たり判定は「描かれた線の上」だけにする。板のまま置くと
       // 下の部品が選べず、写真のドラッグも拾えなくなる (2026-09-12 の不具合)。
@@ -1345,7 +1347,8 @@
         ${seg('Icon size', ['Auto'].concat(SIZES), anyIcon ? (sameIs ? isOf(e) : -9) : -9, 7, -1)}
         `}
         ${allStock ? `<div class="field" title="Ticker as Yahoo Finance writes it — 7203.T for Tokyo, ^GSPC for an index"><span>Symbol</span><input type="text" id="fstk" value="${stkOf(e[0])}" placeholder="AAPL" style="width:110px" maxlength="12"></div>
-        <div class="field" title="What the number shows"><span>Value</span><span class="cb units" id="fstkv"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 4)) ? 'on' : ''}">Price</button><button type="button" data-v="4" class="${all.every((x) => (x[6] & 4)) ? 'on' : ''}">Change %</button></span></div>` : ''}
+        <div class="field" title="What the number shows"><span>Value</span><span class="cb units" id="fstkv"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 4)) ? 'on' : ''}">Price</button><button type="button" data-v="4" class="${all.every((x) => (x[6] & 4)) ? 'on' : ''}">Change %</button></span></div>
+        <div class="field" title="Green when the price is up, red when it is down — instead of the colour below"><span>Up / down</span><span class="cb units" id="fstkc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep colour</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">Green / red</button></span></div>` : ''}
         ${allLine ? '' : `<div class="field" title="${anyIcon ? 'What this part draws' : 'This part has no icon'}"><span>Show</span><span class="cb units" id="fshow">${
           [['Icon + value', 1], ['Icon only', 3], ['Value only', 0]].map(([lbl, v]) =>
             `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 3) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none ? 'disabled' : ''}>${lbl}</button>`).join('')
@@ -1420,6 +1423,7 @@
       const i = TYPES[e[0]].stk; st.stk = (st.stk || ['', '']).slice(); st.stk[i] = stkClean(ev.target.value); commit();
     });
     document.querySelectorAll('#fstkv button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStock(x[0])) x[6] = (x[6] & ~4) | (+b.dataset.v); })));
+    document.querySelectorAll('#fstkc button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStock(x[0])) x[6] = (x[6] & ~8) | (+b.dataset.v); })));
     document.querySelectorAll('#fshow button').forEach((b) => b.addEventListener('click', () => {
       const v = Number(b.dataset.v);
       each((x) => { if (TYPES[x[0]]?.icon) { x[6] = (x[6] & ~3) | v; } });

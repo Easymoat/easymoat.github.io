@@ -259,7 +259,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 11:07</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 12:28</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -391,7 +391,9 @@
   // 色の 10 番以降は「使った色」の控え (5 つ)。既定は昔からの 5 色なので、古い面は見た目が変わらない。
   // 実機はこの 5 つを layout の pc で受け取る (0-9 は実機側の固定色)。
   const DEF_PC = [0x555555, 0xAA0000, 0x00AA00, 0x0000FF, 0xAA00FF];
-  const PC_N = 5, PC_BASE = 10;
+  const PC_N = 5;          // 見せる控えの数 (新しい 5 つ)
+  const PC_BASE = 10;      // 色 index 10 から上が控え
+  const PC_MAX = 22;       // 控えの上限 = 色 index 31 まで (部品は 24 個なので実質足りる)
   const BG_HIST_MAX = 5;   // the 5 round swatches = recently used background colours (newest first)
   // Moon age in days (reference new moon 2000-01-06 18:14 UTC, synodic month 29.530588853 d) —
   // same formula as WfData.moonAge / moonPhase. Phase 0 new … 4 full (northern hemisphere, lit from the right).
@@ -690,7 +692,7 @@
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
-  let st = { dev: 'fr965', grid: 50, showGrid: true, gridBright: false, mt: [0, 0, 0, 0], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
+  let st = { dev: 'fr965', grid: 50, showGrid: true, gridBright: false, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
   // Selection: `sel` is the primary (last clicked) element, `selSet` every selected index.
   // Shift / Cmd / Ctrl + click adds or removes one; the Selected panel, dragging, arrows and
   // Delete act on all of them.
@@ -720,8 +722,11 @@
   const stage = $('stage');
   const hex = (n) => '#' + n.toString(16).padStart(6, '0').toUpperCase();
   // 部品の色 index → 実際の色。10..14 は面ごとの控え (st.pc)。
-  const colOf = (i) => (i >= PC_BASE && i < PC_BASE + PC_N)
-    ? hex(((st.pc || DEF_PC)[i - PC_BASE]) || 0) : (PALETTE[i] || PALETTE[0]);
+  const colOf = (i) => {
+    const pc = st.pc || DEF_PC, k = i - PC_BASE;
+    if (k >= 0 && k < pc.length) return hex(pc[k] || 0);
+    return PALETTE[i] || PALETTE[0];
+  };
   const dev = () => DEVICES[st.dev] || DEVICES.fr965;
   const prof = () => DEVPROF[st.dev] || DEVPROF.fr965;
   const isVector = () => prof()[2] === 1;
@@ -790,7 +795,7 @@
       return null;
     }
     // 縁の仕様 (複数可)
-    function rim(t, k, mt) {
+    function rim(t, k, mt, mc) {
       const L = (v) => v * k.l, W = (v) => v * k.w;
       if (t === 60) return [[0, 60, 5, 2, r1(L(10)), r1(W(3)), r1(L(22)), r1(W(6))]];
       if (t === 61) return [[1, 12, 3, 3, r1(W(4)), r1(W(7))]];
@@ -798,14 +803,15 @@
       if (t === 63) return [[2, r1(R - 2 - W(2.5)), r1(W(5))], [0, 4, 1, 2, r1(L(26)), r1(W(7)), r1(L(26)), r1(W(7))]];
       if (ARCSET[t]) {
         const A = ARCSET[t];                              // 位置・長さ・向き
-        const mt = (arguments[2] || [0, 0, 0, 0]);
+        const mt = (arguments[2] || [0, 0, 0, 0]), mcol = (arguments[3] || [-1, -1, -1, -1]);
         const rr = r1(R - 3 - W(6)), sw = r1(W(12));
+        const col = (i) => (Number.isInteger(mcol[i]) && mcol[i] >= 0 ? mcol[i] : -1);   // -1 = 部品の色
         // 指標を選んでいない間は飾りの弧のまま。1 つでも選べば弧ごとの「メーター」で送る。
         if (!mt.some((m) => m)) {
-          if (t === 64) { return [[3, 4, rr, sw, A.half]]; }   // 均等 4 本は種別 3 で足りる
-          return A.deg.map((d, i) => [5, d, A.half, rr, sw, 0, A.dir[i]]);
+          if (t === 64 && !mcol.some((c) => c >= 0)) { return [[3, 4, rr, sw, A.half]]; }   // 均等 4 本・色も同じなら種別 3 で足りる
+          return A.deg.map((d, i) => [5, d, A.half, rr, sw, 0, A.dir[i], col(i)]);
         }
-        return A.deg.map((d, i) => [5, d, A.half, rr, sw, mt[i] || 0, A.dir[i]]);
+        return A.deg.map((d, i) => [5, d, A.half, rr, sw, mt[i] || 0, A.dir[i], col(i)]);
       }
       return null;
     }
@@ -847,11 +853,12 @@
             o += `<path d="M ${r1(x0)} ${r1(y0)} A ${rr} ${rr} 0 0 1 ${r1(x1)} ${r1(y1)}" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round"/>`;
           }
         } else if (e[0] === 5) {                            // メーターの弧 (track + 実測ぶん)
-          const [, cdeg, half, rr, sw, metric, dirIn] = e;
+          const [, cdeg, half, rr, sw, metric, dirIn, colIn] = e;
           const dir = (dirIn === -1) ? -1 : 1;
+          const stroke = (Number.isInteger(colIn) && colIn >= 0) ? colOf(colIn) : 'currentColor';
           const p = (a) => [R + rr * Math.cos((a - 90) * Math.PI / 180), R + rr * Math.sin((a - 90) * Math.PI / 180)];
           const arc = (a0, a1, op) => { const [x0, y0] = p(a0), [x1, y1] = p(a1);
-            return `<path d="M ${r1(x0)} ${r1(y0)} A ${rr} ${rr} 0 0 1 ${r1(x1)} ${r1(y1)}" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" opacity="${op}"/>`; };
+            return `<path d="M ${r1(x0)} ${r1(y0)} A ${rr} ${rr} 0 0 1 ${r1(x1)} ${r1(y1)}" fill="none" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" opacity="${op}"/>`; };
           o += arc(cdeg - half, cdeg + half, 0.45);   // 薄すぎると小さい絵で消えるので 0.45
           const ratio = metric ? meterRatio(metric) : 0;
           if (ratio > 0.02) {
@@ -868,17 +875,17 @@
       }
       return o;
     }
-    function svgFor(t, k, mt) {
+    function svgFor(t, k, mt, mc) {
       const h = hands(t, k);
       if (h) return handSvg(h[1], T.h) + handSvg(h[2], T.m) + (h[0] > 0 ? `<circle cx="${R}" cy="${R}" r="${h[0]}"/>` : '');
-      return rimSvg(rim(t, k, mt));
+      return rimSvg(rim(t, k, mt, mc));
     }
     return { R, hands, rim, svgFor };
   })();
   // One dial part as an <svg> that fills the dial; colour comes from the element (currentColor).
   function dialArt(t, s, w, h) {
     const k = DIAL_SCALE[Math.min(Math.max(s, 0), 3)];
-    const inner = DIAL.svgFor(t, k, st.mt);
+    const inner = DIAL.svgFor(t, k, st.mt, st.mc);
     if (!inner) return '';
     return `<svg width="${w}" height="${h}" viewBox="0 0 454 454" fill="currentColor" style="display:block">${inner}</svg>`;
   }
@@ -1155,12 +1162,12 @@
       const k = DIAL_SCALE[Math.min(Math.max(e[4], 0), 3)];
       const h = DIAL.hands(e[0], k);
       if (h && !out.hd) { out.hd = h; continue; }
-      const r = DIAL.rim(e[0], k, st.mt);
+      const r = DIAL.rim(e[0], k, st.mt, st.mc);
       if (r) { out.rm = (out.rm || []).concat(r); }
     }
     return out;
   }
-  const layoutObj = () => { const o = Object.assign({ bg: st.bg, el: st.el, pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
+  const layoutObj = () => { const o = Object.assign({ bg: st.bg, el: st.el, pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined, mc: (st.mc || []).some((c) => c >= 0) ? st.mc : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   function renderList() {
     const l = $('list'); l.innerHTML = '';
@@ -1173,34 +1180,47 @@
     });
     if (!st.el.length) l.innerHTML = '<span class="muted">None yet.</span>';
   }
-  let COLOR_NOTE = '';   // 控えの枠が足りずに他の部品の色まで変わった時だけ出す一言
-  // 選んだ色を控え (10..14) の枠に入れて、その index を返す。基本色や控えに同じ色があればその index。
-  // 枠は詰め替えない (詰め替えると他の部品の色が動く)。入れる枠の選び方:
-  //   1. 他の部品が使っていない枠 (今いじっている部品が使っている枠は残す = 元の色を控えに残せる)
-  //   2. 無ければ、今いじっている部品だけが使っている枠 (変わるのはその部品だけ)
-  //   3. それも無ければ、使っている部品が一番少ない枠
-  function useColor(str, idxs) {
+  // 並べる控え = 新しい 5 つ。選んでいる部品の色がそれより古い時は、それも出す (選択が見えるように)。
+  function shownColors(cur) {
+    const pc = st.pc || DEF_PC, out = [];
+    for (let i = Math.max(0, pc.length - PC_N); i < pc.length; i++) out.push(PC_BASE + i);
+    const k = cur - PC_BASE;
+    if (k >= 0 && k < pc.length && out.indexOf(cur) < 0) out.unshift(cur);
+    return out;
+  }
+  let COLOR_NOTE = '';   // 控えがいっぱいで他の部品の色まで変わった時だけ出す一言
+  // 選んだ色の index を返す。基本色 (0-9) か控えに同じ色があればその index、無ければ控えに足す。
+  // 足すだけなので、既に置いた部品の色は変わらない。上限に達したら、どの部品も使っていない色を
+  // 古いほうから捨てて詰め直す (捨てた色を使っている部品はいないので見た目は変わらない)。
+  function useColor(str) {
     const rgb = parseInt(String(str).replace('#', ''), 16);
     if (!Number.isInteger(rgb)) return 0;
     const base = PALETTE.slice(0, PC_BASE).findIndex((c) => parseInt(c.slice(1), 16) === rgb);
     if (base >= 0) return base;
-    const pc = (st.pc || DEF_PC).slice();
+    let pc = (st.pc || DEF_PC).slice();
     const at = pc.indexOf(rgb);
     if (at >= 0) return PC_BASE + at;
-    const mine = new Set(idxs || []);
-    const cnt = new Array(PC_N).fill(0);                 // 「今いじっている部品以外」が使っている数
-    st.el.forEach((x, i) => { const k = x[5] - PC_BASE; if (!mine.has(i) && k >= 0 && k < PC_N) cnt[k]++; });
-    const own = new Set();                               // 今いじっている部品が使っている枠
-    (idxs || []).forEach((i) => { const k = st.el[i] && st.el[i][5] - PC_BASE; if (k >= 0 && k < PC_N) own.add(k); });
-    let slot = -1;
-    for (let i = PC_N - 1; i >= 0; i--) if (cnt[i] === 0 && !own.has(i)) { slot = i; break; }
-    if (slot < 0) for (let i = PC_N - 1; i >= 0; i--) if (cnt[i] === 0) { slot = i; break; }
-    if (slot < 0) {                                      // 5 枠すべてが他の部品に使われている: 一番使用数の少ない枠を取る
-      slot = 0; for (let i = 1; i < PC_N; i++) if (cnt[i] < cnt[slot]) slot = i;
-      COLOR_NOTE = `The 5 recent colours were all in use — ${cnt[slot]} other part${cnt[slot] === 1 ? '' : 's'} changed colour.`;
+    if (pc.length >= PC_MAX) pc = gcColors(pc);
+    if (pc.length >= PC_MAX) {            // すべて使用中 (部品 24 個中 22 個が別々の色): 一番古いものを譲る
+      const drop = 0;
+      COLOR_NOTE = 'No room left for another colour — the oldest one was replaced.';
+      pc[drop] = rgb; st.pc = pc; return PC_BASE + drop;
     }
-    pc[slot] = rgb; st.pc = pc;
-    return PC_BASE + slot;
+    pc.push(rgb); st.pc = pc;
+    return PC_BASE + pc.length - 1;
+  }
+  // 使われていない控えを捨てて詰め直す。部品の色 index は付け替えるので見た目は変わらない。
+  function gcColors(pc) {
+    const keep = new Set();
+    st.el.forEach((x) => { const k = x[5] - PC_BASE; if (k >= 0 && k < pc.length) keep.add(k); });
+    (st.mc || []).forEach((c) => { const k = c - PC_BASE; if (k >= 0 && k < pc.length) keep.add(k); });
+    for (let i = Math.max(0, pc.length - PC_N); i < pc.length; i++) keep.add(i);   // 表示中の 5 つは残す
+    if (keep.size >= pc.length) return pc;
+    const next = [], map = {};
+    pc.forEach((c, i) => { if (keep.has(i)) { map[PC_BASE + i] = PC_BASE + next.length; next.push(c); } });
+    st.el.forEach((x) => { if (map[x[5]] != null) x[5] = map[x[5]]; });
+    if (st.mc) st.mc = st.mc.map((c) => (map[c] != null ? map[c] : c));
+    return next;
   }
   function renderInspector() {
     const box = $('insp'); let idx = selIdx(), e = st.el[sel];
@@ -1243,21 +1263,32 @@
         <div class="field"><span>Color</span><span class="swatches">${
           PALETTE.slice(0, PC_BASE).map((c, i) => `<button class="sw ${same(5) && i === e[5] ? 'on' : ''}" data-c="${i}" title="${PALETTE_NAMES[i]}" style="background:${c}"></button>`).join('')
         }<span class="sep"></span>${
-          (st.pc || DEF_PC).map((c, i) => `<button class="sw ${same(5) && PC_BASE + i === e[5] ? 'on' : ''}" data-c="${PC_BASE + i}" title="Recently used ${hex(c)}" style="background:${hex(c)}"></button>`).join('')
-        }<input type="color" class="pick" id="fpick" value="${colOf(e[5])}" title="Pick any colour — it is kept in the 5 recent swatches"></span></div>
+          shownColors(e[5]).map((i) => `<button class="sw ${same(5) && i === e[5] ? 'on' : ''}" data-c="${i}" title="${hex((st.pc || DEF_PC)[i - PC_BASE] || 0)}" style="background:${colOf(i)}"></button>`).join('')
+        }<input type="color" class="pick" id="fpick" value="${colOf(e[5])}" title="Pick any colour — the 5 most recent stay here"></span></div>
         <div class="brk"></div>
         <div class="field" title="Line the selected parts up on the one you clicked last (the highlighted row in the list)"><span>Align</span><span class="cb units" id="falign"><button type="button" data-v="x" ${multi ? '' : 'disabled'}>Same X &#8597;</button><button type="button" data-v="y" ${multi ? '' : 'disabled'}>Same Y &#8596;</button><button type="button" data-v="undo" ${ALIGN_UNDO ? '' : 'disabled'}>Undo</button></span></div>
         <div class="row" style="margin-top:6px"><button class="btn" id="dup">Duplicate</button><button class="btn danger" id="del">Remove</button></div>
         ${arcEl ? `<div class="field" title="Each arc can be a meter. Pick what it measures; none = plain arc."><span>Meters</span><span class="mts">${
           ARCSET[arcEl[0]].lbl.map((pos, i) => `<label class="mt"><span>${pos}</span><select data-i="${i}">${
             METERS.map(([id, nm]) => `<option value="${id}" ${(st.mt || [])[i] === id ? 'selected' : ''}>${nm}</option>`).join('')
-          }</select></label>`).join('')
+          }</select><input type="color" class="pick mtc" data-i="${i}" value="${colOf((st.mc || [])[i] >= 0 ? st.mc[i] : arcEl[5])}" title="Colour of this arc — right-click to follow the Rim part again"></label>`).join('')
         }</span></div>` : ''}
       </div>
       <div class="muted hint">${COLOR_NOTE ? `<span class="status err">${COLOR_NOTE}</span> ` : ''}${none ? 'Shift+click (or Cmd/Ctrl+click) selects several parts.' : multi ? `${all.length} parts selected — Anchor, Size, Icon size, Color and Icon apply to all of them.` : 'Shift+click adds another part to the selection.'}</div>`;
-    const bindMeters = () => document.querySelectorAll('.mts select').forEach((sel) => sel.addEventListener('change', () => {
-      const i = Number(sel.dataset.i); st.mt = (st.mt || [0, 0, 0, 0]).slice(); st.mt[i] = Number(sel.value); commit();
-    }));
+    const bindMeters = () => {
+      document.querySelectorAll('.mts select').forEach((sel) => sel.addEventListener('change', () => {
+        const i = Number(sel.dataset.i); st.mt = (st.mt || [0, 0, 0, 0]).slice(); st.mt[i] = Number(sel.value); commit();
+      }));
+      document.querySelectorAll('.mts .mtc').forEach((pk) => {
+        pk.addEventListener('change', () => {
+          const i = Number(pk.dataset.i); st.mc = (st.mc || [-1, -1, -1, -1]).slice(); st.mc[i] = useColor(pk.value); commit();
+        });
+        pk.addEventListener('contextmenu', (ev) => {   // 右クリックで「部品と同じ色」に戻す
+          ev.preventDefault();
+          const i = Number(pk.dataset.i); st.mc = (st.mc || [-1, -1, -1, -1]).slice(); st.mc[i] = -1; commit();
+        });
+      });
+    };
     // 揃える / 戻す。Meters と同じく常に出しておく (選ぶ前から場所が動かない)。
     const bindAlign = () => document.querySelectorAll('#falign button').forEach((b) => b.addEventListener('click', () => {
       if (b.dataset.v === 'undo') {
@@ -1284,7 +1315,7 @@
     box.querySelectorAll('.seg').forEach((sg) => sg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => each((x) => { const k = +sg.dataset.key; while (x.length < 8) x.push(-1); x[k] = +b.dataset.v; }))));
     box.querySelectorAll('.sw').forEach((b) => b.addEventListener('click', () => each((x) => { x[5] = +b.dataset.c; })));
     const fp = $('fpick');
-    if (fp) fp.addEventListener('change', (ev) => { const i = useColor(ev.target.value, selIdx()); each((x) => { x[5] = i; }); });
+    if (fp) fp.addEventListener('change', (ev) => { const i = useColor(ev.target.value); each((x) => { x[5] = i; }); });
     bindMeters(); bindAlign();
     box.querySelectorAll('.step').forEach((sp) => sp.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
       const k = Number(sp.dataset.step), d = Number(b.dataset.d) * st.grid;
@@ -1430,6 +1461,15 @@
   $('preset-lobby').addEventListener('click', () => { st.el = PRESET_LOBBY.map(e => e.slice()); clearSel(); commit(); });
   $('preset-min').addEventListener('click', () => { st.el = PRESET_MIN.map(e => e.slice()); clearSel(); commit(); });
   $('clear').addEventListener('click', () => { st.el = []; clearSel(); commit(); });
+  // pc を持たない古い面: 10 以上の色は昔の固定パレットの色だったので、そのまま控えに写す。
+  function legacyPc(el) {
+    const pc = DEF_PC.slice();
+    for (const e of el) {
+      const k = e[5] - PC_BASE;
+      if (k >= 0 && k < PALETTE.length - PC_BASE) { const rgb = parseInt(PALETTE[e[5]].slice(1), 16); if (pc.indexOf(rgb) < 0 && k >= pc.length) pc.push(rgb); }
+    }
+    return pc;
+  }
   function sanitize(j) {
     if (!j || !Array.isArray(j.el) || j.el.length > 24) return null;
     const el = [];
@@ -1437,7 +1477,7 @@
       if (!Array.isArray(e) || e.length < 7) return null;
       const n = e.slice(0, 8).map(Number); if (n.length < 8) n.push(-1);
       if (!TYPES[n[0]] || n.some((v) => !Number.isInteger(v))) return null;
-      if (n[1] < 0 || n[1] > 1000 || n[2] < 0 || n[2] > 1000 || n[3] < 0 || n[3] > 2 || n[4] < 0 || n[4] > SIZE_MAX || n[5] < 0 || n[5] >= PALETTE.length || n[6] < 0 || n[6] > 3 || n[7] < -1 || n[7] > SIZE_MAX) return null;
+      if (n[1] < 0 || n[1] > 1000 || n[2] < 0 || n[2] > 1000 || n[3] < 0 || n[3] > 2 || n[4] < 0 || n[4] > SIZE_MAX || n[5] < 0 || n[5] > PC_BASE + PC_MAX || n[6] < 0 || n[6] > 3 || n[7] < -1 || n[7] > SIZE_MAX) return null;
       if (isLine(n[0])) { const L = Number(e[8]); n.push(Number.isFinite(L) && L >= LINE_LEN_MIN && L <= 1000 ? Math.round(L) : LINE_LEN_DEF); }   // 線は 9 番目の長さを落とさない
       el.push(n);
     }
@@ -1451,7 +1491,8 @@
              du: (Number.isInteger(j.du) && j.du >= 0 && j.du <= 1) ? j.du : 0,
              hf: (Number.isInteger(j.hf) && j.hf >= 0 && j.hf <= 2) ? j.hf : 0,
              mt: (Array.isArray(j.mt) && j.mt.length === 4 && j.mt.every((m) => METERS.some((x) => x[0] === m))) ? j.mt.slice() : [0, 0, 0, 0],
-             pc: (Array.isArray(j.pc) && j.pc.length === PC_N && j.pc.every((c) => Number.isInteger(c) && c >= 0 && c <= 0xFFFFFF)) ? j.pc.slice() : DEF_PC.slice() };
+             pc: (Array.isArray(j.pc) && j.pc.length >= 1 && j.pc.length <= PC_MAX && j.pc.every((c) => Number.isInteger(c) && c >= 0 && c <= 0xFFFFFF)) ? j.pc.slice() : legacyPc(el),
+             mc: (Array.isArray(j.mc) && j.mc.length === 4 && j.mc.every((c) => Number.isInteger(c) && c >= -1 && c <= PC_BASE + PC_MAX)) ? j.mc.slice() : [-1, -1, -1, -1] };
   }
 
   // ── Server sync ────────────────────────────────────────────────────────────
@@ -1482,7 +1523,7 @@
       div.style.left = left + 'px'; div.style.top = top + 'px';
     });
   }
-  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); clearSel(); pushBgHist(st.bg); }
+  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); clearSel(); pushBgHist(st.bg); }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
   function renderWatchSeen() {
     const el = $('watchseen'); if (!el) return;

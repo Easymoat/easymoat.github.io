@@ -259,7 +259,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 20:48</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 20:56</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -923,16 +923,15 @@
           const [, cdeg, half, rr, sw, metric, dirIn, colIn] = e;
           const dir = (dirIn === -1) ? -1 : 1;
           const stroke = (Number.isInteger(colIn) && colIn >= 0) ? colOf(colIn) : (elCol || 'currentColor');
-          // 下地は実機と同じ「色 45 : 背景 55」の 1 色で塗る (透過にすると写真の上で実機と色が変わる)。
-          const track = mix(stroke === 'currentColor' ? hex(st.bg) : stroke, hex(st.bg), 0.45);
+          // 下地は「その色を 45% の透過で重ねる」= 下にある写真が透ける (2026-09-13 ユーザー指定)。
           const p = (a) => [R + rr * Math.cos((a - 90) * Math.PI / 180), R + rr * Math.sin((a - 90) * Math.PI / 180)];
-          const arc = (a0, a1, col) => { const [x0, y0] = p(a0), [x1, y1] = p(a1);
-            return `<path d="M ${r1(x0)} ${r1(y0)} A ${rr} ${rr} 0 0 1 ${r1(x1)} ${r1(y1)}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round"/>`; };
-          o += arc(cdeg - half, cdeg + half, track);
+          const arc = (a0, a1, op) => { const [x0, y0] = p(a0), [x1, y1] = p(a1);
+            return `<path d="M ${r1(x0)} ${r1(y0)} A ${rr} ${rr} 0 0 1 ${r1(x1)} ${r1(y1)}" fill="none" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" opacity="${op}"/>`; };
+          o += arc(cdeg - half, cdeg + half, 0.45);
           const ratio = metric ? meterRatio(metric) : 0;
           if (ratio > 0.02) {
             const from = cdeg - half * dir, to = from + 2 * half * ratio * dir;
-            o += (dir > 0) ? arc(from, to, stroke) : arc(to, from, stroke);
+            o += (dir > 0) ? arc(from, to, 1) : arc(to, from, 1);
           }
         } else if (e[0] === 4) {                            // 数字 12 / 3 / 6 / 9
           const [, rr, hgt] = e;

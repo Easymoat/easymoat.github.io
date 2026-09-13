@@ -238,6 +238,7 @@
   .kbd { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
   #elcount { font-family: var(--mono); font-size: 10px; color: var(--ink-3); }
   #elcount.over { color: var(--danger); font-weight: 700; }
+  #elcount.heavy { color: var(--accent); }
   .list { display: flex; flex-direction: column; gap: 3px; }   /* grows with the dial: every element stays visible */
   .li { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
   .li:hover { background: var(--panel-2); } .li.on { background: var(--panel-2); outline: 1px solid var(--line-2); }
@@ -261,7 +262,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 06:48</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 06:51</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -621,7 +622,8 @@
   const DIAL_PX = 520;   // on-screen size of the big dial (the layout itself stays in device px)
   // 4 size steps S/M/L/XL (3 → 4 on 2026-09-06); older 3-entry tables are padded with the XL default.
   const SIZES = ['S', 'M', 'L', 'XL'], SIZE_MAX = 3;
-  const EL_MAX = 24;   // 実機が受け取れる部品の数 (サーバも同じ値で弾く)
+  const EL_MAX = 32;   // 実機が受け取れる部品の数 (サーバも同じ値で弾く)
+  const EL_HEAVY = 25;   // これを超えると実機の描き直しが目に見えて遅くなる (部品 1 つ ≒ 5ms)
   // 線 (70-73)。太さは 454 の盤面での px、長さは幅の千分率 (x/y と同じ物差し)。
   const LINE_W = [3, 5, 7], LINE_LEN_DEF = 200, LINE_LEN_MIN = 20;   // 奇数 = 実機で端の丸めがぴったり合う
   const isLine = (t) => !!(TYPES[t] && TYPES[t].line != null);
@@ -1291,7 +1293,11 @@
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   function renderList() {
     const n = st.el.length, ec = $('elcount');
-    if (ec) { ec.textContent = `${n} / ${EL_MAX}`; ec.className = 'cnt' + (n > EL_MAX ? ' over' : ''); }
+    if (ec) {
+      ec.textContent = `${n} / ${EL_MAX}`;
+      ec.className = 'cnt' + (n > EL_MAX ? ' over' : n > EL_HEAVY ? ' heavy' : '');
+      ec.title = n > EL_HEAVY ? 'Past 25 parts the watch takes noticeably longer to redraw — most visible while scrolling its settings menu.' : '';
+    }
     const l = $('list'); l.innerHTML = '';
     if (st.el.length) { const hd = document.createElement('div'); hd.className = 'li hd'; hd.innerHTML = `<span class="dot" style="visibility:hidden"></span>Part<span class="xy">X, Y</span>`; l.appendChild(hd); }
     st.el.forEach((e, i) => {

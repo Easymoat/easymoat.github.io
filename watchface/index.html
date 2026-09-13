@@ -259,7 +259,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 13:48</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 13:53</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -615,6 +615,12 @@
   // 線 (70-73)。太さは 454 の盤面での px、長さは幅の千分率 (x/y と同じ物差し)。
   const LINE_W = [3, 5, 7], LINE_LEN_DEF = 200, LINE_LEN_MIN = 20;   // 奇数 = 実機で端の丸めがぴったり合う
   const isLine = (t) => !!(TYPES[t] && TYPES[t].line != null);
+  // 線の太さ (454 基準)。実機で奇数 px になる値に直して送る = 端の丸めがぴったり合う。
+  const linePen = (sz) => {
+    const w = dev().w, sc = w / 454, base = LINE_W[Math.min(Math.max(sz, 0), 2)];
+    const px = Math.max(1, Math.round((base * sc - 1) / 2) * 2 + 1);
+    return Math.round((px + 0.15) / sc * 10) / 10;
+  };
   const lineLen = (e) => { const v = Number(e[8]); return Number.isFinite(v) && v >= LINE_LEN_MIN ? Math.min(1000, Math.round(v)) : LINE_LEN_DEF; };
   // 線の絵。len/lw は px。向き 0 縦 / 1 横 / 2 斜め \\ / 3 斜め /。箱は線の外接矩形。
   function lineArt(dir, len, lw) {
@@ -766,9 +772,15 @@
   const DIAL = (() => {
     const R = 227, T = { h: 304, m: 48 };            // プレビューの時刻 10:08
     const r1 = (v) => Math.round(v * 10) / 10;
-    // 線や弧の太さは奇数の整数で渡す。実機の塗り円は半径 r で 2r+1 px を覆うので、幅 W に
-    // ぴったり合う半径 (W-1)/2 が整数になるのは W が奇数の時だけ (端の丸めが 1px ずれない)。
-    const odd = (v) => Math.max(1, Math.round((v - 1) / 2) * 2 + 1);
+    // 線や弧の太さ。実機は「届いた値 × 画面幅 / 454」を計算して描くだけなので、その結果が
+    // **その機種の実 px で奇数**になるように 454 基準の値を逆算して送る (奇数でないと、端の
+    // 丸め = 半径 (W-1)/2 の塗り円が 1px ずれる)。四捨五入でも切り捨てでも同じ値になるよう
+    // わずかに上へ振っておく。
+    const odd = (v) => {
+      const w = (typeof dev === 'function' ? dev().w : 454) || 454, sc = w / 454;
+      const px = Math.max(1, Math.round((v * sc - 1) / 2) * 2 + 1);   // 実機で出したい奇数 px
+      return Math.round((px + 0.15) / sc * 10) / 10;                  // 454 基準へ戻す
+    };
     const barPts = (len, w, back) => [-w / 2, -back, w / 2, -back, w / 2, len, -w / 2, len].map(r1);
     const kitePts = (len, w, back) => [0, len, w / 2, len * 0.62, 0, -back, -w / 2, len * 0.62].map(r1);
     const needlePts = (len, w) => [0, len, w / 2, -14, -w / 2, -14].map(r1);
@@ -1082,7 +1094,7 @@
       return div;
     }
     if (def.line != null) {   // 線: 外接矩形の箱に引く。当たり判定は線の上だけ (下の部品を隠さない)
-      const dv = dev(), art = lineArt(def.line, lineLen(e) * dv.w / 1000, LINE_W[Math.min(Math.max(s, 0), 2)] * k);
+      const dv = dev(), art = lineArt(def.line, lineLen(e) * dv.w / 1000, linePen(s) * k);
       div.classList.add('linepart');
       div.style.width = art.w + 'px'; div.style.height = art.h + 'px';
       div.innerHTML = art.svg + '<span class="anchor"></span>';
@@ -1173,7 +1185,7 @@
   }
   // 実機へ渡す el。線だけ 10 番目に太さ (454 盤面の実 px) を足す = 太さを変えても実機のビルドは不要。
   const elOut = () => st.el.map((e) => (isLine(e[0])
-    ? e.slice(0, 8).concat([lineLen(e), LINE_W[Math.min(Math.max(e[4], 0), 2)]]) : e));
+    ? e.slice(0, 8).concat([lineLen(e), linePen(e[4])]) : e));
   const layoutObj = () => { const o = Object.assign({ bg: st.bg, el: elOut(), pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined, mc: (st.mc || []).some((c) => c >= 0) ? st.mc : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   function renderList() {

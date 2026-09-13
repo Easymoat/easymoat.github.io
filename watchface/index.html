@@ -105,6 +105,9 @@
   .el.dialpart { pointer-events: none; padding: 0; margin: 0; }   /* 余白ぶん横が詰まって右側の隙間が広く見えていた */
   .el.dialpart svg { flex: 0 0 auto; }
   #stage .el.dialpart svg * { pointer-events: auto; }
+  .el.linepart { pointer-events: none; padding: 0; margin: 0; }          /* 箱ではなく線の上だけを掴む */
+  .el.linepart svg { flex: 0 0 auto; }
+  #stage .el.linepart svg line { pointer-events: auto; cursor: move; }
   .empty { color: var(--ink-3); font-size: 13px; text-align: center; max-width: 34ch; }
   .drawer { width: 100%; max-width: 1040px; display: grid; grid-template-columns: 1fr; gap: 24px; }
   /* The rail sits beside the dial; when the window is too narrow it wraps ABOVE the dial (wrap-reverse)
@@ -248,7 +251,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 09:01</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-13 09:23</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -261,6 +264,7 @@
     <div class="group"><span class="lbl">Weather</span><div class="parts" id="parts-wx"></div></div>
     <div class="group"><span class="lbl">Hands</span><div class="parts" id="parts-hands"></div></div>
     <div class="group"><span class="lbl">Rim</span><div class="parts" id="parts-rim"></div></div>
+    <div class="group"><span class="lbl">Lines</span><div class="parts" id="parts-line"></div></div>
     <div class="group"><span class="lbl">Markets</span><div class="parts" id="parts-mkt"></div><span class="muted">Values come from MarketWatch complications (next step).</span></div>
   </aside>
 
@@ -440,6 +444,12 @@
     67: { name: 'Rim: Corners long',  grp: 'rim',   dial: true },
     68: { name: 'Rim: Pairs',         grp: 'rim',   dial: true },
     65: { name: 'Rim: Marks',         grp: 'rim',   dial: true, hidden: true },   // Ticks と同じだった (2026-09-12 取り下げ)
+    // 70-73 = 線。グリッドに沿って引く飾り。line = 向き (0 縦 / 1 横 / 2 斜め \\ / 3 斜め /)。
+    // 長さは el の 9 番目 (幅の千分率)、太さは s (0..2)。
+    70: { name: 'Vertical',   grp: 'line', line: 0 },
+    71: { name: 'Horizontal', grp: 'line', line: 1 },
+    72: { name: 'Diagonal \\', grp: 'line', line: 2 },
+    73: { name: 'Diagonal /', grp: 'line', line: 3 },
     30: { name: 'Stock 1',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
     31: { name: 'Stock 2',   grp: 'mkt',   sample: '--',     icon: 'stock',     iw: 0 },
   };
@@ -588,6 +598,20 @@
   const DIAL_PX = 520;   // on-screen size of the big dial (the layout itself stays in device px)
   // 4 size steps S/M/L/XL (3 → 4 on 2026-09-06); older 3-entry tables are padded with the XL default.
   const SIZES = ['S', 'M', 'L', 'XL'], SIZE_MAX = 3;
+  // 線 (70-73)。太さは 454 の盤面での px、長さは幅の千分率 (x/y と同じ物差し)。
+  const LINE_W = [2, 4, 7], LINE_LEN_DEF = 200, LINE_LEN_MIN = 20;
+  const isLine = (t) => !!(TYPES[t] && TYPES[t].line != null);
+  const lineLen = (e) => { const v = Number(e[8]); return Number.isFinite(v) && v >= LINE_LEN_MIN ? Math.min(1000, Math.round(v)) : LINE_LEN_DEF; };
+  // 線の絵。len/lw は px。向き 0 縦 / 1 横 / 2 斜め \\ / 3 斜め /。箱は線の外接矩形。
+  function lineArt(dir, len, lw) {
+    const dg = dir >= 2, side = dg ? len / Math.SQRT2 : 0;
+    const w = dir === 0 ? lw : dir === 1 ? len : side, h = dir === 0 ? len : dir === 1 ? lw : side;
+    const bw = Math.max(w, lw), bh = Math.max(h, lw), cx = bw / 2, cy = bh / 2;
+    const hx = dir === 0 ? 0 : dir === 1 ? len / 2 : side / 2, hy = dir === 0 ? len / 2 : dir === 1 ? 0 : side / 2;
+    const [x1, y1, x2, y2] = dir === 3 ? [cx - hx, cy + hy, cx + hx, cy - hy] : [cx - hx, cy - hy, cx + hx, cy + hy];
+    const l = (st_, wd) => `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${st_}" stroke-width="${wd.toFixed(1)}"/>`;
+    return { w: bw, h: bh, svg: `<svg width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" style="display:block;overflow:visible">${l('transparent', Math.max(lw, 14))}${l('currentColor', lw)}</svg>` };
+  }
   const DEF_TX = [26, 36, 48, 60], DEF_TM = [52, 68, 84, 100], DEF_IC = [19, 26, 35, 44], DEF_IO = 0, ICON_ART = 26, FONT_EM = 1.17, GAP = 6;
   // The watch draws body text (not the clock) 1.2× the value here (WfLayout.TEXT_BOOST): on the
   // 33 mm screen thin digits read smaller than the icons, so the editor keeps the comfortable
@@ -903,6 +927,7 @@
       p.innerHTML = `<span class="ico" style="color:#1D222B">${dialArt(+t, 1, 26, 26)}</span><span class="nm">${d.name.replace(/^(Hands|Rim):\s*/, '')}</span>`;
       p.addEventListener('click', () => toggleDialPart(+t));
     }
+    else if (d.line != null) p.innerHTML = `<span class="ico" style="color:#1D222B">${lineArt(d.line, 22, 3).svg}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     else p.innerHTML = `<span class="ico">${d.icon && d.icon !== 'stock' ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${d.icon === 'stock' ? '$' : d.sample}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     if (!d.dial) p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +t));
     $('parts-' + d.grp).appendChild(p);
@@ -1027,6 +1052,14 @@
       div.addEventListener('pointerdown', (ev) => startMove(ev, i));
       return div;
     }
+    if (def.line != null) {   // 線: 外接矩形の箱に引く。当たり判定は線の上だけ (下の部品を隠さない)
+      const dv = dev(), art = lineArt(def.line, lineLen(e) * dv.w / 1000, LINE_W[Math.min(Math.max(s, 0), 2)] * k);
+      div.classList.add('linepart');
+      div.style.width = art.w + 'px'; div.style.height = art.h + 'px';
+      div.innerHTML = art.svg + '<span class="anchor"></span>';
+      div.addEventListener('pointerdown', (ev) => startMove(ev, i));
+      return div;
+    }
     const px = effPx(t, s);   // what this device really draws (vector px, or its fixed system font)
     // The watch's vector-font :size is the line height (getFontHeight == size); Roboto's glyphs
     // at that size equal CSS font-size = size / 1.17 (measured on fr965 sim: "8,421" @44 = 91px
@@ -1123,16 +1156,27 @@
     const sameIs = all.every((x) => isOf(x) === isOf(e));
     const anyIcon = all.some((x) => TYPES[x[0]]?.icon);
     const arcEl = st.el.find((x) => ARCSET[x[0]]);   // Meters は弧が文字盤にある間ずっと出す (選択に関係なく)
+    const allLine = all.every((x) => isLine(x[0]));   // 線だけを選んでいる時は線の操作に差し替える
+    const sameLen = all.every((x) => lineLen(x) === lineLen(e));
     box.innerHTML = `
       <div style="font-weight:600;margin-bottom:8px">${none ? '<span class="muted" style="font-weight:400">No part selected — click one on the dial (Shift+click for several)</span>' : multi ? `${all.length} elements <span class="kbd">changes apply to all</span>` : `${def.name} <span class="kbd">type ${e[0]}</span>`}</div>
       <div class="group">
         <div class="field"><span>X</span><input type="number" id="fx" min="0" max="1000" step="${st.grid}" value="${none || multi ? '' : e[1]}" ${multi ? 'disabled title="Several parts selected: drag or use the arrow keys to move them together"' : ''}></div>
         <div class="field"><span>Y</span><input type="number" id="fy" min="0" max="1000" step="${st.grid}" value="${none || multi ? '' : e[2]}" ${multi ? 'disabled' : ''}></div>
+        ${allLine ? `
+        <div class="field" title="Which way the line runs"><span>Direction</span><span class="cb units" id="fdir">${
+          [[70, '&#9474;'], [71, '&#9472;'], [72, '&#9586;'], [73, '&#9585;']].map(([tt, lb]) =>
+            `<button type="button" data-t="${tt}" class="${all.every((x) => x[0] === tt) ? 'on' : ''}">${lb}</button>`).join('')
+        }</span></div>
+        <div class="field" title="Length in thousandths of the dial width; the arrows step by the grid"><span>Length</span><input type="number" id="flen" min="${LINE_LEN_MIN}" max="1000" step="${st.grid}" value="${sameLen ? lineLen(e) : ''}"></div>
+        ${seg('Thickness', ['Thin', 'Medium', 'Thick'], same(4) ? e[4] : -9, 4)}
+        ` : `
         ${seg('Anchor', ['Center', 'Left', 'Right'], same(3) ? e[3] : -1, 3)}
         ${seg('Size', SIZES, same(4) ? e[4] : -9, 4)}
         ${seg('Icon size', ['Auto'].concat(SIZES), anyIcon ? (sameIs ? isOf(e) : -9) : -9, 7, -1)}
+        `}
         <div class="field"><span>Color</span><span class="swatches">${PALETTE.map((c, i) => `<button class="sw ${same(5) && i === e[5] ? 'on' : ''}" data-c="${i}" title="${PALETTE_NAMES[i]}" style="background:${c}"></button>`).join('')}</span></div>
-        ${`<div class="field" title="${anyIcon ? 'What this part draws' : 'This part has no icon'}"><span>Show</span><span class="cb units" id="fshow">${
+        ${allLine ? '' : `<div class="field" title="${anyIcon ? 'What this part draws' : 'This part has no icon'}"><span>Show</span><span class="cb units" id="fshow">${
           [['Icon + value', 1], ['Icon only', 3], ['Value only', 0]].map(([lbl, v]) =>
             `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 3) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none ? 'disabled' : ''}>${lbl}</button>`).join('')
         }</span></div>`}
@@ -1141,6 +1185,7 @@
             METERS.map(([id, nm]) => `<option value="${id}" ${(st.mt || [])[i] === id ? 'selected' : ''}>${nm}</option>`).join('')
           }</select></label>`).join('')
         }</span></div>` : ''}
+        ${multi ? `<div class="field" title="Line the selected parts up on the one you clicked last (the highlighted row in the list)"><span>Align</span><span class="cb units" id="falign"><button type="button" data-v="x">Same X &#8597;</button><button type="button" data-v="y">Same Y &#8596;</button></span></div>` : ''}
         <div class="row" style="margin-top:6px"><button class="btn" id="dup">Duplicate</button><button class="btn danger" id="del">Remove</button></div>
       </div>
       <div class="muted hint">${none ? 'Shift+click (or Cmd/Ctrl+click) selects several parts.' : multi ? `${all.length} parts selected — Anchor, Size, Icon size, Color and Icon apply to all of them.` : 'Shift+click adds another part to the selection.'}</div>`;
@@ -1155,6 +1200,17 @@
     box.querySelectorAll('.seg').forEach((sg) => sg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => each((x) => { const k = +sg.dataset.key; while (x.length < 8) x.push(-1); x[k] = +b.dataset.v; }))));
     box.querySelectorAll('.sw').forEach((b) => b.addEventListener('click', () => each((x) => { x[5] = +b.dataset.c; })));
     bindMeters();
+    const fl = $('flen');
+    if (fl) fl.addEventListener('change', (ev) => {
+      const v = Math.max(LINE_LEN_MIN, Math.min(1000, Math.round(+ev.target.value || 0)));
+      each((x) => { while (x.length < 8) x.push(-1); x[8] = v; });
+    });
+    document.querySelectorAll('#fdir button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isLine(x[0])) x[0] = +b.dataset.t; })));
+    // 揃える基準 = 最後に触れた部品 (一覧で光っている行)。
+    document.querySelectorAll('#falign button').forEach((b) => b.addEventListener('click', () => {
+      const ref = st.el[sel] || all[0], k = b.dataset.v === 'x' ? 1 : 2;
+      each((x) => { x[k] = ref[k]; });
+    }));
     document.querySelectorAll('#fshow button').forEach((b) => b.addEventListener('click', () => {
       const v = Number(b.dataset.v);
       each((x) => { if (TYPES[x[0]]?.icon) { x[6] = (x[6] & ~3) | v; } });
@@ -1166,6 +1222,8 @@
   }
   function removeSelected() { selIdx().reverse().forEach((i) => st.el.splice(i, 1)); clearSel(); }
   const clamp = (v) => Math.max(0, Math.min(1000, Math.round(v)));
+  // 線はグリッドに乗せる (グリッドに沿って引くための吸着)。
+  const snapGrid = (v) => clamp(Math.round(v / st.grid) * st.grid);
   const snap = (v) => clamp(Math.round(v / st.grid) * st.grid);
   let LAYOUT_DIRTY = true;   // the dial differs from what the selected face holds (cleared by loading a face / Upload)
   // The editor state itself survives a reload (localStorage 'faceComposer'). On top of that there is
@@ -1226,7 +1284,7 @@
   function startPaletteDrag(ev, t) {
     ev.preventDefault();
     const d = TYPES[t];
-    const e = [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, d.icon ? 1 : 0, -1];
+    const e = isLine(t) ? [t, 500, 500, 0, 1, 0, 0, -1, LINE_LEN_DEF] : [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, d.icon ? 1 : 0, -1];
     st.el.push(e); setSel(st.el.length - 1, false);
     const p = stagePoint(ev); e[1] = clamp(p.x); e[2] = clamp(p.y);
     drag = { i: sel, items: [{ i: sel, dx: 0, dy: 0 }], fromPalette: true, moved: false };
@@ -1236,7 +1294,7 @@
   window.addEventListener('pointermove', (ev) => {
     if (!drag) return;
     const p = stagePoint(ev); if (!st.el[drag.i]) return;
-    drag.items.forEach((it) => { const x = st.el[it.i]; if (x) { x[1] = clamp(p.x + it.dx); x[2] = clamp(p.y + it.dy); } }); drag.moved = true;
+    drag.items.forEach((it) => { const x = st.el[it.i]; if (x) { const sn = isLine(x[0]) ? snapGrid : clamp; x[1] = sn(p.x + it.dx); x[2] = sn(p.y + it.dy); } }); drag.moved = true;
     const div = stage.querySelector(`.el[data-i="${drag.i}"]`);
     if (div) { div.style.opacity = p.inside || !drag.fromPalette ? '' : '.35'; }
     positionAll();

@@ -262,7 +262,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 20:02</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 20:46</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -623,7 +623,9 @@
   const DIAL_PX = 520;   // on-screen size of the big dial (the layout itself stays in device px)
   // 4 size steps S/M/L/XL (3 → 4 on 2026-09-06); older 3-entry tables are padded with the XL default.
   const SIZES = ['S', 'M', 'L', 'XL'], SIZE_MAX = 3;
-  const EL_MAX = 40;   // 実機が受け取れる部品の数 (サーバも同じ値で弾く)
+  const EL_MAX = 40;   // 実機が受け取れる部品の数 (サーバも同じ値で弾く)。**線は数えない**
+  const LINE_MAX = 60;   // 線だけの歯止め (描画コストがほぼ無いので実用上当たらない)
+  const elCount = (list) => (list || []).filter((e) => !isLine(e[0])).length;   // 上限の対象 = 線以外
   // f のビット: 0 アイコン / 1 値を出さない / 2 株は変化率 · 3 上げ下げ (野球は状態) で色 / 4 株は名前。
   // **サーバの上限と必ず揃えること** (ここが狭いと絵札が描けず真っ黒になる、2026-09-14)。
   const F_MAX = 31;
@@ -1389,11 +1391,11 @@
     bb: teamOf() ? { lg: 'mlb', tm: teamOf() } : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   function renderList() {
-    const n = st.el.length, ec = $('elcount');
+    const n = elCount(st.el), ec = $('elcount');
     if (ec) {
       ec.textContent = `${n} / ${EL_MAX}`;
       ec.className = 'cnt' + (n > EL_MAX ? ' over' : n > EL_HEAVY ? ' heavy' : '');
-      ec.title = n > EL_HEAVY ? `Past ${EL_HEAVY} parts the watch redraws noticeably slower (about 5 ms per part) — you will feel it while scrolling the watch's own settings menu.` : '';
+      ec.title = (n > EL_HEAVY ? `Past ${EL_HEAVY} parts the watch redraws noticeably slower (about 5 ms per part) — you will feel it while scrolling the watch's own settings menu. ` : '') + 'Lines are not counted: they cost almost nothing to draw.';
     }
     const l = $('list'); l.innerHTML = '';
     if (st.el.length) { const hd = document.createElement('div'); hd.className = 'li hd'; hd.innerHTML = `<span class="dot" style="visibility:hidden"></span>Part<span class="xy">X, Y</span>`; l.appendChild(hd); }
@@ -1637,7 +1639,7 @@
   }
   // 針と縁は入 / 切。同じ組の中では 1 つだけ (針を 2 種類同時には置かない)。
   function toggleDialPart(t) {
-    if (st.el.length >= EL_MAX && !st.el.some((x) => x[0] === t)) { setStatus('shelfstatus', `The watch takes ${EL_MAX} parts — remove one before adding another.`, 'err'); return; }
+    if (elCount(st.el) >= EL_MAX && !st.el.some((x) => x[0] === t)) { setStatus('shelfstatus', `The watch takes ${EL_MAX} parts — remove one before adding another. Lines do not count.`, 'err'); return; }
     const grp = TYPES[t].grp, was = st.el.findIndex((e) => e[0] === t);
     st.el = st.el.filter((e) => !(TYPES[e[0]] && TYPES[e[0]].dial && TYPES[e[0]].grp === grp));
     if (was < 0) { st.el.push([t, 500, 500, 0, 1, 0, 0, -1]); setSel(st.el.length - 1, false); }
@@ -1651,7 +1653,9 @@
   }
   function startPaletteDrag(ev, t) {
     ev.preventDefault();
-    if (st.el.length >= EL_MAX) { setStatus('shelfstatus', `The watch takes ${EL_MAX} parts — remove one before adding another.`, 'err'); return; }
+    const wantLine = isLine(t) || isLine((PAL_PCT[t] || {}).t);
+    if (!wantLine && elCount(st.el) >= EL_MAX) { setStatus('shelfstatus', `The watch takes ${EL_MAX} parts — remove one before adding another. Lines do not count.`, 'err'); return; }
+    if (wantLine && st.el.length - elCount(st.el) >= LINE_MAX) { setStatus('shelfstatus', `That is ${LINE_MAX} lines — enough for one dial.`, 'err'); return; }
     let d = TYPES[t] || TYPES[(PAL_PCT[t] || {}).t];
     const pct = PAL_PCT[t];                      // 「変化率」版は種別 30/31 + bit2
     if (pct) { t = pct.t; d = TYPES[t]; }
@@ -1729,7 +1733,7 @@
     return pc;
   }
   function sanitize(j) {
-    if (!j || !Array.isArray(j.el) || j.el.length > EL_MAX) return null;
+    if (!j || !Array.isArray(j.el) || j.el.length > EL_MAX + LINE_MAX) return null;
     const el = [];
     for (const e of j.el) {
       if (!Array.isArray(e) || e.length < 7) return null;
@@ -1971,7 +1975,7 @@
   }
   $('shelfsave').addEventListener('click', async () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
-    if (st.el.length > EL_MAX) return setStatus('shelfstatus', `Too many parts: ${st.el.length}. The watch takes ${EL_MAX} — remove ${st.el.length - EL_MAX} and save again.`, 'err');
+    if (elCount(st.el) > EL_MAX) return setStatus('shelfstatus', `Too many parts: ${elCount(st.el)} (lines do not count). The watch takes ${EL_MAX} — remove ${elCount(st.el) - EL_MAX} and save again.`, 'err');
     const hasImg = !!(IMG.show && hasSource() && IMG.masked);
     // 絵のない品はウォッチでも絵なしになる。意図しない「絵なし」で保存してしまうのを防ぐ。
     if (!hasImg && CAM.on && !IMG.cur) return setStatus('shelfstatus', 'No camera frame in the editor yet — this would be saved without a picture. Press Camera again once a frame appears.', 'err');
@@ -1982,7 +1986,7 @@
     try { const r = await fetch($('api').value + '/shelf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const j = await r.json();
       if (!r.ok || !j.ok) throw new Error(j.error === 'shelf_full' ? `the collection is full (${j.max} items) — delete one first`
-        : j.error === 'bad_layout' ? `the watch cannot take this dial (${st.el.length} parts, limit ${EL_MAX})` : (j.error || r.status));
+        : j.error === 'bad_layout' ? `the watch cannot take this dial (${elCount(st.el)} parts, limit ${EL_MAX})` : (j.error || r.status));
       const note = hasImg ? '' : (hasSource() ? ' (saved without the picture — Show is off)' : ' (no picture)');
       setStatus('shelfstatus', `Saved as ${body.name || 'item ' + j.n}${note} — use "To watch…" on it to put it on the watch.`, hasImg ? 'ok' : 'err'); $('shelfname').value = ''; loadShelf(); }
     catch (e) { setStatus('shelfstatus', 'Save failed: ' + e.message, 'err'); }

@@ -265,7 +265,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 06:00</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 06:34</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1772,8 +1772,10 @@
   }
   function readDraft() { try { return JSON.parse(localStorage.getItem('faceComposer.draft') || 'null'); } catch (e) { return null; } }
   function setEditing(m) { EDITING = m; try { localStorage.setItem('faceComposer.editing', String(m)); } catch (e) {} }
+  let LAST_EDGE_BG = null;   // 縁を混ぜた時の背景色。変わったら絵を描き直す
   function commit() {
     LAYOUT_DIRTY = true;
+    if (typeof IMG !== 'undefined' && LAST_EDGE_BG !== null && LAST_EDGE_BG !== st.bg && hasSource()) { LAST_EDGE_BG = st.bg; redrawImg(); }
     try { localStorage.setItem('faceComposer', JSON.stringify(st)); } catch (e) {}
     render();
     if (typeof IMG !== 'undefined' && IMG.bgMode === 'dial' && hasSource()) repaintQuality();   // photo preview follows the dial colour
@@ -2353,6 +2355,26 @@
   const saOf = () => (Number.isFinite(IMG.sa) ? Math.max(0, Math.min(200, IMG.sa)) : 100);
   // 画素を直に計算する (canvas の filter は古い Safari などで無視されるため)。
   // 式は CSS の brightness → saturate と同じで、サーバがカメラの面を作り直す時も同じ順序で計算する。
+  // 枠の縁は canvas が半透明で描く。実機は透過を持てないので、そのまま送ると輪郭に
+  // 黒っぽい線 (背景と絵の隙間のようなもの) が出る。縁の画素を文字盤の背景色と混ぜて
+  // 不透明にし、外側は完全に透明にしておく。
+  function hardenEdge(ctx) {
+    LAST_EDGE_BG = st.bg;
+    const im = ctx.getImageData(0, 0, 320, 320), d = im.data;
+    const bg = st.bg || 0, br = (bg >> 16) & 255, bgn = (bg >> 8) & 255, bb = bg & 255;
+    let touched = false;
+    for (let i = 0; i < d.length; i += 4) {
+      const a = d[i + 3];
+      if (a === 255 || a === 0) continue;
+      const t = a / 255;
+      d[i] = Math.round(d[i] * t + br * (1 - t));
+      d[i + 1] = Math.round(d[i + 1] * t + bgn * (1 - t));
+      d[i + 2] = Math.round(d[i + 2] * t + bb * (1 - t));
+      d[i + 3] = a >= 24 ? 255 : 0;                 // ごく薄い画素は捨てる (形が太らない)
+      touched = true;
+    }
+    if (touched) ctx.putImageData(im, 0, 0);
+  }
   function applyTone(ctx) {
     const br = brOf() / 100, sa = saOf() / 100;
     if (br === 1 && sa === 1) return;
@@ -2381,6 +2403,7 @@
     if (!IMG.cur) {   // colour fill: the frame shape(s) in one colour, no photo
       ctx.clearRect(0, 0, 320, 320);
       for (const [k, i] of frameShapes()) { ctx.save(); framePath(ctx, k, i); ctx.clip(); ctx.fillStyle = IMG.fill; ctx.fillRect(0, 0, 320, 320); ctx.restore(); }
+      hardenEdge(ctx);
       IMG.masked = imgCv.toDataURL('image/png'); applyStageImage(); IMG.reduced = null; paintQuality(); renderShowToggle(); IMG.dirty = true; $('imgbgrow').hidden = false; scheduleMeasure(); return;
     }
     const base = Math.max(bw / IMG.cur.width, bh / IMG.cur.height), sc = base * IMG.zoom;
@@ -2406,6 +2429,7 @@
       ctx.restore();
     }
     applyTone(ctx);                                  // 明るさ・彩度 (実機へ送る絵にも同じ式でかかる)
+    hardenEdge(ctx);                                 // 縁の半透明を潰す (実機に透過が無いので輪郭に暗い線が出る)
     IMG.masked = imgCv.toDataURL('image/png');
     applyStageImage();                 // live: the dial follows every edit at once
     IMG.reduced = null; paintQuality();   // keep the preview lit (Auto colour + raw image) — no black flash while dragging

@@ -239,6 +239,24 @@
   .swatches .sep { width: 1px; height: 20px; background: var(--line-2); margin: 0 3px; }   /* 基本色 | 使った色 */
 
   .kbd { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+  /* ── 携帯 (細い画面): コレクションだけを出して、面の切り替えに専念する ──
+     body.full を付ければ全部出る (Editor ボタン)。 */
+  #phonebar { display: none; }
+  @media (max-width: 760px) {
+    body:not(.full) header .sub, body:not(.full) header .kbd { display: none; }
+    body:not(.full) aside.left, body:not(.full) aside.right,
+    body:not(.full) .stagewrap > .tier, body:not(.full) .stagebar, body:not(.full) .stage-outer,
+    body:not(.full) .imgbox, body:not(.full) .drawer, body:not(.full) #empty,
+    body:not(.full) .shelfbox .tier, body:not(.full) #shelfsaverow { display: none; }
+    body:not(.full) #phonebar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; width: 100%; }
+    body:not(.full) main { padding: 10px; gap: 10px; }
+    body:not(.full) .shelf { gap: 14px; justify-content: center; }
+    body:not(.full) .item { width: 46vw; max-width: 200px; }
+    body:not(.full) .item .mini { width: 42vw; height: 42vw; max-width: 180px; max-height: 180px; }
+    body:not(.full) .item .btn { padding: 8px 12px; font-size: 14px; }
+    body:not(.full) .item [data-a="load"] { display: none; }
+    body:not(.full) .item .cap { max-width: 46vw; }
+  }
   #elcount { font-family: var(--mono); font-size: 10px; color: var(--ink-3); }
   #elcount.over { color: var(--danger); font-weight: 700; }
   #elcount.heavy { color: var(--accent); }
@@ -265,12 +283,18 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 06:34</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 06:48</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
 
 <main>
+  <div id="phonebar" class="box">
+    <span class="lbl">Watch</span>
+    <input type="text" id="devid2" placeholder="XXXX-XXXX" style="width:120px">
+    <span class="status" id="watchseen2" style="flex:1 1 100%"></span>
+    <button class="btn" id="tofulled" title="Show the whole editor on this screen">Editor</button>
+  </div>
   <aside class="left">
     <div class="group"><span class="lbl">Parts</span><span class="muted">Drag onto the dial, or click to drop at center.</span></div>
     <div class="group"><span class="lbl">Clock</span><div class="parts" id="parts-clock"></div></div>
@@ -349,7 +373,7 @@
       <div class="grp">
         <div class="ctl"><span class="muted">Everything on the watch comes from here: save the dial above, then use <b>To watch</b> on it. The watch shows one dial — sending another replaces it, within 5 minutes.</span></div>
         <div class="status" id="syncstatus"></div>
-        <div class="row" style="align-items:center;gap:10px"><input type="text" id="shelfname" placeholder="Name (optional)" style="width:180px"><button class="btn primary" id="shelfsave">Save to collection</button><span class="muted" id="shelfcount"></span><span class="status err" id="shelfnopic" hidden>No picture in the dial — it will be saved without one</span></div>
+        <div class="row" id="shelfsaverow" style="align-items:center;gap:10px"><input type="text" id="shelfname" placeholder="Name (optional)" style="width:180px"><button class="btn primary" id="shelfsave">Save to collection</button><span class="muted" id="shelfcount"></span><span class="status err" id="shelfnopic" hidden>No picture in the dial — it will be saved without one</span></div>
         <div class="status" id="shelfstatus"></div>
       </div>
       <div class="shelf" id="shelf"></div>
@@ -2796,6 +2820,22 @@
   $('plid').addEventListener('change', () => { if (CAM.on) { CAM.ver = ''; fetchCam(); } });
   setShape('square'); renderPhotos(); measure();
 
+  // ── 携帯の画面: コレクションだけ出す。Device ID とウォッチの状態は上のバーに写す ──
+  (() => {
+    const d2 = $('devid2'), w2 = $('watchseen2');
+    if (!d2) return;
+    d2.value = $('devid').value;
+    d2.addEventListener('change', () => { $('devid').value = d2.value.trim(); $('devid').dispatchEvent(new Event('change', { bubbles: true })); });
+    $('devid').addEventListener('change', () => { d2.value = $('devid').value; });
+    // ウォッチの状態の行をそのまま写す
+    const mirror = () => { if (w2) { w2.textContent = $('watchseen').textContent; w2.className = $('watchseen').className; } };
+    new MutationObserver(mirror).observe($('watchseen'), { childList: true, characterData: true, subtree: true, attributes: true });
+    mirror();
+    $('tofulled').addEventListener('click', () => {
+      document.body.classList.toggle('full');
+      $('tofulled').textContent = document.body.classList.contains('full') ? 'Collection' : 'Editor';
+    });
+  })();
   render();
   (st.stk || []).forEach(loadStock);   // 面に既に入っている銘柄も起動時に下見する (名前と値をプレビューへ)
   loadPhotos(); loadWatchState();

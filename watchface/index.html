@@ -262,7 +262,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 18:27</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 18:41</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -623,11 +623,11 @@
   const DIAL_PX = 520;   // on-screen size of the big dial (the layout itself stays in device px)
   // 4 size steps S/M/L/XL (3 → 4 on 2026-09-06); older 3-entry tables are padded with the XL default.
   const SIZES = ['S', 'M', 'L', 'XL'], SIZE_MAX = 3;
-  const EL_MAX = 32;   // 実機が受け取れる部品の数 (サーバも同じ値で弾く)
+  const EL_MAX = 40;   // 実機が受け取れる部品の数 (サーバも同じ値で弾く)
   // f のビット: 0 アイコン / 1 値を出さない / 2 株は変化率 · 3 上げ下げ (野球は状態) で色 / 4 株は名前。
   // **サーバの上限と必ず揃えること** (ここが狭いと絵札が描けず真っ黒になる、2026-09-14)。
   const F_MAX = 31;
-  const EL_HEAVY = 25;   // これを超えると実機の描き直しが目に見えて遅くなる (部品 1 つ ≒ 5ms)
+  const EL_HEAVY = 32;   // これを超えると実機の描き直しが目に見えて遅くなる (部品 1 つ ≒ 4.8ms)
   // 線 (70-73)。太さは 454 の盤面での px、長さは幅の千分率 (x/y と同じ物差し)。
   const LINE_W = [3, 5, 7], LINE_LEN_DEF = 200, LINE_LEN_MIN = 20;   // 奇数 = 実機で端の丸めがぴったり合う
   const isLine = (t) => !!(TYPES[t] && TYPES[t].line != null);
@@ -1333,7 +1333,7 @@
     if (ec) {
       ec.textContent = `${n} / ${EL_MAX}`;
       ec.className = 'cnt' + (n > EL_MAX ? ' over' : n > EL_HEAVY ? ' heavy' : '');
-      ec.title = n > EL_HEAVY ? 'Past 25 parts the watch takes noticeably longer to redraw — most visible while scrolling its settings menu.' : '';
+      ec.title = n > EL_HEAVY ? `Past ${EL_HEAVY} parts the watch redraws noticeably slower (about 5 ms per part) — you will feel it while scrolling the watch's own settings menu.` : '';
     }
     const l = $('list'); l.innerHTML = '';
     if (st.el.length) { const hd = document.createElement('div'); hd.className = 'li hd'; hd.innerHTML = `<span class="dot" style="visibility:hidden"></span>Part<span class="xy">X, Y</span>`; l.appendChild(hd); }

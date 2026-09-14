@@ -262,7 +262,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 05:22</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 05:29</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -826,6 +826,13 @@
   st.tx = intArr3(st.tx, 10, 200, DEF_TX) || DEF_TX.slice(); st.tm = intArr3(st.tm, 10, 200, DEF_TM) || DEF_TM.slice();
   st.ic = intArr3(st.ic, 6, 120, DEF_IC) || DEF_IC.slice(); st.b = (st.b === 1 || st.b === 2) ? st.b : 0;
   UNITS.forEach((U) => { st[U.key] = U.opts[st[U.key]] ? st[U.key] : 0; });
+  // このブラウザに残っている古い下書きを今の形に直す (旧 bb は 1 つの辞書だった、2026-09-15)。
+  st.bb = Array.isArray(st.bb) ? st.bb.slice(0, 2)
+        : (st.bb && st.bb.tm ? [{ lg: String(st.bb.lg || 'mlb'), tm: st.bb.tm }] : []);
+  if (!Array.isArray(st.stk)) st.stk = ['', ''];
+  if (!Array.isArray(st.stn)) st.stn = ['', ''];
+  if (!Array.isArray(st.mc)) st.mc = [-1, -1, -1, -1];
+  if (!Array.isArray(st.pc)) st.pc = DEF_PC.slice();
   if (!Number.isInteger(st.io) || st.io < -20 || st.io > 20) st.io = DEF_IO;
   // 3 or 4 integers in range → 4 (a 3-entry table gets the XL default appended); anything else → null
   function intArr3(v, lo, hi, def) { lo = lo || 10; hi = hi || 200; def = def || DEF_TX;

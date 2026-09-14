@@ -262,7 +262,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 23:44</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 23:49</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1468,6 +1468,8 @@
     st: (st.stk || []).some((v) => v) ? (st.stk || ['', '']).slice(0, 2).map(stkClean) : undefined,
     sn: (st.stn || []).some((v) => v) ? (st.stn || ['', '']).slice(0, 2).map(nameClean) : undefined,
     uc: st.uc === 1 ? 1 : undefined,
+    // 絵が単色の塗りなら、その色を渡す (実機はメーターの下地をこの色と混ぜる。写真の時は渡さない = 黒)
+    ib: (typeof IMG !== 'undefined' && IMG.show && !IMG.cur && IMG.fill) ? parseInt(String(IMG.fill).slice(1), 16) : undefined,
     bb: (st.bb || []).some((b) => b && b.tm) ? (st.bb || []).slice(0, 2).map((b) => (b && b.tm ? b : null)) : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   function renderList() {

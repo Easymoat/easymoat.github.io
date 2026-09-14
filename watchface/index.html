@@ -262,7 +262,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 05:29</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 05:30</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1771,7 +1771,7 @@
     render();
     const p = stagePoint(ev);
     drag = { i, items: selIdx().map((k) => ({ i: k, dx: st.el[k][1] - p.x, dy: st.el[k][2] - p.y })), fromPalette: false, moved: false };
-    ev.target.closest('.el')?.setPointerCapture?.(ev.pointerId);
+    try { ev.target.closest('.el')?.setPointerCapture?.(ev.pointerId); } catch (e) {}   // 掴めなくてもドラッグは続ける
   }
   // 針と縁は入 / 切。同じ組の中では 1 つだけ (針を 2 種類同時には置かない)。
   function toggleDialPart(t) {

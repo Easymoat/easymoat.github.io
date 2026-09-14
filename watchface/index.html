@@ -265,7 +265,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 05:48</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 06:00</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1392,7 +1392,8 @@
       const h = DIAL.hands(e[0], k);
       if (h && !out.hd) { out.hd = h; continue; }
       const r = DIAL.rim(e[0], k, st.mt, st.mc);
-      if (r) { out.rm = (out.rm || []).concat(r); }
+      // 縁は 2 つまで重ねられるので、原型ごとにその部品の色を添える (実機は rc[i] で塗り分ける)。
+      if (r) { out.rm = (out.rm || []).concat(r); out.rc = (out.rc || []).concat(r.map(() => e[5])); }
     }
     return out;
   }
@@ -1681,6 +1682,10 @@
       selSet.clear(); picked.forEach((_, k) => selSet.add(base + k)); sel = base + picked.length - 1;
       commit();
     };
+    const dupBtn = $('dup');
+    if (dupBtn && all.every((x) => TYPES[x[0]] && TYPES[x[0]].dial)) {   // 縁・針は同じものを 2 つ置いても意味がない
+      dupBtn.disabled = true; dupBtn.title = 'Rim and hands are drawn over the whole dial — a copy would land exactly on top.';
+    }
     $('tofront').addEventListener('click', () => moveZ(true));
     $('toback').addEventListener('click', () => moveZ(false));
     lockInspHeight();
@@ -1789,12 +1794,18 @@
     try { ev.target.closest('.el')?.setPointerCapture?.(ev.pointerId); } catch (e) {}   // 掴めなくてもドラッグは続ける
   }
   // 針と縁は入 / 切。同じ組の中では 1 つだけ (針を 2 種類同時には置かない)。
+  const DIAL_MAX = { rim: 2, hands: 1 };   // 縁は 2 つまで重ねられる (針は 1 つ)
   function toggleDialPart(t) {
     if (elCount(st.el) >= EL_MAX && !st.el.some((x) => x[0] === t)) { setStatus('shelfstatus', `The watch takes ${EL_MAX} parts — remove one before adding another. Lines do not count.`, 'err'); return; }
     const grp = TYPES[t].grp, was = st.el.findIndex((e) => e[0] === t);
-    st.el = st.el.filter((e) => !(TYPES[e[0]] && TYPES[e[0]].dial && TYPES[e[0]].grp === grp));
-    if (was < 0) { st.el.push([t, 500, 500, 0, 1, 0, 0, -1]); setSel(st.el.length - 1, false); }
-    else { clearSel(); }
+    if (was >= 0) { st.el.splice(was, 1); clearSel(); commit(); return; }   // もう一度押したら外す
+    const same = st.el.filter((e) => TYPES[e[0]] && TYPES[e[0]].dial && TYPES[e[0]].grp === grp);
+    const max = DIAL_MAX[grp] || 1;
+    if (same.length >= max) {
+      if (max === 1) { st.el = st.el.filter((e) => same.indexOf(e) < 0); }   // 針は 1 つ = 入れ替え
+      else { setStatus('shelfstatus', `${grp === 'rim' ? 'Rim' : 'Hands'} can be stacked ${max} deep — take one off first.`, 'err'); return; }
+    }
+    st.el.push([t, 500, 500, 0, 1, 0, 0, -1]); setSel(st.el.length - 1, false);
     commit();
   }
   function renderDialToggles() {

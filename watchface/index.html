@@ -262,7 +262,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 14:58</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 18:05</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -651,9 +651,12 @@
   const stkInfo = (t) => STKQ[stkOf(t)] || null;
   const stkOf = (t) => (isStock(t) ? ((st.stk || [])[TYPES[t].stk] || '') : '');
   const stkClean = (v) => String(v || '').trim().toUpperCase().replace(/[^A-Z0-9.\-^=]/g, '').slice(0, 12);
+  // 表示名は文字盤のフォントに合わせて ASCII のみ・12 文字まで。空なら取得した名前を使う。
+  const nameClean = (v) => String(v || '').replace(/[^\x20-\x7E]/g, '').replace(/\s+/g, ' ').trim().slice(0, 12);
+  const stkOwn = (t) => (isStock(t) ? ((st.stn || [])[TYPES[t].stk] || '') : '');
   // 見出し = 記号 or 名前 (f bit4)、値 = 価格 or 変化率 (f bit2)。下見が取れていれば本物を出す。
   const stkLabel = (t, f) => { const i = STKQ[stkOf(t)], s = stkOf(t);
-    return (f & 16) ? ((i && i.n) || s || 'Name') : (s || '$'); };
+    return (f & 16) ? (stkOwn(t) || (i && i.n) || s || 'Name') : (s || '$'); };
   const stkValue = (t, f) => { const i = STKQ[stkOf(t)];
     return (f & 4) ? ((i && i.c) || '+1.15%') : ((i && i.p) || TYPES[t].sample); };
   // 線の太さ (454 基準)。実機で奇数 px になる値に直して送る = 端の丸めがぴったり合う。
@@ -743,7 +746,7 @@
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
-  let st = { dev: 'fr965', grid: 50, showGrid: true, gridBright: false, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], stk: ['', ''], bb: { lg: 'mlb', tm: 0 }, hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
+  let st = { dev: 'fr965', grid: 50, showGrid: true, gridBright: false, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], stk: ['', ''], stn: ['', ''], bb: { lg: 'mlb', tm: 0 }, hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
   // Selection: `sel` is the primary (last clicked) element, `selSet` every selected index.
   // Shift / Cmd / Ctrl + click adds or removes one; the Selected panel, dragging, arrows and
   // Delete act on all of them.
@@ -1301,6 +1304,7 @@
     ? e.slice(0, 8).concat([lineLen(e), linePen(e[4])]) : e));
   const layoutObj = () => { const o = Object.assign({ bg: st.bg, el: elOut(), pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined, mc: (st.mc || []).some((c) => c >= 0) ? st.mc : undefined,
     st: (st.stk || []).some((v) => v) ? (st.stk || ['', '']).slice(0, 2).map(stkClean) : undefined,
+    sn: (st.stn || []).some((v) => v) ? (st.stn || ['', '']).slice(0, 2).map(nameClean) : undefined,
     bb: teamOf() ? { lg: 'mlb', tm: teamOf() } : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   function renderList() {
@@ -1404,8 +1408,9 @@
         <div class="field" title="Green while the game is on, orange when it is over — instead of the colour below"><span>State</span><span class="cb units" id="fbbc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep colour</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By state</button></span></div>` : ''}
         ${allStock ? `<div class="field" title="Ticker as Yahoo Finance writes it — 7203.T for Tokyo, ^GSPC for an index"><span>Symbol</span><input type="text" id="fstk" value="${stkOf(e[0])}" placeholder="AAPL" style="width:110px" maxlength="12"><span class="muted" id="fstkinfo">${
           (() => { const q = STKQ[stkOf(e[0])]; if (!stkOf(e[0])) return ''; if (q === null || q === undefined) return 'looking up…';
-                   return q ? `${q.n} · ${q.p} ${q.c}` : 'not found'; })()
+                   return q ? `${q.p} ${q.c}` : 'not found'; })()
         }</span></div>
+        <div class="field" title="The name shown when Label is Name. Leave it empty to use the one that comes with the price. ASCII only, 12 characters."><span>Name</span><input type="text" id="fstkname" value="${stkOwn(e[0])}" placeholder="${(STKQ[stkOf(e[0])] || {}).n || 'Apple Inc.'}" style="width:140px" maxlength="12"></div>
         <div class="field" title="What the number shows"><span>Value</span><span class="cb units" id="fstkv"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 4)) ? 'on' : ''}">Price</button><button type="button" data-v="4" class="${all.every((x) => (x[6] & 4)) ? 'on' : ''}">Change %</button></span></div>
         <div class="field" title="Ticker (AAPL) or the company name as the data provider writes it"><span>Label</span><span class="cb units" id="fstkn"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 16)) ? 'on' : ''}">Symbol</button><button type="button" data-v="16" class="${all.every((x) => (x[6] & 16)) ? 'on' : ''}">Name</button></span></div>
         <div class="field" title="Green when the price is up, red when it is down — instead of the colour below"><span>Up / down</span><span class="cb units" id="fstkc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep colour</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">Green / red</button></span></div>` : ''}
@@ -1478,6 +1483,10 @@
       });
     })));
     document.querySelectorAll('#fdir button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isLine(x[0])) x[0] = +b.dataset.t; })));
+    const fn = $('fstkname');
+    if (fn) fn.addEventListener('change', (ev) => {
+      const i = TYPES[e[0]].stk; st.stn = (st.stn || ['', '']).slice(); st.stn[i] = nameClean(ev.target.value); commit();
+    });
     const fs = $('fstk');
     if (fs) fs.addEventListener('change', (ev) => {
       const i = TYPES[e[0]].stk; st.stk = (st.stk || ['', '']).slice(); st.stk[i] = stkClean(ev.target.value); loadStock(st.stk[i]); commit();
@@ -1658,6 +1667,7 @@
              mt: (Array.isArray(j.mt) && j.mt.length === 4 && j.mt.every((m) => METERS.some((x) => x[0] === m))) ? j.mt.slice() : [0, 0, 0, 0],
              bb: (j.bb && Number(j.bb.tm) > 0) ? { lg: 'mlb', tm: Number(j.bb.tm) } : { lg: 'mlb', tm: 0 },
              stk: (Array.isArray(j.st) && j.st.length <= 2) ? [stkClean(j.st[0]), stkClean(j.st[1])] : ['', ''],
+             stn: (Array.isArray(j.sn) && j.sn.length <= 2) ? [nameClean(j.sn[0]), nameClean(j.sn[1])] : ['', ''],
              pc: (Array.isArray(j.pc) && j.pc.length >= 1 && j.pc.length <= PC_MAX && j.pc.every((c) => Number.isInteger(c) && c >= 0 && c <= 0xFFFFFF)) ? j.pc.slice() : legacyPc(el),
              mc: (Array.isArray(j.mc) && j.mc.length === 4 && j.mc.every((c) => Number.isInteger(c) && c >= -1 && c <= PC_BASE + PC_MAX)) ? j.mc.slice() : [-1, -1, -1, -1] };
   }
@@ -1690,7 +1700,7 @@
       div.style.left = left + 'px'; div.style.top = top + 'px';
     });
   }
-  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stk.forEach(loadStock); st.bb = c.bb || { lg: 'mlb', tm: 0 }; st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); clearSel(); pushBgHist(st.bg); }
+  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.stk.forEach(loadStock); st.bb = c.bb || { lg: 'mlb', tm: 0 }; st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); clearSel(); pushBgHist(st.bg); }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
   function renderWatchSeen() {
     const el = $('watchseen'); if (!el) return;

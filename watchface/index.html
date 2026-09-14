@@ -41,7 +41,10 @@
   aside.right .ctl { gap: 10px; }
   /* Selected sits in the bar above the dial: its fields flow in a row */
   #selgrp { flex: 1 1 560px; }
-  #insp .group { flex-direction: row; flex-wrap: wrap; gap: 10px 22px; align-items: center; }
+  #insp .group { flex-direction: row; flex-wrap: wrap; gap: 10px 22px; align-items: center; align-content: flex-start; }
+  /* 部品の種類で行数が変わっても、下の文字盤プレビューが動かないように高さを保つ
+     (実際の高さは今までに出た一番高い形に合わせて JS が固定する) */
+  #insp { min-height: 300px; }
   #insp .field { display: flex; gap: 8px; align-items: center; }
   #insp .field > span:first-child { color: var(--ink-3); font-size: 12px; }
   #insp .field input[type=number] { width: 68px; }
@@ -262,7 +265,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 05:30</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 05:40</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1538,6 +1541,15 @@
     if (st.mc) st.mc = st.mc.map((c) => (map[c] != null ? map[c] : c));
     return next;
   }
+  // 選ぶ部品で行数が変わっても枠が縮まないように、これまでで一番高い形に合わせておく。
+  // (縮むと下の文字盤プレビューが上下に動いて編集しづらい)
+  let INSP_MIN = 0;
+  function lockInspHeight() {
+    const el = $('insp'); if (!el) return;
+    const h = Math.ceil(el.getBoundingClientRect().height);
+    if (h > INSP_MIN) { INSP_MIN = h; el.style.minHeight = h + 'px'; }
+  }
+  window.addEventListener('resize', () => { INSP_MIN = 0; const el = $('insp'); if (el) el.style.minHeight = ''; });
   function renderInspector() {
     const box = $('insp'); let idx = selIdx(), e = st.el[sel];
     const none = !e || !idx.length;          // nothing selected: the controls stay visible but disabled
@@ -1570,7 +1582,7 @@
           `<button class="sw ${circFill(e) < 0 ? 'on' : ''}" data-fill="-1" title="No fill" style="background:transparent;border-style:dashed"></button>` +
           PALETTE.slice(0, PC_BASE).map((c, i) => `<button class="sw ${circFill(e) === i ? 'on' : ''}" data-fill="${i}" title="${PALETTE_NAMES[i]}" style="background:${c}"></button>`).join('') +
           shownColors(circFill(e)).map((i) => `<button class="sw ${circFill(e) === i ? 'on' : ''}" data-fill="${i}" style="background:${colOf(i)}"></button>`).join('')
-        }</span></div>
+        }<input type="color" class="pick" id="ffillpick" value="${circFill(e) >= 0 ? colOf(circFill(e)) : hex(st.bg)}" title="Pick any colour for the fill"></span></div>
         <div class="field" title="Make the ring a meter"><span>Meter</span><select id="fcmet">${
           METERS.map(([id, nm]) => `<option value="${id}" ${circMet(e) === id ? 'selected' : ''}>${nm}</option>`).join('')
         }</select><span class="cb units" id="fcdir"><button type="button" data-v="1" class="${circDir(e) > 0 ? 'on' : ''}">&#8635;</button><button type="button" data-v="-1" class="${circDir(e) < 0 ? 'on' : ''}">&#8634;</button></span></div>
@@ -1657,7 +1669,7 @@
     if (none) {
       box.querySelectorAll('input, button').forEach((b) => { b.disabled = true; });
       const u = box.querySelector('#falign button[data-v="undo"]'); if (u && ALIGN_UNDO) u.disabled = false;
-      bindMeters(); bindAlign(); return;
+      bindMeters(); bindAlign(); lockInspHeight(); return;
     }
     const each = (fn) => { all.forEach(fn); commit(); };
     // 重なり順 = el の並び。選んだ部品を先頭 (奥) / 末尾 (手前) へ動かす。
@@ -1671,6 +1683,7 @@
     };
     $('tofront').addEventListener('click', () => moveZ(true));
     $('toback').addEventListener('click', () => moveZ(false));
+    lockInspHeight();
     const fx = $('fx'), fy = $('fy');
     if (fx) fx.addEventListener('change', (ev) => { e[1] = clamp(+ev.target.value); commit(); });
     if (fy) fy.addEventListener('change', (ev) => { e[2] = clamp(+ev.target.value); commit(); });
@@ -1704,6 +1717,8 @@
       while (x.length < 8) x.push(-1); x[8] = +b.dataset.v;
     })));
     box.querySelectorAll('[data-fill]').forEach((b) => b.addEventListener('click', () => each((x) => { if (isCircle(x[0])) x[10] = +b.dataset.fill; })));
+    const ffp = $('ffillpick');
+    if (ffp) ffp.addEventListener('change', (ev) => { const i = useColor(ev.target.value); each((x) => { if (isCircle(x[0])) x[10] = i; }); });
     const fcm = $('fcmet');
     if (fcm) fcm.addEventListener('change', (ev) => each((x) => { if (isCircle(x[0])) x[11] = Number(ev.target.value); }));
     document.querySelectorAll('#fcdir button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isCircle(x[0])) x[12] = +b.dataset.v; })));

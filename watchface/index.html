@@ -262,7 +262,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 22:28</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 23:44</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -472,8 +472,10 @@
     72: { name: 'Line \\',    grp: 'line', line: 2, hidden: true },
     73: { name: 'Line /',     grp: 'line', line: 3, hidden: true },
     // 野球 (MLB)。応援チームは面ごとに 1 つ (layout の bb)。32 = 対戦とスコア、33 = 状態。
-    32: { name: 'Game',      grp: 'bb',    sample: 'NYY 3-5 BOS', icon: null,   iw: 0, bb: 1 },
-    33: { name: 'Status',    grp: 'bb',    sample: 'Top 7',       icon: null,   iw: 0, bb: 1 },
+    32: { name: 'Game 1',    grp: 'bb',    sample: 'NYY 3-5 BOS', icon: null,   iw: 0, bb: 0 },
+    33: { name: 'Status 1',  grp: 'bb',    sample: 'Top 7',       icon: null,   iw: 0, bb: 0 },
+    34: { name: 'Game 2',    grp: 'bb',    sample: 'DEN 24-17 KC', icon: null,   iw: 0, bb: 1 },
+    35: { name: 'Status 2',  grp: 'bb',    sample: 'Q3 4:12',     icon: null,   iw: 0, bb: 1 },
     // 銘柄は面ごとに 2 つ持つ (layout の st)。部品は st[0] / st[1] を指すだけ。
     30: { name: 'Stock 1',   grp: 'mkt',   sample: '229.35', icon: 'stock',     iw: 0, stk: 0 },
     31: { name: 'Stock 2',   grp: 'mkt',   sample: '229.35', icon: 'stock',     iw: 0, stk: 1 },
@@ -671,15 +673,31 @@
   // 株の部品 (30/31)。銘柄は面ごとの st.stk[0|1]、f の bit2 = 値を変化率にする。
   // パレットに出す「変化率」版。部品の種別は 30/31 のまま、置いた時に f の bit2 を立てるだけ
   // (実機の契約は変わらない)。野球と同じで、値段と変化率を別々に置ける。
-  const PAL_PCT = { 34: { t: 30, name: 'Stock 1 %' }, 35: { t: 31, name: 'Stock 2 %' } };
+  const PAL_PCT = { 90: { t: 30, name: 'Stock 1 %' }, 91: { t: 31, name: 'Stock 2 %' } };
   const isStock = (t) => !!(TYPES[t] && TYPES[t].stk != null);
   // MLB 30 球団 (statsapi のチーム ID)。実機へ渡すのは ID だけ。
   const MLB_TEAMS = [[109,'AZ','Arizona Diamondbacks'],[133,'ATH','Athletics'],[144,'ATL','Atlanta Braves'],[110,'BAL','Baltimore Orioles'],[111,'BOS','Boston Red Sox'],[112,'CHC','Chicago Cubs'],[145,'CWS','Chicago White Sox'],[113,'CIN','Cincinnati Reds'],[114,'CLE','Cleveland Guardians'],[115,'COL','Colorado Rockies'],[116,'DET','Detroit Tigers'],[117,'HOU','Houston Astros'],[118,'KC','Kansas City Royals'],[108,'LAA','Los Angeles Angels'],[119,'LAD','Los Angeles Dodgers'],[146,'MIA','Miami Marlins'],[158,'MIL','Milwaukee Brewers'],[142,'MIN','Minnesota Twins'],[121,'NYM','New York Mets'],[147,'NYY','New York Yankees'],[143,'PHI','Philadelphia Phillies'],[134,'PIT','Pittsburgh Pirates'],[135,'SD','San Diego Padres'],[137,'SF','San Francisco Giants'],[136,'SEA','Seattle Mariners'],[138,'STL','St. Louis Cardinals'],[139,'TB','Tampa Bay Rays'],[140,'TEX','Texas Rangers'],[141,'TOR','Toronto Blue Jays'],[120,'WSH','Washington Nationals']];
-  const isBall = (t) => !!(TYPES[t] && TYPES[t].bb);
-  const teamOf = () => Number((st.bb || {}).tm) || 0;
-  const teamAbbr = () => { const r = MLB_TEAMS.find((x) => x[0] === teamOf()); return r ? r[1] : 'NYY'; };
-  // 見本は選んだチームで組む (実機は試合が無ければ次の試合、無ければ空)。
-  const ballSample = (t) => (t === 32 ? `${teamAbbr()} 3-5 BOS` : 'Top 7');
+  const NFL_TEAMS = [['ARI','Arizona Cardinals'],['ATL','Atlanta Falcons'],['BAL','Baltimore Ravens'],['BUF','Buffalo Bills'],['CAR','Carolina Panthers'],['CHI','Chicago Bears'],['CIN','Cincinnati Bengals'],['CLE','Cleveland Browns'],['DAL','Dallas Cowboys'],['DEN','Denver Broncos'],['DET','Detroit Lions'],['GB','Green Bay Packers'],['HOU','Houston Texans'],['IND','Indianapolis Colts'],['JAX','Jacksonville Jaguars'],['KC','Kansas City Chiefs'],['LAC','Los Angeles Chargers'],['LAR','Los Angeles Rams'],['LV','Las Vegas Raiders'],['MIA','Miami Dolphins'],['MIN','Minnesota Vikings'],['NE','New England Patriots'],['NO','New Orleans Saints'],['NYG','New York Giants'],['NYJ','New York Jets'],['PHI','Philadelphia Eagles'],['PIT','Pittsburgh Steelers'],['SEA','Seattle Seahawks'],['SF','San Francisco 49ers'],['TB','Tampa Bay Buccaneers'],['TEN','Tennessee Titans'],['WSH','Washington Commanders']];
+  const NBA_TEAMS = [['ATL','Atlanta Hawks'],['BKN','Brooklyn Nets'],['BOS','Boston Celtics'],['CHA','Charlotte Hornets'],['CHI','Chicago Bulls'],['CLE','Cleveland Cavaliers'],['DAL','Dallas Mavericks'],['DEN','Denver Nuggets'],['DET','Detroit Pistons'],['GS','Golden State Warriors'],['HOU','Houston Rockets'],['IND','Indiana Pacers'],['LAC','LA Clippers'],['LAL','Los Angeles Lakers'],['MEM','Memphis Grizzlies'],['MIA','Miami Heat'],['MIL','Milwaukee Bucks'],['MIN','Minnesota Timberwolves'],['NO','New Orleans Pelicans'],['NY','New York Knicks'],['OKC','Oklahoma City Thunder'],['ORL','Orlando Magic'],['PHI','Philadelphia 76ers'],['PHX','Phoenix Suns'],['POR','Portland Trail Blazers'],['SA','San Antonio Spurs'],['SAC','Sacramento Kings'],['TOR','Toronto Raptors'],['UTAH','Utah Jazz'],['WSH','Washington Wizards']];
+  const NHL_TEAMS = [['ANA','Anaheim Ducks'],['BOS','Boston Bruins'],['BUF','Buffalo Sabres'],['CAR','Carolina Hurricanes'],['CBJ','Columbus Blue Jackets'],['CGY','Calgary Flames'],['CHI','Chicago Blackhawks'],['COL','Colorado Avalanche'],['DAL','Dallas Stars'],['DET','Detroit Red Wings'],['EDM','Edmonton Oilers'],['FLA','Florida Panthers'],['LA','Los Angeles Kings'],['MIN','Minnesota Wild'],['MTL','Montreal Canadiens'],['NJ','New Jersey Devils'],['NSH','Nashville Predators'],['NYI','New York Islanders'],['NYR','New York Rangers'],['OTT','Ottawa Senators'],['PHI','Philadelphia Flyers'],['PIT','Pittsburgh Penguins'],['SEA','Seattle Kraken'],['SJ','San Jose Sharks'],['STL','St. Louis Blues'],['TB','Tampa Bay Lightning'],['TOR','Toronto Maple Leafs'],['UTAH','Utah Mammoth'],['VAN','Vancouver Canucks'],['VGK','Vegas Golden Knights'],['WPG','Winnipeg Jets'],['WSH','Washington Capitals']];
+  const LEAGUES = [['mlb', 'MLB'], ['nfl', 'NFL'], ['nba', 'NBA'], ['nhl', 'NHL']];
+  const leagueTeams = (lg) => (lg === 'nfl' ? NFL_TEAMS : lg === 'nba' ? NBA_TEAMS : lg === 'nhl' ? NHL_TEAMS : MLB_TEAMS.map(([id, ab, nm]) => [id, `${ab} · ${nm}`]));
+  const isBall = (t) => !!(TYPES[t] && TYPES[t].bb != null);
+  const bbSlot = (t) => (TYPES[t] || {}).bb || 0;
+  const bbOf = (i) => (st.bb || [])[i] || null;
+  const bbLg = (i) => (bbOf(i) || {}).lg || 'mlb';
+  const bbTm = (i) => { const b = bbOf(i); return b ? b.tm : 0; };
+  const setBb = (i, v) => { const a = (st.bb || []).slice(0, 2); while (a.length < 2) a.push(null); a[i] = v; st.bb = a; };
+  const teamAbbr = (i) => { const lg = bbLg(i), tm = bbTm(i);
+    if (lg === 'mlb') { const r = MLB_TEAMS.find((x) => x[0] === Number(tm)); return r ? r[1] : 'NYY'; }
+    return String(tm || (lg === 'nfl' ? 'KC' : lg === 'nba' ? 'TOR' : 'MTL')); };
+  // 見本は選んだチームとリーグで組む (実機は試合が無ければ次の試合、それも無ければ --)。
+  const ballSample = (t) => {
+    const i = bbSlot(t), lg = bbLg(i), ab = teamAbbr(i);
+    if (!bbTm(i)) return '--';
+    if (t === 32 || t === 34) return `${ab} 3-5 ${lg === 'nfl' ? 'DEN' : lg === 'nba' ? 'BOS' : lg === 'nhl' ? 'MTL' : 'BOS'}`;
+    return lg === 'mlb' ? 'Top 7' : lg === 'nhl' ? 'P2 12:34' : 'Q3 4:12';
+  };
   // 上げ / 下げ / 表 / 裏 / 終了 の色 (実機の固定パレットと共通: 5 緑・2 赤・7 青・3 橙)。
   const C_GREEN = '#55FF55', C_RED = '#FF5555', C_BLUE = '#55AAFF', C_ORANGE = '#FF9900';
   const upCol = () => (st.uc === 1 ? C_RED : C_GREEN);
@@ -789,7 +807,7 @@
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
-  let st = { dev: 'fr965', grid: 50, showGrid: true, gridBright: false, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], stk: ['', ''], stn: ['', ''], uc: 0, bb: { lg: 'mlb', tm: 0 }, hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
+  let st = { dev: 'fr965', grid: 50, showGrid: true, gridBright: false, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], stk: ['', ''], stn: ['', ''], uc: 0, bb: [null, null], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
   // Selection: `sel` is the primary (last clicked) element, `selSet` every selected index.
   // Shift / Cmd / Ctrl + click adds or removes one; the Selected panel, dragging, arrows and
   // Delete act on all of them.
@@ -1450,7 +1468,7 @@
     st: (st.stk || []).some((v) => v) ? (st.stk || ['', '']).slice(0, 2).map(stkClean) : undefined,
     sn: (st.stn || []).some((v) => v) ? (st.stn || ['', '']).slice(0, 2).map(nameClean) : undefined,
     uc: st.uc === 1 ? 1 : undefined,
-    bb: teamOf() ? { lg: 'mlb', tm: teamOf() } : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
+    bb: (st.bb || []).some((b) => b && b.tm) ? (st.bb || []).slice(0, 2).map((b) => (b && b.tm ? b : null)) : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   function renderList() {
     const n = elCount(st.el), ec = $('elcount');
@@ -1565,8 +1583,11 @@
         ${seg('Size', SIZES, same(4) ? e[4] : -9, 4)}
         ${seg('Icon size', ['Auto'].concat(SIZES), anyIcon ? (sameIs ? isOf(e) : -9) : -9, 7, -1)}
         `}
-        ${allBall ? `<div class="field" title="The team whose game is shown (MLB)"><span>Team</span><select id="fteam">${
-          ['<option value="0">— pick a team —</option>'].concat(MLB_TEAMS.map(([id, ab, nm]) => `<option value="${id}" ${teamOf() === id ? 'selected' : ''}>${ab} · ${nm}</option>`)).join('')
+        ${allBall ? `<div class="field" title="Which league and team this slot follows"><span>Game ${bbSlot(e[0]) + 1}</span><span class="cb units" id="fleague">${
+          LEAGUES.map(([k, nm]) => `<button type="button" data-v="${k}" class="${bbLg(bbSlot(e[0])) === k ? 'on' : ''}">${nm}</button>`).join('')
+        }</span></div>
+        <div class="field" title="The team whose game is shown"><span>Team</span><select id="fteam">${
+          ['<option value="">— pick a team —</option>'].concat(leagueTeams(bbLg(bbSlot(e[0]))).map(([id, nm]) => `<option value="${id}" ${String(bbTm(bbSlot(e[0]))) === String(id) ? 'selected' : ''}>${nm}</option>`)).join('')
         }</select></div>
         <div class="field" title="Green while the game is on, orange when it is over — instead of the colour below"><span>State</span><span class="cb units" id="fbbc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep colour</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By state</button></span></div>` : ''}
         ${allStock ? `<div class="field" title="Ticker as Yahoo Finance writes it — 7203.T for Tokyo, ^GSPC for an index"><span>Symbol</span><input type="text" id="fstk" value="${stkOf(e[0])}" placeholder="AAPL" style="width:110px" maxlength="12"><span class="muted" id="fstkinfo">${
@@ -1667,8 +1688,14 @@
     if (fcm) fcm.addEventListener('change', (ev) => each((x) => { if (isCircle(x[0])) x[11] = Number(ev.target.value); }));
     document.querySelectorAll('#fcdir button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isCircle(x[0])) x[12] = +b.dataset.v; })));
     document.querySelectorAll('#fbbc button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isBall(x[0])) x[6] = (x[6] & ~8) | (+b.dataset.v); })));
-    const ft = $('fteam');
-    if (ft) ft.addEventListener('change', (ev) => { st.bb = { lg: 'mlb', tm: Number(ev.target.value) || 0 }; commit(); });
+    const ft = $('fteam'), slot = bbSlot(e[0]);
+    if (ft) ft.addEventListener('change', (ev) => {
+      const lg = bbLg(slot), v = ev.target.value;
+      setBb(slot, v ? { lg, tm: lg === 'mlb' ? Number(v) : String(v) } : null); commit();
+    });
+    document.querySelectorAll('#fleague button').forEach((b) => b.addEventListener('click', () => {
+      setBb(slot, { lg: b.dataset.v, tm: 0 }); commit();     // リーグを変えたらチームは選び直し
+    }));
     document.querySelectorAll('#fshow button').forEach((b) => b.addEventListener('click', () => {
       const v = Number(b.dataset.v);
       each((x) => { if (TYPES[x[0]]?.icon) { x[6] = (x[6] & ~3) | v; } });
@@ -1849,7 +1876,7 @@
              du: (Number.isInteger(j.du) && j.du >= 0 && j.du <= 1) ? j.du : 0,
              hf: (Number.isInteger(j.hf) && j.hf >= 0 && j.hf <= 2) ? j.hf : 0,
              mt: (Array.isArray(j.mt) && j.mt.length === 4 && j.mt.every((m) => METERS.some((x) => x[0] === m))) ? j.mt.slice() : [0, 0, 0, 0],
-             bb: (j.bb && Number(j.bb.tm) > 0) ? { lg: 'mlb', tm: Number(j.bb.tm) } : { lg: 'mlb', tm: 0 },
+             bb: (Array.isArray(j.bb) ? j.bb : (j.bb ? [j.bb] : [])).slice(0, 2).map((b) => (b && b.tm ? { lg: String(b.lg || 'mlb'), tm: b.tm } : null)),
              stk: (Array.isArray(j.st) && j.st.length <= 2) ? [stkClean(j.st[0]), stkClean(j.st[1])] : ['', ''],
              stn: (Array.isArray(j.sn) && j.sn.length <= 2) ? [nameClean(j.sn[0]), nameClean(j.sn[1])] : ['', ''],
              uc: Number(j.uc) === 1 ? 1 : 0,
@@ -1887,7 +1914,7 @@
       div.style.left = left + 'px'; div.style.top = top + 'px';
     });
   }
-  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = c.bb || { lg: 'mlb', tm: 0 }; st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); clearSel(); pushBgHist(st.bg); }
+  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, 2); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); clearSel(); pushBgHist(st.bg); }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
   function renderWatchSeen() {
     const el = $('watchseen'); if (!el) return;

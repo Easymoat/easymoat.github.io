@@ -262,7 +262,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 20:46</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 21:18</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1338,39 +1338,51 @@
     return [[cx - hx, cy - hy], [cx + hx, cy + hy]];
   }
   // 各線の両端について、伸ばす量 (幅の千分率、軸あたり) を出す。
+  // 端どうしが重なっている時だけでなく、**2 本を延長した交点が双方の端の近くにある時**も対象にする。
+  // これで二重線 (平行に 2 本ずつ) の内側も、交点まで詰めて角がそろう (外側は伸び、内側は縮む)。
   function lineJoins(list) {
     const lines = list.map((e, i) => (isLine(e[0]) ? { i, e, ends: lineEnds(e) } : null)).filter(Boolean);
-    const out = {};
-    const TOL = 8;                                     // 同じ点とみなす距離 (‰ ≒ 3.6px @454)
+    const best = {};
+    const TOL = 25;                                    // 交点が端からこの距離以内なら「その角」とみなす (‰ ≒ 11px @454)
     for (const a of lines) {
       for (const b of lines) {
         if (a.i === b.i) continue;
         for (let ea = 0; ea < 2; ea++) {
           for (let eb = 0; eb < 2; eb++) {
             const pa = a.ends[ea], pb = b.ends[eb];
-            if (Math.abs(pa[0] - pb[0]) > TOL || Math.abs(pa[1] - pb[1]) > TOL) continue;
-            // 接点から見た、それぞれの線の向き (外向き)
             const ua = LINE_DIR[a.e[0]], ub = LINE_DIR[b.e[0]];
             const sa = ea === 0 ? 1 : -1, sb = eb === 0 ? 1 : -1;
-            const ax = ua[0] * sa, ay = ua[1] * sa, bx = ub[0] * sb, by = ub[1] * sb;
+            const ax = ua[0] * sa, ay = ua[1] * sa, bx = ub[0] * sb, by = ub[1] * sb;   // 角から線が伸びる向き (角度用)
+            const ox = -ax, oy = -ay, qx = -bx, qy = -by;                  // 端から外へ向かう向き (交点用)
+            const cross = ox * qy - oy * qx;
+            if (Math.abs(cross) < 1e-6) continue;                          // 平行 / 一直線
+            const t = ((pb[0] - pa[0]) * qy - (pb[1] - pa[1]) * qx) / cross;   // a の端から交点まで (+ = 外側)
+            const u = ((pb[0] - pa[0]) * oy - (pb[1] - pa[1]) * ox) / cross;   // b の端から交点まで
+            const wpm0 = linePen(a.e[4]) * 1000 / 454;
+            // 交点は「両方の端の少し先」にあること。手前 (線が交点を通り越している) は角ではなく
+            // 十字や T なので触らない — 触ると別の線に釣られて短くなる。
+            if (t < -wpm0 || u < -wpm0 || t > TOL || u > TOL) continue;
             const dot = Math.max(-1, Math.min(1, ax * bx + ay * by));
-            const th = Math.acos(dot);                 // なす角
-            if (th < 0.2 || th > Math.PI - 0.01) continue;   // 重なり / 一直線は伸ばさない
-            const wpm = linePen(a.e[4]) * 1000 / 454;  // 線幅を幅の千分率に
-            const ext = Math.min(wpm * 2, (wpm / 2) / Math.tan(th / 2));
-            const axis = TYPES[a.e[0]].line >= 2 ? ext / Math.SQRT2 : ext;   // 斜めは軸あたりに直す
-            const key = a.i + '|' + ea;
-            out[key] = Math.max(out[key] || 0, axis);
+            const th = Math.acos(dot);                                     // なす角
+            if (th < 0.2 || th > Math.PI - 0.01) continue;
+            const wpm = wpm0;                                              // 線幅を幅の千分率に
+            const miter = Math.min(wpm * 2, (wpm / 2) / Math.tan(th / 2)); // 角を埋めるぶん
+            const ext = t + miter;                                         // 交点まで動かし、角のぶん伸ばす
+            const axis = TYPES[a.e[0]].line >= 2 ? ext / Math.SQRT2 : ext; // 斜めは軸あたりに直す
+            const key = a.i + '|' + ea, cur = best[key];
+            if (!cur || Math.abs(t) < cur.d) best[key] = { d: Math.abs(t), v: axis };
           }
         }
       }
     }
+    const out = {};
+    for (const k of Object.keys(best)) out[k] = best[k].v;
     return out;
   }
   // 接点で伸ばしたあとの線 (x, y, len)。実機へ渡す値もプレビューもこれを使う。
   function lineGeom(e, joins, i) {
     const L = lineLen(e), e0 = (joins || {})[i + '|0'] || 0, e1 = (joins || {})[i + '|1'] || 0;
-    if (!e0 && !e1) return { x: e[1], y: e[2], len: L };
+    if (!e0 && !e1) return { x: e[1], y: e[2], len: L };   // e0/e1 は負 (詰める) のこともある
     const dir = TYPES[e[0]].line, a = e[3];
     const ux = dir === 0 ? 0 : 1, uy = dir === 1 ? 0 : (dir === 3 ? -1 : 1);
     const len = Math.round(L + e0 + e1);

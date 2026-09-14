@@ -262,7 +262,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 18:41</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 20:02</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -681,9 +681,8 @@
     const bw = Math.max(w, lw), bh = Math.max(h, lw), cx = bw / 2, cy = bh / 2;
     const hx = dir === 0 ? 0 : dir === 1 ? len / 2 : side / 2, hy = dir === 0 ? len / 2 : dir === 1 ? 0 : side / 2;
     const [x1, y1, x2, y2] = dir === 3 ? [cx - hx, cy + hy, cx + hx, cy - hy] : [cx - hx, cy - hy, cx + hx, cy + hy];
-    // 端は丸める: 端点を中心にした半径 (太さ/2) の丸が、線どうしの接点の隙間 (角の欠け) を埋める。
-    // 実機も同じ半径の塗り円を置く。太さを奇数に保つのは、そこで 1px ずれないため。
-    const l = (st_, wd) => `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${st_}" stroke-width="${wd.toFixed(1)}" stroke-linecap="round"/>`;
+    // 端は切り落とし。接点の角は「線どうしを角の分だけ伸ばす」(lineJoin) ので、丸めると逆に出っ張る。
+    const l = (st_, wd) => `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${st_}" stroke-width="${wd.toFixed(1)}"/>`;
     return { w: bw, h: bh, svg: `<svg width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" style="display:block;overflow:visible">${l('transparent', Math.max(lw, 14))}${l('currentColor', lw)}</svg>` };
   }
   const DEF_TX = [26, 36, 48, 60], DEF_TM = [52, 68, 84, 100], DEF_IC = [19, 26, 35, 44], DEF_IO = 0, ICON_ART = 26, FONT_EM = 1.17, GAP = 6;
@@ -1183,6 +1182,7 @@
       g += '</svg>';
       stage.insertAdjacentHTML('beforeend', g);
     }
+    JOINS = lineJoins(st.el);
     elOrder(st.el).forEach(([e, i]) => { if (!hiddenInPreview(e[0])) stage.appendChild(makeEl(e, i, k)); });
     positionAll();
     $('empty').hidden = st.el.length > 0;
@@ -1219,7 +1219,8 @@
       return div;
     }
     if (def.line != null) {   // 線: 外接矩形の箱に引く。当たり判定は線の上だけ (下の部品を隠さない)
-      const dv = dev(), art = lineArt(def.line, lineLen(e) * dv.w / 1000, linePen(s) * k);
+      const dv = dev(), g = lineGeom(e, JOINS, i), art = lineArt(def.line, g.len * dv.w / 1000, linePen(s) * k);
+      div.dataset.lx = g.x; div.dataset.ly = g.y;   // 位置も伸ばしたあとの値で置く
       div.classList.add('linepart');
       div.style.width = art.w + 'px'; div.style.height = art.h + 'px';
       div.dataset.lw = art.w; div.dataset.lh = art.h;   // 端を合わせるので、箱は整数に丸めず小数のまま置く
@@ -1272,7 +1273,8 @@
     const d = dev();
     stage.querySelectorAll('.el').forEach((div) => {
       const e = st.el[+div.dataset.i]; if (!e) return;
-      const px = e[1] * d.w / 1000, py = e[2] * d.h / 1000;
+      const gx = div.dataset.lx ? +div.dataset.lx : e[1], gy = div.dataset.ly ? +div.dataset.ly : e[2];
+      const px = gx * d.w / 1000, py = gy * d.h / 1000;
       const w = div.dataset.lw ? +div.dataset.lw : div.offsetWidth, h = div.dataset.lh ? +div.dataset.lh : div.offsetHeight;
       const { left, top } = boxPos(e, px, py, w, h);
       div.style.left = left + 'px'; div.style.top = top + 'px';
@@ -1319,9 +1321,67 @@
   // 描く順 = 配列の順 (実機も同じ)。縁 (Rim) だけは必ず先頭に寄せて、弧を他の部品の下に敷く。
   const elOrder = (list) => (list || []).map((e, i) => [e, i])
     .sort((a, b) => (TYPES[a[0][0]] && TYPES[a[0][0]].grp === 'rim' ? 0 : 1) - (TYPES[b[0][0]] && TYPES[b[0][0]].grp === 'rim' ? 0 : 1));
+  // ── 線どうしの接点 ────────────────────────────────────────────────────────
+  // 端が重なっている線は、角がきれいに埋まるぶんだけ互いに伸ばす (留め継ぎ)。
+  // 伸ばす量 = (太さ/2) / tan(なす角/2)。直角なら太さの半分、45° の折れなら 0.2 倍。
+  // 端は切り落としなので、伸ばさなければ角が欠け、丸めると出っ張る。両方を避けるための処理。
+  let JOINS = {};        // 今描いている面の接点 (lineJoins の結果)
+  const LINE_DIR = { 70: [0, 1], 71: [1, 0], 72: [Math.SQRT1_2, Math.SQRT1_2], 73: [Math.SQRT1_2, -Math.SQRT1_2] };
+  // 線の端 2 点 (幅の千分率)。A = 始点、B = 終点。
+  function lineEnds(e) {
+    const dir = TYPES[e[0]].line, L = lineLen(e), a = e[3];
+    const hx = dir === 0 ? 0 : L / 2, hy = dir === 1 ? 0 : (dir === 3 ? -L / 2 : L / 2);
+    let cx = e[1], cy = e[2];
+    if (a === 1) { cx += hx; cy += hy; } else if (a === 2) { cx -= hx; cy -= hy; }
+    return [[cx - hx, cy - hy], [cx + hx, cy + hy]];
+  }
+  // 各線の両端について、伸ばす量 (幅の千分率、軸あたり) を出す。
+  function lineJoins(list) {
+    const lines = list.map((e, i) => (isLine(e[0]) ? { i, e, ends: lineEnds(e) } : null)).filter(Boolean);
+    const out = {};
+    const TOL = 8;                                     // 同じ点とみなす距離 (‰ ≒ 3.6px @454)
+    for (const a of lines) {
+      for (const b of lines) {
+        if (a.i === b.i) continue;
+        for (let ea = 0; ea < 2; ea++) {
+          for (let eb = 0; eb < 2; eb++) {
+            const pa = a.ends[ea], pb = b.ends[eb];
+            if (Math.abs(pa[0] - pb[0]) > TOL || Math.abs(pa[1] - pb[1]) > TOL) continue;
+            // 接点から見た、それぞれの線の向き (外向き)
+            const ua = LINE_DIR[a.e[0]], ub = LINE_DIR[b.e[0]];
+            const sa = ea === 0 ? 1 : -1, sb = eb === 0 ? 1 : -1;
+            const ax = ua[0] * sa, ay = ua[1] * sa, bx = ub[0] * sb, by = ub[1] * sb;
+            const dot = Math.max(-1, Math.min(1, ax * bx + ay * by));
+            const th = Math.acos(dot);                 // なす角
+            if (th < 0.2 || th > Math.PI - 0.01) continue;   // 重なり / 一直線は伸ばさない
+            const wpm = linePen(a.e[4]) * 1000 / 454;  // 線幅を幅の千分率に
+            const ext = Math.min(wpm * 2, (wpm / 2) / Math.tan(th / 2));
+            const axis = TYPES[a.e[0]].line >= 2 ? ext / Math.SQRT2 : ext;   // 斜めは軸あたりに直す
+            const key = a.i + '|' + ea;
+            out[key] = Math.max(out[key] || 0, axis);
+          }
+        }
+      }
+    }
+    return out;
+  }
+  // 接点で伸ばしたあとの線 (x, y, len)。実機へ渡す値もプレビューもこれを使う。
+  function lineGeom(e, joins, i) {
+    const L = lineLen(e), e0 = (joins || {})[i + '|0'] || 0, e1 = (joins || {})[i + '|1'] || 0;
+    if (!e0 && !e1) return { x: e[1], y: e[2], len: L };
+    const dir = TYPES[e[0]].line, a = e[3];
+    const ux = dir === 0 ? 0 : 1, uy = dir === 1 ? 0 : (dir === 3 ? -1 : 1);
+    const len = Math.round(L + e0 + e1);
+    let x = e[1], y = e[2];
+    if (a === 0) { x += ux * (e1 - e0) / 2; y += uy * (e1 - e0) / 2; }   // 中心は差のぶんだけ動く
+    else if (a === 1) { x -= ux * e0; y -= uy * e0; }                     // 始点を外へ
+    else { x += ux * e1; y += uy * e1; }                                  // 終点を外へ
+    return { x: clamp(x), y: clamp(y), len: Math.max(LINE_LEN_MIN, Math.min(1000, len)) };
+  }
   // 実機へ渡す el。並びは上と同じ。線だけ 10 番目に太さ (454 盤面の実 px) を足す = 太さを変えても実機のビルドは不要。
-  const elOut = () => elOrder(st.el).map(([e]) => (isLine(e[0])
-    ? e.slice(0, 8).concat([lineLen(e), linePen(e[4])]) : e));
+  const elOut = () => { const joins = lineJoins(st.el); return elOrder(st.el).map(([e, i]) => (isLine(e[0])
+    ? (() => { const g = lineGeom(e, joins, i); return [e[0], g.x, g.y, e[3], e[4], e[5], e[6], -1, g.len, linePen(e[4])]; })()
+    : e)); };
   const layoutObj = () => { const o = Object.assign({ bg: st.bg, el: elOut(), pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined, mc: (st.mc || []).some((c) => c >= 0) ? st.mc : undefined,
     st: (st.stk || []).some((v) => v) ? (st.stk || ['', '']).slice(0, 2).map(stkClean) : undefined,
     sn: (st.stn || []).some((v) => v) ? (st.stn || ['', '']).slice(0, 2).map(nameClean) : undefined,
@@ -1715,12 +1775,14 @@
     inner.style.width = d.w + 'px'; inner.style.height = d.h + 'px'; inner.style.transform = `scale(${sc})`;
     try {
       st = Object.assign({}, keep, lay);
+      JOINS = lineJoins(lay.el);
       elOrder(lay.el).forEach(([e, i]) => inner.appendChild(makeEl(e, i, d.w / 454)));
-    } finally { st = keep; }
+    } finally { st = keep; JOINS = lineJoins(st.el); }
     el.appendChild(inner);
     inner.querySelectorAll('.el').forEach((div) => {
       const e = lay.el[+div.dataset.i]; if (!e) return;
-      const px = e[1] * d.w / 1000, py = e[2] * d.h / 1000;
+      const gx = div.dataset.lx ? +div.dataset.lx : e[1], gy = div.dataset.ly ? +div.dataset.ly : e[2];
+      const px = gx * d.w / 1000, py = gy * d.h / 1000;
       const { left, top } = boxPos(e, px, py, div.dataset.lw ? +div.dataset.lw : div.offsetWidth, div.dataset.lh ? +div.dataset.lh : div.offsetHeight);
       div.style.left = left + 'px'; div.style.top = top + 'px';
     });

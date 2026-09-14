@@ -262,7 +262,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 18:05</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 18:17</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -277,7 +277,7 @@
     <div class="group"><span class="lbl">Hands</span><div class="parts" id="parts-hands"></div></div>
     <div class="group"><span class="lbl">Rim</span><div class="parts" id="parts-rim"></div></div>
     <div class="group"><span class="lbl">Baseball</span><div class="parts" id="parts-bb"></div><span class="muted">Pick your team in Selected part. MLB only.</span></div>
-    <div class="group"><span class="lbl">Markets</span><div class="parts" id="parts-mkt"></div><span class="muted">Drop one on the dial, then type its ticker in Selected part.</span></div>
+    <div class="group"><span class="lbl">Markets</span><div class="parts" id="parts-mkt"></div><span class="muted">Drop one on the dial, then type its ticker in Selected part. The % parts show the change instead of the price.</span></div>
   </aside>
 
   <section class="stagewrap">
@@ -631,6 +631,9 @@
   const LINE_W = [3, 5, 7], LINE_LEN_DEF = 200, LINE_LEN_MIN = 20;   // 奇数 = 実機で端の丸めがぴったり合う
   const isLine = (t) => !!(TYPES[t] && TYPES[t].line != null);
   // 株の部品 (30/31)。銘柄は面ごとの st.stk[0|1]、f の bit2 = 値を変化率にする。
+  // パレットに出す「変化率」版。部品の種別は 30/31 のまま、置いた時に f の bit2 を立てるだけ
+  // (実機の契約は変わらない)。野球と同じで、値段と変化率を別々に置ける。
+  const PAL_PCT = { 34: { t: 30, name: 'Stock 1 %' }, 35: { t: 31, name: 'Stock 2 %' } };
   const isStock = (t) => !!(TYPES[t] && TYPES[t].stk != null);
   // MLB 30 球団 (statsapi のチーム ID)。実機へ渡すのは ID だけ。
   const MLB_TEAMS = [[109,'AZ','Arizona Diamondbacks'],[133,'ATH','Athletics'],[144,'ATL','Atlanta Braves'],[110,'BAL','Baltimore Orioles'],[111,'BOS','Boston Red Sox'],[112,'CHC','Chicago Cubs'],[145,'CWS','Chicago White Sox'],[113,'CIN','Cincinnati Reds'],[114,'CLE','Cleveland Guardians'],[115,'COL','Colorado Rockies'],[116,'DET','Detroit Tigers'],[117,'HOU','Houston Astros'],[118,'KC','Kansas City Royals'],[108,'LAA','Los Angeles Angels'],[119,'LAD','Los Angeles Dodgers'],[146,'MIA','Miami Marlins'],[158,'MIL','Milwaukee Brewers'],[142,'MIN','Minnesota Twins'],[121,'NYM','New York Mets'],[147,'NYY','New York Yankees'],[143,'PHI','Philadelphia Phillies'],[134,'PIT','Pittsburgh Pirates'],[135,'SD','San Diego Padres'],[137,'SF','San Francisco Giants'],[136,'SEA','Seattle Mariners'],[138,'STL','St. Louis Cardinals'],[139,'TB','Tampa Bay Rays'],[140,'TEX','Texas Rangers'],[141,'TOR','Toronto Blue Jays'],[120,'WSH','Washington Nationals']];
@@ -1070,6 +1073,13 @@
     else p.innerHTML = `<span class="ico">${d.icon && d.icon !== 'stock' ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${d.icon === 'stock' ? '$' : d.sample}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     if (!d.dial) p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +t));
     $('parts-' + d.grp).appendChild(p);
+  }
+  for (const [key, d] of Object.entries(PAL_PCT)) {   // Stock 1 % / Stock 2 %
+    const p = document.createElement('div');
+    p.className = 'part'; p.dataset.t = key;
+    p.innerHTML = `<span class="ico"><span style="font:500 13px var(--watch);white-space:nowrap">%</span></span><span class="nm">${d.name}</span><span class="hint">${d.t}</span>`;
+    p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +key));
+    $('parts-mkt').appendChild(p);
   }
   setupFolds();
   for (const [k, d] of Object.entries(DEVICES)) { const o = document.createElement('option'); o.value = k; o.textContent = d.name; $('dev').appendChild(o); }
@@ -1571,8 +1581,11 @@
   function startPaletteDrag(ev, t) {
     ev.preventDefault();
     if (st.el.length >= EL_MAX) { setStatus('shelfstatus', `The watch takes ${EL_MAX} parts — remove one before adding another.`, 'err'); return; }
-    const d = TYPES[t];
-    const e = isLine(t) ? [t, 500, 500, 0, 1, 0, 0, -1, LINE_LEN_DEF] : [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, d.icon ? 1 : 0, -1];
+    let d = TYPES[t] || TYPES[(PAL_PCT[t] || {}).t];
+    const pct = PAL_PCT[t];                      // 「変化率」版は種別 30/31 + bit2
+    if (pct) { t = pct.t; d = TYPES[t]; }
+    const e = isLine(t) ? [t, 500, 500, 0, 1, 0, 0, -1, LINE_LEN_DEF]
+            : [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, (d.icon ? 1 : 0) | (pct ? 4 : 0), -1];
     st.el.push(e); setSel(st.el.length - 1, false);
     const p = stagePoint(ev); e[1] = clamp(p.x); e[2] = clamp(p.y);
     drag = { i: sel, items: [{ i: sel, dx: 0, dy: 0 }], fromPalette: true, moved: false };

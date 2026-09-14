@@ -108,7 +108,7 @@
   #stage .el.dialpart svg * { pointer-events: auto; }
   .el.linepart { pointer-events: none; padding: 0; margin: 0; }          /* 箱ではなく線の上だけを掴む */
   .el.linepart svg { flex: 0 0 auto; }
-  #stage .el.linepart svg line { pointer-events: auto; cursor: move; }
+  #stage .el.linepart svg line, #stage .el.linepart svg circle, #stage .el.linepart svg path { pointer-events: auto; cursor: move; }
   .empty { color: var(--ink-3); font-size: 13px; text-align: center; max-width: 34ch; }
   .drawer { width: 100%; max-width: 1040px; display: grid; grid-template-columns: 1fr; gap: 24px; }
   /* The rail sits beside the dial; when the window is too narrow it wraps ABOVE the dial (wrap-reverse)
@@ -262,7 +262,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 21:18</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 21:38</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -271,7 +271,7 @@
   <aside class="left">
     <div class="group"><span class="lbl">Parts</span><span class="muted">Drag onto the dial, or click to drop at center.</span></div>
     <div class="group"><span class="lbl">Clock</span><div class="parts" id="parts-clock"></div></div>
-    <div class="group"><span class="lbl">Lines</span><div class="parts" id="parts-line"></div></div>
+    <div class="group"><span class="lbl">Lines</span><div class="parts" id="parts-line"></div><span class="muted">Circles can also be meters. Lines do not count toward the part limit.</span></div>
     <div class="group"><span class="lbl">Body</span><div class="parts" id="parts-body"></div></div>
     <div class="group"><span class="lbl">Weather</span><div class="parts" id="parts-wx"></div></div>
     <div class="group"><span class="lbl">Hands</span><div class="parts" id="parts-hands"></div></div>
@@ -466,6 +466,7 @@
     65: { name: 'Rim: Marks',         grp: 'rim',   dial: true, hidden: true },   // Ticks と同じだった (2026-09-12 取り下げ)
     // 70-73 = 線。グリッドに沿って引く飾り。line = 向き (0 縦 / 1 横 / 2 斜め \\ / 3 斜め /)。
     // 長さは el の 9 番目 (幅の千分率)、太さは s (0..2)。
+    75: { name: 'Circle',     grp: 'line', circle: true },
     71: { name: 'Line',       grp: 'line', line: 1 },   // パレットに出るのはこれ 1 つ。向きは編集欄で変える
     70: { name: 'Line |',     grp: 'line', line: 0, hidden: true },
     72: { name: 'Line \\',    grp: 'line', line: 2, hidden: true },
@@ -633,6 +634,40 @@
   // 線 (70-73)。太さは 454 の盤面での px、長さは幅の千分率 (x/y と同じ物差し)。
   const LINE_W = [3, 5, 7], LINE_LEN_DEF = 200, LINE_LEN_MIN = 20;   // 奇数 = 実機で端の丸めがぴったり合う
   const isLine = (t) => !!(TYPES[t] && TYPES[t].line != null);
+  const isCircle = (t) => !!(TYPES[t] && TYPES[t].circle);
+  // 文字系の部品の並び: 0 アイコン左・値右 (既定) / 1 値左・アイコン右 / 2 アイコン上・値下
+  const arrOf = (e) => { const v = Number(e[8]); return (v === 1 || v === 2) ? v : 0; };
+  const CIRC_DEF = { dia: 300, fill: -1, met: 0, dir: 1 };
+  const circDia = (e) => { const v = Number(e[8]); return Number.isFinite(v) && v >= 20 ? Math.min(1000, v) : CIRC_DEF.dia; };
+  const circFill = (e) => { const v = Number(e[10]); return Number.isInteger(v) && v >= 0 ? v : -1; };
+  const circMet = (e) => { const v = Number(e[11]); return METERS.some((m) => m[0] === v) ? v : 0; };
+  const circDir = (e) => (Number(e[12]) === -1 ? -1 : 1);
+  // 直径は実機の実 px で偶数 (= 半径が整数) に着地する値を送る。線幅は線と同じ奇数化。
+  const circPen = (sz) => linePen(sz);
+  function circDiaOut(dia) {
+    const w = dev().w, sc = w / 454 * (454 / 1000);            // ‰ → 実 px
+    const px = Math.max(4, Math.round(dia * w / 1000 / 2) * 2);  // 偶数 px
+    return Math.round((px + 0.3) / w * 1000 * 10) / 10;          // ‰ に戻す
+  }
+  // 円の絵 (プレビュー)。箱は直径 + 線幅。
+  function circleArt(dPx, pen, col, trackOp, met, dir) {
+    const R = dPx / 2, box = dPx + pen, c = box / 2;
+    const p = (a) => [c + R * Math.cos((a - 90) * Math.PI / 180), c + R * Math.sin((a - 90) * Math.PI / 180)];
+    let o = '';
+    if (col) o += `<circle cx="${c}" cy="${c}" r="${(R + pen / 2).toFixed(1)}" fill="${col}"/>`;
+    o += `<circle cx="${c}" cy="${c}" r="${R.toFixed(1)}" fill="none" stroke="currentColor" stroke-width="${pen.toFixed(1)}" opacity="${met ? trackOp : 1}"/>`;
+    const ratio = met ? meterRatio(met) : 0;
+    if (ratio > 0.02) {
+      const end = 360 * Math.min(1, ratio) * (dir < 0 ? -1 : 1);
+      if (Math.abs(end) >= 359.5) o += `<circle cx="${c}" cy="${c}" r="${R.toFixed(1)}" fill="none" stroke="currentColor" stroke-width="${pen.toFixed(1)}"/>`;
+      else {
+        const [x0, y0] = p(0), [x1, y1] = p(end);
+        const large = Math.abs(end) > 180 ? 1 : 0, sweep = end > 0 ? 1 : 0;
+        o += `<path d="M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${R.toFixed(1)} ${R.toFixed(1)} 0 ${large} ${sweep} ${x1.toFixed(1)} ${y1.toFixed(1)}" fill="none" stroke="currentColor" stroke-width="${pen.toFixed(1)}" stroke-linecap="round"/>`;
+      }
+    }
+    return { box, svg: `<svg width="${box.toFixed(1)}" height="${box.toFixed(1)}" style="display:block;overflow:visible">${o}</svg>` };
+  }
   // 株の部品 (30/31)。銘柄は面ごとの st.stk[0|1]、f の bit2 = 値を変化率にする。
   // パレットに出す「変化率」版。部品の種別は 30/31 のまま、置いた時に f の bit2 を立てるだけ
   // (実機の契約は変わらない)。野球と同じで、値段と変化率を別々に置ける。
@@ -1220,6 +1255,15 @@
       div.addEventListener('pointerdown', (ev) => startMove(ev, i));
       return div;
     }
+    if (def.circle) {        // 円: メーターにもなる。当たり判定は輪の上だけ
+      const dv = dev(), pen = circPen(s) * k, art = circleArt(circDia(e) * dv.w / 1000, pen, circFill(e) >= 0 ? colOf(circFill(e)) : '', 0.45, circMet(e), circDir(e));
+      div.classList.add('linepart');
+      div.style.width = art.box + 'px'; div.style.height = art.box + 'px';
+      div.dataset.lw = art.box; div.dataset.lh = art.box;
+      div.innerHTML = art.svg + '<span class="anchor"></span>';
+      div.addEventListener('pointerdown', (ev) => startMove(ev, i));
+      return div;
+    }
     if (def.line != null) {   // 線: 外接矩形の箱に引く。当たり判定は線の上だけ (下の部品を隠さない)
       const dv = dev(), g = lineGeom(e, JOINS, i), art = lineArt(def.line, g.len * dv.w / 1000, linePen(s) * k);
       div.dataset.lx = g.x; div.dataset.ly = g.y;   // 位置も伸ばしたあとの値で置く
@@ -1254,7 +1298,10 @@
     } else {
       const showVal = !(f & 2);   // f の bit 1 = 値を出さない (アイコンだけ)
       const sample = isStock(t) ? stkValue(t, f) : isBall(t) ? ballSample(t) : def.sample;
-      div.innerHTML = icon + (showVal ? `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px">${sample}</span>` : '') + '<span class="anchor"></span>';
+      const lay = arrOf(e);       // 0 アイコン左 / 1 アイコン右 / 2 アイコン上
+      const val = showVal ? `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px">${sample}</span>` : '';
+      if (lay === 2) div.style.flexDirection = 'column';
+      div.innerHTML = (lay === 1 ? val + icon : icon + val) + '<span class="anchor"></span>';
     }
     div.addEventListener('pointerdown', (ev) => startMove(ev, i));
     return div;
@@ -1269,6 +1316,7 @@
       const cx = px + sg * hx, cy = dir === 3 ? py - sg * hy : py + sg * hy;   // ／ だけ上下が逆
       return { left: cx - w / 2, top: cy - h / 2 };
     }
+    if (!isLine(e[0]) && !isCircle(e[0]) && arrOf(e) === 2) return { left: px - w / 2, top: py - h / 2 };   // 縦積みは左右中央
     return { left: a === 1 ? px : a === 2 ? px - w : px - w / 2, top: py - h / 2 };
   }
   function positionAll() {
@@ -1393,7 +1441,9 @@
     return { x: clamp(x), y: clamp(y), len: Math.max(LINE_LEN_MIN, Math.min(1000, len)) };
   }
   // 実機へ渡す el。並びは上と同じ。線だけ 10 番目に太さ (454 盤面の実 px) を足す = 太さを変えても実機のビルドは不要。
-  const elOut = () => { const joins = lineJoins(st.el); return elOrder(st.el).map(([e, i]) => (isLine(e[0])
+  const elOut = () => { const joins = lineJoins(st.el); return elOrder(st.el).map(([e, i]) => (isCircle(e[0])
+    ? [e[0], e[1], e[2], 0, e[4], e[5], e[6], -1, circDiaOut(circDia(e)), circPen(e[4]), circFill(e), circMet(e), circDir(e)]
+    : isLine(e[0])
     ? (() => { const g = lineGeom(e, joins, i); return [e[0], g.x, g.y, e[3], e[4], e[5], e[6], -1, g.len, linePen(e[4])]; })()
     : e)); };
   const layoutObj = () => { const o = Object.assign({ bg: st.bg, el: elOut(), pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined, mc: (st.mc || []).some((c) => c >= 0) ? st.mc : undefined,
@@ -1478,12 +1528,30 @@
     const allLine = all.every((x) => isLine(x[0]));   // 線だけを選んでいる時は線の操作に差し替える
     const allStock = !none && all.every((x) => isStock(x[0])) && all.every((x) => x[0] === e[0]);   // 同じ銘柄の部品だけ
     const allBall = !none && all.every((x) => isBall(x[0]));
+    const allCirc = !none && all.every((x) => isCircle(x[0]));
+    const allText = !none && all.every((x) => !isLine(x[0]) && !isCircle(x[0]) && !TYPES[x[0]].dial);
     const sameLen = all.every((x) => lineLen(x) === lineLen(e));
     box.innerHTML = `
       <div style="font-weight:600;margin-bottom:8px">${none ? '<span class="muted" style="font-weight:400">No part selected — click one on the dial (Shift+click for several)</span>' : multi ? `${all.length} elements <span class="kbd">changes apply to all</span>` : `${def.name} <span class="kbd">type ${e[0]}</span>`}</div>
       <div class="group">
-        ${allLine && !none ? stepRow('X', 1, multi ? null : e[1], 'Move left / right by one grid step') : `<div class="field"><span>X</span><input type="number" id="fx" min="0" max="1000" step="${st.grid}" value="${none || multi ? '' : e[1]}" ${multi ? 'disabled title="Several parts selected: drag or use the arrow keys to move them together"' : ''}></div>`}
-        ${allLine && !none ? stepRow('Y', 2, multi ? null : e[2], 'Move up / down by one grid step') : `<div class="field"><span>Y</span><input type="number" id="fy" min="0" max="1000" step="${st.grid}" value="${none || multi ? '' : e[2]}" ${multi ? 'disabled' : ''}></div>`}
+        ${(allLine || allCirc) && !none ? stepRow('X', 1, multi ? null : e[1], 'Move left / right by one grid step') : `<div class="field"><span>X</span><input type="number" id="fx" min="0" max="1000" step="${st.grid}" value="${none || multi ? '' : e[1]}" ${multi ? 'disabled title="Several parts selected: drag or use the arrow keys to move them together"' : ''}></div>`}
+        ${(allLine || allCirc) && !none ? stepRow('Y', 2, multi ? null : e[2], 'Move up / down by one grid step') : `<div class="field"><span>Y</span><input type="number" id="fy" min="0" max="1000" step="${st.grid}" value="${none || multi ? '' : e[2]}" ${multi ? 'disabled' : ''}></div>`}
+        ${allCirc ? `
+        ${stepRow('Diameter', 8, all.every((x) => circDia(x) === circDia(e)) ? circDia(e) : null, 'Bigger / smaller by one grid step')}
+        ${seg('Thickness', ['Thin', 'Medium', 'Thick'], same(4) ? e[4] : -9, 4)}
+        <div class="field" title="Fill the inside with a colour"><span>Fill</span><span class="swatches">${
+          `<button class="sw ${circFill(e) < 0 ? 'on' : ''}" data-fill="-1" title="No fill" style="background:transparent;border-style:dashed"></button>` +
+          PALETTE.slice(0, PC_BASE).map((c, i) => `<button class="sw ${circFill(e) === i ? 'on' : ''}" data-fill="${i}" title="${PALETTE_NAMES[i]}" style="background:${c}"></button>`).join('') +
+          shownColors(circFill(e)).map((i) => `<button class="sw ${circFill(e) === i ? 'on' : ''}" data-fill="${i}" style="background:${colOf(i)}"></button>`).join('')
+        }</span></div>
+        <div class="field" title="Make the ring a meter"><span>Meter</span><select id="fcmet">${
+          METERS.map(([id, nm]) => `<option value="${id}" ${circMet(e) === id ? 'selected' : ''}>${nm}</option>`).join('')
+        }</select><span class="cb units" id="fcdir"><button type="button" data-v="1" class="${circDir(e) > 0 ? 'on' : ''}">&#8635;</button><button type="button" data-v="-1" class="${circDir(e) < 0 ? 'on' : ''}">&#8634;</button></span></div>
+        ` : ''}
+        ${allText ? `<div class="field" title="Where the icon sits relative to the value"><span>Arrange</span><span class="cb units" id="farr">${
+          [['Icon left', 0], ['Icon right', 1], ['Icon above', 2]].map(([nm, v]) =>
+            `<button type="button" data-v="${v}" class="${all.every((x) => arrOf(x) === v) ? 'on' : ''}">${nm}</button>`).join('')
+        }</span></div>` : ''}
         ${allLine ? `
         ${seg('Anchor', ['Center', 'Left', 'Right'], same(3) ? e[3] : -1, 3)}
         <div class="field" title="Which way the line runs"><span>Direction</span><span class="cb units" id="fdir">${
@@ -1492,7 +1560,7 @@
         }</span></div>
         ${stepRow('Length', 8, sameLen ? lineLen(e) : null, 'How far the line reaches, in grid steps — a diagonal goes this far across and this far down')}
         ${seg('Thickness', ['Thin', 'Medium', 'Thick'], same(4) ? e[4] : -9, 4)}
-        ` : `
+        ` : allCirc ? '' : `
         ${seg('Anchor', ['Center', 'Left', 'Right'], same(3) ? e[3] : -1, 3)}
         ${seg('Size', SIZES, same(4) ? e[4] : -9, 4)}
         ${seg('Icon size', ['Auto'].concat(SIZES), anyIcon ? (sameIs ? isOf(e) : -9) : -9, 7, -1)}
@@ -1509,7 +1577,7 @@
         <div class="field" title="What the number shows"><span>Value</span><span class="cb units" id="fstkv"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 4)) ? 'on' : ''}">Price</button><button type="button" data-v="4" class="${all.every((x) => (x[6] & 4)) ? 'on' : ''}">Change %</button></span></div>
         <div class="field" title="Ticker (AAPL) or the company name as the data provider writes it"><span>Label</span><span class="cb units" id="fstkn"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 16)) ? 'on' : ''}">Symbol</button><button type="button" data-v="16" class="${all.every((x) => (x[6] & 16)) ? 'on' : ''}">Name</button></span></div>
         <div class="field" title="Green when the price is up, red when it is down — instead of the colour below"><span>Up / down</span><span class="cb units" id="fstkc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep colour</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By move</button></span></div>` : ''}
-        ${allLine ? '' : `<div class="field" title="${anyIcon ? 'What this part draws' : 'This part has no icon'}"><span>Show</span><span class="cb units" id="fshow">${
+        ${(allLine || allCirc) ? '' : `<div class="field" title="${anyIcon ? 'What this part draws' : 'This part has no icon'}"><span>Show</span><span class="cb units" id="fshow">${
           [['Icon + value', 1], ['Icon only', 3], ['Value only', 0]].map(([lbl, v]) =>
             `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 3) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none ? 'disabled' : ''}>${lbl}</button>`).join('')
         }</span></div>`}
@@ -1566,14 +1634,15 @@
     if (fx) fx.addEventListener('change', (ev) => { e[1] = clamp(+ev.target.value); commit(); });
     if (fy) fy.addEventListener('change', (ev) => { e[2] = clamp(+ev.target.value); commit(); });
     box.querySelectorAll('.seg').forEach((sg) => sg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => each((x) => { const k = +sg.dataset.key; while (x.length < 8) x.push(-1); x[k] = +b.dataset.v; }))));
-    box.querySelectorAll('.sw').forEach((b) => b.addEventListener('click', () => each((x) => { x[5] = +b.dataset.c; })));
+    box.querySelectorAll('.sw[data-c]').forEach((b) => b.addEventListener('click', () => each((x) => { x[5] = +b.dataset.c; })));
     const fp = $('fpick');
     if (fp) fp.addEventListener('change', (ev) => { const i = useColor(ev.target.value); each((x) => { x[5] = i; }); });
     bindMeters(); bindAlign();
     box.querySelectorAll('.step').forEach((sp) => sp.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
       const k = Number(sp.dataset.step), d = Number(b.dataset.d) * st.grid;
       each((x) => {
-        if (k === 8) { while (x.length < 8) x.push(-1); x[8] = Math.max(LINE_LEN_MIN, Math.min(1000, lineLen(x) + d)); }
+        if (k === 8 && isCircle(x[0])) { x[8] = Math.max(20, Math.min(1000, circDia(x) + d)); }
+        else if (k === 8) { while (x.length < 8) x.push(-1); x[8] = Math.max(LINE_LEN_MIN, Math.min(1000, lineLen(x) + d)); }
         else { x[k] = clamp(snapGrid(x[k]) + d); }
       });
     })));
@@ -1589,6 +1658,14 @@
     document.querySelectorAll('#fstkv button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStock(x[0])) x[6] = (x[6] & ~4) | (+b.dataset.v); })));
     document.querySelectorAll('#fstkc button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStock(x[0])) x[6] = (x[6] & ~8) | (+b.dataset.v); })));
     document.querySelectorAll('#fstkn button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStock(x[0])) x[6] = (x[6] & ~16) | (+b.dataset.v); })));
+    document.querySelectorAll('#farr button').forEach((b) => b.addEventListener('click', () => each((x) => {
+      if (isLine(x[0]) || isCircle(x[0]) || TYPES[x[0]].dial) return;
+      while (x.length < 8) x.push(-1); x[8] = +b.dataset.v;
+    })));
+    box.querySelectorAll('[data-fill]').forEach((b) => b.addEventListener('click', () => each((x) => { if (isCircle(x[0])) x[10] = +b.dataset.fill; })));
+    const fcm = $('fcmet');
+    if (fcm) fcm.addEventListener('change', (ev) => each((x) => { if (isCircle(x[0])) x[11] = Number(ev.target.value); }));
+    document.querySelectorAll('#fcdir button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isCircle(x[0])) x[12] = +b.dataset.v; })));
     document.querySelectorAll('#fbbc button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isBall(x[0])) x[6] = (x[6] & ~8) | (+b.dataset.v); })));
     const ft = $('fteam');
     if (ft) ft.addEventListener('change', (ev) => { st.bb = { lg: 'mlb', tm: Number(ev.target.value) || 0 }; commit(); });
@@ -1671,7 +1748,8 @@
     let d = TYPES[t] || TYPES[(PAL_PCT[t] || {}).t];
     const pct = PAL_PCT[t];                      // 「変化率」版は種別 30/31 + bit2
     if (pct) { t = pct.t; d = TYPES[t]; }
-    const e = isLine(t) ? [t, 500, 500, 0, 1, 0, 0, -1, LINE_LEN_DEF]
+    const e = isCircle(t) ? [t, 500, 500, 0, 1, 0, 0, -1, CIRC_DEF.dia, 0, CIRC_DEF.fill, CIRC_DEF.met, CIRC_DEF.dir]
+            : isLine(t) ? [t, 500, 500, 0, 1, 0, 0, -1, LINE_LEN_DEF]
             : [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, (d.icon ? 1 : 0) | (pct ? 4 : 0), -1];
     st.el.push(e); setSel(st.el.length - 1, false);
     const p = stagePoint(ev); e[1] = clamp(p.x); e[2] = clamp(p.y);
@@ -1753,6 +1831,12 @@
       if (!TYPES[n[0]] || n.some((v) => !Number.isInteger(v))) return null;
       if (n[1] < 0 || n[1] > 1000 || n[2] < 0 || n[2] > 1000 || n[3] < 0 || n[3] > 2 || n[4] < 0 || n[4] > SIZE_MAX || n[5] < 0 || n[5] > PC_BASE + PC_MAX || n[6] < 0 || n[6] > F_MAX || n[7] < -1 || n[7] > SIZE_MAX) return null;
       if (isLine(n[0])) { const L = Number(e[8]); n.push(Number.isFinite(L) && L >= LINE_LEN_MIN && L <= 1000 ? Math.round(L) : LINE_LEN_DEF); }   // 線は 9 番目の長さを落とさない
+      else if (isCircle(n[0])) {                                  // 円は 9..13 番目
+        const dia = Number(e[8]), fill = Number(e[10]), met = Number(e[11]), dir = Number(e[12]);
+        n.push(Number.isFinite(dia) && dia >= 20 && dia <= 1000 ? dia : CIRC_DEF.dia, 0,
+               Number.isInteger(fill) && fill >= 0 ? fill : -1,
+               METERS.some((mm) => mm[0] === met) ? met : 0, dir === -1 ? -1 : 1);
+      } else if (Number(e[8]) === 1 || Number(e[8]) === 2) { n.push(Number(e[8])); }   // アイコンの並び
       el.push(n);
     }
     const bg = Number.isInteger(j.bg) && j.bg >= 0 && j.bg <= 0xFFFFFF ? j.bg : 0;

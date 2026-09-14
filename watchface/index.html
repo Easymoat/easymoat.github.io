@@ -262,7 +262,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 12:25</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 12:54</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -623,6 +623,9 @@
   // 4 size steps S/M/L/XL (3 → 4 on 2026-09-06); older 3-entry tables are padded with the XL default.
   const SIZES = ['S', 'M', 'L', 'XL'], SIZE_MAX = 3;
   const EL_MAX = 32;   // 実機が受け取れる部品の数 (サーバも同じ値で弾く)
+  // f のビット: 0 アイコン / 1 値を出さない / 2 株は変化率 · 3 上げ下げ (野球は状態) で色 / 4 株は名前。
+  // **サーバの上限と必ず揃えること** (ここが狭いと絵札が描けず真っ黒になる、2026-09-14)。
+  const F_MAX = 31;
   const EL_HEAVY = 25;   // これを超えると実機の描き直しが目に見えて遅くなる (部品 1 つ ≒ 5ms)
   // 線 (70-73)。太さは 454 の盤面での px、長さは幅の千分率 (x/y と同じ物差し)。
   const LINE_W = [3, 5, 7], LINE_LEN_DEF = 200, LINE_LEN_MIN = 20;   // 奇数 = 実機で端の丸めがぴったり合う
@@ -1636,7 +1639,7 @@
       if (!Array.isArray(e) || e.length < 7) return null;
       const n = e.slice(0, 8).map(Number); if (n.length < 8) n.push(-1);
       if (!TYPES[n[0]] || n.some((v) => !Number.isInteger(v))) return null;
-      if (n[1] < 0 || n[1] > 1000 || n[2] < 0 || n[2] > 1000 || n[3] < 0 || n[3] > 2 || n[4] < 0 || n[4] > SIZE_MAX || n[5] < 0 || n[5] > PC_BASE + PC_MAX || n[6] < 0 || n[6] > 3 || n[7] < -1 || n[7] > SIZE_MAX) return null;
+      if (n[1] < 0 || n[1] > 1000 || n[2] < 0 || n[2] > 1000 || n[3] < 0 || n[3] > 2 || n[4] < 0 || n[4] > SIZE_MAX || n[5] < 0 || n[5] > PC_BASE + PC_MAX || n[6] < 0 || n[6] > F_MAX || n[7] < -1 || n[7] > SIZE_MAX) return null;
       if (isLine(n[0])) { const L = Number(e[8]); n.push(Number.isFinite(L) && L >= LINE_LEN_MIN && L <= 1000 ? Math.round(L) : LINE_LEN_DEF); }   // 線は 9 番目の長さを落とさない
       el.push(n);
     }
@@ -1818,6 +1821,7 @@
     el.style.backgroundImage = it.url ? `url("${absUrl(it.url)}")` : '';
     el.style.backgroundColor = hex(layout ? layout.bg : 0);
     if (layout) renderFaceMini(el, layout);
+    else { el.innerHTML = '<span class="cap" style="display:block;text-align:center;padding-top:40%">?</span>'; el.title = 'This dial uses something this page does not know yet — reload the page.'; }
   }
   async function loadShelf() {
     const wrap = $('shelf'); const id = devId();

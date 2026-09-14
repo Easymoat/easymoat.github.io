@@ -262,7 +262,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 21:38</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-14 22:28</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -285,7 +285,7 @@
     <div class="stagebar">
       <div class="devrow">
       <div class="grp"><span class="lbl">Device</span><div class="ctl"><select id="dev"></select></div></div>
-      <div class="grp"><span class="lbl">Grid</span><div class="ctl"><select id="grid"><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label><span class="cb units" id="gridcol" title="Grid colour. Bright is easier to see on a black or dark dial."></span></div></div>
+      <div class="grp"><span class="lbl">Grid</span><div class="ctl"><select id="grid" title="Also the step for the - / + buttons. Pick a fine grid to place thin double lines close together."><option value="5">200 × 200 (5)</option><option value="10">100 × 100 (10)</option><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label><span class="cb units" id="gridcol" title="Grid colour. Bright is easier to see on a black or dark dial."></span></div></div>
       </div>
       <div class="grp" id="selgrp"><span class="lbl">Selected part</span><div id="insp"><span class="muted">Click an element on the dial.</span></div></div>
       <div class="grp" id="fixednote" hidden style="flex-basis:100%"><div class="ctl"><span class="muted" id="fixednotetxt"></span></div></div>
@@ -1207,7 +1207,7 @@
     applyStageImage();
     stage.innerHTML = '';
     if (st.showGrid) {
-      const step = st.grid, sx = d.w / 1000, sy = d.h / 1000;
+      const step = st.grid < 25 ? st.grid * 5 : st.grid, sx = d.w / 1000, sy = d.h / 1000;   // 細かすぎる時は 5 本に 1 本だけ描く
       let g = `<svg class="grid" width="${d.w}" height="${d.h}">`;
       for (let u = step; u < 1000; u += step) {
         const major = u === 500;

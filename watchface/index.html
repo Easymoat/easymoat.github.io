@@ -283,7 +283,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 06:48</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 12:39</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -483,6 +483,7 @@
     56: { name: 'Hands: Classic',     grp: 'hands', dial: true },
     57: { name: 'Hands: Outline round', grp: 'hands', dial: true },
     60: { name: 'Rim: Ticks',         grp: 'rim',   dial: true },
+    69: { name: 'Rim: Batons',        grp: 'rim',   dial: true },   // 高級腕時計風: 細かい分目盛り + 12 本の棒 + 12 時の印
     61: { name: 'Rim: Dots',          grp: 'rim',   dial: true },
     62: { name: 'Rim: 12 3 6 9',      grp: 'rim',   dial: true },
     63: { name: 'Rim: Ring',          grp: 'rim',   dial: true },
@@ -1002,6 +1003,10 @@
       if (t === 60) return [[0, 60, 5, 2, r1(L(10)), odd(W(3)), r1(L(22)), odd(W(6))]];
       if (t === 61) return [[1, 12, 3, 3, r1(W(4)), r1(W(7))]];
       if (t === 62) return [[4, r1(R - L(22)), r1(W(38))]];
+      // Batons: 分目盛り (60) + 時の棒 (12) + 12 時だけ長く太い印。腕時計の「植字インデックス」。
+      if (t === 69) return [[0, 60, 0, r1(L(4)), r1(L(6)), odd(W(2)), r1(L(6)), odd(W(2))],
+                            [0, 12, 0, r1(L(12)), r1(L(30)), odd(W(9)), r1(L(30)), odd(W(9))],
+                            [0, 1, 1, r1(L(9)), r1(L(36)), odd(W(15)), r1(L(36)), odd(W(15))]];
       if (t === 63) return [[2, rad(R - 2 - W(2.5)), odd(W(5))], [0, 4, 1, 2, r1(L(26)), odd(W(7)), r1(L(26)), odd(W(7))]];
       if (ARCSET[t]) {
         const A = ARCSET[t];                              // 位置・長さ・向き

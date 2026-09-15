@@ -287,7 +287,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 21:49</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 22:10</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2340,7 +2340,8 @@
     try { const r = await fetch($('api').value + '/shelf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const j = await r.json();
       if (!r.ok || !j.ok) throw new Error(j.error === 'shelf_full' ? `the collection is full (${j.max} items) — delete one first`
-        : j.error === 'bad_layout' ? `the watch cannot take this dial (${elCount(st.el)} parts, limit ${EL_MAX})` : (j.error || r.status));
+        : j.error === 'bad_layout' ? `the server refused this dial (${elCount(st.el)} parts, limit ${EL_MAX}) — send me the JSON below if the count looks fine`
+        : (j.error || r.status));
       const note = hasImg ? '' : (hasSource() ? ' (saved without the picture — Show is off)' : ' (no picture)');
       setStatus('shelfstatus', `Saved as ${body.name || 'item ' + j.n}${note} — use "To watch…" on it to put it on the watch.`, hasImg ? 'ok' : 'err'); $('shelfname').value = ''; loadShelf(); }
     catch (e) { setStatus('shelfstatus', 'Save failed: ' + e.message, 'err'); }

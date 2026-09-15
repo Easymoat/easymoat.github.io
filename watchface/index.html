@@ -287,7 +287,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 18:43</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 19:09</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1596,13 +1596,17 @@
   // 使われていない控えを捨てて詰め直す。部品の色 index は付け替えるので見た目は変わらない。
   function gcColors(pc) {
     const keep = new Set();
-    st.el.forEach((x) => { const k = x[5] - PC_BASE; if (k >= 0 && k < pc.length) keep.add(k); });
-    [].concat(st.mc || [], st.mk || []).forEach((c) => { const k = c - PC_BASE; if (k >= 0 && k < pc.length) keep.add(k); });
+    // 色の index を持っているのは部品の色 (x[5])、円の塗り (x[10])、弧の色 (mc) と下地 (mk)。
+    // 1 つでも数え損ねると、その色だけ捨てられて別の色に化ける (2026-09-15 の塗りの不具合)。
+    const note = (c) => { const k = c - PC_BASE; if (k >= 0 && k < pc.length) keep.add(k); };
+    st.el.forEach((x) => { note(x[5]); if (isCircle(x[0])) note(circFill(x)); });
+    [].concat(st.mc || [], st.mk || []).forEach(note);
     for (let i = Math.max(0, pc.length - PC_N); i < pc.length; i++) keep.add(i);   // 表示中の 5 つは残す
     if (keep.size >= pc.length) return pc;
     const next = [], map = {};
     pc.forEach((c, i) => { if (keep.has(i)) { map[PC_BASE + i] = PC_BASE + next.length; next.push(c); } });
-    st.el.forEach((x) => { if (map[x[5]] != null) x[5] = map[x[5]]; });
+    st.el.forEach((x) => { if (map[x[5]] != null) x[5] = map[x[5]];
+                           if (isCircle(x[0]) && map[x[10]] != null) x[10] = map[x[10]]; });
     if (st.mc) st.mc = st.mc.map((c) => (map[c] != null ? map[c] : c));
     if (st.mk) st.mk = st.mk.map((c) => (map[c] != null ? map[c] : c));
     return next;

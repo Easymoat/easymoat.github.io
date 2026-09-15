@@ -287,7 +287,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 19:34</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 21:49</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -455,7 +455,7 @@
     1:  { name: 'Time',      grp: 'clock', sample: '10:08',  icon: null,        iw: 0 },
     4:  { name: 'Time + sec',  grp: 'clock', sample: '10:08:30', icon: null,      iw: 0 },
     5:  { name: 'Seconds',     grp: 'clock', sample: '30',      icon: null,      iw: 0 },
-    2:  { name: 'Date',      grp: 'clock', sample: 'Fri Sep 4', icon: null,     iw: 0 },
+    2:  { name: 'Date',      grp: 'clock', sample: 'Sep 4',     icon: 'dow',    iw: 0 },
     3:  { name: 'Battery',   grp: 'clock', sample: '85%',    icon: 'battery',   iw: 28 },
     10: { name: 'Heart rate',grp: 'body',  sample: '72',     icon: 'heart',     iw: 26 },
     11: { name: 'Steps',     grp: 'body',  sample: '8,421',  icon: 'steps',     iw: 24 },
@@ -663,7 +663,7 @@
   const elCount = (list) => (list || []).filter((e) => !isLine(e[0])).length;   // 上限の対象 = 線以外
   // f のビット: 0 アイコン / 1 値を出さない / 2 株は変化率 · 3 上げ下げ (野球は状態) で色 / 4 株は名前。
   // **サーバの上限と必ず揃えること** (ここが狭いと絵札が描けず真っ黒になる、2026-09-14)。
-  const F_MAX = 31;
+  const F_MAX = 63;   // bit5 (32) = 日付の曜日をアイコン扱いにする (サーバと揃えること)
   const EL_HEAVY = 32;   // これを超えると実機の描き直しが目に見えて遅くなる (部品 1 つ ≒ 4.8ms)
   // 線 (70-73)。太さは 454 の盤面での px、長さは幅の千分率 (x/y と同じ物差し)。
   const LINE_W = [3, 5, 7], LINE_LEN_DEF = 200, LINE_LEN_MIN = 20;   // 奇数 = 実機で端の丸めがぴったり合う
@@ -749,6 +749,12 @@
   const nameClean = (v) => String(v || '').replace(/[^\x20-\x7E]/g, '').replace(/\s+/g, ' ').trim().slice(0, 12);
   const stkOwn = (t) => (isStock(t) ? ((st.stn || [])[TYPES[t].stk] || '') : '');
   // 見出し = 記号 or 名前 (f bit4)、値 = 価格 or 変化率 (f bit2)。下見が取れていれば本物を出す。
+  const TEXT_ICON = { stock: '$', dow: 'Fri' };   // 絵ではなく文字をアイコン枠に置く部品
+  const F_DOW = 32;                               // 日付: 曜日を別の枠で描く (無い面は昔の「Fri Sep 4」のまま)
+  const isSplitDate = (e) => e[0] === 2 && (e[6] & F_DOW) !== 0;
+  // 昔の面の日付は「Fri Sep 4」の 1 つの文字列。読み込んだ時に「曜日 + 日付」へ揃える
+  // (両方出す形なので見た目は変わらないし、以降は個別に扱える)。
+  const migrateDate = (list) => { (list || []).forEach((x) => { if (Array.isArray(x) && x[0] === 2 && !(x[6] & F_DOW)) x[6] |= F_DOW | 1; }); return list; };
   const stkLabel = (t, f) => { const i = STKQ[stkOf(t)], s = stkOf(t);
     return (f & 16) ? (stkOwn(t) || (i && i.n) || s || 'Name') : (s || '$'); };
   const stkValue = (t, f) => { const i = STKQ[stkOf(t)];
@@ -869,6 +875,7 @@
         : (st.bb && st.bb.tm ? [{ lg: String(st.bb.lg || 'mlb'), tm: st.bb.tm }] : []);
   if (!Array.isArray(st.stk)) st.stk = ['', ''];
   if (!Array.isArray(st.stn)) st.stn = ['', ''];
+  migrateDate(st.el);
   if (!Array.isArray(st.mc)) st.mc = [-1, -1, -1, -1];
   if (!Array.isArray(st.mk)) st.mk = [-1, -1, -1, -1];   // 弧ごとの下地の色 (-1 = 自動で薄く)
   if (!Array.isArray(st.mv)) st.mv = [1, 1, 1, 1];       // 弧ごとの表示 / 非表示
@@ -1195,7 +1202,7 @@
       p.addEventListener('click', () => toggleDialPart(+t));
     }
     else if (d.line != null) p.innerHTML = `<span class="ico" style="color:#1D222B">${lineArt(d.line, 22, 3).svg}</span><span class="nm">Line</span><span class="hint">${t}</span>`;
-    else p.innerHTML = `<span class="ico">${d.icon && d.icon !== 'stock' ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${d.icon === 'stock' ? '$' : d.sample}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
+    else p.innerHTML = `<span class="ico">${d.icon && !TEXT_ICON[d.icon] ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${TEXT_ICON[d.icon] || d.sample}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     if (!d.dial) p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +t));
     $('parts-' + d.grp).appendChild(p);
   }
@@ -1375,8 +1382,11 @@
     const si = (Number.isInteger(is) && is >= 0 && is <= SIZE_MAX) ? is : s;   // per-part icon size, else the text step (WfLayout.drawEl)
     const ki = (st.ic[Math.min(si, st.ic.length - 1)] / ICON_ART) * k, iody = st.io * k;
     div.style.gap = (GAP * ki) + 'px';
-    const icon = (f & 1) && def.icon
-      ? (def.icon === 'stock' ? `<span class="ico">${stkLabel(t, f)}</span>` : `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:translateY(${iody}px) scale(${ki});">${ICONS[def.icon]()}</span>`)
+    // 日付は bit5 が立っている面だけ「曜日 = アイコン / 日付 = 値」に分ける (昔の面は 1 つの文字列のまま)。
+    const splitDate = isSplitDate(e);
+    const showIco = (f & 1) && def.icon && (t !== 2 || splitDate);
+    const icon = showIco
+      ? (TEXT_ICON[def.icon] ? `<span class="ico">${def.icon === 'stock' ? stkLabel(t, f) : TEXT_ICON[def.icon]}</span>` : `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:translateY(${iody}px) scale(${ki});">${ICONS[def.icon]()}</span>`)
       : '';
     if (def.strip) {
       const temps = ['29°', '28°', '27°'], cells = [];
@@ -1384,7 +1394,7 @@
       div.innerHTML = cells.join('') + '<span class="anchor"></span>';
     } else {
       const showVal = !(f & 2);   // f の bit 1 = 値を出さない (アイコンだけ)
-      const sample = isStock(t) ? stkValue(t, f) : isBall(t) ? ballSample(t) : def.sample;
+      const sample = isStock(t) ? stkValue(t, f) : isBall(t) ? ballSample(t) : (t === 2 && !splitDate) ? 'Fri Sep 4' : def.sample;
       const lay = arrOf(e);       // 0 アイコン左 / 1 アイコン右 / 2 アイコン上
       const val = showVal ? `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px">${sample}</span>` : '';
       if (lay === 2) div.style.flexDirection = 'column';
@@ -1515,7 +1525,7 @@
             const wB = linePen(b.e[4]) * 1000 / 454, wmin = Math.min(wpm, wB);
             const tan2 = Math.tan(th / 2);
             let r = FILLET_K * wmin, d = r / tan2;
-            const room = 0.4 * Math.min(lineLen(a.e), lineLen(b.e));       // 短い線を食いつぶさない
+            const room = 0.35 * Math.min(lineLen(a.e), lineLen(b.e));      // 短い線を食いつぶさない
             if (d > room) { d = room; r = d * tan2; }
             // 幅も色も同じ 2 本だけ丸める (違う時は今までどおりの留め継ぎ)。
             const same = a.e[4] === b.e[4] && a.e[5] === b.e[5];
@@ -1570,8 +1580,10 @@
     const j0 = (joins || {})[i + '|0'], j1 = (joins || {})[i + '|1'];
     const L = lineLen(e), e0 = j0 ? j0.v : 0, e1 = j1 ? j1.v : 0;
     // m0 / m1 = 接点の端に入れる R (軸あたりの千分率)。実機はこの分を戸して半円を塗る。
-    const m0 = Math.round((j0 ? j0.m : 0) * 10) / 10, m1 = Math.round((j1 ? j1.m : 0) * 10) / 10;
-    if (!e0 && !e1) return { x: e[1], y: e[2], len: L, m0, m1 };   // e0/e1 は負 (詰める) のこともある
+    let m0 = Math.round((j0 ? j0.m : 0) * 10) / 10, m1 = Math.round((j1 ? j1.m : 0) * 10) / 10;
+    // 両端を戻しすぎて線が消えないようにする (短い線の両端が浅い角でつながった時)。
+    const fit = (len) => { const room = len * 0.9; if (m0 + m1 > room && m0 + m1 > 0) { const f = room / (m0 + m1); m0 = Math.round(m0 * f * 10) / 10; m1 = Math.round(m1 * f * 10) / 10; } };
+    if (!e0 && !e1) { fit(L); return { x: e[1], y: e[2], len: L, m0, m1 }; }   // e0/e1 は負 (詰める) のこともある
     const dir = TYPES[e[0]].line, a = e[3];
     const ux = dir === 0 ? 0 : 1, uy = dir === 1 ? 0 : (dir === 3 ? -1 : 1);
     const len = Math.round(L + e0 + e1);
@@ -1579,7 +1591,9 @@
     if (a === 0) { x += ux * (e1 - e0) / 2; y += uy * (e1 - e0) / 2; }   // 中心は差のぶんだけ動く
     else if (a === 1) { x -= ux * e0; y -= uy * e0; }                     // 始点を外へ
     else { x += ux * e1; y += uy * e1; }                                  // 終点を外へ
-    return { x: clamp(x), y: clamp(y), len: Math.max(LINE_LEN_MIN, Math.min(1000, len)), m0, m1 };
+    const out = Math.max(LINE_LEN_MIN, Math.min(1000, len));
+    fit(out);
+    return { x: clamp(x), y: clamp(y), len: out, m0, m1 };
   }
   // 実機へ渡す el。並びは上と同じ。線だけ 10 番目に太さ (454 盤面の実 px) を足す = 太さを変えても実機のビルドは不要。
   const elOut = () => { const joins = lineJoins(st.el); return elOrder(st.el).map(([e, i]) => (isCircle(e[0])
@@ -1927,6 +1941,23 @@
     if (typeof IMG !== 'undefined' && IMG.bgMode === 'dial' && hasSource()) repaintQuality();   // photo preview follows the dial colour
   }
 
+  // ドラッグ中だけの軽い描き直し。線と角の R だけを作り直す (一覧や JSON は触らない)。
+  function refreshLines() {
+    const d = dev(), k = d.w / 454;
+    JOINS = lineJoins(st.el);
+    stage.querySelectorAll('.el.linepart').forEach((div) => {
+      const i = +div.dataset.i, e = st.el[i];
+      if (!e || !isLine(e[0])) return;
+      const g = lineGeom(e, JOINS, i);
+      const art = lineArt(TYPES[e[0]].line, g.len * d.w / 1000, linePen(e[4]) * k, g.m0 * d.w / 1000, g.m1 * d.w / 1000);
+      div.dataset.lx = g.x; div.dataset.ly = g.y; div.dataset.lw = art.w; div.dataset.lh = art.h;
+      div.style.width = art.w + 'px'; div.style.height = art.h + 'px';
+      div.innerHTML = art.svg + '<span class="anchor"></span>';
+    });
+    const old = stage.querySelector('svg.joints'); if (old) old.remove();
+    if (!hiddenInPreview(70)) stage.insertAdjacentHTML('beforeend', jointArt(JOINS.arcs, d, k));
+  }
+
   // ── Dragging ───────────────────────────────────────────────────────────────
   let drag = null;
   function stagePoint(ev) { const r = stage.getBoundingClientRect(); return { x: (ev.clientX - r.left) * 1000 / r.width, y: (ev.clientY - r.top) * 1000 / r.height, inside: ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom }; }
@@ -1971,7 +2002,7 @@
     if (pct) { t = pct.t; d = TYPES[t]; }
     const e = isCircle(t) ? [t, 500, 500, 0, 1, 0, 0, -1, CIRC_DEF.dia, 0, CIRC_DEF.fill, CIRC_DEF.met, CIRC_DEF.dir]
             : isLine(t) ? [t, 500, 500, 0, 1, 0, 0, -1, LINE_LEN_DEF]
-            : [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, (d.icon ? 1 : 0) | (pct ? 4 : 0), -1];
+            : [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, (d.icon ? 1 : 0) | (pct ? 4 : 0) | (t === 2 ? F_DOW : 0), -1];
     st.el.push(e); setSel(st.el.length - 1, false);
     const p = stagePoint(ev); e[1] = clamp(p.x); e[2] = clamp(p.y);
     drag = { i: sel, items: [{ i: sel, dx: 0, dy: 0 }], fromPalette: true, moved: false };
@@ -1982,6 +2013,9 @@
     if (!drag) return;
     const p = stagePoint(ev); if (!st.el[drag.i]) return;
     drag.items.forEach((it) => { const x = st.el[it.i]; if (x) { const sn = isLine(x[0]) ? snapGrid : clamp; x[1] = sn(p.x + it.dx); x[2] = sn(p.y + it.dy); } }); drag.moved = true;
+    // 線を動かしている間は接点を計算し直す。古い接点のままだと、離れた先でも端を戻したままになり、
+    // 短い線は長さが 0 になって消える (2026-09-15 の不具合)。全体の描き直しは重いので線だけ。
+    if (drag.items.some((it) => st.el[it.i] && isLine(st.el[it.i][0]))) refreshLines();
     const div = stage.querySelector(`.el[data-i="${drag.i}"]`);
     if (div) { div.style.opacity = p.inside || !drag.fromPalette ? '' : '.35'; }
     positionAll();
@@ -2031,8 +2065,8 @@
       st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; st.ic = clean.ic; st.io = clean.io; st.b = clean.b; clearSel(); commit(); setStatus('jsonstatus', `Applied ${clean.el.length} elements.`, 'ok');
     } catch (e) { setStatus('jsonstatus', 'Not a valid layout. Expect {"bg":n,"el":[[t,x,y,a,s,c,f],…]} with 0..1000 coordinates.', 'err'); }
   });
-  $('preset-lobby').addEventListener('click', () => { st.el = PRESET_LOBBY.map(e => e.slice()); clearSel(); commit(); });
-  $('preset-min').addEventListener('click', () => { st.el = PRESET_MIN.map(e => e.slice()); clearSel(); commit(); });
+  $('preset-lobby').addEventListener('click', () => { st.el = migrateDate(PRESET_LOBBY.map(e => e.slice())); clearSel(); commit(); });
+  $('preset-min').addEventListener('click', () => { st.el = migrateDate(PRESET_MIN.map(e => e.slice())); clearSel(); commit(); });
   $('clear').addEventListener('click', () => { st.el = []; clearSel(); commit(); });
   // pc を持たない古い面: 10 以上の色は昔の固定パレットの色だったので、そのまま控えに写す。
   function legacyPc(el) {
@@ -2060,6 +2094,7 @@
       } else if (Number(e[8]) === 1 || Number(e[8]) === 2) { n.push(Number(e[8])); }   // アイコンの並び
       el.push(n);
     }
+    migrateDate(el);
     const bg = Number.isInteger(j.bg) && j.bg >= 0 && j.bg <= 0xFFFFFF ? j.bg : 0;
     return { bg, el, tx: intArr3(j.tx, 10, 200, DEF_TX) || DEF_TX.slice(), tm: intArr3(j.tm, 10, 200, DEF_TM) || DEF_TM.slice(),
              ic: intArr3(j.ic, 6, 120, DEF_IC) || DEF_IC.slice(),

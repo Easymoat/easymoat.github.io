@@ -287,7 +287,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 22:10</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 22:21</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -750,6 +750,8 @@
   const stkOwn = (t) => (isStock(t) ? ((st.stn || [])[TYPES[t].stk] || '') : '');
   // 見出し = 記号 or 名前 (f bit4)、値 = 価格 or 変化率 (f bit2)。下見が取れていれば本物を出す。
   const TEXT_ICON = { stock: '$', dow: 'Fri' };   // 絵ではなく文字をアイコン枠に置く部品
+  const F_SHARP = 1;                              // 線: 角を丸めない (0 = R を入れる = 既定)
+  const lineSharp = (e) => (e[6] & F_SHARP) !== 0;
   const F_DOW = 32;                               // 日付: 曜日を別の枠で描く (無い面は昔の「Fri Sep 4」のまま)
   const isSplitDate = (e) => e[0] === 2 && (e[6] & F_DOW) !== 0;
   // 昔の面の日付は「Fri Sep 4」の 1 つの文字列。読み込んだ時に「曜日 + 日付」へ揃える
@@ -1528,7 +1530,7 @@
             const room = 0.35 * Math.min(lineLen(a.e), lineLen(b.e));      // 短い線を食いつぶさない
             if (d > room) { d = room; r = d * tan2; }
             // 幅も色も同じ 2 本だけ丸める (違う時は今までどおりの留め継ぎ)。
-            const same = a.e[4] === b.e[4] && a.e[5] === b.e[5];
+            const same = a.e[4] === b.e[4] && a.e[5] === b.e[5] && !lineSharp(a.e) && !lineSharp(b.e);
             let fil = null;
             if (same && r > wmin * 0.6) {
               const sin2 = Math.sin(th / 2), bx2 = ax + bx, by2 = ay + by, bl = Math.hypot(bx2, by2);
@@ -1750,6 +1752,10 @@
         }</span></div>
         ${stepRow('Length', 8, sameLen ? lineLen(e) : null, 'How far the line reaches, in grid steps — a diagonal goes this far across and this far down')}
         ${seg('Thickness', ['Thin', 'Medium', 'Thick'], same(4) ? e[4] : -9, 4)}
+        <div class="field" title="Round the corner where this line meets another one. Both lines have to be set to R."><span>Joint</span><span class="cb units" id="fjoint">${
+          [[0, 'R'], [1, 'Sharp']].map(([v, lb]) =>
+            `<button type="button" data-v="${v}" class="${all.every((x) => (lineSharp(x) ? 1 : 0) === v) ? 'on' : ''}">${lb}</button>`).join('')
+        }</span></div>
         ` : allCirc ? '' : `
         ${seg('Anchor', ['Center', 'Left', 'Right'], same(3) ? e[3] : -1, 3)}
         ${seg('Size', SIZES, same(4) ? e[4] : -9, 4)}
@@ -1866,6 +1872,9 @@
       });
     })));
     document.querySelectorAll('#fdir button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isLine(x[0])) x[0] = +b.dataset.t; })));
+    document.querySelectorAll('#fjoint button').forEach((b) => b.addEventListener('click', () => each((x) => {
+      if (isLine(x[0])) x[6] = (+b.dataset.v) ? (x[6] | F_SHARP) : (x[6] & ~F_SHARP);
+    })));
     const fn = $('fstkname');
     if (fn) fn.addEventListener('change', (ev) => {
       const i = TYPES[e[0]].stk; st.stn = (st.stn || ['', '']).slice(); st.stn[i] = nameClean(ev.target.value); commit();

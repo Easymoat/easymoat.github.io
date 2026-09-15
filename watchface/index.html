@@ -239,7 +239,7 @@
   .pxs .step, .stp .step { width: 28px; height: 28px; padding: 0; line-height: 1; font: 600 16px var(--sans); border-radius: 5px; background: var(--panel-2); border: 2px solid var(--ink-3); color: var(--ink); cursor: pointer; }
   .pxs .step:hover, .stp .step:hover { background: var(--line); } .pxs .step:active, .stp .step:active { background: var(--line-2); }
   .sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line-2); cursor: pointer; padding: 0; box-sizing: border-box; }
-  .sw.on { border-color: var(--panel); box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); transform: scale(1.1); }
+  .sw.on { border-color: var(--panel); box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px #FFFFFF; transform: scale(1.1); }
   .swatches .sep { width: 1px; height: 20px; background: var(--line-2); margin: 0 3px; }   /* 基本色 | 使った色 */
 
   .kbd { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
@@ -287,7 +287,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 19:09</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 19:34</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1307,6 +1307,7 @@
     JOINS = lineJoins(st.el);
     elOrder(st.el).forEach(([e, i]) => { if (!hiddenInPreview(e[0])) stage.appendChild(makeEl(e, i, k)); });
     positionAll();
+    if (!hiddenInPreview(70)) stage.insertAdjacentHTML('beforeend', jointArt(JOINS.arcs, d, k));   // 線の角の R
     $('empty').hidden = st.el.length > 0;
     renderBgHist();
     $('bgpick').value = hex(st.bg).toLowerCase();
@@ -1475,6 +1476,8 @@
   // 各線の両端について、伸ばす量 (幅の千分率、軸あたり) を出す。
   // 端どうしが重なっている時だけでなく、**2 本を延長した交点が双方の端の近くにある時**も対象にする。
   // これで二重線 (平行に 2 本ずつ) の内側も、交点まで詰めて角がそろう (外側は伸び、内側は縮む)。
+  // 角に入れる R の大きさ = 線幅の 2 倍 (中心線の半径)。内側の縁も 1.5 倍の半径で曲がる。
+  const FILLET_K = 2;
   function lineJoins(list) {
     const lines = list.map((e, i) => (isLine(e[0]) ? { i, e, ends: lineEnds(e) } : null)).filter(Boolean);
     const best = {};
@@ -1498,22 +1501,69 @@
             // 十字や T なので触らない — 触ると別の線に釣られて短くなる。
             if (t < -wpm0 || u < -wpm0 || t > TOL || u > TOL) continue;
             const dot = Math.max(-1, Math.min(1, ax * bx + ay * by));
-            const th = Math.acos(dot);                                     // なす角
+            const th = Math.acos(dot);                                     // なす角 (90 度だけでなく 45 / 135 度も来る)
             if (th < 0.2 || th > Math.PI - 0.01) continue;
             const wpm = wpm0;                                              // 線幅を幅の千分率に
             const miter = Math.min(wpm * 2, (wpm / 2) / Math.tan(th / 2)); // 角を埋めるぶん
             const ext = t + miter;                                         // 交点まで動かし、角のぶん伸ばす
             const axis = TYPES[a.e[0]].line >= 2 ? ext / Math.SQRT2 : ext; // 斜めは軸あたりに直す
-            const mAxis = TYPES[a.e[0]].line >= 2 ? miter / Math.SQRT2 : miter;   // 丸めるときに戸す分
+            // ── 角の R (2026-09-15) ────────────────────────────────────────
+            // 留め継ぎの尖った角の代わりに、半径 r の円弧で 2 本をつなぐ (フィレット)。
+            // 外側は r + 幅/2、内側は r − 幅/2 の半径で曲がるので、内側の縁にも R が入る。
+            // 接点 (円弧の端) は交点から d = r / tan(θ/2) だけ線の内側へ戻ったところ。
+            const px = pa[0] + ox * t, py = pa[1] + oy * t;                // 交点
+            const wB = linePen(b.e[4]) * 1000 / 454, wmin = Math.min(wpm, wB);
+            const tan2 = Math.tan(th / 2);
+            let r = FILLET_K * wmin, d = r / tan2;
+            const room = 0.4 * Math.min(lineLen(a.e), lineLen(b.e));       // 短い線を食いつぶさない
+            if (d > room) { d = room; r = d * tan2; }
+            // 幅も色も同じ 2 本だけ丸める (違う時は今までどおりの留め継ぎ)。
+            const same = a.e[4] === b.e[4] && a.e[5] === b.e[5];
+            let fil = null;
+            if (same && r > wmin * 0.6) {
+              const sin2 = Math.sin(th / 2), bx2 = ax + bx, by2 = ay + by, bl = Math.hypot(bx2, by2);
+              if (bl > 1e-6) {
+                const cx = px + bx2 / bl * (r / sin2), cy = py + by2 / bl * (r / sin2);   // 円弧の中心
+                const ang = (qx2, qy2) => (Math.atan2(qx2 - cx, cy - qy2) * 180 / Math.PI + 360) % 360;   // 12 時 = 0、時計回り
+                const a0 = ang(px + ax * d, py + ay * d), a1 = ang(px + bx * d, py + by * d);
+                const sweep = ((a1 - a0) + 360) % 360;
+                const arc = sweep <= 180 ? [a0, a0 + sweep] : [a1, a1 + (360 - sweep)];
+                fil = { d, r, cx, cy, a0: arc[0], a1: arc[1], pen: Math.min(linePen(a.e[4]), linePen(b.e[4])), col: a.e[5],
+                        key: [Math.min(a.i, b.i), Math.max(a.i, b.i), Math.round(px), Math.round(py)].join(':') };
+              }
+            }
+            const back = fil ? miter + fil.d : 0;                          // 実機が戻す分 (0 = 丸めない)
+            const mAxis = TYPES[a.e[0]].line >= 2 ? back / Math.SQRT2 : back;
             const key = a.i + '|' + ea, cur = best[key];
-            if (!cur || Math.abs(t) < cur.d) best[key] = { d: Math.abs(t), v: axis, m: mAxis };
+            if (!cur || Math.abs(t) < cur.d) best[key] = { d: Math.abs(t), v: axis, m: mAxis, f: fil };
           }
         }
       }
     }
-    const out = {};
-    for (const k of Object.keys(best)) out[k] = { v: best[k].v, m: best[k].m };
+    const out = {}, seen = {}, arcs = [];
+    for (const k of Object.keys(best)) {
+      out[k] = { v: best[k].v, m: best[k].m };
+      const f = best[k].f;
+      if (f && !seen[f.key]) {
+        seen[f.key] = 1;
+        arcs.push([Math.round(f.cx * 10) / 10, Math.round(f.cy * 10) / 10, Math.round(f.r * 10) / 10,
+                   Math.round(f.a0 * 10) / 10, Math.round(f.a1 * 10) / 10, f.pen, f.col]);
+      }
+    }
+    out.arcs = arcs;
     return out;
+  }
+  // 角の R を実機と同じ向き・同じ丸い端で描く (プレビュー)。線の上に重ねる = 実機も最後に描く。
+  function jointArt(arcs, d, k) {
+    if (!arcs || !arcs.length) return '';
+    let o = `<svg class="joints" width="${d.w}" height="${d.h}" style="position:absolute;left:0;top:0;pointer-events:none;overflow:visible">`;
+    for (const a of arcs) {
+      const cx = a[0] * d.w / 1000, cy = a[1] * d.h / 1000, r = a[2] * d.w / 1000, pen = a[5] * k;
+      const pt = (deg) => [cx + r * Math.sin(deg * Math.PI / 180), cy - r * Math.cos(deg * Math.PI / 180)];
+      const [x0, y0] = pt(a[3]), [x1, y1] = pt(a[4]);
+      o += `<path d="M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${r.toFixed(1)} ${r.toFixed(1)} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}" fill="none" stroke="${colOf(a[6])}" stroke-width="${pen.toFixed(1)}" stroke-linecap="round"/>`;
+    }
+    return o + '</svg>';
   }
   // 接点で伸ばしたあとの線 (x, y, len)。実機へ渡す値もプレビューもこれを使う。
   function lineGeom(e, joins, i) {
@@ -1545,6 +1595,7 @@
     uc: st.uc === 1 ? 1 : undefined,
     // 絵が単色の塗りなら、その色を渡す (実機はメーターの下地をこの色と混ぜる。写真の時は渡さない = 黒)
     ib: (typeof IMG !== 'undefined' && IMG.show && !IMG.cur && IMG.fill) ? parseInt(String(IMG.fill).slice(1), 16) : undefined,
+    lj: (() => { const j = lineJoins(st.el).arcs; return j.length ? j : undefined; })(),
     bb: (st.bb || []).some((b) => b && b.tm) ? (st.bb || []).slice(0, 2).map((b) => (b && b.tm ? b : null)) : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   function renderList() {
@@ -1572,11 +1623,20 @@
     if (k >= 0 && k < pc.length && out.indexOf(cur) < 0) out.unshift(cur);
     return out;
   }
+  // カラーパネルを開けば change は何度も飛んでくるので、その間は控えの 1 枠を使い回す。
+  let PICK_SES = { el: null, idx: -1 };
+  function pickColor(el, str) {
+    if (PICK_SES.el !== el) PICK_SES = { el, idx: -1 };
+    const before = (st.pc || []).length;
+    const i = useColor(str, PICK_SES.idx);
+    if (i >= PC_BASE && (st.pc || []).length > before) PICK_SES.idx = i;
+    return i;
+  }
   let COLOR_NOTE = '';   // 控えがいっぱいで他の部品の色まで変わった時だけ出す一言
   // 選んだ色の index を返す。基本色 (0-9) か控えに同じ色があればその index、無ければ控えに足す。
   // 足すだけなので、既に置いた部品の色は変わらない。上限に達したら、どの部品も使っていない色を
   // 古いほうから捨てて詰め直す (捨てた色を使っている部品はいないので見た目は変わらない)。
-  function useColor(str) {
+  function useColor(str, reuse) {
     const rgb = parseInt(String(str).replace('#', ''), 16);
     if (!Number.isInteger(rgb)) return 0;
     const base = PALETTE.slice(0, PC_BASE).findIndex((c) => parseInt(c.slice(1), 16) === rgb);
@@ -1584,6 +1644,9 @@
     let pc = (st.pc || DEF_PC).slice();
     const at = pc.indexOf(rgb);
     if (at >= 0) return PC_BASE + at;
+    // 同じカラーパネルを操っている間は、その操作で足した枠を上書きする。
+    // こうしないとパネルを動かすたびに控えが 1 色ずつ埋まり、上限を超えて他の部品の色まで動く。
+    if (Number.isInteger(reuse) && reuse >= PC_BASE && reuse - PC_BASE < pc.length) { pc[reuse - PC_BASE] = rgb; st.pc = pc; return reuse; }
     if (pc.length >= PC_MAX) pc = gcColors(pc);
     if (pc.length >= PC_MAX) {            // すべて使用中 (部品 24 個中 22 個が別々の色): 一番古いものを譲る
       const drop = 0;
@@ -1620,8 +1683,12 @@
     if (h > INSP_MIN) { INSP_MIN = h; el.style.minHeight = h + 'px'; }
   }
   window.addEventListener('resize', () => { INSP_MIN = 0; const el = $('insp'); if (el) el.style.minHeight = ''; });
+  let PICK_OPEN = 0;        // 開いている OS のカラーパネルの数
   function renderInspector() {
-    const box = $('insp'); let idx = selIdx(), e = st.el[sel];
+    const box = $('insp');
+    // 色を選んでいる最中は作り直さない (盤面のプレビューはもう更新されている)。
+    if (PICK_OPEN > 0) return;
+    let idx = selIdx(), e = st.el[sel];
     const none = !e || !idx.length;          // nothing selected: the controls stay visible but disabled
     if (none) { e = [11, 0, 0, 0, 1, -1, 0]; idx = []; }
     const all = none ? [e] : idx.map((i) => st.el[i]), multi = all.length > 1;
@@ -1708,13 +1775,18 @@
         }</span></div>` : ''}
       </div>
       <div class="muted hint">${COLOR_NOTE ? `<span class="status err">${COLOR_NOTE}</span> ` : ''}${none ? 'Shift+click (or Cmd/Ctrl+click) selects several parts.' : multi ? `${all.length} parts selected — Anchor, Size, Icon size, Color and Icon apply to all of them.` : 'Shift+click adds another part to the selection.'}</div>`;
+    // 色の入力欄を触っている間は右の欄を作り直さない (作り直すとパネルごと消える)。
+    const bindPickers = () => box.querySelectorAll('input[type="color"]').forEach((pk) => {
+      pk.addEventListener('focus', () => { PICK_OPEN++; });
+      pk.addEventListener('blur', () => { PICK_OPEN = Math.max(0, PICK_OPEN - 1); PICK_SES = { el: null, idx: -1 }; setTimeout(renderInspector, 0); });
+    });
     const bindMeters = () => {
       document.querySelectorAll('.mts select').forEach((sel) => sel.addEventListener('change', () => {
         const i = Number(sel.dataset.i); st.mt = (st.mt || [0, 0, 0, 0]).slice(); st.mt[i] = Number(sel.value); commit();
       }));
       const pick = (cls, key) => document.querySelectorAll('.mts .' + cls).forEach((pk) => {
         pk.addEventListener('change', () => {
-          const i = Number(pk.dataset.i); st[key] = (st[key] || [-1, -1, -1, -1]).slice(); st[key][i] = useColor(pk.value); commit();
+          const i = Number(pk.dataset.i); st[key] = (st[key] || [-1, -1, -1, -1]).slice(); st[key][i] = pickColor(pk, pk.value); commit();
         });
         pk.addEventListener('contextmenu', (ev) => {   // 右クリックで自動 (部品と同じ色 / 薄い下地) に戻す
           ev.preventDefault();
@@ -1744,7 +1816,7 @@
     if (none) {
       box.querySelectorAll('input, button').forEach((b) => { b.disabled = true; });
       const u = box.querySelector('#falign button[data-v="undo"]'); if (u && ALIGN_UNDO) u.disabled = false;
-      bindMeters(); bindAlign(); lockInspHeight(); return;
+      bindMeters(); bindAlign(); bindPickers(); lockInspHeight(); return;
     }
     const each = (fn) => { all.forEach(fn); commit(); };
     // 重なり順 = el の並び。選んだ部品を先頭 (奥) / 末尾 (手前) へ動かす。
@@ -1769,8 +1841,8 @@
     box.querySelectorAll('.seg').forEach((sg) => sg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => each((x) => { const k = +sg.dataset.key; while (x.length < 8) x.push(-1); x[k] = +b.dataset.v; }))));
     box.querySelectorAll('.sw[data-c]').forEach((b) => b.addEventListener('click', () => each((x) => { x[5] = +b.dataset.c; })));
     const fp = $('fpick');
-    if (fp) fp.addEventListener('change', (ev) => { const i = useColor(ev.target.value); each((x) => { x[5] = i; }); });
-    bindMeters(); bindAlign();
+    if (fp) fp.addEventListener('change', (ev) => { const i = pickColor(ev.target, ev.target.value); each((x) => { x[5] = i; }); });
+    bindMeters(); bindAlign(); bindPickers();
     box.querySelectorAll('.step').forEach((sp) => sp.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
       const k = Number(sp.dataset.step), d = Number(b.dataset.d) * st.grid;
       each((x) => {
@@ -1797,7 +1869,7 @@
     })));
     box.querySelectorAll('[data-fill]').forEach((b) => b.addEventListener('click', () => each((x) => { if (isCircle(x[0])) x[10] = +b.dataset.fill; })));
     const ffp = $('ffillpick');
-    if (ffp) ffp.addEventListener('change', (ev) => { const i = useColor(ev.target.value); each((x) => { if (isCircle(x[0])) x[10] = i; }); });
+    if (ffp) ffp.addEventListener('change', (ev) => { const i = pickColor(ev.target, ev.target.value); each((x) => { if (isCircle(x[0])) x[10] = i; }); });
     const fcm = $('fcmet');
     if (fcm) fcm.addEventListener('change', (ev) => each((x) => { if (isCircle(x[0])) x[11] = Number(ev.target.value); }));
     document.querySelectorAll('#fcdir button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isCircle(x[0])) x[12] = +b.dataset.v; })));

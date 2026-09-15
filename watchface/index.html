@@ -287,7 +287,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-15 22:21</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-16 05:12</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -411,7 +411,8 @@
       <div class="ctl" title="Unit for Weather, Today hi/lo and Next 3h.">Temp <span class="cb units" id="tempunit"></span></div>
       <div class="ctl" title="Unit for the Pressure part.">Pressure <span class="cb units" id="pressunit"></span></div>
       <div class="ctl" title="Unit for the Altitude part.">Distance <span class="cb units" id="distunit"></span></div>
-      <div class="ctl" title="Clock format. Device = follow the watch's own setting.">Hours <span class="cb units" id="hourfmt"></span></div></div>
+      <div class="ctl" title="Clock format. Device = follow the watch's own setting.">Hours <span class="cb units" id="hourfmt"></span></div>
+      <div class="ctl" title="What a long press on a weather part opens. In face = the dial redraws as a detail screen (now / hourly / daily). Garmin = the watch's own weather screen (scrolls freely, no time limit, Garmin's own look).">Weather detail <span class="cb units" id="wxdetail"></span></div></div>
     <div class="group"><span class="lbl">Elements <span id="elcount" class="cnt"></span></span><div class="list" id="list"></div></div>
   </aside>
 </main>
@@ -448,6 +449,7 @@
     { key: 'pu', id: 'pressunit', t: 23, opts: { 0: ['hPa', '1013'], 1: ['inHg', '29.92'], 2: ['mmHg', '760'] } },
     { key: 'du', id: 'distunit',  t: 24, opts: { 0: ['m', '45m'], 1: ['ft', '148ft'] } },
     { key: 'hf', id: 'hourfmt',   t: 0,  opts: { 0: ['Auto', ''], 1: ['12', ''], 2: ['24', ''] } },
+    { key: 'wd', id: 'wxdetail',  t: 0,  opts: { 0: ['In face', ''], 1: ['Garmin', ''] } },
   ];
   // 大きい数字の時計用サイズ表 (tm) を使う種別: 1 時刻 / 4 時刻+秒 / 5 秒
   const isClock = (t) => t === 1 || t === 4 || t === 5;
@@ -1604,7 +1606,7 @@
     ? (() => { const g = lineGeom(e, joins, i); const b = [e[0], g.x, g.y, e[3], e[4], e[5], e[6], -1, g.len, linePen(e[4])];
                  return (g.m0 || g.m1) ? b.concat([g.m0, g.m1]) : b; })()
     : e)); };
-  const layoutObj = () => { const o = Object.assign({ bg: st.bg, el: elOut(), pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined, mc: (st.mc || []).some((c) => c >= 0) ? st.mc : undefined,
+  const layoutObj = () => { const o = Object.assign({ bg: st.bg, el: elOut(), pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined, mc: (st.mc || []).some((c) => c >= 0) ? st.mc : undefined,
     mk: (st.mk || []).some((c) => c >= 0) ? st.mk : undefined, mv: (st.mv || []).some((v) => v === 0) ? st.mv : undefined,
     st: (st.stk || []).some((v) => v) ? (st.stk || ['', '']).slice(0, 2).map(stkClean) : undefined,
     sn: (st.stn || []).some((v) => v) ? (st.stn || ['', '']).slice(0, 2).map(nameClean) : undefined,
@@ -1929,7 +1931,7 @@
   // The draft holds the layout AND the image editor: slot, shape, size, position, zoom, colours, Auto
   // shade, Show on dial, and — for an image chosen from a file — the picture itself (downscaled JPEG),
   // so Back to draft restores the dial exactly. imgDraftState / applyImgDraft live with the image code.
-  const draftKeys = () => ({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, img: imgDraftState(), savedAt: Date.now() });
+  const draftKeys = () => ({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, wd: st.wd || 0, img: imgDraftState(), savedAt: Date.now() });
   function saveDraft() {
     const d = draftKeys();
     try { localStorage.setItem('faceComposer.draft', JSON.stringify(d)); return true; }
@@ -2113,6 +2115,7 @@
              pu: (Number.isInteger(j.pu) && j.pu >= 0 && j.pu <= 2) ? j.pu : 0,
              du: (Number.isInteger(j.du) && j.du >= 0 && j.du <= 1) ? j.du : 0,
              hf: (Number.isInteger(j.hf) && j.hf >= 0 && j.hf <= 2) ? j.hf : 0,
+             wd: (Number.isInteger(j.wd) && j.wd >= 0 && j.wd <= 1) ? j.wd : 0,
              mt: (Array.isArray(j.mt) && j.mt.length === 4 && j.mt.every((m) => METERS.some((x) => x[0] === m))) ? j.mt.slice() : [0, 0, 0, 0],
              mk: (Array.isArray(j.mk) && j.mk.length === 4 && j.mk.every((c) => Number.isInteger(c) && c >= -1 && c <= PC_BASE + PC_MAX)) ? j.mk.slice() : [-1, -1, -1, -1],
              mv: (Array.isArray(j.mv) && j.mv.length === 4 && j.mv.every((v) => v === 0 || v === 1)) ? j.mv.slice() : [1, 1, 1, 1],
@@ -2154,7 +2157,7 @@
       div.style.left = left + 'px'; div.style.top = top + 'px';
     });
   }
-  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, 2); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); clearSel(); pushBgHist(st.bg); }
+  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, 2); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); clearSel(); pushBgHist(st.bg); }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
   function renderWatchSeen() {
     const el = $('watchseen'); if (!el) return;

@@ -287,7 +287,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-16 05:12</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-16 06:42</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2143,9 +2143,11 @@
     const inner = document.createElement('div');
     inner.className = 'inner';
     inner.style.width = d.w + 'px'; inner.style.height = d.h + 'px'; inner.style.transform = `scale(${sc})`;
+    let arcs = [];
     try {
       st = Object.assign({}, keep, lay);
       JOINS = lineJoins(lay.el);
+      arcs = JOINS.arcs || [];                 // 線の角の R も見本に出す (盤面と同じ描き方)
       elOrder(lay.el).forEach(([e, i]) => inner.appendChild(makeEl(e, i, d.w / 454)));
     } finally { st = keep; JOINS = lineJoins(st.el); }
     el.appendChild(inner);
@@ -2156,6 +2158,10 @@
       const { left, top } = boxPos(e, px, py, div.dataset.lw ? +div.dataset.lw : div.offsetWidth, div.dataset.lh ? +div.dataset.lh : div.offsetHeight);
       div.style.left = left + 'px'; div.style.top = top + 'px';
     });
+    if (arcs.length) {
+      const hold = st; st = Object.assign({}, keep, lay);      // 弧の色はその面の控えで引く
+      try { inner.insertAdjacentHTML('beforeend', jointArt(arcs, d, d.w / 454)); } finally { st = hold; }
+    }
   }
   function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, 2); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); clearSel(); pushBgHist(st.bg); }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.

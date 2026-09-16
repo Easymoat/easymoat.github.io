@@ -287,7 +287,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-16 06:42</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-16 10:00</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -475,7 +475,7 @@
     // 27-29 = Open-Meteo forecast fetched by the watch's background service (server /api/wf/forecast), 2026-09-06
     27: { name: 'Today hi/lo', grp: 'wx',  sample: '31°/24°', icon: 'hilo',     iw: 16 },
     28: { name: 'Rain today', grp: 'wx',   sample: '40%',    icon: 'umbrella',  iw: 26 },
-    29: { name: 'Next 3h',   grp: 'wx',    sample: '29°',    icon: 'weather',   iw: 34, strip: 3 },
+    29: { name: 'Now 1h 2h', grp: 'wx',    sample: '29°',    icon: 'weather',   iw: 34, strip: 3 },
     25: { name: 'Precip %',  grp: 'wx',    sample: '40%',    icon: 'umbrella',  iw: 26 , hidden: true },   // removed from the palette 2026-09-06 (Garmin's current-hour value; use 28 Rain today). Kept so saved faces still render.
     26: { name: 'Moon age',  grp: 'wx',    sample: moonAgeStr(), icon: 'moon',  iw: 26 },
     40: { name: 'Notifications', grp: 'clock', sample: '3',  icon: 'bell',      iw: 26 },
@@ -752,6 +752,18 @@
   const stkOwn = (t) => (isStock(t) ? ((st.stn || [])[TYPES[t].stk] || '') : '');
   // 見出し = 記号 or 名前 (f bit4)、値 = 価格 or 変化率 (f bit2)。下見が取れていれば本物を出す。
   const TEXT_ICON = { stock: '$', dow: 'Fri' };   // 絵ではなく文字をアイコン枠に置く部品
+  const isStrip = (t) => !!(TYPES[t] && TYPES[t].strip);
+  // 予報の帯が出す値。f の bit2-3 (部品 29 だけの意味)。
+  const STRIP_MET = [[0, 'Temp'], [4, 'Rain %'], [8, 'Wind']];
+  const stripMet = (e) => ((e[6] >> 2) & 3);
+  // 帯の見本。気温は単位に合わせ、風は選んだ単位の見本を散らす。
+  function stripSample(e) {
+    const m = stripMet(e);
+    if (m === 1) return ['20%', '40%', '70%'];
+    if (m === 2) { const w = Number((WIND_UNITS[st.wu || 0] || ['', '3'])[1]) || 3; return [String(w), String(Math.round(w * 1.5)), String(w * 2)]; }
+    const t0 = (TYPES[20] && TYPES[20].sample) || '23°', n = parseInt(t0, 10);
+    return Number.isFinite(n) ? [n + 1, n, n - 1].map((v) => v + '°') : ['29°', '28°', '27°'];
+  }
   const F_SHARP = 1;                              // 線: 角を丸めない (0 = R を入れる = 既定)
   const lineSharp = (e) => (e[6] & F_SHARP) !== 0;
   const F_DOW = 32;                               // 日付: 曜日を別の枠で描く (無い面は昔の「Fri Sep 4」のまま)
@@ -1393,7 +1405,7 @@
       ? (TEXT_ICON[def.icon] ? `<span class="ico">${def.icon === 'stock' ? stkLabel(t, f) : TEXT_ICON[def.icon]}</span>` : `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:translateY(${iody}px) scale(${ki});">${ICONS[def.icon]()}</span>`)
       : '';
     if (def.strip) {
-      const temps = ['29°', '28°', '27°'], cells = [];
+      const temps = stripSample(e), cells = [];
       for (let c = 0; c < def.strip; c++) cells.push(`${icon}<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px;${c < def.strip - 1 ? `margin-right:${(GAP * 2 * ki).toFixed(1)}px` : ''}">${temps[c]}</span>`);
       div.innerHTML = cells.join('') + '<span class="anchor"></span>';
     } else {
@@ -1723,6 +1735,7 @@
     const allStock = !none && all.every((x) => isStock(x[0])) && all.every((x) => x[0] === e[0]);   // 同じ銘柄の部品だけ
     const allBall = !none && all.every((x) => isBall(x[0]));
     const allCirc = !none && all.every((x) => isCircle(x[0]));
+    const allStrip = !none && all.every((x) => isStrip(x[0]));   // 予報の帯 (29)
     const allText = !none && all.every((x) => !isLine(x[0]) && !isCircle(x[0]) && !TYPES[x[0]].dial);
     const sameLen = all.every((x) => lineLen(x) === lineLen(e));
     box.innerHTML = `
@@ -1770,6 +1783,9 @@
           ['<option value="">— pick a team —</option>'].concat(leagueTeams(bbLg(bbSlot(e[0]))).map(([id, nm]) => `<option value="${id}" ${String(bbTm(bbSlot(e[0]))) === String(id) ? 'selected' : ''}>${nm}</option>`)).join('')
         }</select></div>
         <div class="field" title="Green while the game is on, orange when it is over — instead of the colour below"><span>State</span><span class="cb units" id="fbbc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep colour</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By state</button></span></div>` : ''}
+        ${allStrip ? `<div class="field" title="What the three numbers show. The weather icon of each hour stays either way."><span>Shows</span><span class="cb units" id="fstrip">${
+          STRIP_MET.map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 12) === v) ? 'on' : ''}">${lb}</button>`).join('')
+        }</span></div>` : ''}
         ${allStock ? `<div class="field" title="Ticker as Yahoo Finance writes it — 7203.T for Tokyo, ^GSPC for an index"><span>Symbol</span><input type="text" id="fstk" value="${stkOf(e[0])}" placeholder="AAPL" style="width:110px" maxlength="12"><span class="muted" id="fstkinfo">${
           (() => { const q = STKQ[stkOf(e[0])]; if (!stkOf(e[0])) return ''; if (q === null || q === undefined) return 'looking up…';
                    return q ? `${q.p} ${q.c}` : 'not found'; })()
@@ -1886,6 +1902,7 @@
       const i = TYPES[e[0]].stk; st.stk = (st.stk || ['', '']).slice(); st.stk[i] = stkClean(ev.target.value); loadStock(st.stk[i]); commit();
     });
     document.querySelectorAll('#fstkv button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStock(x[0])) x[6] = (x[6] & ~4) | (+b.dataset.v); })));
+    document.querySelectorAll('#fstrip button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStrip(x[0])) x[6] = (x[6] & ~12) | (+b.dataset.v); })));
     document.querySelectorAll('#fstkc button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStock(x[0])) x[6] = (x[6] & ~8) | (+b.dataset.v); })));
     document.querySelectorAll('#fstkn button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStock(x[0])) x[6] = (x[6] & ~16) | (+b.dataset.v); })));
     document.querySelectorAll('#farr button').forEach((b) => b.addEventListener('click', () => each((x) => {

@@ -288,7 +288,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-16 21:00</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-16 21:38</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -507,10 +507,10 @@
     72: { name: 'Line \\',    grp: 'line', line: 2, hidden: true },
     73: { name: 'Line /',     grp: 'line', line: 3, hidden: true },
     // 野球 (MLB)。応援チームは面ごとに 1 つ (layout の bb)。32 = 対戦とスコア、33 = 状態。
-    32: { name: 'Game 1',    grp: 'bb',    sample: 'NYY 3-5 BOS', icon: null,   iw: 0, bb: 0 },
-    33: { name: 'Status 1',  grp: 'bb',    sample: 'Top 7',       icon: null,   iw: 0, bb: 0 },
-    34: { name: 'Game 2',    grp: 'bb',    sample: 'DEN 24-17 KC', icon: null,   iw: 0, bb: 1 },
-    35: { name: 'Status 2',  grp: 'bb',    sample: 'Q3 4:12',     icon: null,   iw: 0, bb: 1 },
+    32: { name: 'Score 1',   grp: 'bb',    sample: 'NYY 3-5 BOS', icon: null,   iw: 0, bb: 0, noPal: true },
+    33: { name: 'Status 1',  grp: 'bb',    sample: 'Top 7',       icon: null,   iw: 0, bb: 0, noPal: true },
+    34: { name: 'Score 2',   grp: 'bb',    sample: 'DEN 24-17 KC', icon: null,   iw: 0, bb: 1, noPal: true },
+    35: { name: 'Status 2',  grp: 'bb',    sample: 'Q3 4:12',     icon: null,   iw: 0, bb: 1, noPal: true },
     // 銘柄は面ごとに 2 つ持つ (layout の st)。部品は st[0] / st[1] を指すだけ。
     30: { name: 'Stock 1',   grp: 'mkt',   sample: '229.35', icon: 'stock',     iw: 0, stk: 0 },
     31: { name: 'Stock 2',   grp: 'mkt',   sample: '229.35', icon: 'stock',     iw: 0, stk: 1 },
@@ -1228,7 +1228,7 @@
       p.addEventListener('click', () => toggleDialPart(+t));
     }
     else if (d.line != null) p.innerHTML = `<span class="ico" style="color:#1D222B">${lineArt(d.line, 22, 3).svg}</span><span class="nm">Line</span><span class="hint">${t}</span>`;
-    else p.innerHTML = `<span class="ico">${d.icon && !TEXT_ICON[d.icon] ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${TEXT_ICON[d.icon] || d.sample}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
+    else p.innerHTML = `<span class="ico">${d.noPal ? '' : d.icon && !TEXT_ICON[d.icon] ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${TEXT_ICON[d.icon] || d.sample}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     if (!d.dial) p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +t));
     $('parts-' + d.grp).appendChild(p);
   }

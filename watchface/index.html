@@ -184,7 +184,9 @@
   .imgstage canvas { width: 320px; height: 320px; display: block; }
   .imgstage #imgQ { position: absolute; left: 0; top: 0; pointer-events: none; }
   .imgstage .parts { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; overflow: hidden; }
-  .imgstage.noimg canvas { visibility: hidden; }   /* Hide image: parts and the dark stage only */
+  .imgstage.master { display: none; }              /* 絵の原版 (320)。見せるのは文字盤のプレビューだけ */
+  #stage.noparts .el { visibility: hidden; }        /* Hide parts: 枠合わせの間だけ */
+  #stage.noimg { background-image: none !important; }
   .imgstage .parts .anchor, .imgstage .parts .grid { display: none !important; }
   .imgstage .parts .el { outline: none !important; }
   .imgstage .parts[hidden] { display: none; }
@@ -296,7 +298,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 03:26</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 03:54</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -346,13 +348,14 @@
       <div class="grp">
         <div class="ctl"><span class="muted">The photo itself is never changed — the cut-out is made when you save to the collection.</span></div></div>
       <div class="cols">
-        <div class="grp"><span class="lbl">Preview</span>
-          <div class="imgstage" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas><canvas id="imgQ" width="320" height="320"></canvas><div class="parts" id="imgParts"></div></div>
+        <div class="grp"><span class="lbl">Frame</span>
+          <div class="imgstage master" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas><canvas id="imgQ" width="320" height="320"></canvas></div>
+          <div class="ctl"><span class="muted">Everything shows on the dial above — drag the empty part of it to move the picture.</span></div>
           <div class="ctl" id="imgsizerow">Size <span class="muted" id="imgsizewho"></span> <input id="imgsize" type="range" min="30" max="100" step="1" value="100"><span class="muted" id="imgsizev">100%</span></div>
           <div class="ctl">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"></div>
           <div class="ctl" title="Only the cut-out changes — the stored photo is never touched.">Brightness <input id="imgbr" type="range" min="20" max="180" step="1" value="100"><span class="muted" id="imgbrv">100%</span> Saturation <input id="imgsa" type="range" min="0" max="200" step="1" value="100"><span class="muted" id="imgsav">100%</span><button class="btn" id="imgtone">Reset</button></div>
-          <div class="ctl" id="imgdragrow">Drag moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Image</button><button type="button" data-m="frame">Frame</button></span></div>
-          <div class="ctl"><button class="btn toggle on" id="imgshow" disabled title="While ON, the dial above shows the image exactly as it is here (frame, size, zoom, colours) and it is saved with the dial. While OFF, the saved dial has no image.">Show on dial: ON</button><button class="btn" id="imgreset" title="Put the frame back to the middle at 100 % (the picture stays)">Reset frame</button><button class="btn danger" id="imgclear" title="Take the picture (or the colour) out of this editor and start over. Nothing is deleted from the server or from the collection.">Reset image</button><button class="btn" id="imgparts">Hide parts</button><button class="btn" id="imghide">Hide image</button></div>
+          <div class="ctl" id="imgdragrow" title="What dragging the empty part of the dial does. Dragging a part always moves that part.">Dragging the dial moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Picture</button><button type="button" data-m="frame">Frame</button></span></div>
+          <div class="ctl"><button class="btn toggle on" id="imgshow" disabled title="While ON, the dial above shows the image exactly as it is here (frame, size, zoom, colours) and it is saved with the dial. While OFF, the saved dial has no image.">Show on dial: ON</button><button class="btn" id="imgreset" title="Put the frame back to the middle at 100 % (the picture stays)">Reset frame</button><button class="btn danger" id="imgclear" title="Take the picture (or the colour) out of this editor and start over. Nothing is deleted from the server or from the collection.">Reset image</button><button class="btn" id="imgparts" title="Hide the parts on the dial above while you frame the picture">Hide parts</button><button class="btn" id="imghide" title="Hide the picture on the dial above">Hide image</button></div>
           <div class="ctl"><span class="onlyfor">For PulseLink users</span></div>
           <div class="ctl" title="Live camera from PulseLink: while ON, the latest camera frame replaces the picture in the editor (framed the same way)."><button class="btn toggle" id="camon">Camera: OFF</button><span class="muted">PL ID</span><input type="text" id="plid" placeholder="XXXX-XXXX" style="width:110px"><span class="status" id="camnote" style="flex:1 1 auto"></span></div>
           <div class="ctl" id="camlocknote" hidden><span class="muted">Which way the camera looks is set in the PulseLink Viewer; how that picture sits on the dial (shape, size, zoom, position) is set here. Later frames keep this framing.</span></div>
@@ -1392,19 +1395,12 @@
     $('empty').hidden = st.el.length > 0;
     renderBgHist();
     $('bgpick').value = hex(st.bg).toLowerCase();
-    renderInspector(); renderList(); renderJson(); renderSizes(); renderImgParts(); renderDialToggles();
+    renderInspector(); renderList(); renderJson(); renderSizes(); renderDialToggles();
     const ub = $('undo'); if (ub) ub.disabled = !UNDO.length;
     const rb = $('redo'); if (rb) rb.disabled = !REDO.length;
   }
   // Layout overlay on the image editor: a non-interactive copy of the stage scaled to the 260 px
   // circle (body text ×TEXT_BOOST like the watch). Toggled with the "parts" button.
-  function renderImgParts() {
-    const d = dev(), sc = 320 / d.w, a = $('imgParts');
-    a.style.width = d.w + 'px'; a.style.height = d.h + 'px'; a.style.transform = `scale(${sc})`;
-    a.innerHTML = stage.innerHTML;
-    a.querySelectorAll('.el').forEach((el) => {
-    });   // the stage already draws the true device sizes, so the copy needs no adjustment
-  }
   function makeEl(e, i, k) {   // k = d.w / 454 (device scale) — used for icons and gaps only
     const [t, x, y, a, s, c, f, is] = e, def = TYPES[t] || TYPES[1];
     const div = document.createElement('div');
@@ -2134,7 +2130,12 @@
     else if (e) { drag.items.forEach((it) => { const x = st.el[it.i]; if (x) { x[1] = snap(x[1]); x[2] = snap(x[2]); } }); }
     drag = null; commit();
   });
-  stage.addEventListener('pointerdown', (ev) => { if (ev.target === stage || ev.target.closest('svg.grid')) { clearSel(); render(); } });
+  stage.addEventListener('pointerdown', (ev) => {
+    if (!(ev.target === stage || ev.target.closest('svg.grid'))) return;
+    // 絵が入っていれば絵の位置合わせ。動かさなかったら (= ただのクリック) 選択を解く。
+    if (typeof IMG !== 'undefined' && IMG.show && hasSource() && imgDragStart(ev)) return;
+    clearSel(); render();
+  });
   window.addEventListener('keydown', (ev) => {
     if (ev.target.matches('input, textarea, select')) return;
     if ((ev.metaKey || ev.ctrlKey) && (ev.key === 'z' || ev.key === 'Z')) { ev.preventDefault(); if (ev.shiftKey) redo(); else undo(); return; }
@@ -2757,16 +2758,30 @@
     img.onload = () => { URL.revokeObjectURL(img.src); addPhoto(img, f.name); };
     img.src = URL.createObjectURL(f);
   });
-  (() => { let drag = false, lx = 0, ly = 0;
-    imgCv.addEventListener('pointerdown', (e) => { if (!hasSource()) return; drag = true; lx = e.clientX; ly = e.clientY; imgCv.setPointerCapture(e.pointerId); });
-    imgCv.addEventListener('pointermove', (e) => { if (!drag) return; const k = 320 / imgCv.clientWidth, dx = (e.clientX - lx) * k, dy = (e.clientY - ly) * k; lx = e.clientX; ly = e.clientY;
-      if (IMG.drag === 'frame' && CAN_SIZE.indexOf(IMG.shape) >= 0) {
-        const cl = (v) => Math.max(0, Math.min(320, v));
-        if (IMG.sel !== 2) { IMG.cx = cl(IMG.cx + dx); IMG.cy = cl(IMG.cy + dy); }                             // 1 つ目 (Both の時も動く)
-        if (IMG.shape2 && IMG.sel !== 1) { IMG.cx2 = cl(cxOf(2) + dx); IMG.cy2 = cl(cyOf(2) + dy); }           // 2 つ目
-      } else { IMG.panX += dx; IMG.panY += dy; }                                                              // image inside the frame
-      redrawImg(); });
-    const end = () => { drag = false; }; imgCv.addEventListener('pointerup', end); imgCv.addEventListener('pointercancel', end); })();
+  // 絵の位置合わせは文字盤のプレビューでする (プレビューは 1 つだけ)。
+  // 部品の上のドラッグは部品が持っていくので、ここに来るのは「空いている所」だけ。
+  // 座標は画面の px → 320 の原版へ直す (文字盤は拡大して見せている)。
+  let IMGDRAG = null;
+  function imgDragStart(ev) {
+    const r = stage.getBoundingClientRect(); if (!r.width) return false;
+    IMGDRAG = { x: ev.clientX, y: ev.clientY, k: 320 / r.width, moved: false };
+    try { stage.setPointerCapture(ev.pointerId); } catch (e) {}
+    return true;
+  }
+  window.addEventListener('pointermove', (ev) => {
+    if (!IMGDRAG) return;
+    const dx = (ev.clientX - IMGDRAG.x) * IMGDRAG.k, dy = (ev.clientY - IMGDRAG.y) * IMGDRAG.k;
+    IMGDRAG.x = ev.clientX; IMGDRAG.y = ev.clientY;
+    if (dx || dy) IMGDRAG.moved = true;
+    if (IMG.drag === 'frame' && CAN_SIZE.indexOf(IMG.shape) >= 0) {
+      const cl = (v) => Math.max(0, Math.min(320, v));
+      if (IMG.sel !== 2) { IMG.cx = cl(IMG.cx + dx); IMG.cy = cl(IMG.cy + dy); }                             // 1 つ目 (Both の時も動く)
+      if (IMG.shape2 && IMG.sel !== 1) { IMG.cx2 = cl(cxOf(2) + dx); IMG.cy2 = cl(cyOf(2) + dy); }           // 2 つ目
+    } else { IMG.panX += dx; IMG.panY += dy; }                                                               // 枠の中の絵
+    redrawImg();
+  });
+  const imgDragEnd = () => { if (!IMGDRAG) return; const moved = IMGDRAG.moved; IMGDRAG = null; if (!moved) { clearSel(); render(); } };
+  window.addEventListener('pointerup', imgDragEnd); window.addEventListener('pointercancel', imgDragEnd);
   $('imgzoom').addEventListener('input', (e) => { IMG.zoom = parseFloat(e.target.value) || 1; redrawImg(); });
   function setSize(v, which) {
     const i = which || IMG.sel, n = Math.max(30, Math.min(100, v || 100)), was = unionSize();
@@ -3059,8 +3074,8 @@
     return j;
   }
   $('devid').addEventListener('change', () => { IMG.k = 0; clearImgPreview(); loadPhotos(); loadShelf(); loadWatchSlots(); loadWatchState(); loadLoc(); refreshLocIfAllowed(); });
-  $('imgparts').addEventListener('click', () => { const a = $('imgParts'); a.hidden = !a.hidden; $('imgparts').textContent = a.hidden ? 'Show parts' : 'Hide parts'; });
-  $('imghide').addEventListener('click', () => { const st_ = $('imgstage'); st_.classList.toggle('noimg'); $('imghide').textContent = st_.classList.contains('noimg') ? 'Show image' : 'Hide image'; });
+  $('imgparts').addEventListener('click', () => { stage.classList.toggle('noparts'); $('imgparts').textContent = stage.classList.contains('noparts') ? 'Show parts' : 'Hide parts'; });
+  $('imghide').addEventListener('click', () => { stage.classList.toggle('noimg'); $('imghide').textContent = stage.classList.contains('noimg') ? 'Show image' : 'Hide image'; });
 
   // ── Live camera (PulseLink): while ON the latest camera frame replaces the picture in the editor ──
   const PL_API = 'https://mlbwatch-server.onrender.com/api/pulselink';

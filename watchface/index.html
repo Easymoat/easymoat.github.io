@@ -288,7 +288,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-16 21:38</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 02:04</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -317,6 +317,7 @@
     <div class="stagebar">
       <div class="devrow">
       <div class="grp"><span class="lbl">Device</span><div class="ctl"><select id="dev"></select></div></div>
+      <div class="grp"><span class="lbl">Dial</span><div class="ctl"><button class="btn" id="undo" disabled title="Undo the last change to the dial (⌘Z / Ctrl+Z). Parts, colours, sizes and the background — not the image.">Undo</button><button class="btn danger" id="reset" title="Empty the dial: every part, the background and the text / icon sizes go back to the start. Units and the grid stay. Undo puts it back.">Reset</button></div></div>
       <div class="grp"><span class="lbl">Grid</span><div class="ctl"><select id="grid" title="Also the step for the - / + buttons. Pick a fine grid to place thin double lines close together."><option value="5">200 × 200 (5)</option><option value="10">100 × 100 (10)</option><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label><span class="cb units" id="gridcol" title="Grid colour. Bright is easier to see on a black or dark dial."></span></div></div>
       </div>
       <div class="grp" id="selgrp"><span class="lbl">Selected part</span><div id="insp"><span class="muted">Click an element on the dial.</span></div></div>
@@ -352,7 +353,7 @@
           <div class="ctl">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"></div>
           <div class="ctl" title="Only the cut-out changes — the stored photo is never touched.">Brightness <input id="imgbr" type="range" min="20" max="180" step="1" value="100"><span class="muted" id="imgbrv">100%</span> Saturation <input id="imgsa" type="range" min="0" max="200" step="1" value="100"><span class="muted" id="imgsav">100%</span><button class="btn" id="imgtone">Reset</button></div>
           <div class="ctl" id="imgdragrow">Drag moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Image</button><button type="button" data-m="frame">Frame</button></span></div>
-          <div class="ctl"><button class="btn toggle on" id="imgshow" disabled title="While ON, the dial above shows the image exactly as it is here (frame, size, zoom, colours) and it is saved with the dial. While OFF, the saved dial has no image.">Show on dial: ON</button><button class="btn" id="imgreset">Reset</button><button class="btn" id="imgparts">Hide parts</button><button class="btn" id="imghide">Hide image</button></div>
+          <div class="ctl"><button class="btn toggle on" id="imgshow" disabled title="While ON, the dial above shows the image exactly as it is here (frame, size, zoom, colours) and it is saved with the dial. While OFF, the saved dial has no image.">Show on dial: ON</button><button class="btn" id="imgreset" title="Put the frame back to the middle at 100 % (the picture stays)">Reset frame</button><button class="btn danger" id="imgclear" title="Take the picture (or the colour) out of this editor and start over. Nothing is deleted from the server or from the collection.">Reset image</button><button class="btn" id="imgparts">Hide parts</button><button class="btn" id="imghide">Hide image</button></div>
           <div class="ctl"><span class="onlyfor">For PulseLink users</span></div>
           <div class="ctl" title="Live camera from PulseLink: while ON, the latest camera frame replaces the picture in the editor (framed the same way)."><button class="btn toggle" id="camon">Camera: OFF</button><span class="muted">PL ID</span><input type="text" id="plid" placeholder="XXXX-XXXX" style="width:110px"><span class="status" id="camnote" style="flex:1 1 auto"></span></div>
           <div class="ctl" id="camlocknote" hidden><span class="muted">Which way the camera looks is set in the PulseLink Viewer; how that picture sits on the dial (shape, size, zoom, position) is set here. Later frames keep this framing.</span></div>
@@ -883,7 +884,28 @@
   // Delete act on all of them.
   let sel = -1; const selSet = new Set();
   // 揃える前の位置 (1 回だけ戻せる)。要素の数が変わったら捨てる。
-  let ALIGN_UNDO = null;
+  // ── 元に戻す (盤面の編集全体) ──────────────────────────────────
+  // commit() は「変えたあと」に呼ばれるので、直前の commit 時の姿 (UNDO_SNAP) を積む。
+  // こうすると呼び出し側は何も変えなくていい (ドラッグも 1 回で 1 段)。
+  const UNDO_MAX = 60;
+  let UNDO = [], UNDO_SNAP = null, UNDO_BUSY = false;
+  const UNDO_KEYS = ['bg', 'el', 'pc', 'tx', 'tm', 'ic', 'io', 'b', 'mt', 'mc', 'mk', 'mv', 'stk', 'stn', 'bb', 'uc'];
+  const undoSnap = () => JSON.stringify(UNDO_KEYS.map((k) => st[k]));
+  function undoPush() {
+    const cur = undoSnap();
+    if (UNDO_SNAP === null || cur === UNDO_SNAP) { UNDO_SNAP = cur; return; }
+    UNDO.push(UNDO_SNAP); if (UNDO.length > UNDO_MAX) UNDO.shift();
+    UNDO_SNAP = cur;
+  }
+  function undo() {
+    if (!UNDO.length) return false;
+    const prev = JSON.parse(UNDO.pop());
+    UNDO_KEYS.forEach((k, i) => { st[k] = prev[i]; });
+    UNDO_SNAP = undoSnap();
+    clearSel();
+    UNDO_BUSY = true; try { commit(); } finally { UNDO_BUSY = false; }
+    return true;
+  }
   const isSel = (i) => selSet.has(i);
   const selIdx = () => [...selSet].filter((i) => st.el[i]).sort((a, b) => a - b);
   function clearSel() { sel = -1; selSet.clear(); }
@@ -1351,6 +1373,7 @@
     renderBgHist();
     $('bgpick').value = hex(st.bg).toLowerCase();
     renderInspector(); renderList(); renderJson(); renderSizes(); renderImgParts(); renderDialToggles();
+    const ub = $('undo'); if (ub) ub.disabled = !UNDO.length;
   }
   // Layout overlay on the image editor: a non-interactive copy of the stage scaled to the 260 px
   // circle (body text ×TEXT_BOOST like the watch). Toggled with the "parts" button.
@@ -1827,7 +1850,7 @@
           shownColors(e[5]).map((i) => `<button class="sw ${same(5) && i === e[5] ? 'on' : ''}" data-c="${i}" title="${hex((st.pc || DEF_PC)[i - PC_BASE] || 0)}" style="background:${colOf(i)}"></button>`).join('')
         }<input type="color" class="pick" id="fpick" value="${colOf(e[5])}" title="Pick any colour — the 5 most recent stay here"></span></div>
         <div class="brk"></div>
-        <div class="field" title="Line the selected parts up on the one you clicked last (the highlighted row in the list)"><span>Align</span><span class="cb units" id="falign"><button type="button" data-v="x" ${multi ? '' : 'disabled'}>Same X &#8597;</button><button type="button" data-v="y" ${multi ? '' : 'disabled'}>Same Y &#8596;</button><button type="button" data-v="undo" ${ALIGN_UNDO ? '' : 'disabled'}>Undo</button></span></div>
+        <div class="field" title="Line the selected parts up on the one you clicked last (the highlighted row in the list)"><span>Align</span><span class="cb units" id="falign"><button type="button" data-v="x" ${multi ? '' : 'disabled'}>Same X &#8597;</button><button type="button" data-v="y" ${multi ? '' : 'disabled'}>Same Y &#8596;</button></span></div>
         <div class="row" style="margin-top:6px"><button class="btn" id="tofront" title="Draw this part over the others (last in the list)">Front</button><button class="btn" id="toback" title="Draw this part under the others (first in the list)">Back</button><button class="btn" id="dup">Duplicate</button><button class="btn danger" id="del">Remove</button></div>
         ${arcEl ? `<div class="field" title="Each arc can be a meter. Pick what it measures; none = plain arc."><span>Meters</span><span class="mts">${
           ARCSET[arcEl[0]].lbl.map((pos, i) => { const on = (st.mv || [])[i] !== 0; return `<label class="mt${on ? '' : ' off'}"><button type="button" class="mvb${on ? ' on' : ''}" data-i="${i}" title="Show or hide this arc">${pos}</button><select data-i="${i}" ${on ? '' : 'disabled'}>${
@@ -1862,21 +1885,14 @@
     };
     // 揃える / 戻す。Meters と同じく常に出しておく (選ぶ前から場所が動かない)。
     const bindAlign = () => document.querySelectorAll('#falign button').forEach((b) => b.addEventListener('click', () => {
-      if (b.dataset.v === 'undo') {
-        const u = ALIGN_UNDO; if (!u || u.n !== st.el.length) { ALIGN_UNDO = null; return render(); }
-        u.items.forEach(([i, x, y]) => { const el = st.el[i]; if (el) { el[1] = x; el[2] = y; } });
-        ALIGN_UNDO = null; commit(); return;
-      }
       const idxs = selIdx(); if (idxs.length < 2) return;
       const ref = st.el[sel] || st.el[idxs[0]], k = b.dataset.v === 'x' ? 1 : 2;
-      ALIGN_UNDO = { n: st.el.length, items: idxs.map((i) => [i, st.el[i][1], st.el[i][2]]) };
       idxs.forEach((i) => { st.el[i][k] = ref[k]; });
-      commit();
+      commit();                                   // 戻すのは上の Undo (盤面の編集全体)
     }));
     COLOR_NOTE = '';
     if (none) {
       box.querySelectorAll('input, button').forEach((b) => { b.disabled = true; });
-      const u = box.querySelector('#falign button[data-v="undo"]'); if (u && ALIGN_UNDO) u.disabled = false;
       bindMeters(); bindAlign(); bindPickers(); lockInspHeight(); return;
     }
     const each = (fn) => { all.forEach(fn); commit(); };
@@ -1980,7 +1996,15 @@
   // The draft holds the layout AND the image editor: slot, shape, size, position, zoom, colours, Auto
   // shade, Show on dial, and — for an image chosen from a file — the picture itself (downscaled JPEG),
   // so Back to draft restores the dial exactly. imgDraftState / applyImgDraft live with the image code.
-  const draftKeys = () => ({ bg: st.bg, el: st.el, tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, wd: st.wd || 0, img: imgDraftState(), savedAt: Date.now() });
+  // ★ 面の項目は sanitize() が読む名前で全部入れること。控えの色 (pc) を入れ忘れていたため、
+  // Back to draft で 10 番以降の色が既定の色に化けていた (2026-09-17 修正)。
+  const draftKeys = () => ({ bg: st.bg, el: st.el, pc: (st.pc || DEF_PC).slice(),
+    tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b,
+    wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0,
+    mt: (st.mt || []).slice(), mc: (st.mc || []).slice(), mk: (st.mk || []).slice(), mv: (st.mv || []).slice(),
+    st: (st.stk || ['', '']).slice(0, 2), sn: (st.stn || ['', '']).slice(0, 2),
+    uc: st.uc === 1 ? 1 : 0, bb: (st.bb || []).slice(0, 2),
+    img: imgDraftState(), savedAt: Date.now() });
   function saveDraft() {
     const d = draftKeys();
     try { localStorage.setItem('faceComposer.draft', JSON.stringify(d)); return true; }
@@ -1994,6 +2018,7 @@
   function setEditing(m) { EDITING = m; try { localStorage.setItem('faceComposer.editing', String(m)); } catch (e) {} }
   let LAST_EDGE_BG = null;   // 縁を混ぜた時の背景色。変わったら絵を描き直す
   function commit() {
+    if (!UNDO_BUSY) undoPush();
     LAYOUT_DIRTY = true;
     if (typeof IMG !== 'undefined' && LAST_EDGE_BG !== null && LAST_EDGE_BG !== st.bg && hasSource()) { LAST_EDGE_BG = st.bg; redrawImg(); }
     try { localStorage.setItem('faceComposer', JSON.stringify(st)); } catch (e) {}
@@ -2091,6 +2116,7 @@
   stage.addEventListener('pointerdown', (ev) => { if (ev.target === stage || ev.target.closest('svg.grid')) { clearSel(); render(); } });
   window.addEventListener('keydown', (ev) => {
     if (ev.target.matches('input, textarea, select')) return;
+    if ((ev.metaKey || ev.ctrlKey) && (ev.key === 'z' || ev.key === 'Z')) { ev.preventDefault(); undo(); return; }
     const all = selIdx().map((i) => st.el[i]); if (!all.length) return;
     const g = st.grid; let h = true;
     const mv = (k, d) => all.forEach((x) => { x[k] = clamp(x[k] + d); });
@@ -2128,6 +2154,16 @@
   $('preset-lobby').addEventListener('click', () => { st.el = migrateDate(PRESET_LOBBY.map(e => e.slice())); clearSel(); commit(); });
   $('preset-min').addEventListener('click', () => { st.el = migrateDate(PRESET_MIN.map(e => e.slice())); clearSel(); commit(); });
   $('clear').addEventListener('click', () => { st.el = []; clearSel(); commit(); });
+  $('undo').addEventListener('click', () => { if (!undo()) setStatus('jsonstatus', 'Nothing left to undo.', ''); });
+  // 盤面を最初の状態へ。単位やグリッドは好みなので残す。Undo で戻せる。
+  $('reset').addEventListener('click', () => {
+    st.el = []; st.bg = 0; st.pc = DEF_PC.slice();
+    st.tx = DEF_TX.slice(); st.tm = DEF_TM.slice(); st.ic = DEF_IC.slice(); st.io = DEF_IO; st.b = 0;
+    st.mt = [0, 0, 0, 0]; st.mc = [-1, -1, -1, -1]; st.mk = [-1, -1, -1, -1]; st.mv = [1, 1, 1, 1];
+    st.stk = ['', '']; st.stn = ['', '']; st.bb = []; st.uc = 0;
+    clearSel(); commit(); renderSizes(); renderBold(); renderUpCol();
+    setStatus('jsonstatus', 'Dial reset — Undo puts it back.', 'ok');
+  });
   // pc を持たない古い面: 10 以上の色は昔の固定パレットの色だったので、そのまま控えに写す。
   function legacyPc(el) {
     const pc = DEF_PC.slice();
@@ -2768,6 +2804,19 @@
     renderTone(); if (hasSource()) redrawImg();
   }));
   $('imgtone').addEventListener('click', () => { IMG.br = 100; IMG.sa = 100; renderTone(); if (hasSource()) redrawImg(); });
+  // 編集欄から絵を取り除くだけ。サーバの写真もコレクションの品も消さない。
+  $('imgclear').addEventListener('click', () => {
+    clearImgPreview();
+    IMG.k = 0; IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; IMG.size = 100; IMG.size2 = null;
+    IMG.cx = 160; IMG.cy = 160; IMG.cx2 = null; IMG.cy2 = null; IMG.rot = 0; IMG.rot2 = null; IMG.shape2 = null;
+    IMG.br = 100; IMG.sa = 100; IMG.show = true;
+    setShape(IMG.shape, null);
+    ['imgzoom', 'imgsize', 'imgbr', 'imgsa'].forEach((id) => { const el = $(id); if (el) el.value = id === 'imgzoom' ? '1' : '100'; });
+    ['imgbrv', 'imgsav', 'imgsizev'].forEach((id) => { const el = $(id); if (el) el.textContent = '100%'; });
+    const f = $('imgfilename'); if (f) f.textContent = 'Stored as is (max 1024 px)';
+    redrawImg(); renderShowToggle(); applyStageImage(); commit();
+    setStatus('imgstatus', 'Image editor reset — nothing was deleted from the server.', 'ok');
+  });
   $('imgreset').addEventListener('click', () => { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; IMG.size = 100; IMG.size2 = null; IMG.cx = 160; IMG.cy = 160; IMG.cx2 = null; IMG.cy2 = null; IMG.rot = 0; IMG.rot2 = null; IMG.shape2 = null; setShape(IMG.shape, null);
     $('imgzoom').value = '1'; redrawImg(); });
   // colours
@@ -3065,6 +3114,7 @@
       $('tofulled').textContent = document.body.classList.contains('full') ? 'Collection' : 'Editor';
     });
   })();
+  UNDO_SNAP = undoSnap();   // 起動時の姿を基準にする (最初の 1 回も戻せるように)
   render();
   (st.stk || []).forEach(loadStock);   // 面に既に入っている銘柄も起動時に下見する (名前と値をプレビューへ)
   loadPhotos(); loadWatchState();

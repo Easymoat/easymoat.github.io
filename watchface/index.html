@@ -81,7 +81,9 @@
   .stagebar { display: flex; flex-wrap: wrap; gap: 22px 40px; align-items: flex-start; justify-content: center;
               width: 100%; max-width: 1040px; padding: 12px 0 18px; }   /* no box: tier 1 reads as one area with the dial */
   .grp { display: flex; flex-direction: column; gap: 10px; }
-  .devrow { display: flex; align-items: flex-start; gap: 28px; }   /* Device と Grid は横並び */
+  .devrow { display: flex; align-items: flex-start; gap: 28px; }   /* Device は 1 行で使う */
+  /* 盤面の真下。盤面の位置を動かさないよう下に置く (上に置くと文字盤が下へずれる) */
+  .dialbar { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: flex-start; justify-content: center; margin-top: -8px; }
   .grp[hidden] { display: none; }   /* the .grp display rule would otherwise beat the default [hidden] */
   .grp > .lbl { font-size: 10px; }
   .ctl { display: flex; align-items: center; gap: 14px; min-height: 28px; color: var(--ink-2); font-size: 13px; flex-wrap: wrap; }
@@ -251,7 +253,7 @@
     body:not(.full) header .sub, body:not(.full) header .kbd { display: none; }
     body:not(.full) aside.left, body:not(.full) aside.right,
     body:not(.full) .stagewrap > .tier, body:not(.full) .stagebar, body:not(.full) .stage-outer,
-    body:not(.full) .imgbox, body:not(.full) .drawer, body:not(.full) #empty,
+    body:not(.full) .imgbox, body:not(.full) .drawer, body:not(.full) #empty, body:not(.full) .dialbar,
     body:not(.full) .shelfbox .tier, body:not(.full) #shelfsaverow { display: none; }
     body:not(.full) #phonebar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; width: 100%; }
     body:not(.full) main { padding: 10px; gap: 10px; }
@@ -288,7 +290,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 02:04</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 02:45</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -317,8 +319,6 @@
     <div class="stagebar">
       <div class="devrow">
       <div class="grp"><span class="lbl">Device</span><div class="ctl"><select id="dev"></select></div></div>
-      <div class="grp"><span class="lbl">Dial</span><div class="ctl"><button class="btn" id="undo" disabled title="Undo the last change to the dial (⌘Z / Ctrl+Z). Parts, colours, sizes and the background — not the image.">Undo</button><button class="btn danger" id="reset" title="Empty the dial: every part, the background and the text / icon sizes go back to the start. Units and the grid stay. Undo puts it back.">Reset</button></div></div>
-      <div class="grp"><span class="lbl">Grid</span><div class="ctl"><select id="grid" title="Also the step for the - / + buttons. Pick a fine grid to place thin double lines close together."><option value="5">200 × 200 (5)</option><option value="10">100 × 100 (10)</option><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label><span class="cb units" id="gridcol" title="Grid colour. Bright is easier to see on a black or dark dial."></span></div></div>
       </div>
       <div class="grp" id="selgrp"><span class="lbl">Selected part</span><div id="insp"><span class="muted">Click an element on the dial.</span></div></div>
       <div class="grp" id="fixednote" hidden style="flex-basis:100%"><div class="ctl"><span class="muted" id="fixednotetxt"></span></div></div>
@@ -326,6 +326,10 @@
     <div class="stage-row">
       <div class="stage-col">
         <div class="stage-outer"><div id="stage"></div></div>
+        <div class="dialbar">
+          <div class="grp"><span class="lbl">Dial</span><div class="ctl"><button class="btn" id="undo" disabled title="Undo the last change to the dial (⌘Z / Ctrl+Z). Parts, colours, sizes and the background — not the image.">Undo</button><button class="btn" id="redo" disabled title="Put back what Undo took away (⇧⌘Z / Ctrl+Y)">Redo</button><button class="btn danger" id="reset" title="Empty the dial: every part, the background and the text / icon sizes go back to the start. Units and the grid stay. Undo puts it back.">Reset</button></div></div>
+          <div class="grp"><span class="lbl">Grid</span><div class="ctl"><select id="grid" title="Also the step for the - / + buttons. Pick a fine grid to place thin double lines close together."><option value="5">200 × 200 (5)</option><option value="10">100 × 100 (10)</option><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label><span class="cb units" id="gridcol" title="Grid colour. Bright is easier to see on a black or dark dial."></span></div></div>
+        </div>
       </div>
       <div class="rail">
         <div class="grp"><span class="lbl">Draft</span>
@@ -888,22 +892,33 @@
   // commit() は「変えたあと」に呼ばれるので、直前の commit 時の姿 (UNDO_SNAP) を積む。
   // こうすると呼び出し側は何も変えなくていい (ドラッグも 1 回で 1 段)。
   const UNDO_MAX = 60;
-  let UNDO = [], UNDO_SNAP = null, UNDO_BUSY = false;
+  let UNDO = [], REDO = [], UNDO_SNAP = null, UNDO_BUSY = false;
   const UNDO_KEYS = ['bg', 'el', 'pc', 'tx', 'tm', 'ic', 'io', 'b', 'mt', 'mc', 'mk', 'mv', 'stk', 'stn', 'bb', 'uc'];
   const undoSnap = () => JSON.stringify(UNDO_KEYS.map((k) => st[k]));
   function undoPush() {
     const cur = undoSnap();
     if (UNDO_SNAP === null || cur === UNDO_SNAP) { UNDO_SNAP = cur; return; }
     UNDO.push(UNDO_SNAP); if (UNDO.length > UNDO_MAX) UNDO.shift();
+    REDO = [];                    // 新しく編集したら「やり直し」の先は捨てる
     UNDO_SNAP = cur;
   }
-  function undo() {
-    if (!UNDO.length) return false;
-    const prev = JSON.parse(UNDO.pop());
-    UNDO_KEYS.forEach((k, i) => { st[k] = prev[i]; });
+  function undoApply(json) {
+    const v = JSON.parse(json);
+    UNDO_KEYS.forEach((k, i) => { st[k] = v[i]; });
     UNDO_SNAP = undoSnap();
     clearSel();
     UNDO_BUSY = true; try { commit(); } finally { UNDO_BUSY = false; }
+  }
+  function undo() {
+    if (!UNDO.length) return false;
+    REDO.push(undoSnap()); if (REDO.length > UNDO_MAX) REDO.shift();
+    undoApply(UNDO.pop());
+    return true;
+  }
+  function redo() {
+    if (!REDO.length) return false;
+    UNDO.push(undoSnap()); if (UNDO.length > UNDO_MAX) UNDO.shift();
+    undoApply(REDO.pop());
     return true;
   }
   const isSel = (i) => selSet.has(i);
@@ -1374,6 +1389,7 @@
     $('bgpick').value = hex(st.bg).toLowerCase();
     renderInspector(); renderList(); renderJson(); renderSizes(); renderImgParts(); renderDialToggles();
     const ub = $('undo'); if (ub) ub.disabled = !UNDO.length;
+    const rb = $('redo'); if (rb) rb.disabled = !REDO.length;
   }
   // Layout overlay on the image editor: a non-interactive copy of the stage scaled to the 260 px
   // circle (body text ×TEXT_BOOST like the watch). Toggled with the "parts" button.
@@ -2116,7 +2132,8 @@
   stage.addEventListener('pointerdown', (ev) => { if (ev.target === stage || ev.target.closest('svg.grid')) { clearSel(); render(); } });
   window.addEventListener('keydown', (ev) => {
     if (ev.target.matches('input, textarea, select')) return;
-    if ((ev.metaKey || ev.ctrlKey) && (ev.key === 'z' || ev.key === 'Z')) { ev.preventDefault(); undo(); return; }
+    if ((ev.metaKey || ev.ctrlKey) && (ev.key === 'z' || ev.key === 'Z')) { ev.preventDefault(); if (ev.shiftKey) redo(); else undo(); return; }
+    if ((ev.metaKey || ev.ctrlKey) && (ev.key === 'y' || ev.key === 'Y')) { ev.preventDefault(); redo(); return; }
     const all = selIdx().map((i) => st.el[i]); if (!all.length) return;
     const g = st.grid; let h = true;
     const mv = (k, d) => all.forEach((x) => { x[k] = clamp(x[k] + d); });
@@ -2155,6 +2172,7 @@
   $('preset-min').addEventListener('click', () => { st.el = migrateDate(PRESET_MIN.map(e => e.slice())); clearSel(); commit(); });
   $('clear').addEventListener('click', () => { st.el = []; clearSel(); commit(); });
   $('undo').addEventListener('click', () => { if (!undo()) setStatus('jsonstatus', 'Nothing left to undo.', ''); });
+  $('redo').addEventListener('click', () => { if (!redo()) setStatus('jsonstatus', 'Nothing to redo.', ''); });
   // 盤面を最初の状態へ。単位やグリッドは好みなので残す。Undo で戻せる。
   $('reset').addEventListener('click', () => {
     st.el = []; st.bg = 0; st.pc = DEF_PC.slice();

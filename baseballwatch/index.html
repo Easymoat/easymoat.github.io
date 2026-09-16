@@ -34,7 +34,8 @@
   nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 40px; display: flex; align-items: center; justify-content: space-between; }
   .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: var(--accent); letter-spacing: -0.01em; }
   .logo span { color: var(--muted2); font-weight: 700; }
-  .nav-badge { background: var(--accent-light); color: var(--accent); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; padding: 4px 10px; border-radius: 20px; text-decoration: none; display: inline-block; transition: background 0.15s, color 0.15s; }
+  .nav-badge { background: var(--accent-light); color: var(--accent); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; padding: 4px 10px; border-radius: 20px; text-decoration: none; display: inline-block; white-space: nowrap; transition: background 0.15s, color 0.15s; }
+  @media (max-width: 480px) { .logo { font-size: 18px; } .logo a > span:last-child { display: none; } .logo img { height: 30px !important; width: 30px !important; } }
   a.nav-badge:hover { background: var(--accent); color: var(--white); }
 
   main { max-width: 960px; margin: 0 auto; padding: 0 40px 80px; }
@@ -171,7 +172,7 @@
   <div class="logo" style="display:flex; align-items:center; gap:10px;">
     <a href="../" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;">
       <img src="../easymoat_logo.png" alt="Easymoat" style="height:36px; width:36px; border-radius:8px; object-fit:cover;">
-      <span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:800;">Easymoat</span><span>.io</span>
+      <span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:800;">Easymoat</span><span>.com</span>
     </a>
   </div>
   <a class="nav-badge" href="manual/" data-en="User Manual" data-ja="ユーザーマニュアル">User Manual</a>
@@ -435,7 +436,7 @@
     </div>
   </div>
 
-  <div class="section">
+  <div class="section" id="privacy">
     <div class="section-header">
       <div class="section-tag" data-en="Privacy" data-ja="プライバシー">Privacy</div>
       <h2 data-en="Privacy Policy" data-ja="プライバシーポリシー">Privacy Policy</h2>
@@ -453,6 +454,8 @@
   <p>© 2026 Easymoat. All rights reserved.</p>
   <div class="footer-links">
     <span class="em-footer"></span>
+    <span style="color:var(--border)">|</span>
+    <a href="#privacy" data-en="Privacy Policy" data-ja="プライバシーポリシー">Privacy Policy</a>
     <span style="color:var(--border)">|</span>
     <a href="../tokutei.html" data-en="Specified Commercial Transactions Act" data-ja="特定商取引法に基づく表記">Specified Commercial Transactions Act</a>
     <span style="color:var(--border)">|</span>

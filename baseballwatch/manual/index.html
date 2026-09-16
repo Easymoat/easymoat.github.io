@@ -674,10 +674,10 @@ function setLang(lang) {
   });
   document.getElementById('btn-en').classList.toggle('active', lang === 'en');
   document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
-  try { localStorage.setItem('bw_lang', lang); } catch(e) {}
+  try { localStorage.setItem('em_lang', lang); } catch(e) {}
 }
 try {
-  var saved = localStorage.getItem('bw_lang');
+  var saved = (localStorage.getItem('em_lang') || localStorage.getItem('bw_lang'));
   if (saved === 'ja') { setLang('ja'); }
 } catch(e) {}
 

@@ -84,6 +84,9 @@
   .devrow { display: flex; align-items: flex-start; gap: 28px; }   /* Device は 1 行で使う */
   /* 盤面の真下。盤面の位置を動かさないよう下に置く (上に置くと文字盤が下へずれる) */
   .dialbar { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: flex-start; justify-content: center; margin-top: -8px; }
+  .dialbar.top { margin: 0 0 -6px; }        /* 文字盤の上の帯 (戻す / やり直す / リセット + 下書き) */
+  .dialbar.top .grp { width: 100%; }
+  .vsep { width: 1px; align-self: stretch; min-height: 20px; background: var(--line-2); margin: 0 4px; }
   .grp[hidden] { display: none; }   /* the .grp display rule would otherwise beat the default [hidden] */
   .grp > .lbl { font-size: 10px; }
   .ctl { display: flex; align-items: center; gap: 14px; min-height: 28px; color: var(--ink-2); font-size: 13px; flex-wrap: wrap; }
@@ -254,6 +257,7 @@
     body:not(.full) aside.left, body:not(.full) aside.right,
     body:not(.full) .stagewrap > .tier, body:not(.full) .stagebar, body:not(.full) .stage-outer,
     body:not(.full) .imgbox, body:not(.full) .drawer, body:not(.full) #empty, body:not(.full) .dialbar,
+    body:not(.full) #watchbox,
     body:not(.full) .shelfbox .tier, body:not(.full) #shelfsaverow { display: none; }
     body:not(.full) #phonebar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; width: 100%; }
     body:not(.full) main { padding: 10px; gap: 10px; }
@@ -290,7 +294,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 02:45</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 03:18</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -325,23 +329,15 @@
     </div>
     <div class="stage-row">
       <div class="stage-col">
+        <div class="dialbar top">
+          <div class="grp"><span class="lbl">Dial</span>
+            <div class="ctl"><button class="btn" id="undo" disabled title="Undo the last change to the dial (⌘Z / Ctrl+Z). Parts, colours, sizes and the background — not the image.">Undo</button><button class="btn" id="redo" disabled title="Put back what Undo took away (⇧⌘Z / Ctrl+Y)">Redo</button><button class="btn danger" id="reset" title="Empty the dial: every part, the background and the text / icon sizes go back to the start. Units and the grid stay. Undo puts it back.">Reset</button><span class="vsep"></span><button class="btn" id="savedraft" title="Keeps a copy of the dial above (layout and image settings) in this browser.">Save draft</button><button class="btn" id="draft" title="Replaces the dial above with the saved draft.">Back to draft</button><span class="muted" id="draftnote"></span></div>
+            <div class="status" id="facestatus"></div>
+          </div>
+        </div>
         <div class="stage-outer"><div id="stage"></div></div>
         <div class="dialbar">
-          <div class="grp"><span class="lbl">Dial</span><div class="ctl"><button class="btn" id="undo" disabled title="Undo the last change to the dial (⌘Z / Ctrl+Z). Parts, colours, sizes and the background — not the image.">Undo</button><button class="btn" id="redo" disabled title="Put back what Undo took away (⇧⌘Z / Ctrl+Y)">Redo</button><button class="btn danger" id="reset" title="Empty the dial: every part, the background and the text / icon sizes go back to the start. Units and the grid stay. Undo puts it back.">Reset</button></div></div>
           <div class="grp"><span class="lbl">Grid</span><div class="ctl"><select id="grid" title="Also the step for the - / + buttons. Pick a fine grid to place thin double lines close together."><option value="5">200 × 200 (5)</option><option value="10">100 × 100 (10)</option><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label><span class="cb units" id="gridcol" title="Grid colour. Bright is easier to see on a black or dark dial."></span></div></div>
-        </div>
-      </div>
-      <div class="rail">
-        <div class="grp"><span class="lbl">Draft</span>
-          <div class="row"><button class="btn" id="savedraft" title="Keeps a copy of the dial above (layout and image settings) in this browser.">Save draft</button><button class="btn" id="draft" title="Replaces the dial above with the saved draft.">Back to draft</button><span class="muted" id="draftnote"></span></div>
-          <div class="status" id="facestatus"></div>
-        </div>
-        <div class="grp box" id="syncbox"><span class="lbl">Watch</span>
-          <div class="row" style="align-items:center;gap:14px"><div class="field" style="grid-template-columns:auto 140px;gap:10px"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX"></div></div>
-          <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
-          <div class="status" id="watchseen" title="When your watch last checked in, and whether it already has what was last sent"></div>
-          <div class="ctl" title="Where the weather parts get their forecast. Once allowed, opening this page updates it, so it follows you when you travel."><button class="btn" id="locset">Set forecast location</button><button class="btn danger" id="locclear" title="Forget the saved place so only the watch's own position is used (for testing the watch's GPS). Automatic updates stop until you press Set again.">Reset</button></div>
-          <div class="ctl" title="If PulseLink runs on this watch and shares its position, the forecast follows that position — no need to open this page when you travel."><span class="muted">or follow PulseLink</span><input type="text" id="locpl" placeholder="XXXX-XXXX" style="width:110px"><button class="btn" id="locplset">Follow</button><span class="status" id="locnote" style="flex:1 1 auto"></span></div>
         </div>
       </div>
     </div>
@@ -387,6 +383,16 @@
         <div class="status" id="shelfstatus"></div>
       </div>
       <div class="shelf" id="shelf"></div>
+    </div>
+    <div class="shelfbox box" id="watchbox">
+      <div class="tier"><span class="num">4</span><span class="name">Watch</span><span class="what">Device ID and where the weather comes from — set once, then leave it</span></div>
+      <div class="grp" id="syncbox">
+          <div class="row" style="align-items:center;gap:14px"><div class="field" style="grid-template-columns:auto 140px;gap:10px"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX"></div></div>
+          <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
+          <div class="status" id="watchseen" title="When your watch last checked in, and whether it already has what was last sent"></div>
+          <div class="ctl" title="Where the weather parts get their forecast. Once allowed, opening this page updates it, so it follows you when you travel."><button class="btn" id="locset">Set forecast location</button><button class="btn danger" id="locclear" title="Forget the saved place so only the watch's own position is used (for testing the watch's GPS). Automatic updates stop until you press Set again.">Reset</button></div>
+          <div class="ctl" title="If PulseLink runs on this watch and shares its position, the forecast follows that position — no need to open this page when you travel."><span class="muted">or follow PulseLink</span><input type="text" id="locpl" placeholder="XXXX-XXXX" style="width:110px"><button class="btn" id="locplset">Follow</button><span class="status" id="locnote" style="flex:1 1 auto"></span></div>
+      </div>
     </div>
     <div class="drawer">
       <details class="box">

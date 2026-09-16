@@ -288,7 +288,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-16 18:38</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-16 21:00</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1239,6 +1239,12 @@
     p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +key));
     $('parts-mkt').appendChild(p);
   }
+  // Markets の並びを Stock 1 / Stock 1 % / Stock 2 / Stock 2 % にする。
+  // 価格は TYPES のループ、変化率はその後のループで作るので、作ったあとに並べ替える。
+  ['30', '90', '31', '91'].forEach((t) => {
+    const el = $('parts-mkt').querySelector(`.part[data-t="${t}"]`);
+    if (el) $('parts-mkt').appendChild(el);
+  });
   setupFolds();
   for (const [k, d] of Object.entries(DEVICES)) { const o = document.createElement('option'); o.value = k; o.textContent = d.name; $('dev').appendChild(o); }
   $('dev').value = st.dev; $('grid').value = String(st.grid); $('showgrid').checked = st.showGrid;

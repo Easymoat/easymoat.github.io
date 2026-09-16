@@ -126,15 +126,21 @@
   .stage-row { display: flex; align-items: flex-end; gap: 56px; flex-wrap: wrap-reverse;   /* wrap-reverse: flex-end = top edge */ justify-content: flex-start; width: 100%; max-width: 1040px; }
   .rail { display: flex; flex-direction: column; gap: 20px; width: 410px; }
   .stage-col { display: flex; flex-direction: column; flex: none; gap: 24px; }
-  .dialrow { display: flex; align-items: stretch; gap: 16px; }   /* 騨置き場は文字盤と同じ高さ */
+  .dialrow { display: flex; align-items: stretch; gap: 28px; flex-wrap: wrap; }   /* 騨置き場は文字盤と同じ高さ。狭ければ下へ回る */
   /* 騨置き場: 文字盤と同じ高さ。幅は上下の操作列からはみ出さない程度にとどめる。 */
-  .tray { width: 224px; display: flex; flex-direction: column; gap: 8px; padding: 10px;
+  .tray { width: 336px; display: flex; flex-direction: column; gap: 8px; padding: 10px;
           border: 2px dashed var(--line-2); border-radius: 12px; background: var(--panel-2); box-sizing: border-box; }
   .tray.over { border-color: var(--accent); background: rgba(242, 180, 65, .08); }
   .trayhd { display: flex; align-items: center; gap: 8px; }
   .traylist { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; flex: 1 1 auto; }
-  .tray .li { cursor: grab; background: var(--panel); border: 1px solid var(--line); }
-  .tray .li:active { cursor: grabbing; }
+  .trayitem { position: relative; min-height: 46px; display: flex; align-items: center; justify-content: center;
+              padding: 4px 8px; border-radius: 6px; background: var(--panel); border: 1px solid var(--line);
+              cursor: grab; overflow: hidden; }
+  .trayitem:active { cursor: grabbing; }
+  .trayitem:hover { border-color: var(--line-2); }
+  .trayitem .el { position: static; margin: 0; cursor: grab; pointer-events: none; }
+  .trayitem .anchor, .trayitem .el.sel { display: none; outline: none; }
+  .trayitem .el.sel { display: flex; outline: none; }
   .tray .empty { font-size: 12px; color: var(--ink-3); line-height: 1.5; }
   .synchelp { margin: 0; padding-left: 18px; line-height: 1.5; }
   .synchelp li { margin: 2px 0; }
@@ -310,7 +316,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 06:46</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 06:52</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1715,11 +1721,21 @@
     if (c) { c.textContent = n ? `${n}` : ''; c.className = 'cnt' + (n ? ' heavy' : ''); }
     l.innerHTML = '';
     if (!n) { l.innerHTML = '<span class="empty">Drag a part here to take it off the dial while you arrange the rest. Parts left here are not saved to the watch.</span>'; return; }
+    // 名前ではなく部品そのものを置く。文字盤と同じ描き方 (makeEl) を使い、
+    // 入らない大きさのものだけ縮めて入れる。
+    const d = dev(), k = d.w / 454;
     st.park.forEach((e, i) => {
-      const li = document.createElement('div'); li.className = 'li';
-      li.innerHTML = `<span class="dot" style="background:${colOf(e[5])}"></span>${TYPES[e[0]]?.name || e[0]}`;
-      li.addEventListener('pointerdown', (ev) => startTrayDrag(ev, i));
-      l.appendChild(li);
+      const box = document.createElement('div'); box.className = 'trayitem';
+      box.title = TYPES[e[0]]?.name || String(e[0]);
+      const art = makeEl(e, i, k).cloneNode(true);       // clone = 文字盤用のドラッグを外す
+      art.classList.remove('sel');
+      box.appendChild(art);
+      box.addEventListener('pointerdown', (ev) => startTrayDrag(ev, i));
+      l.appendChild(box);
+      const w = art.offsetWidth, h = art.offsetHeight, room = $('tray').clientWidth - 36;
+      const sc = Math.min(1, room / Math.max(1, w), 60 / Math.max(1, h));
+      if (sc < 1) { art.style.transformOrigin = 'center'; art.style.transform = `scale(${Math.max(0.12, sc).toFixed(3)})`;
+                    box.style.height = Math.max(46, Math.round(h * sc) + 10) + 'px'; }
     });
   }
   const trayRect = () => { const t = $('tray'); return t && t.offsetWidth ? t.getBoundingClientRect() : null; };

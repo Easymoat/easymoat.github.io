@@ -300,7 +300,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 06:30</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 06:38</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1925,6 +1925,10 @@
       commit();
     };
     const dupBtn = $('dup');
+    if (dupBtn && !none) {   // 選んでいる部品を全部複製する。いくつ増えるかをボタンに出す。
+      dupBtn.textContent = multi ? `Duplicate ${all.length}` : 'Duplicate';
+      dupBtn.title = multi ? `Copy all ${all.length} selected parts, one grid step down` : 'Copy this part, one grid step down';
+    }
     if (dupBtn && all.every((x) => TYPES[x[0]] && TYPES[x[0]].dial)) {   // 縁・針は同じものを 2 つ置いても意味がない
       dupBtn.disabled = true; dupBtn.title = 'Rim and hands are drawn over the whole dial — a copy would land exactly on top.';
     }
@@ -1996,6 +2000,10 @@
       each((x) => { if (TYPES[x[0]]?.icon) { x[6] = (x[6] & ~3) | v; } });
     }));
     $('dup').addEventListener('click', () => {   // copies of every selected element, one grid step down, and the copies become the selection
+      const add = all.filter((x) => !isLine(x[0])).length;   // 線は上限に数えない
+      if (elCount(st.el) + add > EL_MAX) {
+        return setStatus('shelfstatus', `That would be ${elCount(st.el) + add} parts — the watch takes ${EL_MAX}. Remove some first (lines do not count).`, 'err');
+      }
       const start = st.el.length; all.forEach((x) => { const c = x.slice(); c[2] = clamp(c[2] + st.grid); st.el.push(c); });
       selSet.clear(); for (let i = start; i < st.el.length; i++) selSet.add(i); sel = st.el.length - 1; commit(); });
     $('del').addEventListener('click', () => { removeSelected(); commit(); });

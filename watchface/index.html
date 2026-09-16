@@ -200,6 +200,7 @@
   .imgbox .verdict.ok { color: var(--ok); } .imgbox .verdict.warn { color: var(--accent); } .imgbox .verdict.bad { color: var(--danger); }
   .imgbox .frow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); }
   #stage .stageimg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+  #stage .marquee { position: absolute; pointer-events: none; border: 2px dashed var(--accent); background: rgba(242, 180, 65, .10); border-radius: 3px; }
   #stage.noimg .stageimg { display: none; }
   .box { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
   details.box > summary { list-style: none; }
@@ -299,7 +300,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 06:21</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 06:30</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2131,10 +2132,52 @@
     else if (e) { drag.items.forEach((it) => { const x = st.el[it.i]; if (x) { x[1] = snap(x[1]); x[2] = snap(x[2]); } }); }
     drag = null; commit();
   });
+  // ── 囲んでまとめて選ぶ ──────────────────────────────────────
+  // 文字盤の空いている所をドラッグすると枠が出て、**枠にかかった部品を全部**選ぶ。
+  // 絵が入っている面では素のドラッグが絵の位置合わせなので、Shift (または ⌘ / Ctrl) を添える。
+  // 盤面全体の部品 (針・縁) は箱が盤面と同じなので含めない — 小さく囲んでも入ってしまうため。
+  let MARQ = null;
+  function marqStart(ev) {
+    const r = stage.getBoundingClientRect(); if (!r.width) return false;
+    const k = stage.offsetWidth / r.width;                 // 画面 px → 盤面の px (拡大して見せている)
+    const x = (ev.clientX - r.left) * k, y = (ev.clientY - r.top) * k;
+    const box = document.createElement('div'); box.className = 'marquee';
+    stage.appendChild(box);
+    MARQ = { x0: x, y0: y, x: x, y: y, k, r, box };
+    try { stage.setPointerCapture(ev.pointerId); } catch (e) {}
+    return true;
+  }
+  window.addEventListener('pointermove', (ev) => {
+    if (!MARQ) return;
+    MARQ.x = (ev.clientX - MARQ.r.left) * MARQ.k; MARQ.y = (ev.clientY - MARQ.r.top) * MARQ.k;
+    const l = Math.min(MARQ.x0, MARQ.x), t = Math.min(MARQ.y0, MARQ.y);
+    MARQ.box.style.left = l + 'px'; MARQ.box.style.top = t + 'px';
+    MARQ.box.style.width = Math.abs(MARQ.x - MARQ.x0) + 'px'; MARQ.box.style.height = Math.abs(MARQ.y - MARQ.y0) + 'px';
+  });
+  const marqEnd = () => {
+    if (!MARQ) return;
+    const l = Math.min(MARQ.x0, MARQ.x), t = Math.min(MARQ.y0, MARQ.y);
+    const w = Math.abs(MARQ.x - MARQ.x0), h = Math.abs(MARQ.y - MARQ.y0);
+    MARQ.box.remove(); MARQ = null;
+    if (w < 4 && h < 4) { clearSel(); render(); return; }   // ほとんど動いていない = ただのクリック
+    const hit = [];
+    stage.querySelectorAll('.el').forEach((div) => {
+      const i = +div.dataset.i, e = st.el[i];
+      if (!e || (TYPES[e[0]] && TYPES[e[0]].dial)) return;
+      const x1 = div.offsetLeft, y1 = div.offsetTop, x2 = x1 + div.offsetWidth, y2 = y1 + div.offsetHeight;
+      if (x2 >= l && x1 <= l + w && y2 >= t && y1 <= t + h) hit.push(i);   // かすっていれば選ぶ
+    });
+    selSet.clear(); hit.forEach((i) => selSet.add(i)); sel = hit.length ? hit[hit.length - 1] : -1;
+    render();
+  };
+  window.addEventListener('pointerup', marqEnd); window.addEventListener('pointercancel', marqEnd);
+
   stage.addEventListener('pointerdown', (ev) => {
     if (!(ev.target === stage || ev.target.closest('svg.grid'))) return;
-    // 絵が入っていれば絵の位置合わせ。動かさなかったら (= ただのクリック) 選択を解く。
-    if (typeof IMG !== 'undefined' && IMG.show && hasSource() && imgDragStart(ev)) return;
+    const withImg = typeof IMG !== 'undefined' && IMG.show && hasSource();
+    // 囲んで選ぶ: 絵が無ければそのまま、あれば Shift / ⌘ / Ctrl を添えて
+    if (!withImg || addKey(ev)) { ev.preventDefault(); marqStart(ev); return; }
+    if (imgDragStart(ev)) return;                          // 絵の位置合わせ
     clearSel(); render();
   });
   window.addEventListener('keydown', (ev) => {

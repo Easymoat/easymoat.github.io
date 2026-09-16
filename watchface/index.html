@@ -288,7 +288,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-16 12:37</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-16 18:38</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -685,7 +685,7 @@
   // 無い面は全周・0 度 = 今までどおり。
   const CIRC_SPANS = [360, 180, 90];
   const circSpan = (e) => (CIRC_SPANS.indexOf(Number(e[13])) >= 0 ? Number(e[13]) : 360);
-  const circFrom = (e) => { const v = Number(e[14]); return (v === 90 || v === 180 || v === 270) ? v : 0; };
+  const circFrom = (e) => { const v = Number(e[14]); return (Number.isInteger(v) && v >= 0 && v < 360 && v % 45 === 0) ? v : 0; };
   function circDiaOut(dia) {
     const w = dev().w, sc = w / 454 * (454 / 1000);            // ‰ → 実 px
     const px = Math.max(4, Math.round(dia * w / 1000 / 2) * 2);  // 偶数 px
@@ -1762,10 +1762,7 @@
           [[360, 'Full'], [180, 'Half'], [90, 'Quarter']].map(([v, lb]) =>
             `<button type="button" data-v="${v}" class="${all.every((x) => circSpan(x) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>
-        <div class="field" title="Where the arc starts — 12 o'clock is 0, going clockwise. Only for Half and Quarter."><span>Turn</span><span class="cb units" id="fcfrom">${
-          [0, 90, 180, 270].map((v) =>
-            `<button type="button" data-v="${v}" class="${all.every((x) => circFrom(x) === v) ? 'on' : ''}" ${circSpan(e) === 360 ? 'disabled' : ''}>${v}°</button>`).join('')
-        }</span></div>
+        ${stepRow('Turn', 14, circSpan(e) === 360 ? null : (all.every((x) => circFrom(x) === circFrom(e)) ? circFrom(e) + '°' : null), "Turn the arc by 45° — 12 o'clock is 0, going clockwise. Only for Half and Quarter.")}
         <div class="field" title="${circSpan(e) === 360 ? 'Fill the inside with a colour' : 'Only a whole ring can be filled'}"><span>Fill</span><span class="swatches${circSpan(e) === 360 ? '' : ' off'}">${
           `<button class="sw ${circFill(e) < 0 ? 'on' : ''}" data-fill="-1" title="No fill" style="background:transparent;border-style:dashed"></button>` +
           PALETTE.slice(0, PC_BASE).map((c, i) => `<button class="sw ${circFill(e) === i ? 'on' : ''}" data-fill="${i}" title="${PALETTE_NAMES[i]}" style="background:${c}"></button>`).join('') +
@@ -1904,7 +1901,8 @@
     box.querySelectorAll('.step').forEach((sp) => sp.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
       const k = Number(sp.dataset.step), d = Number(b.dataset.d) * st.grid;
       each((x) => {
-        if (k === 8 && isCircle(x[0])) { x[8] = Math.max(20, Math.min(1000, circDia(x) + d)); }
+        if (k === 14 && isCircle(x[0])) { circGrow(x); x[14] = (circFrom(x) + 45 * Number(b.dataset.d) + 360) % 360; }
+        else if (k === 8 && isCircle(x[0])) { x[8] = Math.max(20, Math.min(1000, circDia(x) + d)); }
         else if (k === 8) { while (x.length < 8) x.push(-1); x[8] = Math.max(LINE_LEN_MIN, Math.min(1000, lineLen(x) + d)); }
         else { x[k] = clamp(snapGrid(x[k]) + d); }
       });
@@ -1941,10 +1939,8 @@
       circGrow(x); x[13] = +b.dataset.v;
       if (x[13] === 360) x[14] = 0;                       // 全周に戻したら向きも戻す
     })));
-    document.querySelectorAll('#fcfrom button').forEach((b) => b.addEventListener('click', () => each((x) => {
-      if (!isCircle(x[0])) return;
-      circGrow(x); x[14] = +b.dataset.v;
-    })));
+    // 全周の時は回す意味が無いので押せなくする
+    if (circSpan(e) === 360) box.querySelectorAll('.step[data-step="14"] button').forEach((b) => { b.disabled = true; });
     document.querySelectorAll('#fbbc button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isBall(x[0])) x[6] = (x[6] & ~8) | (+b.dataset.v); })));
     const ft = $('fteam'), slot = bbSlot(e[0]);
     if (ft) ft.addEventListener('change', (ev) => {
@@ -2150,7 +2146,7 @@
                Number.isInteger(fill) && fill >= 0 ? fill : -1,
                METERS.some((mm) => mm[0] === met) ? met : 0, dir === -1 ? -1 : 1,
                CIRC_SPANS.indexOf(Number(e[13])) >= 0 ? Number(e[13]) : 360,          // 弧の角度
-               [90, 180, 270].indexOf(Number(e[14])) >= 0 ? Number(e[14]) : 0);       // 始まる角
+               (Number.isInteger(Number(e[14])) && Number(e[14]) > 0 && Number(e[14]) < 360 && Number(e[14]) % 45 === 0) ? Number(e[14]) : 0);   // 始まる角 (45 度刻み)
       } else if (Number(e[8]) === 1 || Number(e[8]) === 2) { n.push(Number(e[8])); }   // アイコンの並び
       el.push(n);
     }

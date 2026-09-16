@@ -126,6 +126,16 @@
   .stage-row { display: flex; align-items: flex-end; gap: 56px; flex-wrap: wrap-reverse;   /* wrap-reverse: flex-end = top edge */ justify-content: flex-start; width: 100%; max-width: 1040px; }
   .rail { display: flex; flex-direction: column; gap: 20px; width: 410px; }
   .stage-col { display: flex; flex-direction: column; flex: none; gap: 24px; }
+  .dialrow { display: flex; align-items: stretch; gap: 16px; }   /* 騨置き場は文字盤と同じ高さ */
+  /* 騨置き場: 文字盤と同じ高さ。幅は上下の操作列からはみ出さない程度にとどめる。 */
+  .tray { width: 224px; display: flex; flex-direction: column; gap: 8px; padding: 10px;
+          border: 2px dashed var(--line-2); border-radius: 12px; background: var(--panel-2); box-sizing: border-box; }
+  .tray.over { border-color: var(--accent); background: rgba(242, 180, 65, .08); }
+  .trayhd { display: flex; align-items: center; gap: 8px; }
+  .traylist { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; flex: 1 1 auto; }
+  .tray .li { cursor: grab; background: var(--panel); border: 1px solid var(--line); }
+  .tray .li:active { cursor: grabbing; }
+  .tray .empty { font-size: 12px; color: var(--ink-3); line-height: 1.5; }
   .synchelp { margin: 0; padding-left: 18px; line-height: 1.5; }
   .synchelp li { margin: 2px 0; }
   .rail .row { flex-wrap: nowrap; }
@@ -263,7 +273,7 @@
     body:not(.full) aside.left, body:not(.full) aside.right,
     body:not(.full) .stagewrap > .tier, body:not(.full) .stagebar, body:not(.full) .stage-outer,
     body:not(.full) .imgbox, body:not(.full) .drawer, body:not(.full) #empty, body:not(.full) .dialbar,
-    body:not(.full) #watchbox,
+    body:not(.full) #watchbox, body:not(.full) .tray,
     body:not(.full) .shelfbox .tier, body:not(.full) #shelfsaverow { display: none; }
     body:not(.full) #phonebar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; width: 100%; }
     body:not(.full) main { padding: 10px; gap: 10px; }
@@ -300,7 +310,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 06:38</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 06:46</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -341,7 +351,13 @@
             <div class="status" id="facestatus"></div>
           </div>
         </div>
-        <div class="stage-outer"><div id="stage"></div></div>
+        <div class="dialrow">
+          <div class="stage-outer"><div id="stage"></div></div>
+          <div class="tray" id="tray" title="Somewhere to put a part while you arrange the rest. Drag a part from the dial to here, and back when you want it.">
+            <div class="trayhd"><span class="lbl">Parked</span><span class="cnt" id="traycount"></span></div>
+            <div class="traylist" id="traylist"></div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
@@ -903,7 +919,7 @@
   // こうすると呼び出し側は何も変えなくていい (ドラッグも 1 回で 1 段)。
   const UNDO_MAX = 60;
   let UNDO = [], REDO = [], UNDO_SNAP = null, UNDO_BUSY = false;
-  const UNDO_KEYS = ['bg', 'el', 'pc', 'tx', 'tm', 'ic', 'io', 'b', 'mt', 'mc', 'mk', 'mv', 'stk', 'stn', 'bb', 'uc'];
+  const UNDO_KEYS = ['bg', 'el', 'park', 'pc', 'tx', 'tm', 'ic', 'io', 'b', 'mt', 'mc', 'mk', 'mv', 'stk', 'stn', 'bb', 'uc'];
   const undoSnap = () => JSON.stringify(UNDO_KEYS.map((k) => st[k]));
   function undoPush() {
     const cur = undoSnap();
@@ -949,6 +965,8 @@
   if (!Array.isArray(st.stk)) st.stk = ['', ''];
   if (!Array.isArray(st.stn)) st.stn = ['', ''];
   migrateDate(st.el);
+  if (!Array.isArray(st.park)) st.park = [];   // 騨置き場 (このブラウザだけ。文字盤には含まない)
+  migrateDate(st.park);
   if (!Array.isArray(st.mc)) st.mc = [-1, -1, -1, -1];
   if (!Array.isArray(st.mk)) st.mk = [-1, -1, -1, -1];   // 弧ごとの下地の色 (-1 = 自動で薄く)
   if (!Array.isArray(st.mv)) st.mv = [1, 1, 1, 1];       // 弧ごとの表示 / 非表示
@@ -1397,7 +1415,7 @@
     $('empty').hidden = st.el.length > 0;
     renderBgHist();
     $('bgpick').value = hex(st.bg).toLowerCase();
-    renderInspector(); renderList(); renderJson(); renderSizes(); renderDialToggles();
+    renderInspector(); renderList(); renderTray(); renderJson(); renderSizes(); renderDialToggles();
     const ub = $('undo'); if (ub) ub.disabled = !UNDO.length;
     const rb = $('redo'); if (rb) rb.disabled = !REDO.length;
   }
@@ -1688,6 +1706,44 @@
     lj: (() => { const j = lineJoins(st.el).arcs; return j.length ? j : undefined; })(),
     bb: (st.bb || []).some((b) => b && b.tm) ? (st.bb || []).slice(0, 2).map((b) => (b && b.tm ? b : null)) : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
+  // ── 騨置き場 ─────────────────────────────────────────────
+  // 文字盤が込み合ってきた時の一時置き場。**ここにある部品はウォッチへ行かない**
+  // (文字盤の中身ではないので、コレクションにも入らない)。このブラウザの下書きには残る。
+  function renderTray() {
+    const l = $('traylist'), c = $('traycount'); if (!l) return;
+    const n = (st.park || []).length;
+    if (c) { c.textContent = n ? `${n}` : ''; c.className = 'cnt' + (n ? ' heavy' : ''); }
+    l.innerHTML = '';
+    if (!n) { l.innerHTML = '<span class="empty">Drag a part here to take it off the dial while you arrange the rest. Parts left here are not saved to the watch.</span>'; return; }
+    st.park.forEach((e, i) => {
+      const li = document.createElement('div'); li.className = 'li';
+      li.innerHTML = `<span class="dot" style="background:${colOf(e[5])}"></span>${TYPES[e[0]]?.name || e[0]}`;
+      li.addEventListener('pointerdown', (ev) => startTrayDrag(ev, i));
+      l.appendChild(li);
+    });
+  }
+  const trayRect = () => { const t = $('tray'); return t && t.offsetWidth ? t.getBoundingClientRect() : null; };
+  const overTray = (ev) => { const r = trayRect(); return !!r && ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom; };
+  // 騨置き場 → 文字盤。離した位置に置く (文字盤の外なら戻す)。
+  let TRAYDRAG = null;
+  function startTrayDrag(ev, i) {
+    ev.preventDefault();
+    TRAYDRAG = i;
+    const end = (e2) => {
+      window.removeEventListener('pointerup', end); window.removeEventListener('pointercancel', end);
+      const k = TRAYDRAG; TRAYDRAG = null; $('tray').classList.remove('over');
+      if (k == null || !st.park[k]) return;
+      const p = stagePoint(e2);
+      if (!p.inside) return;                       // 文字盤の外で離した = そのまま
+      if (!isLine(st.park[k][0]) && elCount(st.el) >= EL_MAX) {
+        return setStatus('shelfstatus', `The watch takes ${EL_MAX} parts — make room before putting this one back.`, 'err');
+      }
+      const e = st.park.splice(k, 1)[0];
+      e[1] = clamp(p.x); e[2] = clamp(p.y);
+      st.el.push(e); setSel(st.el.length - 1, false); commit();
+    };
+    window.addEventListener('pointerup', end); window.addEventListener('pointercancel', end);
+  }
   function renderList() {
     const n = elCount(st.el), ec = $('elcount');
     if (ec) {
@@ -2031,6 +2087,7 @@
     mt: (st.mt || []).slice(), mc: (st.mc || []).slice(), mk: (st.mk || []).slice(), mv: (st.mv || []).slice(),
     st: (st.stk || ['', '']).slice(0, 2), sn: (st.stn || ['', '']).slice(0, 2),
     uc: st.uc === 1 ? 1 : 0, bb: (st.bb || []).slice(0, 2),
+    park: (st.park || []).map((e) => e.slice()),
     img: imgDraftState(), savedAt: Date.now() });
   function saveDraft() {
     const d = draftKeys();
@@ -2130,11 +2187,17 @@
     if (drag.items.some((it) => st.el[it.i] && isLine(st.el[it.i][0]))) refreshLines();
     const div = stage.querySelector(`.el[data-i="${drag.i}"]`);
     if (div) { div.style.opacity = p.inside || !drag.fromPalette ? '' : '.35'; }
+    const tr = $('tray'); if (tr) tr.classList.toggle('over', overTray(ev));
     positionAll();
   });
   window.addEventListener('pointerup', (ev) => {
     if (!drag) return;
     const p = stagePoint(ev), e = st.el[drag.i];
+    if (drag.moved && overTray(ev)) {              // 騨置き場へ退かす
+      const idxs = drag.items.map((it) => it.i).sort((a, b) => b - a);
+      idxs.forEach((i) => { const x = st.el[i]; if (x) { st.park.push(x); st.el.splice(i, 1); } });
+      clearSel(); drag = null; $('tray').classList.remove('over'); commit(); return;
+    }
     if (drag.fromPalette && !p.inside && drag.moved) { st.el.splice(drag.i, 1); clearSel(); }
     else if (drag.fromPalette && !drag.moved) { e[1] = 500; e[2] = 500; }
     else if (e) { drag.items.forEach((it) => { const x = st.el[it.i]; if (x) { x[1] = snap(x[1]); x[2] = snap(x[2]); } }); }
@@ -2361,7 +2424,9 @@
   $('draft').addEventListener('click', () => {
     const d = readDraft(), c = d && faceLayout(d);
     if (!c) return setStatus('facestatus', 'No draft saved yet — use Save draft first.', 'err');
-    setEditing('draft'); loadIntoEditor(c); commit();
+    setEditing('draft'); loadIntoEditor(c);
+    st.park = Array.isArray(d.park) ? d.park.map((e) => e.slice()) : [];   // 騨置き場も下書きと一緒に
+    commit();
     if (d.img) applyImgDraft(d.img);
     setStatus('facestatus', `Draft loaded (${c.el.length} elements${d.img ? ', image settings restored' : ''}).`, 'ok');
   });
@@ -2523,7 +2588,8 @@
       if (!r.ok || !j.ok) throw new Error(j.error === 'shelf_full' ? `the collection is full (${j.max} items) — delete one first`
         : j.error === 'bad_layout' ? `the server refused this dial (${elCount(st.el)} parts, limit ${EL_MAX}) — send me the JSON below if the count looks fine`
         : (j.error || r.status));
-      const note = hasImg ? '' : (hasSource() ? ' (saved without the picture — Show is off)' : ' (no picture)');
+      const parked = (st.park || []).length ? ` — ${st.park.length} parked ${st.park.length === 1 ? 'part is' : 'parts are'} not in it` : '';
+      const note = (hasImg ? '' : (hasSource() ? ' (saved without the picture — Show is off)' : ' (no picture)')) + parked;
       setStatus('shelfstatus', `Saved as ${body.name || 'item ' + j.n}${note} — use "To watch…" on it to put it on the watch.`, hasImg ? 'ok' : 'err'); $('shelfname').value = ''; loadShelf(); }
     catch (e) { setStatus('shelfstatus', 'Save failed: ' + e.message, 'err'); }
   });

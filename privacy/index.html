@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policies | Easymoat</title>
+<link rel="icon" type="image/png" href="../favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FC; --white: #FFFFFF; --border: #E2E6EF;
+    --text: #111827; --text2: #374151; --muted: #6B7280; --muted2: #9CA3AF;
+    --mw: #117A3A; --mw-light: #E5F5EC;
+    --bw: #1E3A8A; --bw-light: #E5EBFA;
+    --pl: #0891B2; --pl-light: #CFFAFE;
+    --wm: #4F46E5; --wm-light: #EEF2FF;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.75; }
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 40px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; color: var(--muted); transition: all 0.15s; }
+  .lang-btn.active { background: var(--text); color: #fff; border-color: var(--text); }
+  .lang-btn:hover:not(.active) { border-color: var(--text); color: var(--text); }
+  nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 40px; display: flex; align-items: center; }
+  nav a { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; letter-spacing: -0.01em; }
+  nav img { height: 36px; width: 36px; border-radius: 8px; object-fit: cover; }
+  nav a span { color: var(--muted2); font-weight: 700; }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+  h1 { font-family: 'Syne', sans-serif; font-size: clamp(26px, 5vw, 34px); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .lead { font-size: 15px; color: var(--text2); margin-bottom: 32px; }
+  .cards { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  .card { display: flex; align-items: center; gap: 16px; background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; text-decoration: none; color: inherit; transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s; }
+  .card:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(17,24,39,0.06); }
+  .card img { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; flex-shrink: 0; }
+  .card-body { flex: 1; min-width: 0; }
+  .card-tag { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+  .card-name { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+  .card-desc { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .card-arrow { color: var(--muted2); font-size: 18px; flex-shrink: 0; }
+  .card.mw:hover { border-color: var(--mw); } .card.mw .card-tag { color: var(--mw); }
+  .card.bw:hover { border-color: var(--bw); } .card.bw .card-tag { color: var(--bw); }
+  .card.pl:hover { border-color: var(--pl); } .card.pl .card-tag { color: var(--pl); }
+  .card.wm:hover { border-color: var(--wm); } .card.wm .card-tag { color: var(--wm); }
+  .common { margin-top: 40px; background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 22px 24px; }
+  .common h2 { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 800; margin-bottom: 10px; }
+  .common ul { margin: 0 0 0 20px; }
+  .common li { font-size: 14px; color: var(--text2); margin-bottom: 6px; }
+  .common a { color: var(--text); font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--border); }
+  footer { border-top: 1px solid var(--border); padding: 28px 24px; text-align: center; font-size: 13px; color: var(--muted2); }
+  footer a { color: var(--muted); margin: 0 8px; text-decoration: none; }
+  footer a:hover { color: var(--text); }
+  @media (max-width: 720px) { nav, .lang-bar { padding-left: 20px; padding-right: 20px; } }
+</style>
+</head>
+<body>
+<div class="lang-bar">
+  <span>🌐</span>
+  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+  <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+</div>
+<nav>
+  <a href="../"><img src="../easymoat_logo.png" alt="Easymoat">Easymoat<span>.com</span></a>
+</nav>
+
+<main>
+  <h1 data-en="Privacy Policies" data-ja="プライバシーポリシー">Privacy Policies</h1>
+  <p class="lead" data-en="Each Easymoat product handles data differently, so each has its own policy. Pick the product you use." data-ja="Easymoat の製品はそれぞれ扱うデータが異なるため、製品ごとにポリシーを用意しています。お使いの製品をお選びください。">Each Easymoat product handles data differently, so each has its own policy. Pick the product you use.</p>
+
+  <div class="cards">
+    <a class="card mw" href="../marketwatch/#privacy">
+      <img src="../marketwatch_icon.png" alt="MarketWatch">
+      <div class="card-body">
+        <div class="card-tag" data-en="Garmin app" data-ja="Garmin アプリ">Garmin app</div>
+        <div class="card-name">MarketWatch</div>
+        <div class="card-desc" data-en="Watch app: Device ID and license key only. Symbols stay on the watch." data-ja="ウォッチアプリ: Device ID とライセンスキーのみ。銘柄はウォッチ内に保存。">Watch app: Device ID and license key only. Symbols stay on the watch.</div>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+    <a class="card bw" href="../baseballwatch/#privacy">
+      <img src="../baseballwatch_icon.png" alt="BaseballWatch">
+      <div class="card-body">
+        <div class="card-tag" data-en="Garmin app" data-ja="Garmin アプリ">Garmin app</div>
+        <div class="card-name">BaseballWatch</div>
+        <div class="card-desc" data-en="Watch app: Device ID for activation. Registered players stay on the watch." data-ja="ウォッチアプリ: 有効化に Device ID を使用。登録選手はウォッチ内に保存。">Watch app: Device ID for activation. Registered players stay on the watch.</div>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+    <a class="card pl" href="../pulselink/privacy/">
+      <img src="../pulselink_icon.png" alt="PulseLink">
+      <div class="card-body">
+        <div class="card-tag" data-en="Garmin app + web" data-ja="Garmin アプリ + Web">Garmin app + web</div>
+        <div class="card-name">PulseLink</div>
+        <div class="card-desc" data-en="Location, heart rate and images shared within your Crew. Full policy, terms and data deletion." data-ja="Crew 内で共有する位置・心拍・画像について。ポリシー全文・利用規約・データ削除。">Location, heart rate and images shared within your Crew. Full policy, terms and data deletion.</div>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+    <a class="card wm" href="../portfolio/privacy/">
+      <img src="../webmemo_icon.png" alt="WebMemo">
+      <div class="card-body">
+        <div class="card-tag" data-en="Web + Garmin app" data-ja="Web + Garmin アプリ">Web + Garmin app</div>
+        <div class="card-name">WebMemo &amp; MarketWatch Max</div>
+        <div class="card-desc" data-en="Portfolios you build on the web, stored on our server under your Device ID." data-ja="Web で作成したポートフォリオを Device ID に紐づけて当社サーバーに保存。">Portfolios you build on the web, stored on our server under your Device ID.</div>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+  </div>
+
+  <div class="common">
+    <h2 data-en="Common to every product" data-ja="全製品に共通すること">Common to every product</h2>
+    <ul>
+      <li data-en="No accounts and no passwords. Your watch's Device ID is the only identifier." data-ja="アカウントもパスワードもありません。識別子はウォッチの Device ID だけです。">No accounts and no passwords. Your watch's Device ID is the only identifier.</li>
+      <li data-en="Payments are processed by Stripe. We never see your card details." data-ja="決済は Stripe が処理します。カード情報が当社に渡ることはありません。">Payments are processed by Stripe. We never see your card details.</li>
+      <li data-en="No advertising and no sale of data to third parties." data-ja="広告はなく、データを第三者に販売することもありません。">No advertising and no sale of data to third parties.</li>
+      <li><span data-en="Questions: " data-ja="お問い合わせ: ">Questions: </span><a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a></li>
+    </ul>
+  </div>
+</main>
+
+<footer>
+  © 2026 Easymoat &nbsp;|&nbsp;
+  <a href="../tokutei.html" data-en="Specified Commercial Transactions Act" data-ja="特定商取引法に基づく表記">Specified Commercial Transactions Act</a> &nbsp;|&nbsp;
+  <a href="../" data-en="← Back to Easymoat" data-ja="← Easymoatに戻る">← Back to Easymoat</a>
+</footer>
+
+<script>
+function setLang(lang) {
+  var L = (lang === 'ja') ? 'ja' : 'en';
+  document.documentElement.lang = L;
+  document.querySelectorAll('[data-en]').forEach(function (el) {
+    if (el.children.length > 0) return;
+    var t = el.getAttribute('data-' + L);
+    if (t != null) el.textContent = t;
+  });
+  document.getElementById('btn-en').classList.toggle('active', L === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', L === 'ja');
+  try { localStorage.setItem('em_lang', L); } catch (e) {}
+}
+(function () {
+  var saved = 'en';
+  try { saved = localStorage.getItem('em_lang') || localStorage.getItem('pl_lang') || 'en'; } catch (e) {}
+  if (saved === 'ja') { setLang('ja'); }
+})();
+</script>
+</body>
+</html>

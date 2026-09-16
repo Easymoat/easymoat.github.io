@@ -150,12 +150,12 @@ function setLang(lang) {
   });
   document.getElementById('btn-en').classList.toggle('active', lang === 'en');
   document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
-  try { localStorage.setItem('pl_lang', lang); } catch (e) {}
+  try { localStorage.setItem('em_lang', lang); } catch (e) {}
   renderStatus();
   if (typeof renderRingBtn === 'function') { renderRingBtn(); }
   if (typeof renderFacingBtn === 'function') { renderFacingBtn(); }
 }
-try { if (localStorage.getItem('pl_lang') === 'ja') setLang('ja'); } catch (e) {}
+try { if ((localStorage.getItem('em_lang') || localStorage.getItem('pl_lang')) === 'ja') setLang('ja'); } catch (e) {}
 function ja() { return document.documentElement.lang === 'ja'; }
 
 // ─── サインイン (Device ID のみ) ───
@@ -1144,7 +1144,7 @@ function renderStatus() {
 // 言語の再適用。冒頭の setLang は state (ringOn / camCfg) の宣言より前に走るため、
 // JS が文言を組み立てるボタン (ターゲット円・カメラ切替) だけ英語のまま残ってしまう。
 // 全ての宣言が済んだここで一度やり直して、初回表示から日本語に揃える。
-try { if (localStorage.getItem('pl_lang') === 'ja') { setLang('ja'); } } catch (e) {}
+try { if ((localStorage.getItem('em_lang') || localStorage.getItem('pl_lang')) === 'ja') { setLang('ja'); } } catch (e) {}
 </script>
 </body>
 </html>

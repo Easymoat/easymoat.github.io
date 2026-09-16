@@ -178,11 +178,11 @@ function setLang(lang) {
   }
   document.getElementById('btn-en').classList.toggle('active', lang === 'en');
   document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
-  try { localStorage.setItem('pl_lang', lang); } catch (e) {}
+  try { localStorage.setItem('em_lang', lang); } catch (e) {}
 }
 (function () {
   var saved = 'en';
-  try { saved = localStorage.getItem('pl_lang') || 'en'; } catch (e) {}
+  try { saved = (localStorage.getItem('em_lang') || localStorage.getItem('pl_lang')) || 'en'; } catch (e) {}
   if (saved === 'ja') { setLang('ja'); }
 })();
 </script>

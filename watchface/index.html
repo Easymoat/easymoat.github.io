@@ -199,7 +199,8 @@
   .imgbox .verdict { font: 12px var(--mono); padding: 6px 8px; border-radius: 5px; background: var(--panel-2); }
   .imgbox .verdict.ok { color: var(--ok); } .imgbox .verdict.warn { color: var(--accent); } .imgbox .verdict.bad { color: var(--danger); }
   .imgbox .frow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); }
-  #stage.hasimg { background-size: cover; background-position: center; }
+  #stage .stageimg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+  #stage.noimg .stageimg { display: none; }
   .box { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
   details.box > summary { list-style: none; }
   details.box > summary::-webkit-details-marker { display: none; }
@@ -298,7 +299,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 03:54</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 06:21</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1373,8 +1374,8 @@
     const outer = stage.parentElement; outer.style.width = Math.round(d.w * vs) + 'px'; outer.style.height = Math.round(d.h * vs) + 'px';
     stage.classList.toggle('round', d.round);
     stage.style.background = hex(st.bg);
-    applyStageImage();
     stage.innerHTML = '';
+    applyStageImage();            // 絵は一番下。innerHTML を消したあとに入れ直す
     if (st.showGrid) {
       const step = st.grid < 25 ? st.grid * 5 : st.grid, sx = d.w / 1000, sy = d.h / 1000;   // 細かすぎる時は 5 本に 1 本だけ描く
       let g = `<svg class="grid" width="${d.w}" height="${d.h}">`;
@@ -2560,11 +2561,22 @@
   // "Show on dial" = a live preview switch: while ON, the dial above shows the image exactly as it is
   // in the editor right now (frame, size, zoom, colour count). It never reads the server — what the
   // watch shows is whatever was last uploaded.
+  const stageImg = document.createElement('canvas');   // 文字盤の下敷きの絵 (部品の下)
+  stageImg.className = 'stageimg';
   function applyStageImage() {
     const on = IMG.show && hasSource();
     stage.classList.toggle('hasimg', on);
-    if (on) { stage.style.backgroundImage = `url("${(IMG.reduced || imgCv).toDataURL('image/png')}")`; stage.style.backgroundSize = 'cover'; stage.style.backgroundPosition = 'center'; }
-    else { stage.style.backgroundImage = ''; }
+    if (stageImg.parentElement !== stage) stage.insertBefore(stageImg, stage.firstChild);
+    const d = dev();
+    if (stageImg.width !== d.w || stageImg.height !== d.h) { stageImg.width = d.w; stageImg.height = d.h; }
+    const ctx = stageImg.getContext('2d');
+    ctx.clearRect(0, 0, d.w, d.h);
+    stageImg.hidden = !on;
+    if (!on) return;
+    // 320 の原版を盤面の大きさへ。同期で塗るので、ドラッグ中でも絵が消えない。
+    const src = IMG.reduced || imgCv, side = Math.max(d.w, d.h);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(src, (d.w - side) / 2, (d.h - side) / 2, side, side);   // cover 相当 (原版は正方形)
   }
   function clearImgPreview() {
     IMG.cur = null; IMG.src = null; IMG.fill = null; IMG.masked = null; IMG.reduced = null; IMG.dirty = false; IMG.fromSlot = 0;

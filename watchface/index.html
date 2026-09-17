@@ -145,7 +145,7 @@
   .synchelp { margin: 0; padding-left: 18px; line-height: 1.5; }
   .synchelp li { margin: 2px 0; }
   .rail .row { flex-wrap: nowrap; }
-  #syncbox { padding: 10px 14px; gap: 8px; }
+  #syncbox, #locbox { padding: 10px 14px; gap: 8px; }
   #syncbox .status { margin-top: 0; }   /* Upload to face and Delete face stay on one line */
   .photos { display: flex; gap: 10px; flex-wrap: wrap; }
   .photo { width: 64px; height: 64px; border-radius: 8px; border: 2px solid var(--line-2); background: #000 center/cover no-repeat; cursor: pointer; padding: 0; }
@@ -226,6 +226,7 @@
   details.box[open] > summary::before { content: "▾ "; }
   textarea { width: 100%; min-height: 96px; background: var(--ground); border: 1px solid var(--line); border-radius: 5px; padding: 8px; font: 12px/1.5 var(--mono); color: var(--ink); resize: vertical; }
   .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .row[hidden], .opt[hidden], .grp[hidden] { display: none; }
   .btn { background: var(--panel-2); border: 2px solid var(--ink-3); border-radius: 6px; padding: 6px 14px; cursor: pointer;
          color: var(--ink); font: 500 13px var(--sans); line-height: 1.2; }
   .btn:hover { background: var(--line); border-color: var(--ink-2); }
@@ -340,7 +341,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 06:38</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 06:48</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -466,16 +467,17 @@
     </div>
     <div class="drawer">
       <details class="box">
-        <summary class="lbl" style="cursor:pointer">Presets</summary>
-        <span class="muted">Start again from a ready-made dial. Undo puts back what you had.</span>
+        <summary class="lbl" style="cursor:pointer">Start the dial over</summary>
+        <span class="muted">These three replace the parts on the dial above — the one you are editing, not what the watch is showing.
+          Nothing is sent to the watch and nothing in Collection changes. Undo (&#8984;Z) puts your parts back.</span>
         <textarea id="json" spellcheck="false" hidden></textarea>
-        <div class="row">
-          <button class="btn" id="copy" hidden>Copy</button>
-          <button class="btn" id="apply" hidden>Apply edited JSON</button>
-          <button class="btn" id="preset-lobby">Preset: Lobby</button>
-          <button class="btn" id="preset-min">Minimal</button>
-          <button class="btn danger" id="clear">Clear</button>
+        <div class="row" hidden>
+          <button class="btn" id="copy">Copy</button>
+          <button class="btn" id="apply">Apply edited JSON</button>
         </div>
+        <div class="opt"><button class="btn" id="preset-lobby">Start from Lobby</button><span class="muted">The dial the watch face ships with: time, date, battery, heart rate, steps, floors, calories, weather and wind.</span></div>
+        <div class="opt"><button class="btn" id="preset-min">Start from Minimal</button><span class="muted">Three parts only — time, date and battery. A quiet dial to build on.</span></div>
+        <div class="opt"><button class="btn danger" id="clear">Take every part off</button><span class="muted">Leaves an empty dial. The background colour, the text sizes and the picture stay as they are.</span></div>
         <div class="status" id="jsonstatus"></div>
       </details>
     </div>

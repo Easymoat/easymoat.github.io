@@ -320,8 +320,8 @@
 <body>
 <header>
   <h1>Face Composer</h1>
-  <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 20:45</span>
+  <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 03:16</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -383,9 +383,6 @@
           <div class="ctl" title="Only the cut-out changes — the stored photo is never touched.">Brightness <input id="imgbr" type="range" min="20" max="180" step="1" value="100"><span class="muted" id="imgbrv">100%</span> Saturation <input id="imgsa" type="range" min="0" max="200" step="1" value="100"><span class="muted" id="imgsav">100%</span><button class="btn" id="imgtone" title="Brightness and saturation back to 100 %">Reset tone</button></div>
           <div class="ctl" id="imgdragrow" title="What dragging the empty part of the dial does. Dragging a part always moves that part.">Dragging the dial moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Picture</button><button type="button" data-m="frame">Frame</button></span></div>
           <div class="ctl"><button class="btn toggle on" id="imgshow" disabled title="While ON, the dial above shows the image exactly as it is here (frame, size, zoom, colours) and it is saved with the dial. While OFF, the saved dial has no image.">Show on dial: ON</button><button class="btn" id="imgreset" title="Put the frame back to the middle at 100 % (the picture stays)">Reset frame</button><button class="btn danger" id="imgclear" title="Take the picture (or the colour) out of this editor and start over. Nothing is deleted from the server or from the collection.">Reset image</button><button class="btn" id="imgparts" title="Hide the parts on the dial above while you frame the picture">Hide parts</button><button class="btn" id="imghide" title="Hide the picture on the dial above">Hide image</button></div>
-          <div class="ctl"><span class="onlyfor">For PulseLink users</span></div>
-          <div class="ctl" title="Live camera from PulseLink: while ON, the latest camera frame replaces the picture in the editor (framed the same way)."><button class="btn toggle" id="camon">Camera: OFF</button><span class="muted">PL ID</span><input type="text" id="plid" placeholder="XXXX-XXXX" style="width:110px"><span class="status" id="camnote" style="flex:1 1 auto"></span></div>
-          <div class="ctl" id="camlocknote" hidden><span class="muted">Which way the camera looks is set in the PulseLink Viewer; how that picture sits on the dial (shape, size, zoom, position) is set here. Later frames keep this framing.</span></div>
         </div>
         <div class="opts">
           <div class="grp" title="The shape of the image frame on the dial."><span class="lbl">Shape</span><div class="ctl"><span class="cb" id="imgshape"></span></div>
@@ -398,6 +395,11 @@
             <div class="ctl" title="No photo: the frame shape is filled with one colour instead."><span class="muted">Fill colour</span><input type="color" id="imgfill" value="#3a7bd5"><span class="swatches" id="fillsw" title="Recently used fill colours"></span><button class="btn" id="imgfillon">Use colour (no photo)</button></div>
             <div class="status" id="imgstatus"></div></div>
           <div class="grp" title="How many colours the cut-out is reduced to when you save. The watch can show at most 32."><span class="lbl">Colours on the watch</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div>
+          </div>
+          <div class="grp" id="camgrp"><span class="lbl">PulseLink camera</span>
+            <div class="muted">PulseLink is another Easymoat app (it shares position between watches and can turn a spare phone into a fixed camera). You only need this if you use it — everything else here works without it.</div>
+            <div class="ctl" title="Live camera from PulseLink: while ON, the latest camera frame replaces the picture in the editor (framed the same way)."><button class="btn toggle" id="camon">Camera: OFF</button><span class="muted">PL ID</span><input type="text" id="plid" placeholder="XXXX-XXXX" style="width:110px"><span class="status" id="camnote" style="flex:1 1 auto"></span></div>
+            <div class="ctl" id="camlocknote" hidden><span class="muted">Which way the camera looks is set in the PulseLink Viewer; how that picture sits on the dial (shape, size, zoom, position) is set here. Later frames keep this framing.</span></div>
           </div>
           <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span><button class="btn" id="imgbgapply" title="Copy this colour to the dial background (one-off; the dial is not linked to the image)">Use as dial background</button><button class="btn toggle" id="imgbgdial" title="Preview the photo against the dial's own background colour (follows the Layout background while ON; move the slider to go back to Auto)">Use dial background</button></div></div>
         </div>
@@ -420,18 +422,17 @@
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
           <div class="status" id="watchseen" title="When your watch last checked in, and whether it already has what was last sent"></div>
           <div class="ctl" title="Where the weather parts get their forecast. Once allowed, opening this page updates it, so it follows you when you travel."><button class="btn" id="locset">Set forecast location</button><button class="btn danger" id="locclear" title="Forget the saved place so only the watch's own position is used (for testing the watch's GPS). Automatic updates stop until you press Set again.">Forget place</button></div>
-          <div class="ctl" title="If PulseLink runs on this watch and shares its position, the forecast follows that position — no need to open this page when you travel."><span class="muted">or follow PulseLink</span><input type="text" id="locpl" placeholder="XXXX-XXXX" style="width:110px"><button class="btn" id="locplset">Follow</button><span class="status" id="locnote" style="flex:1 1 auto"></span></div>
+          <div class="ctl" title="If PulseLink runs on this watch and shares its position, the forecast follows that position — no need to open this page when you travel."><span class="muted" title="PulseLink is another Easymoat app that shares a watch's position.">or follow PulseLink (another Easymoat app)</span><input type="text" id="locpl" placeholder="XXXX-XXXX" style="width:110px"><button class="btn" id="locplset">Follow</button><span class="status" id="locnote" style="flex:1 1 auto"></span></div>
       </div>
     </div>
     <div class="drawer">
       <details class="box">
-        <summary class="lbl" style="cursor:pointer">Layout JSON &amp; presets</summary>
-        <span class="muted">The layout in plain text — for backups, moving a dial to another Device ID, or presets.</span>
-        <textarea id="json" spellcheck="false"></textarea>
+        <summary class="lbl" style="cursor:pointer">Presets</summary>
+        <span class="muted">Start again from a ready-made dial. Undo puts back what you had.</span>
+        <textarea id="json" spellcheck="false" hidden></textarea>
         <div class="row">
-          <button class="btn" id="copy">Copy</button>
-          <button class="btn" id="apply">Apply edited JSON</button>
-          <span class="spacer"></span>
+          <button class="btn" id="copy" hidden>Copy</button>
+          <button class="btn" id="apply" hidden>Apply edited JSON</button>
           <button class="btn" id="preset-lobby">Preset: Lobby</button>
           <button class="btn" id="preset-min">Minimal</button>
           <button class="btn danger" id="clear">Clear</button>
@@ -455,7 +456,7 @@
       <div class="ctl" title="Clock format. Device = follow the watch's own setting.">Hours <span class="cb units" id="hourfmt"></span></div>
       <div class="ctl" title="What a long press on a weather part opens. In face = the dial redraws as a detail screen (now / hourly / daily). Garmin = the watch's own weather screen (scrolls freely, no time limit, Garmin's own look).">Weather detail <span class="cb units" id="wxdetail"></span></div></div>
     <div class="group"><span class="lbl">Markets</span><div class="parts" id="parts-mkt"></div><span class="muted">Drop one on the dial, then type its ticker in Selected part. The % parts show the change instead of the price.</span></div>
-    <div class="group"><span class="lbl">Scores</span><div class="parts" id="parts-bb"></div><span class="muted">Pick the league (MLB / NFL / NBA / NHL) and your team in Selected part. Out of season, the part stays blank.</span></div>
+    <div class="group"><span class="lbl">USA Sports</span><div class="parts" id="parts-bb"></div><span class="muted">Pick the league (MLB / NFL / NBA / NHL) and your team in Selected part. Out of season, the part stays blank.</span></div>
     <div class="group"><span class="lbl">Elements <span id="elcount" class="cnt"></span></span><div class="list" id="list"></div></div>
   </aside>
 </main>
@@ -2517,7 +2518,7 @@
       const j = await r.json();
       if (j.pl != null) { $('locpl').value = j.pl; }
       el.textContent = j.lat == null ? (locAutoOn() ? 'Not set — press the button so the forecast has a place.' : 'Not set — the watch must supply its own position.')
-        : `${j.lat.toFixed(1)}, ${j.lon.toFixed(1)} · ${j.src === 'pulselink' ? 'following PulseLink' : j.src === 'web' ? 'from this browser' : 'from the watch'} ${fmtTime(j.ts * 1000)}`;
+        : `${j.src === 'pulselink' ? 'Following PulseLink' : j.src === 'web' ? 'Using the place set from this browser' : "Using the watch's own position"} · ${fmtTime(j.ts * 1000)}`;
       if (j.lat == null && j.pl) el.textContent = 'Following PulseLink — ' + PL_WHY[j.pl_state || ''];
       el.className = 'status';
     } catch (e) {}
@@ -2558,7 +2559,7 @@
         body: JSON.stringify({ device_id: id, pl_id: pl }) });
       const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error === 'bad_pl_id' ? 'that ID is not valid' : (j.error || r.status));
       if (!pl) setStatus('locnote', 'No longer following PulseLink.', 'ok');
-      else if (j.lat != null) setStatus('locnote', `Following PulseLink · ${j.lat.toFixed(1)}, ${j.lon.toFixed(1)}`, 'ok');
+      else if (j.lat != null) setStatus('locnote', 'Following PulseLink — its position is in use.', 'ok');
       else setStatus('locnote', 'Following PulseLink — ' + PL_WHY[j.pl_state || ''], j.pl_state === 'stale' ? '' : 'err');
       setTimeout(loadLoc, 1200);
     } catch (e) { setStatus('locnote', 'Could not save: ' + e.message, 'err'); }

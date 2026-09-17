@@ -145,7 +145,7 @@
   .synchelp { margin: 0; padding-left: 18px; line-height: 1.5; }
   .synchelp li { margin: 2px 0; }
   .rail .row { flex-wrap: nowrap; }
-  #syncbox, #locbox { padding: 10px 14px; gap: 8px; }
+  #syncbox, #locbox { padding: 10px 14px; gap: 10px; }
   #syncbox .status { margin-top: 0; }   /* Upload to face and Delete face stay on one line */
   .photos { display: flex; gap: 10px; flex-wrap: wrap; }
   .photo { width: 64px; height: 64px; border-radius: 8px; border: 2px solid var(--line-2); background: #000 center/cover no-repeat; cursor: pointer; padding: 0; }
@@ -251,6 +251,8 @@
   .status.ok { color: var(--ok); } .status.err { color: var(--danger); } .status.warn { color: var(--accent); }
   .field { display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 12px; }
   .opt { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .opt + .opt { margin-top: 12px; }
+  .opt + .status, .status + .opt { margin-top: 12px; }
   .opt > .btn { min-width: 210px; justify-content: center; }
   .opt .muted { flex: 1 1 320px; min-width: 0; }
   #locbox .lbl, #syncbox .lbl { margin-bottom: 2px; }
@@ -341,7 +343,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 06:48</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 07:24</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>

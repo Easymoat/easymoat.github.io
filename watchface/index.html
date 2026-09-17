@@ -132,10 +132,10 @@
           border: 2px dashed var(--line-2); border-radius: 12px; background: var(--panel-2); box-sizing: border-box; }
   .tray.over { border-color: var(--accent); background: rgba(242, 180, 65, .08); }
   .trayhd { display: flex; align-items: center; gap: 8px; }
-  .traylist { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; flex: 1 1 auto; }
-  .trayitem { position: relative; min-height: 46px; display: flex; align-items: center; justify-content: center;
-              padding: 4px 8px; border-radius: 6px; background: var(--panel); border: 1px solid var(--line);
-              cursor: grab; overflow: hidden; }
+  .traylist { position: relative; overflow: hidden; flex: 1 1 auto; border-radius: 8px; }
+  .trayitem { position: absolute; display: flex; align-items: center; justify-content: center;
+              padding: 2px; border-radius: 4px; cursor: grab; white-space: nowrap; }
+  .trayitem:hover { outline: 1px dashed var(--line-2); outline-offset: 2px; }
   .trayitem:active { cursor: grabbing; }
   .trayitem:hover { border-color: var(--line-2); }
   .trayitem .el { position: static; margin: 0; cursor: grab; pointer-events: none; }
@@ -216,6 +216,7 @@
   .imgbox .verdict.ok { color: var(--ok); } .imgbox .verdict.warn { color: var(--accent); } .imgbox .verdict.bad { color: var(--danger); }
   .imgbox .frow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); }
   #stage .stageimg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+  #stage.overdrop { outline: 2px dashed var(--accent); outline-offset: -4px; }
   #stage .marquee { position: absolute; pointer-events: none; border: 2px dashed var(--accent); background: rgba(242, 180, 65, .10); border-radius: 3px; }
   #stage.noimg .stageimg { display: none; }
   .box { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
@@ -316,7 +317,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 06:52</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 09:58</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1721,22 +1722,29 @@
     if (c) { c.textContent = n ? `${n}` : ''; c.className = 'cnt' + (n ? ' heavy' : ''); }
     l.innerHTML = '';
     if (!n) { l.innerHTML = '<span class="empty">Drag a part here to take it off the dial while you arrange the rest. Parts left here are not saved to the watch.</span>'; return; }
-    // 名前ではなく部品そのものを置く。文字盤と同じ描き方 (makeEl) を使い、
-    // 入らない大きさのものだけ縮めて入れる。
-    const d = dev(), k = d.w / 454;
+    // 名前ではなく部品そのものを、文字盤と同じように好きな位置へ置ける。
+    // x, y はこの盤の千分率 (文字盤へ戻す時に書き換えるので、使い回していい)。
+    const d = dev(), k = d.w / 454, W = l.clientWidth || 300, H = l.clientHeight || 420;
+    const K = Math.min(1, W / d.w);                     // 文字盤に対する縮尺 (幅に合わせる)
     st.park.forEach((e, i) => {
       const box = document.createElement('div'); box.className = 'trayitem';
       box.title = TYPES[e[0]]?.name || String(e[0]);
       const art = makeEl(e, i, k).cloneNode(true);       // clone = 文字盤用のドラッグを外す
       art.classList.remove('sel');
       box.appendChild(art);
+      box.style.left = (trayPos(e)[0] * W / 1000) + 'px';
+      box.style.top = (trayPos(e)[1] * H / 1000) + 'px';
+      box.style.transform = `translate(-50%, -50%) scale(${K.toFixed(3)})`;
       box.addEventListener('pointerdown', (ev) => startTrayDrag(ev, i));
       l.appendChild(box);
-      const w = art.offsetWidth, h = art.offsetHeight, room = $('tray').clientWidth - 36;
-      const sc = Math.min(1, room / Math.max(1, w), 60 / Math.max(1, h));
-      if (sc < 1) { art.style.transformOrigin = 'center'; art.style.transform = `scale(${Math.max(0.12, sc).toFixed(3)})`;
-                    box.style.height = Math.max(46, Math.round(h * sc) + 10) + 'px'; }
     });
+  }
+  const trayPos = (e) => [Math.max(20, Math.min(980, e[1] | 0)), Math.max(20, Math.min(980, e[2] | 0))];
+  // ポインタの位置 → 騨置き場の千分率
+  function trayPoint(ev) {
+    const l = $('traylist'), r = l.getBoundingClientRect();
+    return [Math.max(20, Math.min(980, Math.round((ev.clientX - r.left) * 1000 / (r.width || 1)))),
+            Math.max(20, Math.min(980, Math.round((ev.clientY - r.top) * 1000 / (r.height || 1))))];
   }
   const trayRect = () => { const t = $('tray'); return t && t.offsetWidth ? t.getBoundingClientRect() : null; };
   const overTray = (ev) => { const r = trayRect(); return !!r && ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom; };
@@ -1744,20 +1752,37 @@
   let TRAYDRAG = null;
   function startTrayDrag(ev, i) {
     ev.preventDefault();
-    TRAYDRAG = i;
-    const end = (e2) => {
-      window.removeEventListener('pointerup', end); window.removeEventListener('pointercancel', end);
-      const k = TRAYDRAG; TRAYDRAG = null; $('tray').classList.remove('over');
-      if (k == null || !st.park[k]) return;
-      const p = stagePoint(e2);
-      if (!p.inside) return;                       // 文字盤の外で離した = そのまま
-      if (!isLine(st.park[k][0]) && elCount(st.el) >= EL_MAX) {
-        return setStatus('shelfstatus', `The watch takes ${EL_MAX} parts — make room before putting this one back.`, 'err');
-      }
-      const e = st.park.splice(k, 1)[0];
-      e[1] = clamp(p.x); e[2] = clamp(p.y);
-      st.el.push(e); setSel(st.el.length - 1, false); commit();
+    const box = ev.currentTarget;
+    TRAYDRAG = { i, box, moved: false };
+    const move = (e2) => {
+      if (!TRAYDRAG) return;
+      TRAYDRAG.moved = true;
+      const l = $('traylist'), r = l.getBoundingClientRect();
+      const [x, y] = trayPoint(e2);
+      box.style.left = (x * r.width / 1000) + 'px'; box.style.top = (y * r.height / 1000) + 'px';
+      const on = stagePoint(e2).inside;
+      box.style.opacity = on ? '.5' : '';
+      stage.classList.toggle('overdrop', on);
     };
+    const end = (e2) => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', end); window.removeEventListener('pointercancel', end);
+      const t = TRAYDRAG; TRAYDRAG = null; stage.classList.remove('overdrop');
+      if (!t || !st.park[t.i]) return;
+      const p = stagePoint(e2);
+      if (p.inside) {                              // 文字盤へ戻す
+        if (!isLine(st.park[t.i][0]) && elCount(st.el) >= EL_MAX) {
+          render(); return setStatus('shelfstatus', `The watch takes ${EL_MAX} parts — make room before putting this one back.`, 'err');
+        }
+        const e = st.park.splice(t.i, 1)[0];
+        e[1] = clamp(p.x); e[2] = clamp(p.y);
+        st.el.push(e); setSel(st.el.length - 1, false); commit(); return;
+      }
+      if (!t.moved) { render(); return; }          // 押しただけ
+      const [x, y] = trayPoint(e2);                // 騨置き場の中で移動
+      st.park[t.i][1] = x; st.park[t.i][2] = y; commit();
+    };
+    window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', end); window.addEventListener('pointercancel', end);
   }
   function renderList() {
@@ -2209,9 +2234,13 @@
   window.addEventListener('pointerup', (ev) => {
     if (!drag) return;
     const p = stagePoint(ev), e = st.el[drag.i];
-    if (drag.moved && overTray(ev)) {              // 騨置き場へ退かす
+    if (drag.moved && overTray(ev)) {              // 騨置き場へ退かす (離した位置に置く)
       const idxs = drag.items.map((it) => it.i).sort((a, b) => b - a);
-      idxs.forEach((i) => { const x = st.el[i]; if (x) { st.park.push(x); st.el.splice(i, 1); } });
+      const [tx, ty] = trayPoint(ev);
+      let n = 0;
+      idxs.forEach((i) => { const x = st.el[i]; if (x) {
+        x[1] = Math.max(20, Math.min(980, tx + (n % 3) * 60)); x[2] = Math.max(20, Math.min(980, ty + Math.floor(n / 3) * 60)); n++;
+        st.park.push(x); st.el.splice(i, 1); } });
       clearSel(); drag = null; $('tray').classList.remove('over'); commit(); return;
     }
     if (drag.fromPalette && !p.inside && drag.moved) { st.el.splice(drag.i, 1); clearSel(); }

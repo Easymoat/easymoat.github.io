@@ -335,7 +335,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 05:21</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 06:29</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -448,7 +448,7 @@
       <div class="grp" id="syncbox">
           <div class="row" style="align-items:center;gap:14px"><div class="field" style="grid-template-columns:auto 140px;gap:10px"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX"></div></div>
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
-          <div class="status" id="watchseen" title="When your watch last checked in, and whether it already has what was last sent"></div>
+          <div class="status" id="watchseen" title="Your watch asks the server for a new dial about every 5 minutes. This line says when it last asked, and whether it already has the dial you sent."></div>
           <div class="ctl" title="Where the weather parts get their forecast. Once allowed, opening this page updates it, so it follows you when you travel."><button class="btn" id="locset">Set forecast location</button><button class="btn danger" id="locclear" title="Forget the saved place so only the watch's own position is used (for testing the watch's GPS). Automatic updates stop until you press Set again.">Forget place</button></div>
           <div class="ctl" title="If PulseLink runs on this watch and shares its position, the forecast follows that position — no need to open this page when you travel."><span class="muted" title="PulseLink is another Easymoat app that shares a watch's position.">or follow PulseLink (another Easymoat app)</span><input type="text" id="locpl" placeholder="XXXX-XXXX" style="width:110px"><button class="btn" id="locplset">Follow</button><span class="status" id="locnote" style="flex:1 1 auto"></span></div>
       </div>
@@ -2497,7 +2497,7 @@
   const devId = () => { const v = $('devid').value.trim(); try { localStorage.setItem('faceComposer.devid', v); } catch (e) {} return v; };
   // ── Watch state, draft, collection ───────────────────────────────────────
   // The server still keeps layout "faces" 1-3 for the watch contract; the active slot is mirrored to face 1.
-  const WATCH = { active: 1, faces: {}, seen: null };
+  const WATCH = { active: 1, faces: {}, seenLegacy: null, seenWatch: null };
   function faceLayout(f) { const c = sanitize(f); return c || null; }
   // Render one layout as a small dial (reuses makeEl by swapping `st` while it builds).
   // 見本の枠は画面幅で伸び縮みする (携帯は 42vw)。描いた時の幅のままだと中身がずれるので、
@@ -2538,28 +2538,36 @@
   }
   function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, BB_MAX); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); clearSel(); pushBgHist(st.bg); }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
+  // ウォッチが最後に来た時刻は 2 か所から来る: 従来経路 (/layouts) と実機が今使う経路 (/watch)。
+  // 実機はもう従来経路を見に来ないので、そちらの値は何日も古いまま。新しい方だけを使う
+  // (古い方で上書きして「5 日繋がっていない」と出ていた 2026-09-18)。
+  const seenNow = () => [WATCH.seenLegacy, WATCH.seenWatch].filter((x) => x && x.ts).sort((a, b) => b.ts - a.ts)[0] || null;
   function renderWatchSeen() {
     const el = $('watchseen'); if (!el) return;
-    const sn = WATCH.seen, act = WATCH.faces[String(WATCH.active)];
-    if (!sn || !sn.ts) { el.textContent = 'Waiting for your watch to connect for the first time. It looks for a new dial about every 5 minutes.'; el.className = 'status'; return; }
+    const sn = seenNow(), act = WATCH.faces[String(WATCH.active)];
+    const cur = WSLOTS.faces && WSLOTS.active ? WSLOTS.faces[String(WSLOTS.active)] : null;
+    const sent = cur || act;
+    if (!sn) {
+      el.textContent = sent ? 'Your watch has not connected yet. It asks for a new dial about every 5 minutes.'
+                            : 'No dial has been sent to this watch yet. Save one in Collection, then press "To watch…" on it.';
+      el.className = 'status'; return;
+    }
     const age = Math.max(0, Math.round(Date.now() / 1000 - sn.ts));
     const span = age < 90 ? 'a moment' : age < 5400 ? `${Math.round(age / 60)} minutes`
                : age < 172800 ? `${Math.round(age / 3600)} hours` : `${Math.round(age / 86400)} days`;
-    const cur = WSLOTS.faces && WSLOTS.active ? WSLOTS.faces[String(WSLOTS.active)] : null;
-    const sent = cur || act;
     const upToDate = cur ? String(sn.have) === String(cur.v) : (act && String(sn.have) === String(act.v));
-    // 「5 d ago · update pending」では何が起きているのか伝わらないので、そのままの文にする。
+    // 何が送られていて、いつ届くのかをそのまま書く。
     let t, c = '';
-    if (!sent) { t = `Nothing has been sent to this watch yet. Your watch last connected ${span} ago.`; }
-    else if (upToDate) { t = `Your watch has the dial you sent. It last connected ${span} ago.`; c = 'ok'; }
-    else if (age < 1800) { t = 'Sent. Your watch should show it within 5 minutes.'; }
-    else { t = `Sent, but your watch has not connected for ${span}. It will show the new dial the next time it does.`; c = 'warn'; }
+    if (!sent) { t = `No dial has been sent to this watch yet. Your watch checked ${span} ago.`; }
+    else if (upToDate) { t = `Your watch is showing the dial you sent. It checked ${span} ago.`; c = 'ok'; }
+    else if (age < 1800) { t = `The dial you sent is on its way — your watch will show it within 5 minutes. (it checked ${span} ago)`; }
+    else { t = `Your watch has not checked for ${span} — it may be off, or too far from your phone. The dial you sent will appear the next time it checks.`; c = 'warn'; }
     el.textContent = t; el.className = 'status ' + c;
   }
   async function loadWatchState() {
-    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { WATCH.faces = {}; WATCH.seen = null; renderWatchSeen(); return; }
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { WATCH.faces = {}; WATCH.seenLegacy = null; WATCH.seenWatch = null; renderWatchSeen(); return; }
     try { const r = await fetch($('api').value + '/layouts?device_id=' + encodeURIComponent(id)); if (!r.ok) return; const j = await r.json();
-      WATCH.faces = j.faces || {}; WATCH.active = Number(j.active || 1); WATCH.seen = j.seen || null; renderWatchSeen(); } catch (e) {}
+      WATCH.faces = j.faces || {}; WATCH.active = Number(j.active || 1); WATCH.seenLegacy = j.seen || null; renderWatchSeen(); } catch (e) {}
   }
   setInterval(loadWatchState, 30000);   // refresh the watch line while the page is open
   // カメラの面はコマが 3 分ごとに変わるので、開いている間は絵札も見直す。
@@ -2779,7 +2787,7 @@
     try {
       const r = await fetch($('api').value + '/watch?device_id=' + encodeURIComponent(id)); if (!r.ok) return;
       const j = await r.json(); WSLOTS.active = j.active || 0; WSLOTS.faces = j.faces || {};
-      if (j.seen && j.seen.ts && (!WATCH.seen || j.seen.ts > (WATCH.seen.ts || 0))) { WATCH.seen = j.seen; renderWatchSeen(); }
+      WATCH.seenWatch = j.seen || null; renderWatchSeen();
     } catch (e) { return; }
     markShelfOnWatch();
   }

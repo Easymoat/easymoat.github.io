@@ -321,7 +321,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 03:26</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 03:45</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -555,6 +555,10 @@
     33: { name: 'Status 1',  grp: 'bb',    sample: 'Top 7',       icon: null,   iw: 0, bb: 0, noPal: true },
     34: { name: 'Score 2',   grp: 'bb',    sample: 'DEN 24-17 KC', icon: null,   iw: 0, bb: 1, noPal: true },
     35: { name: 'Status 2',  grp: 'bb',    sample: 'Q3 4:12',     icon: null,   iw: 0, bb: 1, noPal: true },
+    36: { name: 'Score 3',   grp: 'bb',    sample: 'ARS 1-1 CHE', icon: null,   iw: 0, bb: 2, noPal: true },
+    37: { name: 'Status 3',  grp: 'bb',    sample: "67'",         icon: null,   iw: 0, bb: 2, noPal: true },
+    38: { name: 'Score 4',   grp: 'bb',    sample: 'TOK 1-1 AVF', icon: null,   iw: 0, bb: 3, noPal: true },
+    39: { name: 'Status 4',  grp: 'bb',    sample: 'FT',          icon: null,   iw: 0, bb: 3, noPal: true },
     // 銘柄は面ごとに 2 つ持つ (layout の st)。部品は st[0] / st[1] を指すだけ。
     30: { name: 'Stock 1',   grp: 'mkt',   sample: '229.35', icon: 'stock',     iw: 0, stk: 0 },
     31: { name: 'Stock 2',   grp: 'mkt',   sample: '229.35', icon: 'stock',     iw: 0, stk: 1 },
@@ -764,7 +768,8 @@
   const PAL_PCT = { 90: { t: 30, name: 'Stock 1 %' }, 91: { t: 31, name: 'Stock 2 %' } };
   // サッカー用のパレット。部品そのものは USA Sports と同じ 32-35 で、置いた時に
   // その枠 (Game 1 / Game 2) のリーグをサッカー側へ寄せるだけ。チーム未選択の枠にしか触らない。
-  const PAL_SOC = { 92: { t: 32, name: 'Score 1' }, 93: { t: 33, name: 'Status 1' }, 94: { t: 34, name: 'Score 2' }, 95: { t: 35, name: 'Status 2' } };
+  const PAL_SOC = { 92: { t: 32, name: 'Score 1' }, 93: { t: 33, name: 'Status 1' }, 94: { t: 34, name: 'Score 2' }, 95: { t: 35, name: 'Status 2' },
+                    96: { t: 36, name: 'Score 3' }, 97: { t: 37, name: 'Status 3' }, 98: { t: 38, name: 'Score 4' }, 99: { t: 39, name: 'Status 4' } };
   const SOC_DEF = 'eng.1';
   const isStock = (t) => !!(TYPES[t] && TYPES[t].stk != null);
   // MLB 30 球団 (statsapi のチーム ID)。実機へ渡すのは ID だけ。
@@ -787,12 +792,13 @@
   const leagueTeams = (lg) => (SOC_TEAMS[lg] ? SOC_TEAMS[lg].map(([ab, nm]) => [ab, `${ab} · ${nm}`])
     : lg === 'nfl' ? NFL_TEAMS : lg === 'nba' ? NBA_TEAMS : lg === 'nhl' ? NHL_TEAMS : MLB_TEAMS.map(([id, ab, nm]) => [id, `${ab} · ${nm}`]));
   const leagueName = (lg) => { const a = LEAGUES.concat(SOC_LEAGUES).find(([k]) => k === lg); return a ? a[1] : lg; };
+  const BB_MAX = 4;                    // 試合の枠 (Game 1-4)。実機も同じ数まで読む
   const isBall = (t) => !!(TYPES[t] && TYPES[t].bb != null);
   const bbSlot = (t) => (TYPES[t] || {}).bb || 0;
   const bbOf = (i) => (st.bb || [])[i] || null;
   const bbLg = (i) => (bbOf(i) || {}).lg || 'mlb';
   const bbTm = (i) => { const b = bbOf(i); return b ? b.tm : 0; };
-  const setBb = (i, v) => { const a = (st.bb || []).slice(0, 2); while (a.length < 2) a.push(null); a[i] = v; st.bb = a; };
+  const setBb = (i, v) => { const a = (st.bb || []).slice(0, BB_MAX); while (a.length < BB_MAX) a.push(null); a[i] = v; st.bb = a; };
   const teamAbbr = (i) => { const lg = bbLg(i), tm = bbTm(i);
     if (lg === 'mlb') { const r = MLB_TEAMS.find((x) => x[0] === Number(tm)); return r ? r[1] : 'NYY'; }
     if (isSoccer(lg)) return String(tm || SOC_TEAMS[lg][0][0]);
@@ -801,7 +807,7 @@
   const ballSample = (t) => {
     const i = bbSlot(t), lg = bbLg(i), ab = teamAbbr(i);
     if (!bbTm(i)) return '--';
-    if (t === 32 || t === 34) {
+    if (t % 2 === 0) {
       if (isSoccer(lg)) { const o = (SOC_TEAMS[lg].find(([x]) => x !== ab) || ['CHE'])[0]; return `${ab} 1-1 ${o}`; }
       return `${ab} 3-5 ${lg === 'nfl' ? 'DEN' : lg === 'nba' ? 'BOS' : lg === 'nhl' ? 'MTL' : 'BOS'}`;
     }
@@ -942,7 +948,7 @@
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
-  let st = { dev: 'fr965', grid: 50, showGrid: true, gridBright: false, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], stk: ['', ''], stn: ['', ''], uc: 0, bb: [null, null], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
+  let st = { dev: 'fr965', grid: 50, showGrid: true, gridBright: false, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], stk: ['', ''], stn: ['', ''], uc: 0, bb: [null, null, null, null], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
   // Selection: `sel` is the primary (last clicked) element, `selSet` every selected index.
   // Shift / Cmd / Ctrl + click adds or removes one; the Selected panel, dragging, arrows and
   // Delete act on all of them.
@@ -994,7 +1000,7 @@
   st.ic = intArr3(st.ic, 6, 120, DEF_IC) || DEF_IC.slice(); st.b = (st.b === 1 || st.b === 2) ? st.b : 0;
   UNITS.forEach((U) => { st[U.key] = U.opts[st[U.key]] ? st[U.key] : 0; });
   // このブラウザに残っている古い下書きを今の形に直す (旧 bb は 1 つの辞書だった、2026-09-15)。
-  st.bb = Array.isArray(st.bb) ? st.bb.slice(0, 2)
+  st.bb = Array.isArray(st.bb) ? st.bb.slice(0, BB_MAX)
         : (st.bb && st.bb.tm ? [{ lg: String(st.bb.lg || 'mlb'), tm: st.bb.tm }] : []);
   if (!Array.isArray(st.stk)) st.stk = ['', ''];
   if (!Array.isArray(st.stn)) st.stn = ['', ''];
@@ -1338,7 +1344,7 @@
   for (const [key, d] of Object.entries(PAL_SOC)) {   // Soccer: 部品は 32-35 と同じ
     const p = document.createElement('div');
     p.className = 'part'; p.dataset.t = key;
-    p.innerHTML = `<span class="ico"><span style="font:500 13px var(--watch);white-space:nowrap">${d.t === 32 || d.t === 34 ? '1-1' : "67'"}</span></span><span class="nm">${d.name}</span><span class="hint">${d.t}</span>`;
+    p.innerHTML = `<span class="ico"><span style="font:500 13px var(--watch);white-space:nowrap">${d.t % 2 === 0 ? '1-1' : "67'"}</span></span><span class="nm">${d.name}</span><span class="hint">${d.t}</span>`;
     p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +key));
     $('parts-soc').appendChild(p);
   }
@@ -1751,7 +1757,7 @@
     // 絵が単色の塗りなら、その色を渡す (実機はメーターの下地をこの色と混ぜる。写真の時は渡さない = 黒)
     ib: (typeof IMG !== 'undefined' && IMG.show && !IMG.cur && IMG.fill) ? parseInt(String(IMG.fill).slice(1), 16) : undefined,
     lj: (() => { const j = lineJoins(st.el).arcs; return j.length ? j : undefined; })(),
-    bb: (st.bb || []).some((b) => b && b.tm) ? (st.bb || []).slice(0, 2).map((b) => (b && b.tm ? b : null)) : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
+    bb: (st.bb || []).some((b) => b && b.tm) ? (st.bb || []).slice(0, BB_MAX).map((b) => (b && b.tm ? b : null)) : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   // ── 騨置き場 ─────────────────────────────────────────────
   // 文字盤が込み合ってきた時の一時置き場。**ここにある部品はウォッチへ行かない**
@@ -2167,7 +2173,7 @@
     wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0,
     mt: (st.mt || []).slice(), mc: (st.mc || []).slice(), mk: (st.mk || []).slice(), mv: (st.mv || []).slice(),
     st: (st.stk || ['', '']).slice(0, 2), sn: (st.stn || ['', '']).slice(0, 2),
-    uc: st.uc === 1 ? 1 : 0, bb: (st.bb || []).slice(0, 2),
+    uc: st.uc === 1 ? 1 : 0, bb: (st.bb || []).slice(0, BB_MAX),
     park: (st.park || []).map((e) => e.slice()),
     img: imgDraftState(), savedAt: Date.now() });
   function saveDraft() {
@@ -2450,7 +2456,7 @@
              mt: (Array.isArray(j.mt) && j.mt.length === 4 && j.mt.every((m) => METERS.some((x) => x[0] === m))) ? j.mt.slice() : [0, 0, 0, 0],
              mk: (Array.isArray(j.mk) && j.mk.length === 4 && j.mk.every((c) => Number.isInteger(c) && c >= -1 && c <= PC_BASE + PC_MAX)) ? j.mk.slice() : [-1, -1, -1, -1],
              mv: (Array.isArray(j.mv) && j.mv.length === 4 && j.mv.every((v) => v === 0 || v === 1)) ? j.mv.slice() : [1, 1, 1, 1],
-             bb: (Array.isArray(j.bb) ? j.bb : (j.bb ? [j.bb] : [])).slice(0, 2).map((b) => (b && b.tm ? { lg: String(b.lg || 'mlb'), tm: b.tm } : null)),
+             bb: (Array.isArray(j.bb) ? j.bb : (j.bb ? [j.bb] : [])).slice(0, BB_MAX).map((b) => (b && b.tm ? { lg: String(b.lg || 'mlb'), tm: b.tm } : null)),
              stk: (Array.isArray(j.st) && j.st.length <= 2) ? [stkClean(j.st[0]), stkClean(j.st[1])] : ['', ''],
              stn: (Array.isArray(j.sn) && j.sn.length <= 2) ? [nameClean(j.sn[0]), nameClean(j.sn[1])] : ['', ''],
              uc: Number(j.uc) === 1 ? 1 : 0,
@@ -2494,7 +2500,7 @@
       try { inner.insertAdjacentHTML('beforeend', jointArt(arcs, d, d.w / 454)); } finally { st = hold; }
     }
   }
-  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, 2); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); clearSel(); pushBgHist(st.bg); }
+  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, BB_MAX); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); clearSel(); pushBgHist(st.bg); }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
   function renderWatchSeen() {
     const el = $('watchseen'); if (!el) return;

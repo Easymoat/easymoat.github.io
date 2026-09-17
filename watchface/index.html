@@ -283,6 +283,7 @@
   /* ── 携帯 (細い画面): コレクションだけを出して、面の切り替えに専念する ──
      body.full を付ければ全部出る (Editor ボタン)。 */
   #phonebar { display: none; }
+  .only-phone { display: none; }
   /* 携帯のバー。行はすべて同じ高さで左端をそろえ、指で押せる大きさ (44px) にする。 */
   .prow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; width: 100%; }
   .prow input[type=text] { flex: 1 1 150px; min-width: 0; height: 44px; box-sizing: border-box; font-size: 16px; }
@@ -304,6 +305,8 @@
     body:not(.full) #watchbox, body:not(.full) .tray,
     body:not(.full) .shelfbox .tier, body:not(.full) #shelfsaverow { display: none; }
     body:not(.full) #phonebar { display: block; width: 100%; box-sizing: border-box; }
+    body:not(.full) .only-wide { display: none; }
+    body:not(.full) .only-phone { display: inline; }
     body:not(.full) main { padding: 10px; gap: 10px; align-content: flex-start; }
     body:not(.full) main > * { align-self: start; }
     body:not(.full) .shelf { gap: 14px; justify-content: center; }
@@ -343,7 +346,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 07:24</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 07:43</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -444,7 +447,7 @@
     <div class="shelfbox box">
       <div class="tier"><span class="num">3</span><span class="name">Collection</span><span class="what">Save the dial, then send it to the watch from here</span></div>
       <div class="grp">
-        <div class="ctl"><span class="muted">Everything on the watch comes from here: save the dial above, then use <b>To watch</b> on it. The watch shows one dial — sending another replaces it, within 5 minutes.</span></div>
+        <div class="ctl"><span class="muted only-wide">Everything on the watch comes from here: save the dial above, then use <b>To watch</b> on it. The watch shows one dial — sending another replaces it, within 5 minutes.</span><span class="muted only-phone">Pick a dial below and press <b>To watch</b>. Your watch shows one dial — sending another replaces it, within 5 minutes.</span></div>
         <div class="status" id="syncstatus"></div>
         <div class="row" id="shelfsaverow" style="align-items:center;gap:10px"><input type="text" id="shelfname" placeholder="Name (optional)" style="width:180px"><button class="btn primary" id="shelfsave">Save to collection</button><span class="muted" id="shelfcount"></span><span class="status warn" id="shelfnopic" hidden>No picture in the dial — it will be saved without one</span></div>
         <div class="status" id="shelfstatus"></div>
@@ -2732,7 +2735,7 @@
       const on = !!(cur && Number(cur.shelf) === Number(d.dataset.n));
       const b = d.querySelector('[data-a="send"]');
       if (b) {
-        b.textContent = on ? 'Showing' : 'To watch';
+        b.textContent = on ? 'Showing' : ('To watch ' + (devId() || '—'));   // 送り先を取り違えないよう ID をボタンに出す
         b.classList.toggle('primary', !on);
         b.classList.toggle('toggle', on);
         b.classList.toggle('on', on);
@@ -2807,8 +2810,13 @@
     markShelfOnWatch();
   }
   // 棚の品をそのまま実機の面にする (他の面は消える)。
+  // Device ID を書き換えた直後の 1 回目だけ、送り先を口頭で確認する。
+  // ID を知っていれば誰の面でも上書きできるので、取り違えの被害が大きい (2026-09-18)。
+  let SENT_TO = null;
   async function sendShelfItem(n) {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('syncstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
+    if (SENT_TO !== id && !confirm(`Send this dial to the watch ${id}?\n\nIt replaces whatever that watch is showing now.`)) return;
+    SENT_TO = id;
     const it = SHELF.items.find((i) => i.n === n) || {};
     const name = it.name || 'item ' + n;
     setStatus('syncstatus', 'Sending…');

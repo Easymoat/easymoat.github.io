@@ -249,6 +249,11 @@
   #insp .hint { min-height: 1.4em; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .status.ok { color: var(--ok); } .status.err { color: var(--danger); } .status.warn { color: var(--accent); }
   .field { display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 12px; }
+  .opt { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .opt > .btn { min-width: 210px; justify-content: center; }
+  .opt .muted { flex: 1 1 320px; min-width: 0; }
+  #locbox .lbl, #syncbox .lbl { margin-bottom: 2px; }
+  #locbox .status { white-space: normal; height: auto; line-height: 1.5; font-family: var(--sans); font-size: 13px; }
   .field input[type=number] { width: 100%; font-family: var(--mono); }
   .seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 5px; overflow: hidden; }
   .seg button { background: transparent; border: 0; padding: 5px 10px; cursor: pointer; color: var(--ink-2); border-right: 1px solid var(--line-2); }
@@ -335,7 +340,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 06:29</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 06:38</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -444,13 +449,19 @@
       <div class="shelf" id="shelf"></div>
     </div>
     <div class="shelfbox box" id="watchbox">
-      <div class="tier"><span class="num">4</span><span class="name">Watch</span><span class="what">Device ID and where the weather comes from — set once, then leave it</span></div>
+      <div class="tier"><span class="num">4</span><span class="name">Watch</span><span class="what">Two settings you make once: which watch receives your dials, and where its weather comes from</span></div>
       <div class="grp" id="syncbox">
-          <div class="row" style="align-items:center;gap:14px"><div class="field" style="grid-template-columns:auto 140px;gap:10px"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX"></div></div>
+          <span class="lbl">a · Which watch</span>
+          <div class="ctl"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX" style="width:140px"><span class="muted">Your watch face shows this ID. Everything you send from Collection goes to this watch. It is kept on this computer — there is nothing to sign up for.</span></div>
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
           <div class="status" id="watchseen" title="Your watch asks the server for a new dial about every 5 minutes. This line says when it last asked, and whether it already has the dial you sent."></div>
-          <div class="ctl" title="Where the weather parts get their forecast. Once allowed, opening this page updates it, so it follows you when you travel."><button class="btn" id="locset">Set forecast location</button><button class="btn danger" id="locclear" title="Forget the saved place so only the watch's own position is used (for testing the watch's GPS). Automatic updates stop until you press Set again.">Forget place</button></div>
-          <div class="ctl" title="If PulseLink runs on this watch and shares its position, the forecast follows that position — no need to open this page when you travel."><span class="muted" title="PulseLink is another Easymoat app that shares a watch's position.">or follow PulseLink (another Easymoat app)</span><input type="text" id="locpl" placeholder="XXXX-XXXX" style="width:110px"><button class="btn" id="locplset">Follow</button><span class="status" id="locnote" style="flex:1 1 auto"></span></div>
+      </div>
+      <div class="grp" id="locbox">
+          <span class="lbl">b · Where the weather parts get their forecast</span>
+          <div class="status" id="locnote" title="Which of the three below is in use right now">Not set yet — pick one of the three below.</div>
+          <div class="opt"><button class="btn" id="locset">Use this computer's place</button><span class="muted">Asks this browser where you are and sends that. Opening this page updates it, so it follows you when you travel.</span></div>
+          <div class="opt"><button class="btn" id="locplset">Follow PulseLink</button><input type="text" id="locpl" placeholder="XXXX-XXXX" style="width:110px"><span class="muted">PulseLink is another Easymoat app. If it runs on this watch, the forecast follows the watch wherever it goes — no need to open this page.</span></div>
+          <div class="opt"><button class="btn danger" id="locclear">Use the watch's own GPS</button><span class="muted">Stops sending a place from here. The watch then has to find its own position, which can be slow or fail indoors.</span></div>
       </div>
     </div>
     <div class="drawer">
@@ -2641,7 +2652,7 @@
   }
   // PulseLink のウォッチの位置に追従する (PL の You メニューにある Device ID)
   $('locplset').addEventListener('click', async () => {
-    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('locnote', 'Enter the Device ID first.', 'err');
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('locnote', 'Fill in the Device ID above first — the forecast is stored against that watch.', 'err');
     const pl = $('locpl').value.trim();
     if (pl && !/^[0-9a-zA-Z-]{4,40}$/.test(pl)) return setStatus('locnote', 'That PulseLink ID does not look right (XXXX-XXXX).', 'err');
     try { localStorage.setItem('faceComposer.locpl', pl); } catch (e) {}
@@ -2649,25 +2660,25 @@
       const r = await fetch($('api').value + '/loc', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ device_id: id, pl_id: pl }) });
       const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error === 'bad_pl_id' ? 'that ID is not valid' : (j.error || r.status));
-      if (!pl) setStatus('locnote', 'No longer following PulseLink.', 'ok');
+      if (!pl) setStatus('locnote', 'No longer following PulseLink. Press one of the other two to choose where the forecast comes from.', 'ok');
       else if (j.lat != null) setStatus('locnote', 'Following PulseLink — its position is in use.', 'ok');
       else setStatus('locnote', 'Following PulseLink — ' + PL_WHY[j.pl_state || ''], j.pl_state === 'stale' ? '' : 'err');
       setTimeout(loadLoc, 1200);
     } catch (e) { setStatus('locnote', 'Could not save: ' + e.message, 'err'); }
   });
   $('locclear').addEventListener('click', async () => {
-    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('locnote', 'Enter the Device ID first.', 'err');
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('locnote', 'Fill in the Device ID above first — the forecast is stored against that watch.', 'err');
     try { localStorage.setItem(LOC_AUTO, 'off'); } catch (e) {}
     try {
       const r = await fetch($('api').value + '/loc', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ device_id: id, remove: true }) });
       const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
-      setStatus('locnote', 'Forgotten — the forecast now needs the watch\'s own position.', 'ok');
+      setStatus('locnote', "Using the watch's own position from now on. Nothing is sent from this page.", 'ok');
       setTimeout(loadLoc, 1200);
     } catch (e) { setStatus('locnote', 'Could not clear: ' + e.message, 'err'); }
   });
   $('locset').addEventListener('click', () => {
-    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('locnote', 'Enter the Device ID first.', 'err');
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('locnote', 'Fill in the Device ID above first — the forecast is stored against that watch.', 'err');
     if (!navigator.geolocation) return setStatus('locnote', 'This browser has no location.', 'err');
     setStatus('locnote', 'Asking the browser…');
     navigator.geolocation.getCurrentPosition(async (p) => {
@@ -2676,7 +2687,7 @@
         const r = await fetch($('api').value + '/loc', { method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ device_id: id, lat: p.coords.latitude, lon: p.coords.longitude }) });
         const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
-        setStatus('locnote', `Saved ${j.lat.toFixed(1)}, ${j.lon.toFixed(1)} — kept to 0.1° (about 11 km).`, 'ok');
+        setStatus('locnote', 'Using the place from this computer. It is kept to about 11 km, not your exact spot.', 'ok');
       } catch (e) { setStatus('locnote', 'Could not save: ' + e.message, 'err'); }
     }, (e) => setStatus('locnote', 'The browser refused: ' + e.message, 'err'), { maximumAge: 600000, timeout: 10000 });
   });

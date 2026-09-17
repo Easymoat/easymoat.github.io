@@ -247,7 +247,7 @@
   .status { font-family: var(--mono); font-size: 12px; color: var(--ink-2); height: 17px; line-height: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   #facenote, #imgslotnote { display: block; min-height: 1.4em; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   #insp .hint { min-height: 1.4em; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .status.ok { color: var(--ok); } .status.err { color: var(--danger); }
+  .status.ok { color: var(--ok); } .status.err { color: var(--danger); } .status.warn { color: var(--accent); }
   .field { display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 12px; }
   .field input[type=number] { width: 100%; font-family: var(--mono); }
   .seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 5px; overflow: hidden; }
@@ -317,7 +317,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 09:58</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 15:09</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -406,7 +406,7 @@
       <div class="grp">
         <div class="ctl"><span class="muted">Everything on the watch comes from here: save the dial above, then use <b>To watch</b> on it. The watch shows one dial — sending another replaces it, within 5 minutes.</span></div>
         <div class="status" id="syncstatus"></div>
-        <div class="row" id="shelfsaverow" style="align-items:center;gap:10px"><input type="text" id="shelfname" placeholder="Name (optional)" style="width:180px"><button class="btn primary" id="shelfsave">Save to collection</button><span class="muted" id="shelfcount"></span><span class="status err" id="shelfnopic" hidden>No picture in the dial — it will be saved without one</span></div>
+        <div class="row" id="shelfsaverow" style="align-items:center;gap:10px"><input type="text" id="shelfname" placeholder="Name (optional)" style="width:180px"><button class="btn primary" id="shelfsave">Save to collection</button><span class="muted" id="shelfcount"></span><span class="status warn" id="shelfnopic" hidden>No picture in the dial — it will be saved without one</span></div>
         <div class="status" id="shelfstatus"></div>
       </div>
       <div class="shelf" id="shelf"></div>
@@ -1299,8 +1299,9 @@
       p.innerHTML = `<span class="ico" style="color:#1D222B">${dialArt(+t, 1, 26, 26, '#1D222B')}</span><span class="nm">${d.name.replace(/^(Hands|Rim):\s*/, '')}</span>`;
       p.addEventListener('click', () => toggleDialPart(+t));
     }
+    else if (d.circle) p.innerHTML = `<span class="ico" style="color:#1D222B"><svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="8.5" fill="none" stroke="currentColor" stroke-width="3"/></svg></span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     else if (d.line != null) p.innerHTML = `<span class="ico" style="color:#1D222B">${lineArt(d.line, 22, 3).svg}</span><span class="nm">Line</span><span class="hint">${t}</span>`;
-    else p.innerHTML = `<span class="ico">${d.noPal ? '' : d.icon && !TEXT_ICON[d.icon] ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${TEXT_ICON[d.icon] || d.sample}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
+    else p.innerHTML = `<span class="ico">${d.noPal ? '' : d.icon && !TEXT_ICON[d.icon] ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${TEXT_ICON[d.icon] || d.sample || ''}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     if (!d.dial) p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +t));
     $('parts-' + d.grp).appendChild(p);
   }
@@ -2635,7 +2636,7 @@
         : (j.error || r.status));
       const parked = (st.park || []).length ? ` — ${st.park.length} parked ${st.park.length === 1 ? 'part is' : 'parts are'} not in it` : '';
       const note = (hasImg ? '' : (hasSource() ? ' (saved without the picture — Show is off)' : ' (no picture)')) + parked;
-      setStatus('shelfstatus', `Saved as ${body.name || 'item ' + j.n}${note} — use "To watch…" on it to put it on the watch.`, hasImg ? 'ok' : 'err'); $('shelfname').value = ''; loadShelf(); }
+      setStatus('shelfstatus', `Saved as ${body.name || 'item ' + j.n}${note} — use "To watch…" on it to put it on the watch.`, hasImg ? 'ok' : 'warn'); $('shelfname').value = ''; loadShelf(); }
     catch (e) { setStatus('shelfstatus', 'Save failed: ' + e.message, 'err'); }
   });
   async function loadShelfItem(n) {
@@ -2685,7 +2686,7 @@
         body: JSON.stringify({ device_id: id, slot: 1, from_shelf: n, activate: true, only: true }) });
       const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
       const nopic = !it.kind || it.kind === 'none';
-      setStatus('syncstatus', `Your watch now shows "${name}"${nopic ? ' — this item has no picture, so the watch shows the dial only' : ''}. It arrives within 5 minutes.`, nopic ? 'err' : 'ok');
+      setStatus('syncstatus', `Your watch now shows "${name}"${nopic ? ' — this item has no picture, so the watch shows the dial only' : ''}. It arrives within 5 minutes.`, nopic ? 'warn' : 'ok');
       WSLOTS.active = 1; WSLOTS.faces = { '1': { v: j.v, shelf: n, kind: it.kind || 'none' } }; markShelfOnWatch();
       loadWatchSlots(); loadWatchState();
     } catch (e) { setStatus('syncstatus', 'Send failed: ' + e.message, 'err'); }

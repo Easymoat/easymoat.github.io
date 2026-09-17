@@ -275,6 +275,17 @@
   /* ── 携帯 (細い画面): コレクションだけを出して、面の切り替えに専念する ──
      body.full を付ければ全部出る (Editor ボタン)。 */
   #phonebar { display: none; }
+  /* 携帯のバー。行はすべて同じ高さで左端をそろえ、指で押せる大きさ (44px) にする。 */
+  .prow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; width: 100%; }
+  .prow input[type=text] { flex: 1 1 150px; min-width: 0; height: 44px; box-sizing: border-box; font-size: 16px; }
+  .prow .btn { height: 44px; padding: 0 18px; display: inline-flex; align-items: center; }
+  .prow .pgrow { flex: 1 1 auto; }
+  .pwho { display: flex; align-items: baseline; gap: 8px; }
+  .pwho b { font-family: var(--mono); font-size: 15px; letter-spacing: .04em; }
+  .pnote { margin: 6px 0 12px; color: var(--ink-2); font-size: 13px; line-height: 1.5; }
+  .pnote b { font-family: var(--mono); color: var(--ink); }
+  #phonebar .status { white-space: normal; height: auto; line-height: 1.5; margin-top: 8px; }
+  #watchseen { white-space: normal; height: auto; line-height: 1.5; max-width: 520px; }
   @media (max-width: 760px) {
     body:not(.full) header .sub, body:not(.full) header .kbd { display: none; }
     body:not(.full) aside.left, body:not(.full) aside.right,
@@ -282,7 +293,7 @@
     body:not(.full) .imgbox, body:not(.full) .drawer, body:not(.full) #empty, body:not(.full) .dialbar,
     body:not(.full) #watchbox, body:not(.full) .tray,
     body:not(.full) .shelfbox .tier, body:not(.full) #shelfsaverow { display: none; }
-    body:not(.full) #phonebar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; width: 100%; }
+    body:not(.full) #phonebar { display: block; width: 100%; box-sizing: border-box; }
     body:not(.full) main { padding: 10px; gap: 10px; }
     body:not(.full) .shelf { gap: 14px; justify-content: center; }
     body:not(.full) .item { width: 46vw; max-width: 200px; }
@@ -321,17 +332,31 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 03:45</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 05:16</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
 
 <main>
   <div id="phonebar" class="box">
-    <span class="lbl">Watch</span>
-    <input type="text" id="devid2" placeholder="XXXX-XXXX" style="width:120px">
-    <span class="status" id="watchseen2" style="flex:1 1 100%"></span>
-    <button class="btn" id="tofulled" title="Show the whole editor on this screen">Editor</button>
+    <div class="psign" id="psign">
+      <div class="lbl">Your watch</div>
+      <p class="pnote">Type the ID your watch face shows — four characters, a dash, four more (like <b>a1b2-3456</b>). It stays on this phone.</p>
+      <div class="prow">
+        <input type="text" id="devid2" placeholder="XXXX-XXXX" inputmode="text" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" maxlength="40">
+        <button class="btn primary" id="psignin">Sign in</button>
+      </div>
+      <div class="status" id="psignerr"></div>
+    </div>
+    <div class="pon" id="pon" hidden>
+      <div class="prow">
+        <span class="pwho"><span class="lbl">Watch</span><b id="pid"></b></span>
+        <span class="pgrow"></span>
+        <button class="btn" id="psignout" title="Use a different watch">Change</button>
+        <button class="btn" id="tofulled" title="Show the whole editor on this screen">Editor</button>
+      </div>
+      <div class="status" id="watchseen2"></div>
+    </div>
   </div>
   <aside class="left">
     <div class="group"><span class="lbl">Parts</span><span class="muted">Drag onto the dial, or click to drop at center.</span></div>
@@ -2472,9 +2497,17 @@
   const WATCH = { active: 1, faces: {}, seen: null };
   function faceLayout(f) { const c = sanitize(f); return c || null; }
   // Render one layout as a small dial (reuses makeEl by swapping `st` while it builds).
+  // 見本の枠は画面幅で伸び縮みする (携帯は 42vw)。描いた時の幅のままだと中身がずれるので、
+  // 枠の大きさが変わったら描き直す (携帯で絵が枠からずれていた 2026-09-18)。
+  const MINI_RO = (typeof ResizeObserver === 'function') ? new ResizeObserver((rs) => {
+    rs.forEach((r) => { const el = r.target, w = Math.round(el.clientWidth);
+      if (el.__lay && w > 0 && w !== el.__side) renderFaceMini(el, el.__lay); });
+  }) : null;
   function renderFaceMini(el, lay) {
     // 枠線の内側 (clientWidth) に合わせる。124 固定だと border ぶんはみ出して右と下が切れる。
     const d = dev(), side = el.clientWidth || 124, sc = side / d.w, keep = st;
+    el.__lay = lay; el.__side = Math.round(el.clientWidth);
+    if (MINI_RO && !el.__obs) { el.__obs = 1; MINI_RO.observe(el); }
     el.innerHTML = '';
     if (!el.style.backgroundImage) el.style.background = hex(lay.bg);
     const inner = document.createElement('div');
@@ -2505,13 +2538,20 @@
   function renderWatchSeen() {
     const el = $('watchseen'); if (!el) return;
     const sn = WATCH.seen, act = WATCH.faces[String(WATCH.active)];
-    if (!sn || !sn.ts) { el.textContent = 'Watch: not checked in yet — it looks for changes every 5 minutes.'; el.className = 'status'; return; }
+    if (!sn || !sn.ts) { el.textContent = 'Waiting for your watch to connect for the first time. It looks for a new dial about every 5 minutes.'; el.className = 'status'; return; }
     const age = Math.max(0, Math.round(Date.now() / 1000 - sn.ts));
-    const ago = age < 60 ? 'just now' : age < 3600 ? `${Math.round(age / 60)} min ago` : age < 86400 ? `${Math.round(age / 3600)} h ago` : `${Math.round(age / 86400)} d ago`;
+    const span = age < 90 ? 'a moment' : age < 5400 ? `${Math.round(age / 60)} minutes`
+               : age < 172800 ? `${Math.round(age / 3600)} hours` : `${Math.round(age / 86400)} days`;
     const cur = WSLOTS.faces && WSLOTS.active ? WSLOTS.faces[String(WSLOTS.active)] : null;
+    const sent = cur || act;
     const upToDate = cur ? String(sn.have) === String(cur.v) : (act && String(sn.have) === String(act.v));
-    el.textContent = `Watch: last checked ${ago} · ` + (upToDate ? 'up to date ✓' : act ? 'update pending — arrives within 5 min' : 'nothing sent yet');
-    el.className = 'status ' + (upToDate ? 'ok' : '');
+    // 「5 d ago · update pending」では何が起きているのか伝わらないので、そのままの文にする。
+    let t, c = '';
+    if (!sent) { t = `Nothing has been sent to this watch yet. Your watch last connected ${span} ago.`; }
+    else if (upToDate) { t = `Your watch has the dial you sent. It last connected ${span} ago.`; c = 'ok'; }
+    else if (age < 1800) { t = 'Sent. Your watch should show it within 5 minutes.'; }
+    else { t = `Sent, but your watch has not connected for ${span}. It will show the new dial the next time it does.`; c = 'warn'; }
+    el.textContent = t; el.className = 'status ' + c;
   }
   async function loadWatchState() {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { WATCH.faces = {}; WATCH.seen = null; renderWatchSeen(); return; }
@@ -3380,13 +3420,30 @@
   (() => {
     const d2 = $('devid2'), w2 = $('watchseen2');
     if (!d2) return;
-    d2.value = $('devid').value;
-    d2.addEventListener('change', () => { $('devid').value = d2.value.trim(); $('devid').dispatchEvent(new Event('change', { bubbles: true })); });
-    $('devid').addEventListener('change', () => { d2.value = $('devid').value; });
+    const ok = (v) => /^[0-9a-zA-Z-]{4,40}$/.test(v);
+    // Device ID を入れる = このウォッチにサインインする、という流れにする。
+    // ID は下の Watch 欄 (#devid) が正で、こちらはその入口。
+    function showSigned() {
+      const v = $('devid').value.trim(), on = ok(v);
+      $('psign').hidden = on; $('pon').hidden = !on;
+      if (on) { $('pid').textContent = v; }
+      else { d2.value = ''; }
+    }
+    function signIn() {
+      const v = d2.value.trim();
+      if (!ok(v)) { setStatus('psignerr', 'That ID does not look right. It is like a1b2-3456 — check the watch face.', 'err'); d2.focus(); return; }
+      setStatus('psignerr', '');
+      $('devid').value = v; $('devid').dispatchEvent(new Event('change', { bubbles: true }));
+      showSigned();
+    }
+    $('psignin').addEventListener('click', signIn);
+    d2.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); signIn(); } });
+    $('psignout').addEventListener('click', () => { d2.value = $('devid').value; $('psign').hidden = false; $('pon').hidden = true; d2.focus(); d2.select(); });
+    $('devid').addEventListener('change', showSigned);
     // ウォッチの状態の行をそのまま写す
     const mirror = () => { if (w2) { w2.textContent = $('watchseen').textContent; w2.className = $('watchseen').className; } };
     new MutationObserver(mirror).observe($('watchseen'), { childList: true, characterData: true, subtree: true, attributes: true });
-    mirror();
+    mirror(); showSigned();
     $('tofulled').addEventListener('click', () => {
       document.body.classList.toggle('full');
       $('tofulled').textContent = document.body.classList.contains('full') ? 'Collection' : 'Editor';

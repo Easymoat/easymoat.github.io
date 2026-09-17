@@ -10,7 +10,7 @@
 <style>
   :root {
     --ground: #0E1116; --panel: #161A21; --panel-2: #1D222B; --line: #2A3140; --line-2: #3A4356;
-    --ink: #E7EAF0; --ink-2: #A3ACBC; --ink-3: #6E7889;
+    --ink: #E7EAF0; --ink-2: #A3ACBC; --ink-3: #8A93A3;
     --accent: #F2B441; --accent-ink: #1A1200; --danger: #E5484D; --ok: #4CC38A;
     --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
     --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -155,8 +155,8 @@
   .cap.onw { color: var(--accent); }
   .cap.del { cursor: pointer; }
   .cap.del:hover { color: var(--danger); }
-  .item { width: 150px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .item .mini { position: relative; width: 124px; height: 124px; border-radius: 50%; overflow: hidden; background: #000 center/cover no-repeat; border: 2px solid var(--line-2); }
+  .item { width: 250px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .item .mini { position: relative; width: 240px; height: 240px; border-radius: 50%; overflow: hidden; background: #000 center/cover no-repeat; border: 2px solid var(--line-2); }
   .item.onwatch .mini { border-color: var(--accent); }
   .item .mini .inner { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
   .item .mini .inner .anchor, .item .mini .inner .grid { display: none !important; }
@@ -303,6 +303,23 @@
   .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
   .muted { color: var(--ink-3); font-size: 12px; }
   .onlyfor { font-size: 14px; font-weight: 600; color: var(--accent); letter-spacing: .02em; }
+  /* ── 列ごとのスクロール (2026-09-17) ─────────────────────────────────
+     部品を探して左を下げると文字盤が画面の外へ出てしまい、置いた結果が見えなかった。
+     広い画面では 3 列をそれぞれ独立してスクロールさせ、中央は文字盤を上に貼り付ける
+     (下の Image / Collection / Watch がその下を流れる)。文字盤は貼り付いた時だけ縮む
+     — 縮尺は見た目だけで、当たり判定は画面上の矩形から取るので編集には影響しない。 */
+  @media (min-width: 981px) {
+    body { overflow: hidden; }
+    main { height: calc(100vh - var(--hdr, 52px)); min-height: 0; }
+    main > aside, main > section.stagewrap { overflow-y: auto; overscroll-behavior: contain; }
+    .stagewrap { padding-top: 0; }
+    .stage-row { position: sticky; top: 0; z-index: 4; background: var(--ground);
+                 box-shadow: 0 8px 12px -10px rgba(0,0,0,.9); }
+    /* 貼り付いている間は行を素の箱にする: 元の flex (wrap-reverse) だと縮めた高さから
+       中身が上へはみ出して文字盤が画面の外に出る。 */
+    .stage-col { transform-origin: top left; }
+    .stagewrap.pinned .stage-row { display: block; overflow: hidden; flex: none; }
+  }
   @media (max-width: 980px) {
     main { grid-template-columns: 1fr; }
     aside { border: 0; border-bottom: 1px solid var(--line); }
@@ -317,7 +334,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 15:09</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 19:53</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -354,7 +371,7 @@
       <div class="stage-col">
         <div class="dialbar top">
           <div class="grp"><span class="lbl">Dial</span>
-            <div class="ctl"><button class="btn" id="undo" disabled title="Undo the last change to the dial (⌘Z / Ctrl+Z). Parts, colours, sizes and the background — not the image.">Undo</button><button class="btn" id="redo" disabled title="Put back what Undo took away (⇧⌘Z / Ctrl+Y)">Redo</button><button class="btn danger" id="reset" title="Empty the dial: every part, the background and the text / icon sizes go back to the start. Units and the grid stay. Undo puts it back.">Reset</button><span class="vsep"></span><button class="btn" id="savedraft" title="Keeps a copy of the dial above (layout and image settings) in this browser.">Save draft</button><button class="btn" id="draft" title="Replaces the dial above with the saved draft.">Back to draft</button><span class="vsep"></span><span class="sub"><span class="muted">Grid</span><select id="grid" title="Also the step for the - / + buttons. Pick a fine grid to place thin double lines close together."><option value="5">200 × 200 (5)</option><option value="10">100 × 100 (10)</option><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label><span class="cb units" id="gridcol" title="Grid colour. Bright is easier to see on a black or dark dial."></span></span><span class="muted" id="draftnote"></span></div>
+            <div class="ctl"><button class="btn" id="undo" disabled title="Undo the last change to the dial (⌘Z / Ctrl+Z). Parts, colours, sizes and the background — not the image.">Undo</button><button class="btn" id="redo" disabled title="Put back what Undo took away (⇧⌘Z / Ctrl+Y)">Redo</button><button class="btn danger" id="reset" title="Empty the dial: every part, the background and the text / icon sizes go back to the start. Units and the grid stay. Undo puts it back.">Clear dial</button><span class="vsep"></span><button class="btn" id="savedraft" title="Keeps a copy of the dial above (layout and image settings) in this browser.">Save draft</button><button class="btn" id="draft" title="Replaces the dial above with the saved draft.">Back to draft</button><span class="vsep"></span><span class="sub"><span class="muted">Grid</span><select id="grid" title="Also the step for the - / + buttons. Pick a fine grid to place thin double lines close together."><option value="5">200 × 200 (5)</option><option value="10">100 × 100 (10)</option><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label><span class="cb units" id="gridcol" title="Grid colour. Bright is easier to see on a black or dark dial."></span></span><span class="muted" id="draftnote"></span></div>
             <div class="status" id="facestatus"></div>
           </div>
         </div>
@@ -378,7 +395,7 @@
           <div class="ctl"><span class="muted">Everything shows on the dial above — drag the empty part of it to move the picture.</span></div>
           <div class="ctl" id="imgsizerow">Size <span class="muted" id="imgsizewho"></span> <input id="imgsize" type="range" min="30" max="100" step="1" value="100"><span class="muted" id="imgsizev">100%</span></div>
           <div class="ctl">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"></div>
-          <div class="ctl" title="Only the cut-out changes — the stored photo is never touched.">Brightness <input id="imgbr" type="range" min="20" max="180" step="1" value="100"><span class="muted" id="imgbrv">100%</span> Saturation <input id="imgsa" type="range" min="0" max="200" step="1" value="100"><span class="muted" id="imgsav">100%</span><button class="btn" id="imgtone">Reset</button></div>
+          <div class="ctl" title="Only the cut-out changes — the stored photo is never touched.">Brightness <input id="imgbr" type="range" min="20" max="180" step="1" value="100"><span class="muted" id="imgbrv">100%</span> Saturation <input id="imgsa" type="range" min="0" max="200" step="1" value="100"><span class="muted" id="imgsav">100%</span><button class="btn" id="imgtone" title="Brightness and saturation back to 100 %">Reset tone</button></div>
           <div class="ctl" id="imgdragrow" title="What dragging the empty part of the dial does. Dragging a part always moves that part.">Dragging the dial moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Picture</button><button type="button" data-m="frame">Frame</button></span></div>
           <div class="ctl"><button class="btn toggle on" id="imgshow" disabled title="While ON, the dial above shows the image exactly as it is here (frame, size, zoom, colours) and it is saved with the dial. While OFF, the saved dial has no image.">Show on dial: ON</button><button class="btn" id="imgreset" title="Put the frame back to the middle at 100 % (the picture stays)">Reset frame</button><button class="btn danger" id="imgclear" title="Take the picture (or the colour) out of this editor and start over. Nothing is deleted from the server or from the collection.">Reset image</button><button class="btn" id="imgparts" title="Hide the parts on the dial above while you frame the picture">Hide parts</button><button class="btn" id="imghide" title="Hide the picture on the dial above">Hide image</button></div>
           <div class="ctl"><span class="onlyfor">For PulseLink users</span></div>
@@ -417,7 +434,7 @@
           <div class="row" style="align-items:center;gap:14px"><div class="field" style="grid-template-columns:auto 140px;gap:10px"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX"></div></div>
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
           <div class="status" id="watchseen" title="When your watch last checked in, and whether it already has what was last sent"></div>
-          <div class="ctl" title="Where the weather parts get their forecast. Once allowed, opening this page updates it, so it follows you when you travel."><button class="btn" id="locset">Set forecast location</button><button class="btn danger" id="locclear" title="Forget the saved place so only the watch's own position is used (for testing the watch's GPS). Automatic updates stop until you press Set again.">Reset</button></div>
+          <div class="ctl" title="Where the weather parts get their forecast. Once allowed, opening this page updates it, so it follows you when you travel."><button class="btn" id="locset">Set forecast location</button><button class="btn danger" id="locclear" title="Forget the saved place so only the watch's own position is used (for testing the watch's GPS). Automatic updates stop until you press Set again.">Forget place</button></div>
           <div class="ctl" title="If PulseLink runs on this watch and shares its position, the forecast follows that position — no need to open this page when you travel."><span class="muted">or follow PulseLink</span><input type="text" id="locpl" placeholder="XXXX-XXXX" style="width:110px"><button class="btn" id="locplset">Follow</button><span class="status" id="locnote" style="flex:1 1 auto"></span></div>
       </div>
     </div>
@@ -872,7 +889,7 @@
   // 疑似ボールド: 同じ文字を右へずらして重ね描きする。1 = 1 回ぶん、2 = より太く (途中にもう 1 枚)。
   const boldOff = (px, lv) => (lv === 2 ? Math.max(2, Math.round(px / 20)) : Math.max(1, Math.round(px / 36)));
   const BOLDS = [['Off', 0], ['Bold', 1], ['Bold 2', 2]];
-  const PRESET_LOBBY = [[3,500,150,0,0,5,1],[1,500,330,0,2,0,0],[2,500,445,0,0,1,0],[10,130,560,1,1,2,1],[13,870,560,2,1,3,1],[11,130,650,1,1,0,1],[12,870,650,2,1,0,1],[20,130,760,1,1,4,1],[22,870,760,2,1,6,1]];
+  const PRESET_LOBBY = [[3,500,150,0,0,5,1],[1,500,320,0,2,0,0],[2,500,465,0,0,1,0],[10,130,560,1,1,2,1],[13,870,560,2,1,3,1],[11,130,650,1,1,0,1],[12,870,650,2,1,0,1],[20,130,760,1,1,4,1],[22,870,760,2,1,6,1]];
   const PRESET_MIN   = [[1,500,420,0,2,0,0],[2,500,540,0,0,1,0],[3,500,700,0,0,5,1]];
 
   // ── Icons: same geometry as WfIcons.mc (center 0,0, ink box W x H at M; viewBox = ink box) ──
@@ -2342,6 +2359,7 @@
   $('redo').addEventListener('click', () => { if (!redo()) setStatus('jsonstatus', 'Nothing to redo.', ''); });
   // 盤面を最初の状態へ。単位やグリッドは好みなので残す。Undo で戻せる。
   $('reset').addEventListener('click', () => {
+    if (st.el.length && !confirm(`Clear the dial? ${elCount(st.el)} parts, the background and the sizes go back to the start. Undo (\u2318Z) puts it back.`)) return;
     st.el = []; st.bg = 0; st.pc = DEF_PC.slice();
     st.tx = DEF_TX.slice(); st.tm = DEF_TM.slice(); st.ic = DEF_IC.slice(); st.io = DEF_IO; st.b = 0;
     st.mt = [0, 0, 0, 0]; st.mc = [-1, -1, -1, -1]; st.mk = [-1, -1, -1, -1]; st.mv = [1, 1, 1, 1];
@@ -3326,6 +3344,29 @@
       document.body.classList.toggle('full');
       $('tofulled').textContent = document.body.classList.contains('full') ? 'Collection' : 'Editor';
     });
+  })();
+  // ── 文字盤の貼り付け ───────────────────────────────────────────────
+  // 中央の列を下げると文字盤が上に貼り付く。そのままでは下の段を読む場所が無くなるので、
+  // 貼り付いている間だけ縮める。縮尺は見た目だけ (位置の計算は画面上の矩形から取る)。
+  (function pinDial() {
+    const hdr = document.querySelector('header'), sc = document.querySelector('section.stagewrap');
+    const row = document.querySelector('.stage-row'), col = document.querySelector('.stage-col');
+    if (!hdr || !sc || !row || !col) return;
+    const setHdr = () => document.documentElement.style.setProperty('--hdr', hdr.offsetHeight + 'px');
+    function apply() {
+      if (!matchMedia('(min-width: 981px)').matches) { row.style.height = ''; col.style.transform = ''; sc.classList.remove('pinned'); return; }
+      const h = col.scrollHeight, room = sc.clientHeight;
+      const on = sc.scrollTop > 24 && h > room * .55;
+      const k = on ? Math.max(.5, Math.min(1, room * .55 / h)) : 1;
+      sc.classList.toggle('pinned', on);
+      col.style.transform = k < 1 ? `scale(${k.toFixed(3)})` : '';
+      row.style.height = k < 1 ? Math.round(h * k) + 'px' : '';
+    }
+    const kick = apply;   // requestAnimationFrame は画面外のタブでは走らない (検証で踏んだ)
+    sc.addEventListener('scroll', kick, { passive: true });
+    window.addEventListener('resize', () => { setHdr(); kick(); });
+    setHdr(); kick();
+    window.pinDialRefresh = kick;   // 部品や騨置き場が増減して高さが変わった時
   })();
   UNDO_SNAP = undoSnap();   // 起動時の姿を基準にする (最初の 1 回も戻せるように)
   render();

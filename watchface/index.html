@@ -321,7 +321,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 03:16</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 03:26</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -457,6 +457,7 @@
       <div class="ctl" title="What a long press on a weather part opens. In face = the dial redraws as a detail screen (now / hourly / daily). Garmin = the watch's own weather screen (scrolls freely, no time limit, Garmin's own look).">Weather detail <span class="cb units" id="wxdetail"></span></div></div>
     <div class="group"><span class="lbl">Markets</span><div class="parts" id="parts-mkt"></div><span class="muted">Drop one on the dial, then type its ticker in Selected part. The % parts show the change instead of the price.</span></div>
     <div class="group"><span class="lbl">USA Sports</span><div class="parts" id="parts-bb"></div><span class="muted">Pick the league (MLB / NFL / NBA / NHL) and your team in Selected part. Out of season, the part stays blank.</span></div>
+    <div class="group"><span class="lbl">Soccer</span><div class="parts" id="parts-soc"></div><span class="muted">Premier League, LaLiga, Serie A, Bundesliga, Ligue 1 and J1. One slot follows one competition: for a club's cup ties, use the other slot.</span></div>
     <div class="group"><span class="lbl">Elements <span id="elcount" class="cnt"></span></span><div class="list" id="list"></div></div>
   </aside>
 </main>
@@ -761,14 +762,31 @@
   // パレットに出す「変化率」版。部品の種別は 30/31 のまま、置いた時に f の bit2 を立てるだけ
   // (実機の契約は変わらない)。野球と同じで、値段と変化率を別々に置ける。
   const PAL_PCT = { 90: { t: 30, name: 'Stock 1 %' }, 91: { t: 31, name: 'Stock 2 %' } };
+  // サッカー用のパレット。部品そのものは USA Sports と同じ 32-35 で、置いた時に
+  // その枠 (Game 1 / Game 2) のリーグをサッカー側へ寄せるだけ。チーム未選択の枠にしか触らない。
+  const PAL_SOC = { 92: { t: 32, name: 'Score 1' }, 93: { t: 33, name: 'Status 1' }, 94: { t: 34, name: 'Score 2' }, 95: { t: 35, name: 'Status 2' } };
+  const SOC_DEF = 'eng.1';
   const isStock = (t) => !!(TYPES[t] && TYPES[t].stk != null);
   // MLB 30 球団 (statsapi のチーム ID)。実機へ渡すのは ID だけ。
   const MLB_TEAMS = [[109,'AZ','Arizona Diamondbacks'],[133,'ATH','Athletics'],[144,'ATL','Atlanta Braves'],[110,'BAL','Baltimore Orioles'],[111,'BOS','Boston Red Sox'],[112,'CHC','Chicago Cubs'],[145,'CWS','Chicago White Sox'],[113,'CIN','Cincinnati Reds'],[114,'CLE','Cleveland Guardians'],[115,'COL','Colorado Rockies'],[116,'DET','Detroit Tigers'],[117,'HOU','Houston Astros'],[118,'KC','Kansas City Royals'],[108,'LAA','Los Angeles Angels'],[119,'LAD','Los Angeles Dodgers'],[146,'MIA','Miami Marlins'],[158,'MIL','Milwaukee Brewers'],[142,'MIN','Minnesota Twins'],[121,'NYM','New York Mets'],[147,'NYY','New York Yankees'],[143,'PHI','Philadelphia Phillies'],[134,'PIT','Pittsburgh Pirates'],[135,'SD','San Diego Padres'],[137,'SF','San Francisco Giants'],[136,'SEA','Seattle Mariners'],[138,'STL','St. Louis Cardinals'],[139,'TB','Tampa Bay Rays'],[140,'TEX','Texas Rangers'],[141,'TOR','Toronto Blue Jays'],[120,'WSH','Washington Nationals']];
   const NFL_TEAMS = [['ARI','Arizona Cardinals'],['ATL','Atlanta Falcons'],['BAL','Baltimore Ravens'],['BUF','Buffalo Bills'],['CAR','Carolina Panthers'],['CHI','Chicago Bears'],['CIN','Cincinnati Bengals'],['CLE','Cleveland Browns'],['DAL','Dallas Cowboys'],['DEN','Denver Broncos'],['DET','Detroit Lions'],['GB','Green Bay Packers'],['HOU','Houston Texans'],['IND','Indianapolis Colts'],['JAX','Jacksonville Jaguars'],['KC','Kansas City Chiefs'],['LAC','Los Angeles Chargers'],['LAR','Los Angeles Rams'],['LV','Las Vegas Raiders'],['MIA','Miami Dolphins'],['MIN','Minnesota Vikings'],['NE','New England Patriots'],['NO','New Orleans Saints'],['NYG','New York Giants'],['NYJ','New York Jets'],['PHI','Philadelphia Eagles'],['PIT','Pittsburgh Steelers'],['SEA','Seattle Seahawks'],['SF','San Francisco 49ers'],['TB','Tampa Bay Buccaneers'],['TEN','Tennessee Titans'],['WSH','Washington Commanders']];
   const NBA_TEAMS = [['ATL','Atlanta Hawks'],['BKN','Brooklyn Nets'],['BOS','Boston Celtics'],['CHA','Charlotte Hornets'],['CHI','Chicago Bulls'],['CLE','Cleveland Cavaliers'],['DAL','Dallas Mavericks'],['DEN','Denver Nuggets'],['DET','Detroit Pistons'],['GS','Golden State Warriors'],['HOU','Houston Rockets'],['IND','Indiana Pacers'],['LAC','LA Clippers'],['LAL','Los Angeles Lakers'],['MEM','Memphis Grizzlies'],['MIA','Miami Heat'],['MIL','Milwaukee Bucks'],['MIN','Minnesota Timberwolves'],['NO','New Orleans Pelicans'],['NY','New York Knicks'],['OKC','Oklahoma City Thunder'],['ORL','Orlando Magic'],['PHI','Philadelphia 76ers'],['PHX','Phoenix Suns'],['POR','Portland Trail Blazers'],['SA','San Antonio Spurs'],['SAC','Sacramento Kings'],['TOR','Toronto Raptors'],['UTAH','Utah Jazz'],['WSH','Washington Wizards']];
   const NHL_TEAMS = [['ANA','Anaheim Ducks'],['BOS','Boston Bruins'],['BUF','Buffalo Sabres'],['CAR','Carolina Hurricanes'],['CBJ','Columbus Blue Jackets'],['CGY','Calgary Flames'],['CHI','Chicago Blackhawks'],['COL','Colorado Avalanche'],['DAL','Dallas Stars'],['DET','Detroit Red Wings'],['EDM','Edmonton Oilers'],['FLA','Florida Panthers'],['LA','Los Angeles Kings'],['MIN','Minnesota Wild'],['MTL','Montreal Canadiens'],['NJ','New Jersey Devils'],['NSH','Nashville Predators'],['NYI','New York Islanders'],['NYR','New York Rangers'],['OTT','Ottawa Senators'],['PHI','Philadelphia Flyers'],['PIT','Pittsburgh Penguins'],['SEA','Seattle Kraken'],['SJ','San Jose Sharks'],['STL','St. Louis Blues'],['TB','Tampa Bay Lightning'],['TOR','Toronto Maple Leafs'],['UTAH','Utah Mammoth'],['VAN','Vancouver Canucks'],['VGK','Vegas Golden Knights'],['WPG','Winnipeg Jets'],['WSH','Washington Capitals']];
+  // サッカー (ESPN の soccer/<リーグ>)。実機へ渡すのは略号だけ。2026-09-18 に ESPN から取得。
+  const SOC_TEAMS = {
+    'eng.1': [['ARS','Arsenal'],['AVL','Aston Villa'],['BHA','Brighton'],['BOU','Bournemouth'],['BRE','Brentford'],['CHE','Chelsea'],['COV','Coventry'],['CRY','C Palace'],['EVE','Everton'],['FUL','Fulham'],['HUL','Hull'],['IPS','Ipswich'],['LEE','Leeds'],['LIV','Liverpool'],['MAN','Man United'],['MNC','Man City'],['NEW','Newcastle'],['NFO','Nottm Forest'],['SUN','Sunderland'],['TOT','Spurs']],
+    'esp.1': [['ALA','Alavés'],['ATH','Athletic'],['ATM','Atlético'],['BAR','Barcelona'],['BET','Betis'],['CEL','Celta Vigo'],['DEP','Deportivo'],['ELC','Elche'],['ESP','Espanyol'],['GET','Getafe'],['LEV','Levante'],['MCF','Málaga'],['OSA','Osasuna'],['RAC','Racing'],['RAY','Rayo'],['RMA','Real Madrid'],['RSO','Real Sociedad'],['SEV','Sevilla'],['VAL','Valencia'],['VIL','Villarreal']],
+    'ita.1': [['ATA','Atalanta'],['BOL','Bologna'],['CAG','Cagliari'],['COMO','Como'],['FIO','Fiorentina'],['FRO','Frosinone'],['GEN','Genoa'],['INT','Inter Milan'],['JUV','Juventus'],['LAZ','Lazio'],['LEC','Lecce'],['MIL','Milan'],['MON','Monza'],['NAP','Napoli'],['PAR','Parma'],['ROMA','AS Roma'],['SAS','Sassuolo'],['TOR','Torino'],['UDI','Udinese'],['VEN','Venezia']],
+    'ger.1': [['B04','Leverkusen'],['BMG','Gladbach'],['DOR','Dortmund'],['ELV','Elversberg'],['FCA','Augsburg'],['FCU','Union Berlin'],['HSV','Hamburg'],['KOE','Cologne'],['M05','Mainz'],['MUN','Bayern'],['RBL','RB Leipzig'],['S04','Schalke'],['SCF','Freiburg'],['SCP','Paderborn'],['SGE','Frankfurt'],['SVW','Bremen'],['TSG','Hoffenheim'],['VFB','Stuttgart']],
+    'fra.1': [['ANG','Angers'],['AUX','Auxerre'],['BRE','Brest'],['HAC','Le Havre AC'],['LILL','Lille'],['LOR','Lorient'],['LYON','Lyon'],['MNS','Le Mans'],['MON','Monaco'],['NICE','Nice'],['OLM','Marseille'],['PAR','Paris FC'],['PSG','PSG'],['RCL','Lens'],['REN','Rennes'],['STR','Strasbourg'],['TOU','Toulouse'],['TRY','Troyes']],
+    'jpn.1': [['AVF','A Fukuoka'],['CER','Cerezo Osaka'],['GAM','Gamba Osaka'],['JEF','JEF Utd Chiba'],['KAN','Kashima'],['KAW','Kawasaki'],['KRE','Kashiwa'],['KYO','Kyoto Sanga'],['MITO','Mito Hollyhock'],['NAG','Nagoya'],['OKA','Okayama'],['SAN','Sanfreece'],['SHI','Shimizu'],['TOK','Tokyo'],['TYKV','Tokyo Verdy'],['URA','Urawa Reds'],['VIS','Vissel Kobe'],['VVN','V-Varen'],['YOK','Yokohama FM'],['ZEL','Machida Zelvia']],
+  };
+  const SOC_LEAGUES = [['eng.1','Premier League'],['esp.1','LaLiga'],['ita.1','Serie A'],['ger.1','Bundesliga'],['fra.1','Ligue 1'],['jpn.1','J1 League']];
   const LEAGUES = [['mlb', 'MLB'], ['nfl', 'NFL'], ['nba', 'NBA'], ['nhl', 'NHL']];
-  const leagueTeams = (lg) => (lg === 'nfl' ? NFL_TEAMS : lg === 'nba' ? NBA_TEAMS : lg === 'nhl' ? NHL_TEAMS : MLB_TEAMS.map(([id, ab, nm]) => [id, `${ab} · ${nm}`]));
+  const isSoccer = (lg) => !!SOC_TEAMS[lg];
+  const leagueTeams = (lg) => (SOC_TEAMS[lg] ? SOC_TEAMS[lg].map(([ab, nm]) => [ab, `${ab} · ${nm}`])
+    : lg === 'nfl' ? NFL_TEAMS : lg === 'nba' ? NBA_TEAMS : lg === 'nhl' ? NHL_TEAMS : MLB_TEAMS.map(([id, ab, nm]) => [id, `${ab} · ${nm}`]));
+  const leagueName = (lg) => { const a = LEAGUES.concat(SOC_LEAGUES).find(([k]) => k === lg); return a ? a[1] : lg; };
   const isBall = (t) => !!(TYPES[t] && TYPES[t].bb != null);
   const bbSlot = (t) => (TYPES[t] || {}).bb || 0;
   const bbOf = (i) => (st.bb || [])[i] || null;
@@ -777,13 +795,17 @@
   const setBb = (i, v) => { const a = (st.bb || []).slice(0, 2); while (a.length < 2) a.push(null); a[i] = v; st.bb = a; };
   const teamAbbr = (i) => { const lg = bbLg(i), tm = bbTm(i);
     if (lg === 'mlb') { const r = MLB_TEAMS.find((x) => x[0] === Number(tm)); return r ? r[1] : 'NYY'; }
+    if (isSoccer(lg)) return String(tm || SOC_TEAMS[lg][0][0]);
     return String(tm || (lg === 'nfl' ? 'KC' : lg === 'nba' ? 'TOR' : 'MTL')); };
   // 見本は選んだチームとリーグで組む (実機は試合が無ければ次の試合、それも無ければ --)。
   const ballSample = (t) => {
     const i = bbSlot(t), lg = bbLg(i), ab = teamAbbr(i);
     if (!bbTm(i)) return '--';
-    if (t === 32 || t === 34) return `${ab} 3-5 ${lg === 'nfl' ? 'DEN' : lg === 'nba' ? 'BOS' : lg === 'nhl' ? 'MTL' : 'BOS'}`;
-    return lg === 'mlb' ? 'Top 7' : lg === 'nhl' ? 'P2 12:34' : 'Q3 4:12';
+    if (t === 32 || t === 34) {
+      if (isSoccer(lg)) { const o = (SOC_TEAMS[lg].find(([x]) => x !== ab) || ['CHE'])[0]; return `${ab} 1-1 ${o}`; }
+      return `${ab} 3-5 ${lg === 'nfl' ? 'DEN' : lg === 'nba' ? 'BOS' : lg === 'nhl' ? 'MTL' : 'BOS'}`;
+    }
+    return isSoccer(lg) ? "67'" : lg === 'mlb' ? 'Top 7' : lg === 'nhl' ? 'P2 12:34' : 'Q3 4:12';
   };
   // 上げ / 下げ / 表 / 裏 / 終了 の色 (実機の固定パレットと共通: 5 緑・2 赤・7 青・3 橙)。
   const C_GREEN = '#55FF55', C_RED = '#FF5555', C_BLUE = '#55AAFF', C_ORANGE = '#FF9900';
@@ -1312,6 +1334,13 @@
     else p.innerHTML = `<span class="ico">${d.noPal ? '' : d.icon && !TEXT_ICON[d.icon] ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${TEXT_ICON[d.icon] || d.sample || ''}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     if (!d.dial) p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +t));
     $('parts-' + d.grp).appendChild(p);
+  }
+  for (const [key, d] of Object.entries(PAL_SOC)) {   // Soccer: 部品は 32-35 と同じ
+    const p = document.createElement('div');
+    p.className = 'part'; p.dataset.t = key;
+    p.innerHTML = `<span class="ico"><span style="font:500 13px var(--watch);white-space:nowrap">${d.t === 32 || d.t === 34 ? '1-1' : "67'"}</span></span><span class="nm">${d.name}</span><span class="hint">${d.t}</span>`;
+    p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +key));
+    $('parts-soc').appendChild(p);
   }
   for (const [key, d] of Object.entries(PAL_PCT)) {   // Stock 1 % / Stock 2 %
     const p = document.createElement('div');
@@ -1949,9 +1978,10 @@
         ${seg('Size', SIZES, same(4) ? e[4] : -9, 4)}
         ${seg('Icon size', ['Auto'].concat(SIZES), anyIcon ? (sameIs ? isOf(e) : -9) : -9, 7, -1)}
         `}
-        ${allBall ? `<div class="field" title="Which league and team this slot follows"><span>Game ${bbSlot(e[0]) + 1}</span><span class="cb units" id="fleague">${
-          LEAGUES.map(([k, nm]) => `<button type="button" data-v="${k}" class="${bbLg(bbSlot(e[0])) === k ? 'on' : ''}">${nm}</button>`).join('')
-        }</span></div>
+        ${allBall ? `<div class="field" title="Which league and team this slot follows"><span>Game ${bbSlot(e[0]) + 1}</span><select id="fleague">${
+          [['USA Sports', LEAGUES], ['Soccer', SOC_LEAGUES]].map(([gp, list]) => `<optgroup label="${gp}">` + list.map(([k, nm]) =>
+            `<option value="${k}" ${bbLg(bbSlot(e[0])) === k ? 'selected' : ''}>${nm}</option>`).join('') + '</optgroup>').join('')
+        }</select></div>
         <div class="field" title="The team whose game is shown"><span>Team</span><select id="fteam">${
           ['<option value="">— pick a team —</option>'].concat(leagueTeams(bbLg(bbSlot(e[0]))).map(([id, nm]) => `<option value="${id}" ${String(bbTm(bbSlot(e[0]))) === String(id) ? 'selected' : ''}>${nm}</option>`)).join('')
         }</select></div>
@@ -2100,9 +2130,8 @@
       const lg = bbLg(slot), v = ev.target.value;
       setBb(slot, v ? { lg, tm: lg === 'mlb' ? Number(v) : String(v) } : null); commit();
     });
-    document.querySelectorAll('#fleague button').forEach((b) => b.addEventListener('click', () => {
-      setBb(slot, { lg: b.dataset.v, tm: 0 }); commit();     // リーグを変えたらチームは選び直し
-    }));
+    const fl = $('fleague');
+    if (fl) fl.addEventListener('change', (ev) => { setBb(slot, { lg: ev.target.value, tm: 0 }); commit(); });   // リーグを変えたらチームは選び直し
     document.querySelectorAll('#fshow button').forEach((b) => b.addEventListener('click', () => {
       const v = Number(b.dataset.v);
       each((x) => { if (TYPES[x[0]]?.icon) { x[6] = (x[6] & ~3) | v; } });
@@ -2223,9 +2252,14 @@
   // 指 / マウスが動いた = 運ぶ。動かずに離した = 中央に置く。どちらも「作る」のはここ。
   function palSpawn(ev, center) {
     let t = PAL_PEND.t; PAL_PEND = null;
-    let d = TYPES[t] || TYPES[(PAL_PCT[t] || {}).t];
-    const pct = PAL_PCT[t];                      // 「変化率」版は種別 30/31 + bit2
+    let d = TYPES[t] || TYPES[(PAL_PCT[t] || {}).t] || TYPES[(PAL_SOC[t] || {}).t];
+    const pct = PAL_PCT[t], soc = PAL_SOC[t];    // 「変化率」版は種別 30/31 + bit2、サッカーは 32-35 と同じ
     if (pct) { t = pct.t; d = TYPES[t]; }
+    if (soc) { t = soc.t; d = TYPES[t]; }
+    if (isBall(t)) {                             // チーム未選択の枠だけ、置いた群に合わせてリーグを寄せる
+      const sl = bbSlot(t);
+      if (!bbTm(sl) && isSoccer(bbLg(sl)) !== !!soc) setBb(sl, { lg: soc ? SOC_DEF : 'mlb', tm: 0 });
+    }
     const e = isCircle(t) ? [t, 500, 500, 0, 1, 0, 0, -1, CIRC_DEF.dia, 0, CIRC_DEF.fill, CIRC_DEF.met, CIRC_DEF.dir]
             : isLine(t) ? [t, 500, 500, 0, 1, 0, 0, -1, LINE_LEN_DEF]
             : [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, (d.icon ? 1 : 0) | (pct ? 4 : 0) | (t === 2 ? F_DOW : 0), -1];

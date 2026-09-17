@@ -303,23 +303,6 @@
   .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
   .muted { color: var(--ink-3); font-size: 12px; }
   .onlyfor { font-size: 14px; font-weight: 600; color: var(--accent); letter-spacing: .02em; }
-  /* ── 列ごとのスクロール (2026-09-17) ─────────────────────────────────
-     部品を探して左を下げると文字盤が画面の外へ出てしまい、置いた結果が見えなかった。
-     広い画面では 3 列をそれぞれ独立してスクロールさせ、中央は文字盤を上に貼り付ける
-     (下の Image / Collection / Watch がその下を流れる)。文字盤は貼り付いた時だけ縮む
-     — 縮尺は見た目だけで、当たり判定は画面上の矩形から取るので編集には影響しない。 */
-  @media (min-width: 981px) {
-    body { overflow: hidden; }
-    main { height: calc(100vh - var(--hdr, 52px)); min-height: 0; }
-    main > aside, main > section.stagewrap { overflow-y: auto; overscroll-behavior: contain; }
-    .stagewrap { padding-top: 0; }
-    .stage-row { position: sticky; top: 0; z-index: 4; background: var(--ground);
-                 box-shadow: 0 8px 12px -10px rgba(0,0,0,.9); }
-    /* 貼り付いている間は行を素の箱にする: 元の flex (wrap-reverse) だと縮めた高さから
-       中身が上へはみ出して文字盤が画面の外に出る。 */
-    .stage-col { transform-origin: top left; }
-    .stagewrap.pinned .stage-row { display: block; overflow: hidden; flex: none; }
-  }
   @media (max-width: 980px) {
     main { grid-template-columns: 1fr; }
     aside { border: 0; border-bottom: 1px solid var(--line); }
@@ -334,7 +317,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 19:53</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 20:29</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -354,8 +337,6 @@
     <div class="group"><span class="lbl">Weather</span><div class="parts" id="parts-wx"></div></div>
     <div class="group"><span class="lbl">Hands</span><div class="parts" id="parts-hands"></div></div>
     <div class="group"><span class="lbl">Rim</span><div class="parts" id="parts-rim"></div></div>
-    <div class="group"><span class="lbl">Baseball</span><div class="parts" id="parts-bb"></div><span class="muted">Pick your team in Selected part. MLB only.</span></div>
-    <div class="group"><span class="lbl">Markets</span><div class="parts" id="parts-mkt"></div><span class="muted">Drop one on the dial, then type its ticker in Selected part. The % parts show the change instead of the price.</span></div>
   </aside>
 
   <section class="stagewrap">
@@ -469,6 +450,8 @@
       <div class="ctl" title="Unit for the Altitude part.">Distance <span class="cb units" id="distunit"></span></div>
       <div class="ctl" title="Clock format. Device = follow the watch's own setting.">Hours <span class="cb units" id="hourfmt"></span></div>
       <div class="ctl" title="What a long press on a weather part opens. In face = the dial redraws as a detail screen (now / hourly / daily). Garmin = the watch's own weather screen (scrolls freely, no time limit, Garmin's own look).">Weather detail <span class="cb units" id="wxdetail"></span></div></div>
+    <div class="group"><span class="lbl">Markets</span><div class="parts" id="parts-mkt"></div><span class="muted">Drop one on the dial, then type its ticker in Selected part. The % parts show the change instead of the price.</span></div>
+    <div class="group"><span class="lbl">Scores</span><div class="parts" id="parts-bb"></div><span class="muted">Pick your team in Selected part. Baseball (MLB) only for now.</span></div>
     <div class="group"><span class="lbl">Elements <span id="elcount" class="cnt"></span></span><div class="list" id="list"></div></div>
   </aside>
 </main>
@@ -1265,22 +1248,25 @@
   function readFolds() { try { return JSON.parse(localStorage.getItem(FOLD_KEY) || '{}') || {}; } catch (e) { return {}; } }
   function setupFolds() {
     const folds = readFolds();
-    document.querySelectorAll('aside.left .group').forEach((gp) => {
+    document.querySelectorAll('aside.left .group, aside.right .group').forEach((gp) => {
       const lbl = gp.querySelector('.lbl'), parts = gp.querySelector('.parts');
-      if (!lbl || !parts) return;                       // 見出しだけの群 (Parts の説明) は対象外
-      const name = lbl.textContent.trim();
+      if (!lbl) return;
+      if (!parts && gp.closest('aside.left')) return;   // 左は部品の群だけ (Parts の説明は畳まない)
+      const name = ((lbl.firstChild && lbl.firstChild.nodeType === 3) ? lbl.firstChild.textContent : lbl.textContent).trim();
       gp.classList.add('fold');
-      const cnt = document.createElement('span'); cnt.className = 'cnt'; lbl.appendChild(cnt);
-      // 目のボタン: この群の部品をプレビューに出すか (畳む操作とは別)
-      const grp = parts.id.replace('parts-', '');
-      const eye = document.createElement('span'); eye.className = 'eye'; eye.dataset.grp = grp;
-      eye.title = 'Show or hide these parts in the dial preview (the watch still shows them)';
-      eye.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        if (PV_OFF.has(grp)) { PV_OFF.delete(grp); } else { PV_OFF.add(grp); }
-        savePv(); renderEyes(); render();
-      });
-      lbl.appendChild(eye);
+      if (parts) {
+        const cnt = document.createElement('span'); cnt.className = 'cnt fcnt'; lbl.appendChild(cnt);
+        // 目のボタン: この群の部品をプレビューに出すか (畳む操作とは別)
+        const grp = parts.id.replace('parts-', '');
+        const eye = document.createElement('span'); eye.className = 'eye'; eye.dataset.grp = grp;
+        eye.title = 'Show or hide these parts in the dial preview (the watch still shows them)';
+        eye.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          if (PV_OFF.has(grp)) { PV_OFF.delete(grp); } else { PV_OFF.add(grp); }
+          savePv(); renderEyes(); render();
+        });
+        lbl.appendChild(eye);
+      }
       if (folds[name]) { gp.classList.add('shut'); }
       lbl.title = 'Click to fold this group away';
       lbl.addEventListener('click', () => {
@@ -1295,15 +1281,15 @@
   }
   // 目の印。出す = ● (緑) / 出さない = ◌ (灰)
   function renderEyes() {
-    document.querySelectorAll('aside.left .group.fold .eye').forEach((e) => {
+    document.querySelectorAll('aside.left .group.fold .eye, aside.right .group.fold .eye').forEach((e) => {
       const off = PV_OFF.has(e.dataset.grp);
       e.classList.toggle('off', off); e.textContent = off ? '◌' : '●';
     });
   }
   // 畳んでいる時は「中に何個あるか」を見出しに出す (開かずに中身の量が分かる)。
   function renderFoldCounts() {
-    document.querySelectorAll('aside.left .group.fold').forEach((gp) => {
-      const n = gp.querySelectorAll('.part').length, cnt = gp.querySelector('.lbl .cnt');
+    document.querySelectorAll('aside.left .group.fold, aside.right .group.fold').forEach((gp) => {
+      const n = gp.querySelectorAll('.part').length, cnt = gp.querySelector('.lbl .fcnt');
       if (cnt) { cnt.textContent = gp.classList.contains('shut') ? String(n) : ''; }
     });
   }
@@ -3344,29 +3330,6 @@
       document.body.classList.toggle('full');
       $('tofulled').textContent = document.body.classList.contains('full') ? 'Collection' : 'Editor';
     });
-  })();
-  // ── 文字盤の貼り付け ───────────────────────────────────────────────
-  // 中央の列を下げると文字盤が上に貼り付く。そのままでは下の段を読む場所が無くなるので、
-  // 貼り付いている間だけ縮める。縮尺は見た目だけ (位置の計算は画面上の矩形から取る)。
-  (function pinDial() {
-    const hdr = document.querySelector('header'), sc = document.querySelector('section.stagewrap');
-    const row = document.querySelector('.stage-row'), col = document.querySelector('.stage-col');
-    if (!hdr || !sc || !row || !col) return;
-    const setHdr = () => document.documentElement.style.setProperty('--hdr', hdr.offsetHeight + 'px');
-    function apply() {
-      if (!matchMedia('(min-width: 981px)').matches) { row.style.height = ''; col.style.transform = ''; sc.classList.remove('pinned'); return; }
-      const h = col.scrollHeight, room = sc.clientHeight;
-      const on = sc.scrollTop > 24 && h > room * .55;
-      const k = on ? Math.max(.5, Math.min(1, room * .55 / h)) : 1;
-      sc.classList.toggle('pinned', on);
-      col.style.transform = k < 1 ? `scale(${k.toFixed(3)})` : '';
-      row.style.height = k < 1 ? Math.round(h * k) + 'px' : '';
-    }
-    const kick = apply;   // requestAnimationFrame は画面外のタブでは走らない (検証で踏んだ)
-    sc.addEventListener('scroll', kick, { passive: true });
-    window.addEventListener('resize', () => { setHdr(); kick(); });
-    setHdr(); kick();
-    window.pinDialRefresh = kick;   // 部品や騨置き場が増減して高さが変わった時
   })();
   UNDO_SNAP = undoSnap();   // 起動時の姿を基準にする (最初の 1 回も戻せるように)
   render();

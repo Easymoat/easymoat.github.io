@@ -65,7 +65,7 @@
   .group.fold > .lbl .eye { margin-left: auto; font-size: 12px; color: var(--ok); cursor: pointer; padding: 0 2px; }
   .group.fold > .lbl .eye.off { color: var(--ink-3); }
   .group.fold > .lbl .eye:hover { color: var(--ink); }
-  .part { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); cursor: grab; user-select: none; touch-action: none; }
+  .part { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); cursor: grab; user-select: none; touch-action: pan-y; }
   .part:hover { border-color: var(--line-2); }
   .part:active { cursor: grabbing; }
   .part .ico { width: 34px; display: flex; justify-content: center; color: var(--ink-2); }
@@ -303,6 +303,10 @@
   .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
   .muted { color: var(--ink-3); font-size: 12px; }
   .onlyfor { font-size: 14px; font-weight: 600; color: var(--accent); letter-spacing: .02em; }
+  @media (min-width: 981px) {
+    aside.left, aside.right { align-self: start; position: sticky; top: 0; max-height: 100vh;
+                              overflow-y: auto; overscroll-behavior: contain; }
+  }
   @media (max-width: 980px) {
     main { grid-template-columns: 1fr; }
     aside { border: 0; border-bottom: 1px solid var(--line); }
@@ -317,7 +321,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag metrics onto the dial. The layout syncs to the watch face as a 1000×1000 grid.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 20:29</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-17 20:45</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -451,7 +455,7 @@
       <div class="ctl" title="Clock format. Device = follow the watch's own setting.">Hours <span class="cb units" id="hourfmt"></span></div>
       <div class="ctl" title="What a long press on a weather part opens. In face = the dial redraws as a detail screen (now / hourly / daily). Garmin = the watch's own weather screen (scrolls freely, no time limit, Garmin's own look).">Weather detail <span class="cb units" id="wxdetail"></span></div></div>
     <div class="group"><span class="lbl">Markets</span><div class="parts" id="parts-mkt"></div><span class="muted">Drop one on the dial, then type its ticker in Selected part. The % parts show the change instead of the price.</span></div>
-    <div class="group"><span class="lbl">Scores</span><div class="parts" id="parts-bb"></div><span class="muted">Pick your team in Selected part. Baseball (MLB) only for now.</span></div>
+    <div class="group"><span class="lbl">Scores</span><div class="parts" id="parts-bb"></div><span class="muted">Pick the league (MLB / NFL / NBA / NHL) and your team in Selected part. Out of season, the part stays blank.</span></div>
     <div class="group"><span class="lbl">Elements <span id="elcount" class="cnt"></span></span><div class="list" id="list"></div></div>
   </aside>
 </main>
@@ -1610,10 +1614,12 @@
             if (Math.abs(cross) < 1e-6) continue;                          // 平行 / 一直線
             const t = ((pb[0] - pa[0]) * qy - (pb[1] - pa[1]) * qx) / cross;   // a の端から交点まで (+ = 外側)
             const u = ((pb[0] - pa[0]) * oy - (pb[1] - pa[1]) * ox) / cross;   // b の端から交点まで
-            const wpm0 = linePen(a.e[4]) * 1000 / 454;
-            // 交点は「両方の端の少し先」にあること。手前 (線が交点を通り越している) は角ではなく
-            // 十字や T なので触らない — 触ると別の線に釣られて短くなる。
-            if (t < -wpm0 || u < -wpm0 || t > TOL || u > TOL) continue;
+            const wpm0 = linePen(a.e[4]) * 1000 / 454, wpmB = linePen(b.e[4]) * 1000 / 454;
+            // 交点は「両方の端の少し先」にあること。ずっと手前 (線が交点を大きく通り越している) は
+            // 角ではなく十字や T なので触らない — 触ると別の線に釣られて短くなる。
+            // ただし留め継ぎのぶん (線幅の 2 倍まで) の行き過ぎは角として扱う: 保存した面の線は
+            // 既にそこまで伸びた状態で戻ってくるので、これを外すと開き直すたびに R が消える。
+            if (t < -(2 * wpm0 + 1) || u < -(2 * wpmB + 1) || t > TOL || u > TOL) continue;
             const dot = Math.max(-1, Math.min(1, ax * bx + ay * by));
             const th = Math.acos(dot);                                     // なす角 (90 度だけでなく 45 / 135 度も来る)
             if (th < 0.2 || th > Math.PI - 0.01) continue;
@@ -1626,7 +1632,7 @@
             // 外側は r + 幅/2、内側は r − 幅/2 の半径で曲がるので、内側の縁にも R が入る。
             // 接点 (円弧の端) は交点から d = r / tan(θ/2) だけ線の内側へ戻ったところ。
             const px = pa[0] + ox * t, py = pa[1] + oy * t;                // 交点
-            const wB = linePen(b.e[4]) * 1000 / 454, wmin = Math.min(wpm, wB);
+            const wmin = Math.min(wpm, wpmB);
             const tan2 = Math.tan(th / 2);
             let r = FILLET_K * wmin, d = r / tan2;
             const room = 0.35 * Math.min(lineLen(a.e), lineLen(b.e));      // 短い線を食いつぶさない
@@ -2206,11 +2212,16 @@
       p.classList.toggle('on', st.el.some((e) => e[0] === +p.dataset.t));
     });
   }
+  let PAL_PEND = null;                 // 押したところ。動かすか離すまで部品は作らない
   function startPaletteDrag(ev, t) {
-    ev.preventDefault();
     const wantLine = isLine(t) || isLine((PAL_PCT[t] || {}).t);
     if (!wantLine && elCount(st.el) >= EL_MAX) { setStatus('shelfstatus', `The watch takes ${EL_MAX} parts — remove one before adding another. Lines do not count.`, 'err'); return; }
     if (wantLine && st.el.length - elCount(st.el) >= LINE_MAX) { setStatus('shelfstatus', `That is ${LINE_MAX} lines — enough for one dial.`, 'err'); return; }
+    PAL_PEND = { t, x: ev.clientX, y: ev.clientY, id: ev.pointerId };
+  }
+  // 指 / マウスが動いた = 運ぶ。動かずに離した = 中央に置く。どちらも「作る」のはここ。
+  function palSpawn(ev, center) {
+    let t = PAL_PEND.t; PAL_PEND = null;
     let d = TYPES[t] || TYPES[(PAL_PCT[t] || {}).t];
     const pct = PAL_PCT[t];                      // 「変化率」版は種別 30/31 + bit2
     if (pct) { t = pct.t; d = TYPES[t]; }
@@ -2218,11 +2229,20 @@
             : isLine(t) ? [t, 500, 500, 0, 1, 0, 0, -1, LINE_LEN_DEF]
             : [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, (d.icon ? 1 : 0) | (pct ? 4 : 0) | (t === 2 ? F_DOW : 0), -1];
     st.el.push(e); setSel(st.el.length - 1, false);
+    if (center) { e[1] = 500; e[2] = 500; render(); commit(); return; }
     const p = stagePoint(ev); e[1] = clamp(p.x); e[2] = clamp(p.y);
-    drag = { i: sel, items: [{ i: sel, dx: 0, dy: 0 }], fromPalette: true, moved: false };
+    drag = { i: sel, items: [{ i: sel, dx: 0, dy: 0 }], fromPalette: true, moved: true };
     render();
     stage.querySelector('.el.sel')?.classList.add('ghost');
   }
+  window.addEventListener('pointermove', (ev) => {
+    if (!PAL_PEND || ev.pointerId !== PAL_PEND.id) return;
+    if (Math.abs(ev.clientX - PAL_PEND.x) < 6 && Math.abs(ev.clientY - PAL_PEND.y) < 6) return;
+    palSpawn(ev, false);
+  });
+  window.addEventListener('pointerup', (ev) => { if (PAL_PEND && ev.pointerId === PAL_PEND.id) palSpawn(ev, true); });
+  // 縦になぞった時はブラウザが一覧を送る (iPad)。その時は pointercancel が来るので何も作らない。
+  window.addEventListener('pointercancel', () => { PAL_PEND = null; });
   window.addEventListener('pointermove', (ev) => {
     if (!drag) return;
     const p = stagePoint(ev); if (!st.el[drag.i]) return;

@@ -24,6 +24,7 @@
   header .sub { color: var(--ink-2); font-size: 13px; }
   header .spacer { flex: 1; }
   .lbl { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
+  .lblnote { text-transform: none; letter-spacing: 0; margin-left: 8px; font-weight: 400; }
   .tier { display: flex; align-items: baseline; gap: 12px; width: 100%; max-width: 1040px; margin: 6px 0 -6px; }
   /* Tiers 2 and 3 are not boxes: just a dividing line above each, then the heading */
   .imgbox.box, .shelfbox.box { background: none; border: 0; border-top: 1px solid var(--line); border-radius: 0; padding: 22px 0 0; }
@@ -227,6 +228,7 @@
   #stage.noimg .stageimg { display: none; }
   .box { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
   details.box > summary { list-style: none; }
+  details.camdet { margin-top: 12px; padding: 12px 16px; gap: 10px; }
   details.box > summary::-webkit-details-marker { display: none; }
   details.box > summary::before { content: "▸ "; color: var(--ink-3); }
   details.box[open] > summary::before { content: "▾ "; }
@@ -352,7 +354,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 06:59</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 07:20</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -426,23 +428,21 @@
           <div class="ctl" title="Only the cut-out changes — the stored photo is never touched.">Brightness <input id="imgbr" type="range" min="20" max="180" step="1" value="100"><span class="muted" id="imgbrv">100%</span> Saturation <input id="imgsa" type="range" min="0" max="200" step="1" value="100"><span class="muted" id="imgsav">100%</span><button class="btn" id="imgtone" title="Brightness and saturation back to 100 %">Reset tone</button></div>
           <div class="ctl" id="imgdragrow" title="What dragging the empty part of the dial does. Dragging a part always moves that part.">Dragging the dial moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Picture</button><button type="button" data-m="frame">Frame</button></span></div>
           <div class="ctl"><button class="btn" id="imgreset" title="Put the frame back to the middle at 100 % (the picture stays)">Reset frame</button><button class="btn danger" id="imgclear" title="Take the picture (or the colour) out of this editor and start over. Nothing is deleted from the server or from the collection.">Reset image</button></div>
+          <details class="box camdet" id="camgrp"><summary class="lbl" style="cursor:pointer">PulseLink camera</summary>
+            <div class="ctl"><button class="btn toggle" id="camon">Camera: OFF</button><span class="muted">PL ID</span><input type="text" id="plid" placeholder="XXXX-XXXX" style="width:110px"><span class="status" id="camnote" style="flex:1 1 auto"></span></div>
+          </details>
         </div>
         <div class="opts">
-          <div class="grp" title="The shape of the image frame on the dial."><span class="lbl">Shape</span><div class="ctl"><span class="cb" id="imgshape"></span></div>
+          <div class="grp" title="The shape of the image frame on the dial."><span class="lbl">Shape <span class="lblnote">Shift+click to add a second shape</span></span><div class="ctl"><span class="cb" id="imgshape"></span></div>
             <div class="ctl" id="shapeselrow" hidden title="Size and Rotate change the shape chosen here.">Adjust <span class="cb" id="shapesel"></span></div>
             <div class="ctl">Rotate <span class="cb"><button type="button" id="rotl" title="Turn the frame 45° anticlockwise">&#8634; 45°</button><button type="button" id="rotr" title="Turn the frame 45° clockwise">&#8635; 45°</button></span><span class="muted" id="rotv">0°</span></div>
-            <div class="muted">Shift+click to add a second shape — the same shape twice is fine. Each keeps its own size and angle.</div></div>
+</div>
           <div class="grp"><span class="lbl">Photos</span><div class="photos" id="photos"></div><div class="muted" id="imgslotnote"></div></div>
           <div class="grp"><span class="lbl">Actions</span>
-            <div class="ctl"><label class="btn file" for="imgfile">Add photo…</label><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp" hidden><span class="muted" id="imgfilename">Stored as is (max 1024 px)</span><button class="btn danger" id="imgremove" disabled>Delete photo</button></div>
+            <div class="ctl"><label class="btn file" for="imgfile">Add photo…</label><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp" hidden><span class="muted" id="imgfilename"></span><button class="btn danger" id="imgremove" disabled>Delete photo</button></div>
             <div class="ctl" title="No photo: the frame shape is filled with one colour instead."><span class="muted">Fill colour</span><input type="color" id="imgfill" value="#3a7bd5"><span class="swatches" id="fillsw" title="Recently used fill colours"></span><button class="btn" id="imgfillon">Use colour (no photo)</button></div>
             <div class="status" id="imgstatus"></div></div>
           <div class="grp" title="How many colours the cut-out is reduced to when you save. The watch can show at most 32."><span class="lbl">Colours on the watch</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div>
-          </div>
-          <div class="grp" id="camgrp"><span class="lbl">PulseLink camera</span>
-            <div class="muted">PulseLink is another Easymoat app (it shares position between watches and can turn a spare phone into a fixed camera). You only need this if you use it — everything else here works without it.</div>
-            <div class="ctl" title="Live camera from PulseLink: while ON, the latest camera frame replaces the picture in the editor (framed the same way)."><button class="btn toggle" id="camon">Camera: OFF</button><span class="muted">PL ID</span><input type="text" id="plid" placeholder="XXXX-XXXX" style="width:110px"><span class="status" id="camnote" style="flex:1 1 auto"></span></div>
-            <div class="ctl" id="camlocknote" hidden><span class="muted">Which way the camera looks is set in the PulseLink Viewer; how that picture sits on the dial (shape, size, zoom, position) is set here. Later frames keep this framing.</span></div>
           </div>
           <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span><button class="btn" id="imgbgapply" title="Copy this colour to the dial background (one-off; the dial is not linked to the image)">Use as dial background</button><button class="btn toggle" id="imgbgdial" title="Preview the photo against the dial's own background colour (follows the Layout background while ON; move the slider to go back to Auto)">Use dial background</button></div></div>
         </div>
@@ -3404,7 +3404,7 @@
     setShape(IMG.shape, null);
     ['imgzoom', 'imgsize', 'imgbr', 'imgsa'].forEach((id) => { const el = $(id); if (el) el.value = id === 'imgzoom' ? '1' : '100'; });
     ['imgbrv', 'imgsav', 'imgsizev'].forEach((id) => { const el = $(id); if (el) el.textContent = '100%'; });
-    const f = $('imgfilename'); if (f) f.textContent = 'Stored as is (max 1024 px)';
+    const f = $('imgfilename'); if (f) f.textContent = '';
     redrawImg(); renderShowToggle(); applyStageImage(); commit();
     setStatus('imgstatus', 'Image editor reset — nothing was deleted from the server.', 'ok');
   });
@@ -3596,7 +3596,7 @@
     if (d.k && PHOTOS.list.some((p) => p.k === d.k)) { loadPhoto(d.k, true); return; }   // shelf photo: the draft's framing goes on top
     if (d.data) {   // a picture kept inside the draft
       const img = new Image();
-      img.onload = () => { IMG.cur = img; IMG.src = 'file'; IMG.k = 0; redrawImg(); IMG.dirty = true; renderPhotos(); $('imgfilename').textContent = 'From draft'; };
+      img.onload = () => { IMG.cur = img; IMG.src = 'file'; IMG.k = 0; redrawImg(); IMG.dirty = true; renderPhotos(); $('imgfilename').textContent = ''; };
       img.src = d.data; return;
     }
     clearImgPreview(); IMG.k = 0; renderPhotos();
@@ -3660,7 +3660,7 @@
     } catch (e) { camNote('Camera: ' + e.message, 'err'); }
   }
   // カメラ中に変わるのは絵の中身だけ。枠 (形・大きさ・位置・拡大・移動) は他の写真と同じに使える。
-  function renderCamLock() { $('camlocknote').hidden = !CAM.on; }
+  function renderCamLock() {}
   // 枠がまだ無いとき (絵を 1 枚も入れていない) だけの初期値 = 画面いっぱいの四角。
   // 写真で作った枠があるならそれを引き継ぐ (カメラ → 写真と同じ扱い)。
   function camSquare() {
@@ -3722,7 +3722,22 @@
   UNDO_SNAP = undoSnap();   // 起動時の姿を基準にする (最初の 1 回も戻せるように)
   render();
   (st.stk || []).forEach(loadStock);   // 面に既に入っている銘柄も起動時に下見する (名前と値をプレビューへ)
-  loadPhotos(); loadWatchState();
+  // 再読み込みで Dial の絵が消えないように、絵の状態もこのブラウザに残す (2026-09-19)。
+  // 部品は faceComposer に残るのに絵だけ消えていた。棚の写真は番号、塗りは色、それ以外は縮小 JPEG で持つ。
+  const IMG_KEY = 'faceComposer.img';
+  const saveImgState = () => {
+    if (IMG.src === 'camera') return;
+    const d = Object.assign(imgDraftState(), { id: devId() });
+    try { localStorage.setItem(IMG_KEY, JSON.stringify(d)); }
+    catch (e) { delete d.data; try { localStorage.setItem(IMG_KEY, JSON.stringify(d)); } catch (e2) {} }
+  };
+  addEventListener('pagehide', saveImgState);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveImgState(); });
+  loadPhotos().then(() => {
+    let d = null; try { d = JSON.parse(localStorage.getItem(IMG_KEY) || 'null'); } catch (e) {}
+    if (d && !d.none && d.id === devId() && !hasSource()) applyImgDraft(d);
+  });
+  loadWatchState();
 })();
 </script>
 </body>

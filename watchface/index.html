@@ -347,7 +347,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 23:26</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 23:42</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1296,11 +1296,8 @@
       // Batons: 高級腕時計の文字盤。外周に「鉄道目盛り (chemin de fer)」=
       // 細い 2 本の円を 60 本の細線で橋渡し、内側に細長い植字バトン。角は丸めない (実機と同じ)。
       if (t === 69) {
-        const ro = rad(R - L(5)), ri = rad(R - L(15)), hair = odd(W(1));
-        return [[2, ro, hair],
-                [0, 60, 0, r1(R - ro), r1(ro - ri), hair, r1(ro - ri), hair, 0],
-                [2, ri, hair],
-                [0, 12, 0, r1(L(21)), r1(L(40)), odd(W(7)), r1(L(40)), odd(W(7)), 0],
+        // 太いバトンだけ (2026-09-18 ユーザー指示: 二重線と細い目盛りを外す)。位置は以前のまま。
+        return [[0, 12, 0, r1(L(21)), r1(L(40)), odd(W(7)), r1(L(40)), odd(W(7)), 0],
                 [0, 1, 1, r1(L(21)), r1(L(40)), odd(W(13)), r1(L(40)), odd(W(13)), 0]];
       }
       if (t === 63) return [[2, rad(R - 2 - W(2.5)), odd(W(5))], [0, 4, 1, 2, r1(L(26)), odd(W(7)), r1(L(26)), odd(W(7))]];

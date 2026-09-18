@@ -107,6 +107,7 @@
   .el { position: absolute; display: flex; align-items: center; gap: 4px; white-space: nowrap; cursor: grab; padding: 2px; margin: -2px; border-radius: 3px; touch-action: none; font-family: var(--watch); font-weight: 400; line-height: 1; }
   .el:active { cursor: grabbing; }
   .el .ico { display: flex; align-items: center; }
+  .el .scell { display: inline-flex; align-items: center; justify-content: flex-start; }
   .el.sel { outline: 1.5px dashed var(--accent); outline-offset: 2px; }
   .el .anchor { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); border: 1px solid #000; display: none; }
   .el.sel .anchor { display: block; }
@@ -346,7 +347,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 10:04</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 19:02</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -946,6 +947,14 @@
       d = px / 2 - inkC;
     } catch (e) {}
     return (shiftCache[px] = d);
+  }
+  // 文字の幅 (実機の dc.getTextWidthInPixels と同じ役目)。帯のコマ幅に使う。
+  const twCache = {};
+  function textW(px, str) {
+    const key = px + '|' + str; if (key in twCache) return twCache[key];
+    let w = 0;
+    try { const c = document.createElement('canvas').getContext('2d'); c.font = `400 ${px / FONT_EM}px Roboto`; w = c.measureText(str).width; } catch (e) {}
+    return (twCache[key] = w);
   }
   // Faux bold (layout "b" = 1): the watch draws the text twice, shifted right by round(px/36) (min 1).
   // 疑似ボールド: 同じ文字を右へずらして重ね描きする。1 = 1 回ぶん、2 = より太く (途中にもう 1 枚)。
@@ -1579,8 +1588,21 @@
       ? (TEXT_ICON[def.icon] ? `<span class="ico">${def.icon === 'stock' ? stkLabel(t, f) : TEXT_ICON[def.icon]}</span>` : `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:translateY(${iody}px) scale(${ki});">${ICONS[def.icon]()}</span>`)
       : '';
     if (def.strip) {
-      const temps = stripSample(e), cells = [];
-      for (let c = 0; c < def.strip; c++) cells.push(`${icon}<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px;${c < def.strip - 1 ? `margin-right:${(GAP * 2 * ki).toFixed(1)}px` : ''}">${temps[c]}</span>`);
+      // 帯 (29)。3 コマとも同じ幅にするので、気温 / 降水 / 風を並べても縦がそろう。
+      // コマの幅は中身ではなく「アイコン + "100%" の幅」で決める (実機も同じ決め方)。
+      const vals = stripSample(e), cells = [];
+      const met = stripMet(e), lay = arrOf(e);                 // 0 アイコン左 / 1 右 / 2 上
+      const iName = met === 1 ? 'umbrella' : met === 2 ? 'wind' : 'weather';   // 指標そのもののアイコン
+      const iArt = 34;                                         // 枠はどの指標でも 34 幅 (絵は中央ぞろえ)
+      const gp = GAP * ki, iw = showIco ? iArt * ki : 0;
+      const vw = textW(px, '100%') + bo;
+      const colW = (lay === 2) ? Math.max(iw, vw) : iw + (iw ? gp : 0) + vw;
+      const ico = showIco ? `<span class="ico" style="width:${iw.toFixed(1)}px;height:${(30 * ki).toFixed(1)}px;justify-content:center;align-items:center;transform:translateY(${iody}px) scale(${ki});">${ICONS[iName]()}</span>` : '';
+      for (let c = 0; c < def.strip; c++) {
+        const v = `<span class="val" style="display:inline-block;width:${vw.toFixed(1)}px;text-align:${lay === 2 ? 'center' : 'left'};position:relative;top:${inkShift(px).toFixed(2)}px">${vals[c]}</span>`;
+        cells.push(`<span class="scell" style="width:${colW.toFixed(1)}px;gap:${gp.toFixed(1)}px;${lay === 2 ? 'flex-direction:column;' : ''}${c < def.strip - 1 ? `margin-right:${(gp * 3).toFixed(1)}px` : ''}">${lay === 1 ? v + ico : ico + v}</span>`);
+      }
+      div.style.gap = '0px';
       div.innerHTML = cells.join('') + '<span class="anchor"></span>';
     } else {
       const showVal = !(f & 2);   // f の bit 1 = 値を出さない (アイコンだけ)
@@ -2038,7 +2060,7 @@
           ['<option value="">— pick a team —</option>'].concat(leagueTeams(bbLg(bbSlot(e[0]))).map(([id, nm]) => `<option value="${id}" ${String(bbTm(bbSlot(e[0]))) === String(id) ? 'selected' : ''}>${nm}</option>`)).join('')
         }</select></div>
         <div class="field" title="Green while the game is on, orange when it is over — instead of the colour below"><span>State</span><span class="cb units" id="fbbc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep colour</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By state</button></span></div>` : ''}
-        ${allStrip ? `<div class="field" title="What the three numbers show. The weather icon of each hour stays either way."><span>Shows</span><span class="cb units" id="fstrip">${
+        ${allStrip ? `<div class="field" title="What the three columns show. Each one draws its own icon: the hour's weather, an umbrella, or wind."><span>Shows</span><span class="cb units" id="fstrip">${
           STRIP_MET.map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 12) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>` : ''}
         ${allStock ? `<div class="field" title="Ticker as Yahoo Finance writes it — 7203.T for Tokyo, ^GSPC for an index"><span>Symbol</span><input type="text" id="fstk" value="${stkOf(e[0])}" placeholder="AAPL" style="width:110px" maxlength="12"><span class="muted" id="fstkinfo">${

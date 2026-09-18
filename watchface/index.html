@@ -346,7 +346,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 07:43</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 10:04</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -502,8 +502,8 @@
       <div class="ctl" title="Clock format. Device = follow the watch's own setting.">Hours <span class="cb units" id="hourfmt"></span></div>
       <div class="ctl" title="What a long press on a weather part opens. In face = the dial redraws as a detail screen (now / hourly / daily). Garmin = the watch's own weather screen (scrolls freely, no time limit, Garmin's own look).">Weather detail <span class="cb units" id="wxdetail"></span></div></div>
     <div class="group"><span class="lbl">Markets</span><div class="parts" id="parts-mkt"></div><span class="muted">Drop one on the dial, then type its ticker in Selected part. The % parts show the change instead of the price.</span></div>
-    <div class="group"><span class="lbl">USA Sports</span><div class="parts" id="parts-bb"></div><span class="muted">Pick the league (MLB / NFL / NBA / NHL) and your team in Selected part. Out of season, the part stays blank.</span></div>
-    <div class="group"><span class="lbl">Soccer</span><div class="parts" id="parts-soc"></div><span class="muted">Premier League, LaLiga, Serie A, Bundesliga, Ligue 1 and J1. One slot follows one competition: for a club's cup ties, use the other slot.</span></div>
+    <div class="group"><span class="lbl">USA Sports</span><div class="parts" id="parts-bb"></div><span class="muted">Four slots, Game 1-4. Pick each slot's league (MLB / NFL / NBA / NHL) and team in Selected part. Out of season, the part stays blank.</span></div>
+    <div class="group"><span class="lbl">Soccer</span><div class="parts" id="parts-soc"></div><span class="muted">Premier League, LaLiga, Serie A, Bundesliga, Ligue 1 and J1. <b>Game 1-4 are the same four slots as USA Sports</b> — each slot follows one team in one competition.</span></div>
     <div class="group"><span class="lbl">Elements <span id="elcount" class="cnt"></span></span><div class="list" id="list"></div></div>
   </aside>
 </main>
@@ -597,14 +597,14 @@
     72: { name: 'Line \\',    grp: 'line', line: 2, hidden: true },
     73: { name: 'Line /',     grp: 'line', line: 3, hidden: true },
     // 野球 (MLB)。応援チームは面ごとに 1 つ (layout の bb)。32 = 対戦とスコア、33 = 状態。
-    32: { name: 'Score 1',   grp: 'bb',    sample: 'NYY 3-5 BOS', icon: null,   iw: 0, bb: 0, noPal: true },
-    33: { name: 'Status 1',  grp: 'bb',    sample: 'Top 7',       icon: null,   iw: 0, bb: 0, noPal: true },
-    34: { name: 'Score 2',   grp: 'bb',    sample: 'DEN 24-17 KC', icon: null,   iw: 0, bb: 1, noPal: true },
-    35: { name: 'Status 2',  grp: 'bb',    sample: 'Q3 4:12',     icon: null,   iw: 0, bb: 1, noPal: true },
-    36: { name: 'Score 3',   grp: 'bb',    sample: 'ARS 1-1 CHE', icon: null,   iw: 0, bb: 2, noPal: true },
-    37: { name: 'Status 3',  grp: 'bb',    sample: "67'",         icon: null,   iw: 0, bb: 2, noPal: true },
-    38: { name: 'Score 4',   grp: 'bb',    sample: 'TOK 1-1 AVF', icon: null,   iw: 0, bb: 3, noPal: true },
-    39: { name: 'Status 4',  grp: 'bb',    sample: 'FT',          icon: null,   iw: 0, bb: 3, noPal: true },
+    32: { name: 'Game 1 score',   grp: 'bb',    sample: 'NYY 3-5 BOS', icon: null,   iw: 0, bb: 0, noPal: true },
+    33: { name: 'Game 1 status',  grp: 'bb',    sample: 'Top 7',       icon: null,   iw: 0, bb: 0, noPal: true },
+    34: { name: 'Game 2 score',   grp: 'bb',    sample: 'DEN 24-17 KC', icon: null,   iw: 0, bb: 1, noPal: true },
+    35: { name: 'Game 2 status',  grp: 'bb',    sample: 'Q3 4:12',     icon: null,   iw: 0, bb: 1, noPal: true },
+    36: { name: 'Game 3 score',   grp: 'bb',    sample: 'ARS 1-1 CHE', icon: null,   iw: 0, bb: 2, noPal: true },
+    37: { name: 'Game 3 status',  grp: 'bb',    sample: "67'",         icon: null,   iw: 0, bb: 2, noPal: true },
+    38: { name: 'Game 4 score',   grp: 'bb',    sample: 'TOK 1-1 AVF', icon: null,   iw: 0, bb: 3, noPal: true },
+    39: { name: 'Game 4 status',  grp: 'bb',    sample: 'FT',          icon: null,   iw: 0, bb: 3, noPal: true },
     // 銘柄は面ごとに 2 つ持つ (layout の st)。部品は st[0] / st[1] を指すだけ。
     30: { name: 'Stock 1',   grp: 'mkt',   sample: '229.35', icon: 'stock',     iw: 0, stk: 0 },
     31: { name: 'Stock 2',   grp: 'mkt',   sample: '229.35', icon: 'stock',     iw: 0, stk: 1 },
@@ -814,8 +814,8 @@
   const PAL_PCT = { 90: { t: 30, name: 'Stock 1 %' }, 91: { t: 31, name: 'Stock 2 %' } };
   // サッカー用のパレット。部品そのものは USA Sports と同じ 32-35 で、置いた時に
   // その枠 (Game 1 / Game 2) のリーグをサッカー側へ寄せるだけ。チーム未選択の枠にしか触らない。
-  const PAL_SOC = { 92: { t: 32, name: 'Score 1' }, 93: { t: 33, name: 'Status 1' }, 94: { t: 34, name: 'Score 2' }, 95: { t: 35, name: 'Status 2' },
-                    96: { t: 36, name: 'Score 3' }, 97: { t: 37, name: 'Status 3' }, 98: { t: 38, name: 'Score 4' }, 99: { t: 39, name: 'Status 4' } };
+  const PAL_SOC = { 92: { t: 32, name: 'Game 1 score' }, 93: { t: 33, name: 'Game 1 status' }, 94: { t: 34, name: 'Game 2 score' }, 95: { t: 35, name: 'Game 2 status' },
+                    96: { t: 36, name: 'Game 3 score' }, 97: { t: 37, name: 'Game 3 status' }, 98: { t: 38, name: 'Game 4 score' }, 99: { t: 39, name: 'Game 4 status' } };
   const SOC_DEF = 'eng.1';
   const isStock = (t) => !!(TYPES[t] && TYPES[t].stk != null);
   // MLB 30 球団 (statsapi のチーム ID)。実機へ渡すのは ID だけ。
@@ -2202,6 +2202,16 @@
   // 線はグリッドに乗せる (グリッドに沿って引くための吸着)。
   const snapGrid = (v) => clamp(Math.round(v / st.grid) * st.grid);
   const snap = (v) => clamp(Math.round(v / st.grid) * st.grid);
+  // クリックで足す時の置き場所。中央から縦に、空いているところを探す (重ねて置かない)。
+  // 盤面全体に描く部品 (針・縁) と線・円は場所を持たないので数えない。
+  function freeSpot() {
+    const put = st.el.filter((e) => !isLine(e[0]) && !isCircle(e[0]) && !(TYPES[e[0]] || {}).dial);
+    const busy = (x, y) => put.some((e) => Math.abs(e[1] - x) < 90 && Math.abs(e[2] - y) < 55);
+    const ys = [500]; for (let d = 60; d <= 360; d += 60) { ys.push(500 - d, 500 + d); }
+    for (const y of ys) { if (!busy(500, y)) return [snap(500), snap(y)]; }
+    for (const y of ys) { for (const x of [340, 660, 240, 760]) { if (!busy(x, y)) return [snap(x), snap(y)]; } }
+    return [500, 500];
+  }
   let LAYOUT_DIRTY = true;   // the dial differs from what the selected face holds (cleared by loading a face / Upload)
   // The editor state itself survives a reload (localStorage 'faceComposer'). On top of that there is
   // one "draft" slot in this browser, separate from the three faces: "Save draft" copies the dial into
@@ -2316,7 +2326,7 @@
             : isLine(t) ? [t, 500, 500, 0, 1, 0, 0, -1, LINE_LEN_DEF]
             : [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, (d.icon ? 1 : 0) | (pct ? 4 : 0) | (t === 2 ? F_DOW : 0), -1];
     st.el.push(e); setSel(st.el.length - 1, false);
-    if (center) { e[1] = 500; e[2] = 500; render(); commit(); return; }
+    if (center) { const [cx, cy] = freeSpot(); e[1] = cx; e[2] = cy; render(); commit(); return; }
     const p = stagePoint(ev); e[1] = clamp(p.x); e[2] = clamp(p.y);
     drag = { i: sel, items: [{ i: sel, dx: 0, dy: 0 }], fromPalette: true, moved: true };
     render();

@@ -347,7 +347,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 23:15</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 23:26</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1680,10 +1680,13 @@
     div.style.gap = (GAP * ki) + 'px';
     // 日付は bit5 が立っている面だけ「曜日 = アイコン / 日付 = 値」に分ける (昔の面は 1 つの文字列のまま)。
     const splitDate = isSplitDate(e);
-    const showIco = (f & 1) && def.icon && (t !== 2 || splitDate);
-    const icon = showIco
-      ? (TEXT_ICON[def.icon] ? `<span class="ico"${def.icon === 'stock' && (f & 8) ? ` style="color:${colOf(c)}"` : ''}>${def.icon === 'stock' ? stkLabel(t, f) : TEXT_ICON[def.icon]}</span>` : `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:translateY(${iody}px) scale(${ki});">${ICONS[def.icon]()}</span>`)
-      : '';
+    const cityCode = cityOf(e) ? ((TZ_CITIES.find((cc) => cc[0] === cityOf(e)) || [])[1] || '') : '';
+    const showIco = (f & 1) && (def.icon || cityCode) && (t !== 2 || splitDate);
+    const lpx = cityCode ? effPx(2, s) : 0;            // 都市名は時刻ではなく本文の大きさ
+    const icon = !showIco ? ''
+      : cityCode ? `<span class="ico" style="font-size:${(lpx / FONT_EM).toFixed(2)}px;line-height:${lpx}px;position:relative;top:${inkShift(lpx).toFixed(2)}px">${cityCode}</span>`
+      : (TEXT_ICON[def.icon] ? `<span class="ico"${def.icon === 'stock' && (f & 8) ? ` style="color:${colOf(c)}"` : ''}>${def.icon === 'stock' ? stkLabel(t, f) : TEXT_ICON[def.icon]}</span>` : `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:translateY(${iody}px) scale(${ki});">${ICONS[def.icon]()}</span>`)
+;
     if (def.strip) {
       // 帯 (29)。3 コマとも同じ幅にするので、気温 / 降水 / 風を並べても縦がそろう。
       // コマの幅は中身ではなく「アイコン + "100%" の幅」で決める (実機も同じ決め方)。
@@ -2118,7 +2121,7 @@
     const stepRow = (label, key, val, ttl) => `<div class="field" title="${ttl}"><span>${label}</span><span class="cb units step" data-step="${key}"><button type="button" data-d="-1">&minus;</button><b>${val == null ? '—' : val}</b><button type="button" data-d="1">+</button></span></div>`;
     const isOf = (x) => (Number.isInteger(x[7]) && x[7] >= 0 && x[7] <= SIZE_MAX) ? x[7] : -1;
     const sameIs = all.every((x) => isOf(x) === isOf(e));
-    const anyIcon = all.some((x) => TYPES[x[0]]?.icon);
+    const anyIcon = all.some((x) => TYPES[x[0]]?.icon || cityOf(x));
     const arcEl = st.el.find((x) => ARCSET[x[0]]);   // Meters は弧が文字盤にある間ずっと出す (選択に関係なく)
     const allLine = all.every((x) => isLine(x[0]));   // 線だけを選んでいる時は線の操作に差し替える
     const allStock = !none && all.every((x) => isStock(x[0])) && all.every((x) => x[0] === e[0]);   // 同じ銘柄の部品だけ
@@ -2344,9 +2347,10 @@
     const ftz = $('ftz');
     if (ftz) ftz.addEventListener('change', (ev) => each((x) => {
       if (!hasCity(x[0])) return;
-      const v = Number(ev.target.value);
+      const v = Number(ev.target.value), was = cityOf(x);
       while (x.length < 9) x.push(x.length === 7 ? -1 : 0);
-      if (v) { if (x.length < 10) x.push(v); else x[9] = v; } else if (x.length > 9) x.length = 9;
+      if (v) { if (x.length < 10) x.push(v); else x[9] = v; if (!was) x[6] = (x[6] & ~3) | 1; }   // 初めて都市にした時は名前も出す
+      else { if (x.length > 9) x.length = 9; x[6] &= ~3; }                                       // ウォッチの時刻に戻したら名前は無し
     }));
     const fl = $('fleague');
     if (fl) fl.addEventListener('change', (ev) => { setBb(slot, { lg: ev.target.value, tm: 0 }); commit(); });   // リーグを変えたらチームは選び直し

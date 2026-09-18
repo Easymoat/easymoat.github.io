@@ -273,10 +273,16 @@
   .seg button.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
   .swatches { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .swatches.off { opacity: .35; pointer-events: none; }   /* 全周でない円は塗れない */
-  #bgpick, .swatches .pick { width: 34px; height: 26px; padding: 0 2px; border: 1px solid var(--line-2); border-radius: 5px; background: var(--panel-2); cursor: pointer; }
+  #bgpick, #imgfill, .swatches .pick { width: 34px; height: 26px; padding: 0 2px; border: 1px solid var(--line-2); border-radius: 5px; background: var(--panel-2); cursor: pointer; }
   #bgpick { margin-right: 6px; }
-  #bgpick, .swatches .pick.big { width: 56px; height: 38px; }
-  .swatches.simple .pick.big { margin: 0 6px 0 0; }
+  .swatches.simple .pick { margin: 0 4px 0 0; }
+  /* 大きいカラーパネル (OS のパネルは大きさを変えられない) */
+  .cpop { position: fixed; z-index: 1000; background: var(--panel); border: 1px solid var(--line-2); border-radius: 10px; padding: 12px; box-shadow: 0 16px 40px rgba(0,0,0,.55); display: flex; flex-direction: column; gap: 10px; touch-action: none; }
+  .cpop[hidden] { display: none; }
+  .cpop canvas { display: block; border-radius: 6px; cursor: crosshair; }
+  .cpop .cprow { display: flex; gap: 8px; align-items: center; }
+  .cpop .cpsw { width: 34px; height: 30px; border-radius: 5px; border: 1px solid var(--line-2); }
+  .cpop .cphex { flex: 1 1 auto; width: 90px; font: 13px ui-monospace, monospace; }
   .swatches .pick { margin-left: 6px; }
   .pxs { display: inline-flex; gap: 18px; }
   .stp { display: inline-flex; align-items: center; gap: 6px; }
@@ -357,7 +363,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 07:41</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 07:52</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2262,19 +2268,18 @@
         <div class="field" title="Ticker (AAPL) or the company name as the data provider writes it"><span>Label</span><span class="cb units" id="fstkn"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 16)) ? 'on' : ''}">Symbol</button><button type="button" data-v="16" class="${all.every((x) => (x[6] & 16)) ? 'on' : ''}">Name</button></span></div>
         <div class="field" title="The price turns green when it is up and red when it is down. The symbol or name keeps the colour below."><span>Up / down</span><span class="cb units" id="fstkc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep colour</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By move</button></span></div>` : ''}
         <div class="brk"></div>
-        <div class="field"><span>Color</span><span class="swatches simple"><input type="color" class="pick big" id="fpick" value="${colOf(e[5])}" title="Pick any colour — recent ones stay next to it">${
+        <div class="field"><span>Color</span><span class="swatches simple"><input type="color" class="pick" id="fpick" value="${colOf(e[5])}" title="Pick any colour — recent ones stay next to it">${
           (same(5) && e[5] >= 0 && e[5] < PC_BASE ? [e[5]] : []).concat(shownColors(e[5]).reverse()).map((i) => `<button class="sw ${same(5) && i === e[5] ? 'on' : ''}" data-c="${i}" title="${colOf(i).toUpperCase()}" style="background:${colOf(i)}"></button>`).join('')
         }</span></div>
         <div class="field" title="Line the selected parts up on the one you clicked last (the highlighted row in the list)"><span>Align</span><span class="cb units" id="falign"><button type="button" data-v="x" ${multi ? '' : 'disabled'}>Same X &#8597;</button><button type="button" data-v="y" ${multi ? '' : 'disabled'}>Same Y &#8596;</button></span></div>
-        <div class="brk"></div>
-        <div class="row" style="margin-top:6px"><button class="btn" id="tofront" title="Draw this part over the others (last in the list)">Front</button><button class="btn" id="toback" title="Draw this part under the others (first in the list)">Back</button><button class="btn" id="dup">Duplicate</button><button class="btn danger" id="del">Remove</button></div>
+        <div class="field"><button class="btn" id="tofront" title="Draw this part over the others (last in the list)">Front</button><button class="btn" id="toback" title="Draw this part under the others (first in the list)">Back</button><button class="btn" id="dup">Duplicate</button><button class="btn danger" id="del">Remove</button></div>
         ${arcEl ? `<div class="field" title="Each arc can be a meter. Pick what it measures; none = plain arc."><span>Meters</span><span class="mts">${
           ARCSET[arcEl[0]].lbl.map((pos, i) => { const on = (st.mv || [])[i] !== 0; return `<label class="mt${on ? '' : ' off'}"><button type="button" class="mvb${on ? ' on' : ''}" data-i="${i}" title="Show or hide this arc">${pos}</button><select data-i="${i}" ${on ? '' : 'disabled'}>${
             METERS.map(([id, nm]) => `<option value="${id}" ${(st.mt || [])[i] === id ? 'selected' : ''}>${nm}</option>`).join('')
           }</select><input type="color" class="pick mtc" data-i="${i}" value="${colOf((st.mc || [])[i] >= 0 ? st.mc[i] : arcEl[5])}" title="Colour of the arc itself — right-click to follow the Rim part again"><input type="color" class="pick mtk" data-i="${i}" value="${colOf((st.mk || [])[i] >= 0 ? st.mk[i] : arcEl[5])}" title="Colour of the track (the empty part of the arc) — right-click for the automatic faint shade"></label>`; }).join('')
         }</span></div>` : ''}
       </div>
-      <div class="muted hint">${COLOR_NOTE ? `<span class="status err">${COLOR_NOTE}</span> ` : ''}${none ? 'Shift+click (or Cmd/Ctrl+click) selects several parts.' : multi ? `${all.length} parts selected — Anchor, Size, Icon size, Color and Icon apply to all of them.` : 'Shift+click adds another part to the selection.'}</div>`;
+      <div class="muted hint">${COLOR_NOTE ? `<span class="status err">${COLOR_NOTE}</span> ` : ''}${none ? 'Shift+click (or Cmd/Ctrl+click) selects several parts.' : multi ? `${all.length} parts selected — Anchor, Size, Icon size, Color and Icon apply to all of them.` : ''}</div>`;
     // 色の入力欄を触っている間は右の欄を作り直さない (作り直すとパネルごと消える)。
     const bindPickers = () => box.querySelectorAll('input[type="color"]').forEach((pk) => {
       pk.addEventListener('focus', () => { PICK_OPEN++; });
@@ -3742,6 +3747,80 @@
     if (d && !d.none && d.id === devId() && !hasSource()) applyImgDraft(d);
   });
   loadWatchState();
+})();
+
+// 大きいカラーパネル (2026-09-19)。OS のパネルは大きさを変えられないので、input[type=color] を押したら
+// これを開く。input は値の置き場とイベントの出し元のまま: 動かしている間は input、閉じた時に値が変わって
+// いれば change、開いた時 focus・閉じた時 blur (部品の編集欄は開いている間は作り直さない = PICK_OPEN)。
+(() => {
+  const W = 300, H = 220, HB = 22, dpr = Math.max(1, window.devicePixelRatio || 1);
+  const pop = document.createElement('div'); pop.className = 'cpop'; pop.hidden = true;
+  pop.innerHTML = `<canvas class="sv"></canvas><canvas class="hue"></canvas>
+    <div class="cprow"><span class="cpsw"></span><input type="text" class="cphex" maxlength="7" spellcheck="false" autocomplete="off"><button type="button" class="btn cpok">Done</button></div>`;
+  document.body.appendChild(pop);
+  const sv = pop.querySelector('.sv'), hu = pop.querySelector('.hue'), hx = pop.querySelector('.cphex'), sw = pop.querySelector('.cpsw');
+  [[sv, W, H], [hu, W, HB]].forEach(([c, w, h]) => { c.width = w * dpr; c.height = h * dpr; c.style.width = w + 'px'; c.style.height = h + 'px'; });
+  let cur = null, start = '', h = 0, s = 0, v = 0;
+  const toHex = () => {
+    const f = (n) => { const k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); };
+    return '#' + [f(5), f(3), f(1)].map((x) => Math.round(x * 255).toString(16).padStart(2, '0')).join('');
+  };
+  const fromHex = (str) => {
+    const n = parseInt(String(str).replace('#', ''), 16) || 0, r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+    const mx = Math.max(r, g, b), d = mx - Math.min(r, g, b);
+    v = mx; s = mx ? d / mx : 0;
+    if (d) { const hh = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = (hh * 60 + 360) % 360; }
+  };
+  function paint() {
+    let c = sv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.fillStyle = `hsl(${h},100%,50%)`; c.fillRect(0, 0, W, H);
+    let g = c.createLinearGradient(0, 0, W, 0); g.addColorStop(0, '#fff'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+    g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, '#000'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+    c.lineWidth = 2; c.strokeStyle = v > 0.55 && s < 0.5 ? '#000' : '#fff'; c.beginPath(); c.arc(s * W, (1 - v) * H, 7, 0, Math.PI * 2); c.stroke();
+    c = hu.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g = c.createLinearGradient(0, 0, W, 0); for (let i = 0; i <= 6; i++) g.addColorStop(i / 6, `hsl(${i * 60},100%,50%)`);
+    c.fillStyle = g; c.fillRect(0, 0, W, HB);
+    c.lineWidth = 3; c.strokeStyle = '#fff'; c.strokeRect(h / 360 * W - 3, 1.5, 6, HB - 3);
+    const x = toHex(); sw.style.background = x; if (document.activeElement !== hx) hx.value = x.toUpperCase();
+  }
+  const emit = () => { if (!cur) return; cur.value = toHex(); cur.dispatchEvent(new Event('input', { bubbles: true })); };
+  const drag = (cv, fn) => cv.addEventListener('pointerdown', (ev) => {
+    ev.preventDefault(); try { cv.setPointerCapture(ev.pointerId); } catch (e) {}
+    const at = (e2) => { const r = cv.getBoundingClientRect(); fn(Math.max(0, Math.min(1, (e2.clientX - r.left) / r.width)), Math.max(0, Math.min(1, (e2.clientY - r.top) / r.height))); paint(); emit(); };
+    at(ev);
+    const mv = (e2) => at(e2), up = () => { cv.removeEventListener('pointermove', mv); cv.removeEventListener('pointerup', up); cv.removeEventListener('pointercancel', up); };
+    cv.addEventListener('pointermove', mv); cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  });
+  drag(sv, (x, y) => { s = x; v = 1 - y; });
+  drag(hu, (x) => { h = Math.min(359.9, x * 360); });
+  hx.addEventListener('input', () => { const m = /^#?([0-9a-f]{6})$/i.exec(hx.value.trim()); if (m) { fromHex(m[1]); paint(); emit(); } });
+  hx.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') close(); });
+  pop.querySelector('.cpok').addEventListener('click', () => close());
+  function open(t) {
+    if (cur) close();
+    cur = t; start = t.value; fromHex(start); pop.hidden = false; paint();
+    t.dispatchEvent(new Event('focus'));
+    const r = t.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight;
+    let left = Math.max(8, Math.min(r.left, innerWidth - pw - 8)), top = r.bottom + 6;
+    if (top + ph > innerHeight - 8) top = Math.max(8, r.top - ph - 6);
+    pop.style.left = left + 'px'; pop.style.top = top + 'px';
+  }
+  function close() {
+    if (!cur) return;
+    const t = cur; cur = null; pop.hidden = true;
+    if (t.value.toLowerCase() !== start.toLowerCase()) t.dispatchEvent(new Event('change', { bubbles: true }));
+    t.dispatchEvent(new Event('blur'));
+  }
+  const isPick = (el) => el && el.matches && el.matches('input[type="color"]');
+  document.addEventListener('mousedown', (ev) => { if (isPick(ev.target)) ev.preventDefault(); }, true);   // フォーカスを取らせない
+  document.addEventListener('click', (ev) => {
+    if (!isPick(ev.target)) return;
+    ev.preventDefault();                                   // OS のパネルは開かない
+    if (cur === ev.target) close(); else open(ev.target);
+  }, true);
+  document.addEventListener('pointerdown', (ev) => { if (cur && !pop.contains(ev.target) && ev.target !== cur) close(); }, true);
+  document.addEventListener('keydown', (ev) => { if (cur && ev.key === 'Escape') { cur.value = start; cur.dispatchEvent(new Event('input', { bubbles: true })); close(); } });
+  window.addEventListener('resize', () => close());
 })();
 </script>
 </body>

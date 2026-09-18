@@ -45,7 +45,7 @@
   #insp .group { flex-direction: row; flex-wrap: wrap; gap: 10px 22px; align-items: center; align-content: flex-start; }
   /* 部品の種類で行数が変わっても、下の文字盤プレビューが動かないように高さを保つ
      (実際の高さは今までに出た一番高い形に合わせて JS が固定する) */
-  #insp { min-height: 300px; }
+  #insp { min-height: 0; }   /* 基本の 3 行が固定なので確保しない (2026-09-19) */
   #insp .field { display: flex; gap: 8px; align-items: center; }
   #insp .field > span:first-child { color: var(--ink-3); font-size: 12px; }
   #insp .field input[type=number] { width: 68px; }
@@ -361,7 +361,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 08:41</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 08:42</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>

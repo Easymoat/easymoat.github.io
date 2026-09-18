@@ -51,7 +51,8 @@
   #insp .field input[type=number] { width: 68px; }
   #insp .swatches { gap: 5px; max-width: 530px; }   /* ピッカーまで同じ行に収める (折り返すと左端へ回る) */
   #insp .row { margin-top: 0 !important; }
-  #insp .brk { flex: 0 0 100%; height: 0; }   /* Align と Duplicate / Remove を必ず同じ行に置く */
+  #insp .brk { flex: 0 0 100%; height: 0; }
+  #insp .brk + .brk, #insp .group > .brk:first-child { display: none; }   /* Align と Duplicate / Remove を必ず同じ行に置く */
   #insp > div:first-child { display: inline-block; margin-right: 18px; }
   .group { display: flex; flex-direction: column; gap: 6px; }
   .parts { display: grid; grid-template-columns: 1fr; gap: 4px; }
@@ -274,6 +275,8 @@
   .swatches.off { opacity: .35; pointer-events: none; }   /* 全周でない円は塗れない */
   #bgpick, .swatches .pick { width: 34px; height: 26px; padding: 0 2px; border: 1px solid var(--line-2); border-radius: 5px; background: var(--panel-2); cursor: pointer; }
   #bgpick { margin-right: 6px; }
+  #bgpick, .swatches .pick.big { width: 56px; height: 38px; }
+  .swatches.simple .pick.big { margin: 0 6px 0 0; }
   .swatches .pick { margin-left: 6px; }
   .pxs { display: inline-flex; gap: 18px; }
   .stp { display: inline-flex; align-items: center; gap: 6px; }
@@ -354,7 +357,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 07:20</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 07:41</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2196,10 +2199,6 @@
           METERS.map(([id, nm]) => `<option value="${id}" ${circMet(e) === id ? 'selected' : ''}>${nm}</option>`).join('')
         }</select><span class="cb units" id="fcdir"><button type="button" data-v="1" class="${circDir(e) > 0 ? 'on' : ''}">&#8635;</button><button type="button" data-v="-1" class="${circDir(e) < 0 ? 'on' : ''}">&#8634;</button></span></div>
         ` : ''}
-        ${allText ? `<div class="field" title="Where the icon sits relative to the value"><span>Arrange</span><span class="cb units" id="farr">${
-          [['Icon left', 0], ['Icon right', 1], ['Icon above', 2]].map(([nm, v]) =>
-            `<button type="button" data-v="${v}" class="${all.every((x) => arrOf(x) === v) ? 'on' : ''}">${nm}</button>`).join('')
-        }</span></div>` : ''}
         ${allRect ? `
         ${stepRow('Width', 8, all.every((x) => rectW(x) === rectW(e)) ? rectW(e) : null, 'How wide the rectangle is, in grid steps')}
         ${stepRow('Height', 9, all.every((x) => rectH(x) === rectH(e)) ? rectH(e) : null, 'How tall the rectangle is, in grid steps')}
@@ -2228,6 +2227,16 @@
         ${seg('Size', SIZES, same(4) ? e[4] : -9, 4)}
         ${seg('Icon size', ['Auto'].concat(SIZES), anyIcon ? (sameIs ? isOf(e) : -9) : -9, 7, -1)}
         `}
+        <div class="brk"></div>
+        ${(allLine || allCirc || allRect || allGraph) ? '' : `<div class="field" title="${anyIcon ? 'What this part draws' : 'This part has no icon'}"><span>Show</span><span class="cb units" id="fshow">${
+          [['Icon + value', 1], ['Icon only', 3], ['Value only', 0]].map(([lbl, v]) =>
+            `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 3) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none ? 'disabled' : ''}>${lbl}</button>`).join('')
+        }</span></div>`}
+        ${allText ? `<div class="field" title="Where the icon sits relative to the value"><span>Arrange</span><span class="cb units" id="farr">${
+          [['Icon left', 0], ['Icon right', 1], ['Icon above', 2]].map(([nm, v]) =>
+            `<button type="button" data-v="${v}" class="${all.every((x) => arrOf(x) === v) ? 'on' : ''}">${nm}</button>`).join('')
+        }</span></div>` : ''}
+        <div class="brk"></div>
         ${allCityClock ? `<div class="field" title="Show the time in another city. Summer time is followed automatically."><span>Time zone</span><select id="ftz">${
           [`<option value="0" ${all.every((x) => cityOf(x) === 0) ? 'selected' : ''}>This watch's time</option>`].concat(
             TZ_CITIES.map((c) => [c, tzOffsetNow(c[3])]).sort((a, b) => a[1] - b[1]).map(([c, off]) =>
@@ -2252,17 +2261,12 @@
         <div class="field" title="What the number shows"><span>Value</span><span class="cb units" id="fstkv"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 4)) ? 'on' : ''}">Price</button><button type="button" data-v="4" class="${all.every((x) => (x[6] & 4)) ? 'on' : ''}">Change %</button></span></div>
         <div class="field" title="Ticker (AAPL) or the company name as the data provider writes it"><span>Label</span><span class="cb units" id="fstkn"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 16)) ? 'on' : ''}">Symbol</button><button type="button" data-v="16" class="${all.every((x) => (x[6] & 16)) ? 'on' : ''}">Name</button></span></div>
         <div class="field" title="The price turns green when it is up and red when it is down. The symbol or name keeps the colour below."><span>Up / down</span><span class="cb units" id="fstkc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep colour</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By move</button></span></div>` : ''}
-        ${(allLine || allCirc || allRect || allGraph) ? '' : `<div class="field" title="${anyIcon ? 'What this part draws' : 'This part has no icon'}"><span>Show</span><span class="cb units" id="fshow">${
-          [['Icon + value', 1], ['Icon only', 3], ['Value only', 0]].map(([lbl, v]) =>
-            `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 3) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none ? 'disabled' : ''}>${lbl}</button>`).join('')
-        }</span></div>`}
-        <div class="field"><span>Color</span><span class="swatches">${
-          PALETTE.slice(0, PC_BASE).map((c, i) => `<button class="sw ${same(5) && i === e[5] ? 'on' : ''}" data-c="${i}" title="${PALETTE_NAMES[i]}" style="background:${c}"></button>`).join('')
-        }<span class="sep"></span>${
-          shownColors(e[5]).map((i) => `<button class="sw ${same(5) && i === e[5] ? 'on' : ''}" data-c="${i}" title="${hex((st.pc || DEF_PC)[i - PC_BASE] || 0)}" style="background:${colOf(i)}"></button>`).join('')
-        }<input type="color" class="pick" id="fpick" value="${colOf(e[5])}" title="Pick any colour — the 5 most recent stay here"></span></div>
         <div class="brk"></div>
+        <div class="field"><span>Color</span><span class="swatches simple"><input type="color" class="pick big" id="fpick" value="${colOf(e[5])}" title="Pick any colour — recent ones stay next to it">${
+          (same(5) && e[5] >= 0 && e[5] < PC_BASE ? [e[5]] : []).concat(shownColors(e[5]).reverse()).map((i) => `<button class="sw ${same(5) && i === e[5] ? 'on' : ''}" data-c="${i}" title="${colOf(i).toUpperCase()}" style="background:${colOf(i)}"></button>`).join('')
+        }</span></div>
         <div class="field" title="Line the selected parts up on the one you clicked last (the highlighted row in the list)"><span>Align</span><span class="cb units" id="falign"><button type="button" data-v="x" ${multi ? '' : 'disabled'}>Same X &#8597;</button><button type="button" data-v="y" ${multi ? '' : 'disabled'}>Same Y &#8596;</button></span></div>
+        <div class="brk"></div>
         <div class="row" style="margin-top:6px"><button class="btn" id="tofront" title="Draw this part over the others (last in the list)">Front</button><button class="btn" id="toback" title="Draw this part under the others (first in the list)">Back</button><button class="btn" id="dup">Duplicate</button><button class="btn danger" id="del">Remove</button></div>
         ${arcEl ? `<div class="field" title="Each arc can be a meter. Pick what it measures; none = plain arc."><span>Meters</span><span class="mts">${
           ARCSET[arcEl[0]].lbl.map((pos, i) => { const on = (st.mv || [])[i] !== 0; return `<label class="mt${on ? '' : ' off'}"><button type="button" class="mvb${on ? ' on' : ''}" data-i="${i}" title="Show or hide this arc">${pos}</button><select data-i="${i}" ${on ? '' : 'disabled'}>${

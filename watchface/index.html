@@ -119,6 +119,7 @@
   #stage .el.dialpart svg * { pointer-events: auto; }
   .el.linepart { pointer-events: none; padding: 0; margin: 0; }          /* 箱ではなく線の上だけを掴む */
   .el.linepart svg { flex: 0 0 auto; }
+  .el.graphpart { padding: 0; margin: 0; }
   /* 四角形の右下のつまみ。選んでいる時だけ出る。つまみだけは掴めるようにする (箱は素通し) */
   .el .rhandle { display: none; position: absolute; right: -7px; bottom: -7px; width: 14px; height: 14px; box-sizing: border-box;
                  background: var(--accent); border: 2px solid #05070A; border-radius: 3px; cursor: nwse-resize; pointer-events: auto; touch-action: none; }
@@ -351,7 +352,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 23:56</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 00:13</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -382,6 +383,7 @@
     <div class="group"><span class="lbl">Clock</span><div class="parts" id="parts-clock"></div></div>
     <div class="group"><span class="lbl">Lines</span><div class="parts" id="parts-line"></div><span class="muted">Circles can also be meters. Lines do not count toward the part limit.</span></div>
     <div class="group"><span class="lbl">Body</span><div class="parts" id="parts-body"></div></div>
+    <div class="group"><span class="lbl">Graphs</span><div class="parts" id="parts-graph"></div><span class="muted">Heart rate and stress: the last 6 hours. Steps: the last 7 days, today on the right. Two sizes.</span></div>
     <div class="group"><span class="lbl">Weather</span><div class="parts" id="parts-wx"></div></div>
     <div class="group"><span class="lbl">Hands</span><div class="parts" id="parts-hands"></div></div>
     <div class="group"><span class="lbl">Rim</span><div class="parts" id="parts-rim"></div></div>
@@ -606,6 +608,11 @@
     29: { name: 'Now 1h 2h', grp: 'wx',    sample: '29°',    icon: 'weather',   iw: 34, strip: 3 },
     25: { name: 'Precip %',  grp: 'wx',    sample: '40%',    icon: 'umbrella',  iw: 26 , hidden: true },   // removed from the palette 2026-09-06 (Garmin's current-hour value; use 28 Rain today). Kept so saved faces still render.
     26: { name: 'Moon age',  grp: 'wx',    sample: moonAgeStr(), icon: 'moon',  iw: 26 },
+    // 41-43 = グラフ (2026-09-19)。s = 大きさ (0 小 / 1 大)。心拍とストレスは 6 時間、歩数は過去 7 日 (今日を含む)。
+    // 心拍は時計の記録 (SensorHistory)、ストレスは記録が無い機種が多いので文字盤が 5 分ごとに自分で測って貯める。
+    41: { name: 'HR graph',     grp: 'graph', graph: 'hr' },
+    42: { name: 'Stress graph', grp: 'graph', graph: 'stress' },
+    43: { name: 'Steps graph',  grp: 'graph', graph: 'steps' },
     40: { name: 'Notifications', grp: 'clock', sample: '3',  icon: 'bell',      iw: 26 },
     // 50-54 / 60-64 = whole-dial parts: they sit at the centre, cover the dial and are not moved.
     50: { name: 'Hands: Bars',        grp: 'hands', dial: true },
@@ -807,6 +814,31 @@
   const isLine = (t) => !!(TYPES[t] && TYPES[t].line != null);
   const isCircle = (t) => !!(TYPES[t] && TYPES[t].circle);
   const isRect = (t) => !!(TYPES[t] && TYPES[t].rect);
+  const isGraph = (t) => !!(TYPES[t] && TYPES[t].graph);
+  // グラフの箱 [幅, 高さ] (どちらも盤面の幅の千分率、実機と同じ値)。0 = 小、1 = 大
+  const GRAPH_BOX = [[260, 100], [440, 160]];
+  const graphBox = (e) => GRAPH_BOX[e[4] === 1 ? 1 : 0];
+  // 見本のデータ。心拍 = 5 分ごと 72 点 (6 時間)、ストレス = 10 分ごと 36 本、歩数 = 7 日 (右端が今日)
+  const HR_SAMPLE = Array.from({ length: 72 }, (_, i) => Math.round(64 + 6 * Math.sin(i / 6) + (i > 38 && i < 52 ? 38 * Math.sin((i - 38) / 13 * Math.PI) : 0)));
+  const STRESS_SAMPLE = Array.from({ length: 36 }, (_, i) => Math.max(5, Math.round(24 + 14 * Math.sin(i / 4) + (i > 20 && i < 28 ? 30 : 0))));
+  const STEPS_SAMPLE = [6200, 8400, 5100, 10200, 7600, 9100, 4300];
+  // グラフの絵 (w, h は px)。実機も同じ決め方で描く:
+  //   心拍: 72 点の折れ線、縦は窓の中の最小〜最大、上下 2px の余白、線幅 2
+  //   ストレス: 36 本の棒、ピッチ = 幅/36、棒の幅 = ピッチ×0.7、高さ = 値/100
+  //   歩数: 7 本の棒、ピッチ = 幅/7、棒の幅 = ピッチ×0.6、高さ = 値/7 日の最大
+  function graphArt(kind, w, h, k) {
+    let o = '';
+    if (kind === 'hr') {
+      const d = HR_SAMPLE, lo = Math.min(...d), hi = Math.max(...d), pad = 2 * k, pen = Math.max(1, 2 * k);
+      const pts = d.map((v, i) => `${(pen / 2 + i * (w - pen) / (d.length - 1)).toFixed(1)},${(pad + (1 - (v - lo) / Math.max(1, hi - lo)) * (h - 2 * pad)).toFixed(1)}`);
+      o = `<polyline points="${pts.join(' ')}" fill="none" stroke="currentColor" stroke-width="${pen.toFixed(1)}" stroke-linejoin="round" stroke-linecap="round"/>`;
+    } else {
+      const d = kind === 'stress' ? STRESS_SAMPLE : STEPS_SAMPLE, top = kind === 'stress' ? 100 : Math.max(...d);
+      const pitch = w / d.length, bw = Math.max(1, Math.round(pitch * (kind === 'stress' ? 0.7 : 0.6)));
+      o = d.map((v, i) => { const bh = Math.max(1, v / top * h); return `<rect x="${(i * pitch + (pitch - bw) / 2).toFixed(1)}" y="${(h - bh).toFixed(1)}" width="${bw}" height="${bh.toFixed(1)}" fill="currentColor"/>`; }).join('');
+    }
+    return `<svg width="${w.toFixed(1)}" height="${h.toFixed(1)}" style="display:block;overflow:visible">${o}</svg>`;
+  }
   const RECT_DEF = { w: 300, h: 200 };
   const RECT_MIN = 40;
   const rectW = (e) => { const v = Number(e[8]); return Number.isFinite(v) && v >= RECT_MIN ? Math.min(1000, Math.round(v)) : RECT_DEF.w; };
@@ -1476,6 +1508,7 @@
       p.innerHTML = `<span class="ico" style="color:#1D222B">${dialArt(+t, 1, 26, 26, '#1D222B')}</span><span class="nm">${d.name.replace(/^(Hands|Rim):\s*/, '')}</span>`;
       p.addEventListener('click', () => toggleDialPart(+t));
     }
+    else if (d.graph) p.innerHTML = `<span class="ico" style="color:#1D222B">${graphArt(d.graph, 30, 16, 0.5)}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     else if (d.rect) p.innerHTML = `<span class="ico" style="color:#1D222B"><svg width="24" height="20" viewBox="0 0 24 20"><rect x="2" y="2" width="20" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="3"/></svg></span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     else if (d.circle) p.innerHTML = `<span class="ico" style="color:#1D222B"><svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="8.5" fill="none" stroke="currentColor" stroke-width="3"/></svg></span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     else if (d.line != null) p.innerHTML = `<span class="ico" style="color:#1D222B">${lineArt(d.line, 22, 3).svg}</span><span class="nm">Line</span><span class="hint">${t}</span>`;
@@ -1643,6 +1676,15 @@
       div.addEventListener('pointerdown', (ev) => startMove(ev, i));
       return div;
     }
+    if (def.graph) {         // グラフ: 箱ごと掴める
+      const dv = dev(), [gw, gh] = graphBox(e), W = gw * dv.w / 1000, H = gh * dv.w / 1000;
+      div.classList.add('graphpart');
+      div.style.width = W + 'px'; div.style.height = H + 'px';
+      div.dataset.lw = W; div.dataset.lh = H;
+      div.innerHTML = graphArt(def.graph, W, H, dv.w / 454) + '<span class="anchor"></span>';
+      div.addEventListener('pointerdown', (ev) => startMove(ev, i));
+      return div;
+    }
     if (def.rect) {          // 四角形: 当たり判定は枠の線の上だけ (中の部品を隠さない)
       const dv = dev(), pen = linePen(s) * k;
       const W = rectW(e) * dv.w / 1000, H = rectH(e) * dv.h / 1000, r = rectRadius(e) * dv.w / 1000;
@@ -1761,7 +1803,7 @@
       const an = div.querySelector('.anchor');
       // .el は margin:-2px なので、中の絶対配置の基準は left/top より 2px 外側から始まる。
       // その 2px を足さないと黄色い点が左上へ 2px ずれる (線と針の部品は margin 0)。
-      const m = (div.classList.contains('linepart') || div.classList.contains('dialpart')) ? 0 : 2;
+      const m = (div.classList.contains('linepart') || div.classList.contains('dialpart') || div.classList.contains('graphpart')) ? 0 : 2;
       an.style.left = (px - left + m - 3.5) + 'px'; an.style.top = (py - top + m - 3.5) + 'px';
       let oob = false;
       if (TYPES[e[0]] && TYPES[e[0]].dial) { div.classList.remove('oob'); return; }
@@ -2131,8 +2173,9 @@
     const allCirc = !none && all.every((x) => isCircle(x[0]));
     const allRect = !none && all.every((x) => isRect(x[0]));   // 四角形
     const allCityClock = !none && all.every((x) => hasCity(x[0]));   // 時刻 (世界時計にできる)
+    const allGraph = !none && all.every((x) => isGraph(x[0]));   // グラフ
     const allStrip = !none && all.every((x) => isStrip(x[0]));   // 予報の帯 (29)
-    const allText = !none && all.every((x) => !isLine(x[0]) && !isCircle(x[0]) && !isRect(x[0]) && !TYPES[x[0]].dial);
+    const allText = !none && all.every((x) => !isLine(x[0]) && !isCircle(x[0]) && !isRect(x[0]) && !isGraph(x[0]) && !TYPES[x[0]].dial);
     const sameLen = all.every((x) => lineLen(x) === lineLen(e));
     box.innerHTML = `
       <div style="font-weight:600;margin-bottom:8px">${none ? '<span class="muted" style="font-weight:400">No part selected — click one on the dial (Shift+click for several)</span>' : multi ? `${all.length} elements <span class="kbd">changes apply to all</span>` : `${def.name} <span class="kbd">type ${e[0]}</span>`}</div>
@@ -2180,6 +2223,9 @@
           [[0, 'R'], [1, 'Sharp']].map(([v, lb]) =>
             `<button type="button" data-v="${v}" class="${all.every((x) => (lineSharp(x) ? 1 : 0) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>
+        ` : allGraph ? `
+        ${seg('Anchor', ['Center', 'Left', 'Right'], same(3) ? e[3] : -1, 3)}
+        ${seg('Size', ['Small', 'Large'], same(4) ? e[4] : -9, 4)}
         ` : (allCirc || allRect) ? '' : `
         ${seg('Anchor', ['Center', 'Left', 'Right'], same(3) ? e[3] : -1, 3)}
         ${seg('Size', SIZES, same(4) ? e[4] : -9, 4)}
@@ -2209,7 +2255,7 @@
         <div class="field" title="What the number shows"><span>Value</span><span class="cb units" id="fstkv"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 4)) ? 'on' : ''}">Price</button><button type="button" data-v="4" class="${all.every((x) => (x[6] & 4)) ? 'on' : ''}">Change %</button></span></div>
         <div class="field" title="Ticker (AAPL) or the company name as the data provider writes it"><span>Label</span><span class="cb units" id="fstkn"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 16)) ? 'on' : ''}">Symbol</button><button type="button" data-v="16" class="${all.every((x) => (x[6] & 16)) ? 'on' : ''}">Name</button></span></div>
         <div class="field" title="The price turns green when it is up and red when it is down. The symbol or name keeps the colour below."><span>Up / down</span><span class="cb units" id="fstkc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep colour</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By move</button></span></div>` : ''}
-        ${(allLine || allCirc || allRect) ? '' : `<div class="field" title="${anyIcon ? 'What this part draws' : 'This part has no icon'}"><span>Show</span><span class="cb units" id="fshow">${
+        ${(allLine || allCirc || allRect || allGraph) ? '' : `<div class="field" title="${anyIcon ? 'What this part draws' : 'This part has no icon'}"><span>Show</span><span class="cb units" id="fshow">${
           [['Icon + value', 1], ['Icon only', 3], ['Value only', 0]].map(([lbl, v]) =>
             `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 3) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none ? 'disabled' : ''}>${lbl}</button>`).join('')
         }</span></div>`}
@@ -2517,6 +2563,7 @@
     const e = isRect(t) ? [t, 500, 500, 0, 1, 0, 0, -1, RECT_DEF.w, RECT_DEF.h]
             : isCircle(t) ? [t, 500, 500, 0, 1, 0, 0, -1, CIRC_DEF.dia, 0, CIRC_DEF.fill, CIRC_DEF.met, CIRC_DEF.dir]
             : isLine(t) ? [t, 500, 500, 0, 1, 0, 0, -1, LINE_LEN_DEF]
+            : isGraph(t) ? [t, 500, 500, 0, 0, 0, 0, -1]
             : [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, (d.icon ? 1 : 0) | (pct ? 4 : 0) | (t === 2 ? F_DOW : 0), -1];
     st.el.push(e); setSel(st.el.length - 1, false);
     if (center) { const [cx, cy] = freeSpot(); e[1] = cx; e[2] = cy; render(); commit(); return; }

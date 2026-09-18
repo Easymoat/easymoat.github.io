@@ -88,7 +88,10 @@
   /* 盤面の真下。盤面の位置を動かさないよう下に置く (上に置くと文字盤が下へずれる) */
   .dialbar { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: flex-start; justify-content: center; margin-top: -8px; }
   .dialbar.top { margin: 0 0 -6px; }        /* 文字盤の上の帯 (戻す / やり直す / リセット + 下書き) */
-  .dialbar.top .grp { width: 100%; max-width: 560px; }   /* 盤面の幅ぐらいで折り返す */
+  .dialbar.top .grp { width: 100%; }
+  .dialsec { width: 100%; max-width: 1040px; justify-content: flex-start; border-top: 1px solid var(--line); padding-top: 22px; }
+  .dialsec .ctl { flex-wrap: nowrap; white-space: nowrap; }
+  @media (max-width: 760px) { .dialsec .ctl { flex-wrap: wrap; } }
   .dialbar.top select { height: 28px; }
   .dialbar.top .sub { display: flex; align-items: center; gap: 10px; }   /* Grid は見出しごと折り返す */
   .vsep { width: 1px; align-self: stretch; min-height: 20px; background: var(--line-2); margin: 0 4px; }
@@ -277,20 +280,6 @@
   #bgpick, #imgfill, .swatches .pick { width: 34px; height: 26px; padding: 0 2px; border: 1px solid var(--line-2); border-radius: 5px; background: var(--panel-2); cursor: pointer; }
   #bgpick { margin-right: 6px; }
   .swatches.simple .pick { margin: 0 4px 0 0; }
-  /* 大きいカラーパネル (ブラウザのパネルと同じ機能を大きく) */
-  .cpop { position: fixed; z-index: 1000; background: var(--panel); border: 1px solid var(--line-2); border-radius: 10px; padding: 0 0 14px; box-shadow: 0 16px 40px rgba(0,0,0,.55); display: flex; flex-direction: column; gap: 14px; touch-action: none; overflow: hidden; width: 340px; }
-  .cpop[hidden] { display: none; }
-  .cpop canvas.sv { display: block; cursor: crosshair; }
-  .cpop .cprow { display: flex; gap: 12px; align-items: center; padding: 0 16px; }
-  .cpop .cpeye, .cpop .cpfmt { background: none; border: 0; color: var(--ink-2); cursor: pointer; padding: 4px; border-radius: 5px; font-size: 16px; }
-  .cpop .cpeye:hover, .cpop .cpfmt:hover { background: var(--line); color: var(--ink); }
-  .cpop .cpsw { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-2); flex: 0 0 auto; }
-  .cpop .cphue { position: relative; flex: 1 1 auto; padding: 6px 0; cursor: pointer; }
-  .cpop .cphue canvas { display: block; border-radius: 7px; }
-  .cpop .cpthumb { position: absolute; top: 3px; width: 20px; height: 20px; margin-left: -10px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.5); pointer-events: none; }
-  .cpop .cpin { flex: 1 1 auto; display: flex; gap: 8px; }
-  .cpop .cpin label { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; color: var(--ink-3); }
-  .cpop .cpin input { min-width: 0; width: 100%; box-sizing: border-box; text-align: center; font: 13px var(--mono); }
   .swatches .pick { margin-left: 6px; }
   .pxs { display: inline-flex; gap: 18px; }
   .stp { display: inline-flex; align-items: center; gap: 6px; }
@@ -371,7 +360,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 08:10</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 08:22</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -409,7 +398,7 @@
   </aside>
 
   <section class="stagewrap">
-    <div class="tier"><span class="num">1</span><span class="name">Layout</span><span class="what">Build the dial: parts, sizes, colours</span></div>
+    <div class="tier"><span class="num">1</span><span class="name">Layout</span><span class="what">Build the dial: parts, sizes, colors</span></div>
     <div class="stagebar">
       <div class="devrow">
       <div class="grp"><span class="lbl">Device</span><div class="ctl"><select id="dev"></select></div></div>
@@ -417,14 +406,14 @@
       <div class="grp" id="selgrp"><span class="lbl">Selected part</span><div id="insp"><span class="muted">Click an element on the dial.</span></div></div>
       <div class="grp" id="fixednote" hidden style="flex-basis:100%"><div class="ctl"><span class="muted" id="fixednotetxt"></span></div></div>
     </div>
+    <div class="dialbar top dialsec">
+      <div class="grp"><div class="tier"><span class="num">2</span><span class="name">Dial</span><span class="what">Move the parts and the picture here</span></div>
+        <div class="ctl"><button class="btn" id="undo" disabled title="Undo the last change to the dial (⌘Z / Ctrl+Z). Parts, colors, sizes and the background — not the image.">Undo</button><button class="btn" id="redo" disabled title="Put back what Undo took away (⇧⌘Z / Ctrl+Y)">Redo</button><button class="btn danger" id="reset" title="Empty the dial: every part, the background and the text / icon sizes go back to the start. Units and the grid stay. Undo puts it back.">Clear dial</button><span class="vsep"></span><button class="btn" id="imgparts" title="Hide the parts on the dial while you frame the picture. Only this view — nothing is saved.">Hide parts</button><button class="btn" id="imghide" title="Hide the picture on the dial. Only this view — nothing is saved.">Hide image</button><span class="vsep"></span><span class="sub"><span class="muted">Grid</span><select id="grid" title="Also the step for the - / + buttons. Pick a fine grid to place thin double lines close together."><option value="5">200 × 200 (5)</option><option value="10">100 × 100 (10)</option><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label><span class="cb units" id="gridcol" title="Grid color. Bright is easier to see on a black or dark dial."></span></span></div>
+        <div class="status" id="facestatus"></div>
+      </div>
+    </div>
     <div class="stage-row">
       <div class="stage-col">
-        <div class="dialbar top">
-          <div class="grp"><div class="tier"><span class="num">2</span><span class="name">Dial</span><span class="what">Move the parts and the picture here</span></div>
-            <div class="ctl"><button class="btn" id="undo" disabled title="Undo the last change to the dial (⌘Z / Ctrl+Z). Parts, colours, sizes and the background — not the image.">Undo</button><button class="btn" id="redo" disabled title="Put back what Undo took away (⇧⌘Z / Ctrl+Y)">Redo</button><button class="btn danger" id="reset" title="Empty the dial: every part, the background and the text / icon sizes go back to the start. Units and the grid stay. Undo puts it back.">Clear dial</button><span class="vsep"></span><button class="btn" id="imgparts" title="Hide the parts on the dial while you frame the picture. Only this view — nothing is saved.">Hide parts</button><button class="btn" id="imghide" title="Hide the picture on the dial. Only this view — nothing is saved.">Hide image</button><span class="vsep"></span><span class="sub"><span class="muted">Grid</span><select id="grid" title="Also the step for the - / + buttons. Pick a fine grid to place thin double lines close together."><option value="5">200 × 200 (5)</option><option value="10">100 × 100 (10)</option><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label><span class="cb units" id="gridcol" title="Grid colour. Bright is easier to see on a black or dark dial."></span></span></div>
-            <div class="status" id="facestatus"></div>
-          </div>
-        </div>
         <div class="dialrow">
           <div class="stage-outer"><div id="stage"></div></div>
           <div class="tray" id="tray" title="Somewhere to put a part while you arrange the rest. Drag a part from the dial to here, and back when you want it.">
@@ -444,7 +433,7 @@
           <div class="ctl">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"></div>
           <div class="ctl" title="Only the cut-out changes — the stored photo is never touched.">Brightness <input id="imgbr" type="range" min="20" max="180" step="1" value="100"><span class="muted" id="imgbrv">100%</span> Saturation <input id="imgsa" type="range" min="0" max="200" step="1" value="100"><span class="muted" id="imgsav">100%</span><button class="btn" id="imgtone" title="Brightness and saturation back to 100 %">Reset tone</button></div>
           <div class="ctl" id="imgdragrow" title="What dragging the empty part of the dial does. Dragging a part always moves that part.">Dragging the dial moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Picture</button><button type="button" data-m="frame">Frame</button></span></div>
-          <div class="ctl"><button class="btn" id="imgreset" title="Put the frame back to the middle at 100 % (the picture stays)">Reset frame</button><button class="btn danger" id="imgclear" title="Take the picture (or the colour) out of this editor and start over. Nothing is deleted from the server or from the collection.">Reset image</button></div>
+          <div class="ctl"><button class="btn" id="imgreset" title="Put the frame back to the middle at 100 % (the picture stays)">Reset frame</button><button class="btn danger" id="imgclear" title="Take the picture (or the color) out of this editor and start over. Nothing is deleted from the server or from the collection.">Reset image</button></div>
           <details class="box camdet" id="camgrp"><summary class="lbl" style="cursor:pointer">PulseLink camera</summary>
             <div class="ctl"><button class="btn toggle" id="camon">Camera: OFF</button><span class="muted">PL ID</span><input type="text" id="plid" placeholder="XXXX-XXXX" style="width:110px"><span class="status" id="camnote" style="flex:1 1 auto"></span></div>
           </details>
@@ -457,11 +446,11 @@
           <div class="grp"><span class="lbl">Photos</span><div class="photos" id="photos"></div><div class="muted" id="imgslotnote"></div></div>
           <div class="grp"><span class="lbl">Actions</span>
             <div class="ctl"><label class="btn file" for="imgfile">Add photo…</label><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp" hidden><span class="muted" id="imgfilename"></span><button class="btn danger" id="imgremove" disabled>Delete photo</button></div>
-            <div class="ctl" title="No photo: the frame shape is filled with one colour instead."><span class="muted">Fill colour</span><input type="color" id="imgfill" value="#3a7bd5"><span class="swatches" id="fillsw" title="Recently used fill colours"></span><button class="btn" id="imgfillon">Use colour (no photo)</button></div>
+            <div class="ctl" title="No photo: the frame shape is filled with one color instead."><span class="muted">Fill color</span><input type="color" id="imgfill" value="#3a7bd5"><span class="swatches" id="fillsw" title="Recently used fill colors"></span><button class="btn" id="imgfillon">Use color (no photo)</button></div>
             <div class="status" id="imgstatus"></div></div>
-          <div class="grp" title="How many colours the cut-out is reduced to when you save. The watch can show at most 32."><span class="lbl">Colours on the watch</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div>
+          <div class="grp" title="How many colors the cut-out is reduced to when you save. The watch can show at most 32."><span class="lbl">Colors on the watch</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div>
           </div>
-          <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span><button class="btn" id="imgbgapply" title="Copy this colour to the dial background (one-off; the dial is not linked to the image)">Use as dial background</button><button class="btn toggle" id="imgbgdial" title="Preview the photo against the dial's own background colour (follows the Layout background while ON; move the slider to go back to Auto)">Use dial background</button></div></div>
+          <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span><button class="btn" id="imgbgapply" title="Copy this color to the dial background (one-off; the dial is not linked to the image)">Use as dial background</button><button class="btn toggle" id="imgbgdial" title="Preview the photo against the dial's own background color (follows the Layout background while ON; move the slider to go back to Auto)">Use dial background</button></div></div>
         </div>
       </div>
     </div>
@@ -503,19 +492,19 @@
         </div>
         <div class="opt"><button class="btn" id="preset-lobby">Start from Lobby</button><span class="muted">The dial the watch face ships with: time, date, battery, heart rate, steps, floors, calories, weather and wind.</span></div>
         <div class="opt"><button class="btn" id="preset-min">Start from Minimal</button><span class="muted">Three parts only — time, date and battery. A quiet dial to build on.</span></div>
-        <div class="opt"><button class="btn danger" id="clear">Take every part off</button><span class="muted">Leaves an empty dial. The background colour, the text sizes and the picture stay as they are.</span></div>
+        <div class="opt"><button class="btn danger" id="clear">Take every part off</button><span class="muted">Leaves an empty dial. The background color, the text sizes and the picture stay as they are.</span></div>
         <div class="status" id="jsonstatus"></div>
       </details>
     </div>
   </section>
 
   <aside class="right">
-    <div class="group"><span class="lbl">Background</span><div class="ctl"><input type="color" id="bgpick" title="Pick any background colour (sent to the watch as bg)" value="#000000"><span class="swatches" id="bgsw" title="Recently used colours"></span></div></div>
+    <div class="group"><span class="lbl">Background</span><div class="ctl"><input type="color" id="bgpick" title="Pick any background color (sent to the watch as bg)" value="#000000"><span class="swatches" id="bgsw" title="Recently used colors"></span></div></div>
     <div class="group" title="Text height in px on a 454 dial: S / M / L. Sent to the watch with the layout."><span class="lbl">Text size (px)</span><div class="ctl"><span class="pxs" id="tx"></span></div></div>
     <div class="group" title="Clock height in px on a 454 dial: S / M / L."><span class="lbl">Time size (px)</span><div class="ctl"><span class="pxs" id="tm"></span></div></div>
     <div class="group" title="Icon height in px on a 454 dial: S / M / L. Independent of the text size — use it to balance the look on devices whose text is fixed to S/M/L."><span class="lbl">Icon size (px)</span><div class="ctl"><span class="pxs" id="ic"></span><span class="stp" title="Move every icon up or down against the numbers (px on a 454 dial, + is down)."><span class="sml">&#8597;</span><button class="step" type="button" id="iodn">&minus;</button><input type="number" id="io" min="-20" max="20"><button class="step" type="button" id="ioup">+</button></span></div></div>
     <div class="group" title="Faux bold: the watch has no bold Roboto, so the text is drawn again with a small offset. Bold 2 is heavier."><span class="lbl">Style</span><div class="ctl">Bold <span class="cb units" id="bold"></span></div>
-      <div class="ctl" title="Which colour means a rising price. Green up is the US habit, red up the Japanese one.">Up is <span class="cb units" id="upcol"></span></div>
+      <div class="ctl" title="Which color means a rising price. Green up is the US habit, red up the Japanese one.">Up is <span class="cb units" id="upcol"></span></div>
       <div class="ctl" title="Unit for the Wind part. The same choice as MarketWatch and PulseLink; m/s is their default too.">Wind <span class="cb units" id="windunit"></span></div>
       <div class="ctl" title="Unit for Weather, Today hi/lo and Next 3h.">Temp <span class="cb units" id="tempunit"></span></div>
       <div class="ctl" title="Unit for the Pressure part.">Pressure <span class="cb units" id="pressunit"></span></div>
@@ -544,7 +533,7 @@
   const PC_N = 5;          // 見せる控えの数 (新しい 5 つ)
   const PC_BASE = 10;      // 色 index 10 から上が控え
   const PC_MAX = 22;       // 控えの上限 = 色 index 31 まで (部品は 24 個なので実質足りる)
-  const BG_HIST_MAX = 5;   // the 5 round swatches = recently used background colours (newest first)
+  const BG_HIST_MAX = 5;   // the 5 round swatches = recently used background colors (newest first)
   // Moon age in days (reference new moon 2000-01-06 18:14 UTC, synodic month 29.530588853 d) —
   // same formula as WfData.moonAge / moonPhase. Phase 0 new … 4 full (northern hemisphere, lit from the right).
   const SYNODIC = 29.530588853;
@@ -1449,7 +1438,7 @@
     }
     return { R, hands, rim, svgFor };
   })();
-  // One dial part as an <svg> that fills the dial; colour comes from the element (currentColor).
+  // One dial part as an <svg> that fills the dial; color comes from the element (currentColor).
   function dialArt(t, s, w, h, col) {
     const k = DIAL_SCALE[Math.min(Math.max(s, 0), 3)];
     const inner = DIAL.svgFor(t, k, st.mt, st.mc, col, st.mk, st.mv);
@@ -1670,7 +1659,7 @@
     div.style.color = (isStock(t) && (f & 8)) ? (stkInfo(t) ? (stkInfo(t).u < 0 ? downCol() : stkInfo(t).u > 0 ? upCol() : colOf(c)) : upCol())
                     : (isBall(t) && (f & 8)) ? C_BLUE                     // 見本は進行中の表 (青)
                     : colOf(c);
-    if (def.dial) {   // hands / rim: one drawing over the whole dial, colour from the element
+    if (def.dial) {   // hands / rim: one drawing over the whole dial, color from the element
       // 画面全体を覆うので、当たり判定は「描かれた線の上」だけにする。板のまま置くと
       // 下の部品が選べず、写真のドラッグも拾えなくなる (2026-09-12 の不具合)。
       const dv = dev();
@@ -2130,7 +2119,7 @@
     if (pc.length >= PC_MAX) pc = gcColors(pc);
     if (pc.length >= PC_MAX) {            // すべて使用中 (部品 24 個中 22 個が別々の色): 一番古いものを譲る
       const drop = 0;
-      COLOR_NOTE = 'No room left for another colour — the oldest one was replaced.';
+      COLOR_NOTE = 'No room left for another color — the oldest one was replaced.';
       pc[drop] = rgb; st.pc = pc; return PC_BASE + drop;
     }
     pc.push(rgb); st.pc = pc;
@@ -2180,7 +2169,7 @@
     const isOf = (x) => (Number.isInteger(x[7]) && x[7] >= 0 && x[7] <= SIZE_MAX) ? x[7] : -1;
     const sameIs = all.every((x) => isOf(x) === isOf(e));
     const anyIcon = all.some((x) => TYPES[x[0]]?.icon || cityOf(x));
-    const arcEl = st.el.find((x) => ARCSET[x[0]]);   // Meters は弧が文字盤にある間ずっと出す (選択に関係なく)
+    const arcEl = none ? null : all.find((x) => ARCSET[x[0]]);   // Meters は弧の部品を選んだ時だけ出す (2026-09-19)
     const allLine = all.every((x) => isLine(x[0]));   // 線だけを選んでいる時は線の操作に差し替える
     const allStock = !none && all.every((x) => isStock(x[0])) && all.every((x) => x[0] === e[0]);   // 同じ銘柄の部品だけ
     const allBall = !none && all.every((x) => isBall(x[0]));
@@ -2211,7 +2200,7 @@
             `<button type="button" data-v="${v}" class="${allText && all.every((x) => arrOf(x) === v) ? 'on' : ''}" ${allText ? '' : 'disabled'}>${nm}</button>`).join('')
         }</span></div>
         <div class="brk"></div>
-        <div class="field"><span>Color</span><span class="swatches simple"><input type="color" class="pick" id="fpick" value="${colOf(e[5])}" title="Pick any colour — recent ones stay next to it">${
+        <div class="field"><span>Color</span><span class="swatches simple"><input type="color" class="pick" id="fpick" value="${colOf(e[5])}" title="Pick any color — recent ones stay next to it">${
           (same(5) && e[5] >= 0 && e[5] < PC_BASE ? [e[5]] : []).concat(shownColors(e[5]).reverse()).map((i) => `<button class="sw ${same(5) && i === e[5] ? 'on' : ''}" data-c="${i}" title="${colOf(i).toUpperCase()}" style="background:${colOf(i)}"></button>`).join('')
         }</span></div>
         <div class="field" title="Line the selected parts up on the one you clicked last (the highlighted row in the list)"><span>Align</span><span class="cb units" id="falign"><button type="button" data-v="x" ${multi ? '' : 'disabled'}>Same X &#8597;</button><button type="button" data-v="y" ${multi ? '' : 'disabled'}>Same Y &#8596;</button></span></div>
@@ -2225,11 +2214,11 @@
             `<button type="button" data-v="${v}" class="${all.every((x) => circSpan(x) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>
         ${stepRow('Turn', 14, circSpan(e) === 360 ? null : (all.every((x) => circFrom(x) === circFrom(e)) ? circFrom(e) + '°' : null), "Turn the arc by 45° — 12 o'clock is 0, going clockwise. Only for Half and Quarter.")}
-        <div class="field" title="${circSpan(e) === 360 ? 'Fill the inside with a colour' : 'Only a whole ring can be filled'}"><span>Fill</span><span class="swatches${circSpan(e) === 360 ? '' : ' off'}">${
+        <div class="field" title="${circSpan(e) === 360 ? 'Fill the inside with a color' : 'Only a whole ring can be filled'}"><span>Fill</span><span class="swatches${circSpan(e) === 360 ? '' : ' off'}">${
           `<button class="sw ${circFill(e) < 0 ? 'on' : ''}" data-fill="-1" title="No fill" style="background:transparent;border-style:dashed"></button>` +
           PALETTE.slice(0, PC_BASE).map((c, i) => `<button class="sw ${circFill(e) === i ? 'on' : ''}" data-fill="${i}" title="${PALETTE_NAMES[i]}" style="background:${c}"></button>`).join('') +
           shownColors(circFill(e)).map((i) => `<button class="sw ${circFill(e) === i ? 'on' : ''}" data-fill="${i}" style="background:${colOf(i)}"></button>`).join('')
-        }<input type="color" class="pick" id="ffillpick" value="${circFill(e) >= 0 ? colOf(circFill(e)) : hex(st.bg)}" title="Pick any colour for the fill"></span></div>
+        }<input type="color" class="pick" id="ffillpick" value="${circFill(e) >= 0 ? colOf(circFill(e)) : hex(st.bg)}" title="Pick any color for the fill"></span></div>
         <div class="field" title="Make the ring a meter"><span>Meter</span><select id="fcmet">${
           METERS.map(([id, nm]) => `<option value="${id}" ${circMet(e) === id ? 'selected' : ''}>${nm}</option>`).join('')
         }</select><span class="cb units" id="fcdir"><button type="button" data-v="1" class="${circDir(e) > 0 ? 'on' : ''}">&#8635;</button><button type="button" data-v="-1" class="${circDir(e) < 0 ? 'on' : ''}">&#8634;</button></span></div>
@@ -2267,7 +2256,7 @@
         <div class="field" title="The team whose game is shown"><span>Team</span><select id="fteam">${
           ['<option value="">— pick a team —</option>'].concat(leagueTeams(bbLg(bbSlot(e[0]))).map(([id, nm]) => `<option value="${id}" ${String(bbTm(bbSlot(e[0]))) === String(id) ? 'selected' : ''}>${nm}</option>`)).join('')
         }</select></div>
-        <div class="field" title="Green while the game is on, orange when it is over — instead of the colour below"><span>State</span><span class="cb units" id="fbbc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep colour</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By state</button></span></div>` : ''}
+        <div class="field" title="Green while the game is on, orange when it is over — instead of the color below"><span>State</span><span class="cb units" id="fbbc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep color</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By state</button></span></div>` : ''}
         ${allStrip ? `<div class="field" title="What the three columns show. Each one draws its own icon: the hour's weather, an umbrella, or wind."><span>Shows</span><span class="cb units" id="fstrip">${
           STRIP_MET.map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 12) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>` : ''}
@@ -2278,11 +2267,11 @@
         <div class="field" title="The name shown when Label is Name. Leave it empty to use the one that comes with the price. ASCII only, 12 characters."><span>Name</span><input type="text" id="fstkname" value="${stkOwn(e[0])}" placeholder="${(STKQ[stkOf(e[0])] || {}).n || 'Apple Inc.'}" style="width:140px" maxlength="12"></div>
         <div class="field" title="What the number shows"><span>Value</span><span class="cb units" id="fstkv"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 4)) ? 'on' : ''}">Price</button><button type="button" data-v="4" class="${all.every((x) => (x[6] & 4)) ? 'on' : ''}">Change %</button></span></div>
         <div class="field" title="Ticker (AAPL) or the company name as the data provider writes it"><span>Label</span><span class="cb units" id="fstkn"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 16)) ? 'on' : ''}">Symbol</button><button type="button" data-v="16" class="${all.every((x) => (x[6] & 16)) ? 'on' : ''}">Name</button></span></div>
-        <div class="field" title="The price turns green when it is up and red when it is down. The symbol or name keeps the colour below."><span>Up / down</span><span class="cb units" id="fstkc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep colour</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By move</button></span></div>` : ''}
+        <div class="field" title="The price turns green when it is up and red when it is down. The symbol or name keeps the color below."><span>Up / down</span><span class="cb units" id="fstkc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep color</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By move</button></span></div>` : ''}
         ${arcEl ? `<div class="field" title="Each arc can be a meter. Pick what it measures; none = plain arc."><span>Meters</span><span class="mts">${
           ARCSET[arcEl[0]].lbl.map((pos, i) => { const on = (st.mv || [])[i] !== 0; return `<label class="mt${on ? '' : ' off'}"><button type="button" class="mvb${on ? ' on' : ''}" data-i="${i}" title="Show or hide this arc">${pos}</button><select data-i="${i}" ${on ? '' : 'disabled'}>${
             METERS.map(([id, nm]) => `<option value="${id}" ${(st.mt || [])[i] === id ? 'selected' : ''}>${nm}</option>`).join('')
-          }</select><input type="color" class="pick mtc" data-i="${i}" value="${colOf((st.mc || [])[i] >= 0 ? st.mc[i] : arcEl[5])}" title="Colour of the arc itself — right-click to follow the Rim part again"><input type="color" class="pick mtk" data-i="${i}" value="${colOf((st.mk || [])[i] >= 0 ? st.mk[i] : arcEl[5])}" title="Colour of the track (the empty part of the arc) — right-click for the automatic faint shade"></label>`; }).join('')
+          }</select><input type="color" class="pick mtc" data-i="${i}" value="${colOf((st.mc || [])[i] >= 0 ? st.mc[i] : arcEl[5])}" title="Color of the arc itself — right-click to follow the Rim part again"><input type="color" class="pick mtk" data-i="${i}" value="${colOf((st.mk || [])[i] >= 0 ? st.mk[i] : arcEl[5])}" title="Color of the track (the empty part of the arc) — right-click for the automatic faint shade"></label>`; }).join('')
         }</span></div>` : ''}
       </div>
       <div class="muted hint">${COLOR_NOTE ? `<span class="status err">${COLOR_NOTE}</span> ` : ''}${none ? 'Shift+click (or Cmd/Ctrl+click) selects several parts.' : multi ? `${all.length} parts selected — Anchor, Size, Icon size, Color and Icon apply to all of them.` : ''}</div>`;
@@ -2449,7 +2438,7 @@
   // EDITING = 'draft' or the face number last loaded, only used for the note under the faces.
   let EDITING = 'draft';
   try { EDITING = localStorage.getItem('faceComposer.editing') || 'draft'; if (EDITING !== 'draft' && !/^[123]$/.test(EDITING)) EDITING = 'draft'; } catch (e) {}
-  // The draft holds the layout AND the image editor: slot, shape, size, position, zoom, colours, Auto
+  // The draft holds the layout AND the image editor: slot, shape, size, position, zoom, colors, Auto
   // shade, Show on dial, and — for an image chosen from a file — the picture itself (downscaled JPEG),
   // so Back to draft restores the dial exactly. imgDraftState / applyImgDraft live with the image code.
   // ★ 面の項目は sanitize() が読む名前で全部入れること。控えの色 (pc) を入れ忘れていたため、
@@ -2480,7 +2469,7 @@
     if (typeof IMG !== 'undefined' && LAST_EDGE_BG !== null && LAST_EDGE_BG !== st.bg && hasSource()) { LAST_EDGE_BG = st.bg; redrawImg(); }
     try { localStorage.setItem('faceComposer', JSON.stringify(st)); } catch (e) {}
     render();
-    if (typeof IMG !== 'undefined' && IMG.bgMode === 'dial' && hasSource()) repaintQuality();   // photo preview follows the dial colour
+    if (typeof IMG !== 'undefined' && IMG.bgMode === 'dial' && hasSource()) repaintQuality();   // photo preview follows the dial color
   }
 
   // ドラッグ中だけの軽い描き直し。線と角の R だけを作り直す (一覧や JSON は触らない)。
@@ -2971,7 +2960,7 @@
     if (!SHELF.items.length) { wrap.innerHTML = '<span class="muted">Nothing saved yet — Save to collection keeps the dial above here.</span>'; return; }
     for (const it of SHELF.items) {
       const d = document.createElement('div'); d.className = 'item'; d.dataset.n = it.n;
-      d.innerHTML = `<div class="mini"></div><span class="cap"><b>${(it.name || `Item ${it.n}`).replace(/</g, '&lt;')}</b></span><span class="cap">${it.kind === 'photo' ? 'photo' : it.kind === 'fill' ? 'colour shape' : it.kind === 'camera' ? 'camera' : 'no image'} · ${fmtTime(it.ts * 1000)}</span>
+      d.innerHTML = `<div class="mini"></div><span class="cap"><b>${(it.name || `Item ${it.n}`).replace(/</g, '&lt;')}</b></span><span class="cap">${it.kind === 'photo' ? 'photo' : it.kind === 'fill' ? 'color shape' : it.kind === 'camera' ? 'camera' : 'no image'} · ${fmtTime(it.ts * 1000)}</span>
         <div class="row"><button class="btn" data-a="load" title="Put this item back into the editors above">Edit</button><button class="btn primary" data-a="send" title="Make this the dial your watch shows">To watch</button></div>
         <span class="cap onw"></span><span class="cap del" data-a="del" title="Delete this item from the collection">Delete</span>`;
       d.querySelector('[data-a="load"]').addEventListener('click', () => loadShelfItem(it.n));
@@ -3003,7 +2992,7 @@
   async function fetchShelfItem(n) {
     const r = await fetch(`${$('api').value}/shelf-item?device_id=${encodeURIComponent(devId())}&n=${n}`); if (!r.ok) return null; return r.json();
   }
-  // The recipe = how the picture was framed (which photo, shape, size, position, zoom, colours, Auto).
+  // The recipe = how the picture was framed (which photo, shape, size, position, zoom, colors, Auto).
   function currentRecipe() {
     return { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, shape2: IMG.shape2 || null, rot: IMG.rot, rot2: IMG.shape2 ? rotOf(2) : undefined, size: IMG.size, size2: IMG.shape2 ? sizeOf(2) : undefined, cx: IMG.cx, cy: IMG.cy, cx2: IMG.shape2 ? cxOf(2) : undefined, cy2: IMG.shape2 ? cyOf(2) : undefined, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom, colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, br: brOf(), sa: saOf(), plId: IMG.src === 'camera' ? plId() : undefined };
   }
@@ -3033,7 +3022,7 @@
     setEditing('draft'); loadIntoEditor(c); commit();
     const rc = full.recipe || {};
     if (full.kind === 'none') { applyImgDraft({ none: true, show: rc.show !== false }); }
-    else if (full.kind === 'fill' && rc.fill) { applyImgDraft(Object.assign({}, rc)); }                    // colour shape: fully editable
+    else if (full.kind === 'fill' && rc.fill) { applyImgDraft(Object.assign({}, rc)); }                    // color shape: fully editable
     else if (rc.k && PHOTOS.list.some((p) => p.k === rc.k)) { applyImgDraft(Object.assign({}, rc)); }   // the photo is still on the shelf: fully editable
     else if (full.url) {   // photo gone: show the finished cut-out (frame changes only; no re-crop possible)
       applyImgDraft({ none: true }); const img = new Image(); img.crossOrigin = 'anonymous';
@@ -3043,7 +3032,7 @@
     setStatus('shelfstatus', `Loaded ${full.name || 'item ' + n} into the editors.`, 'ok');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-  // Palette of a ≤32-colour PNG = its distinct opaque colours (what the watch's makeImageRequest needs).
+  // Palette of a ≤32-color PNG = its distinct opaque colors (what the watch's makeImageRequest needs).
   function paletteOfCanvas(cv) {
     const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data, seen = new Map();
     for (let i = 0; i < d.length; i += 4) { if (d[i + 3] === 0) continue; const key = (d[i] << 16) | (d[i + 1] << 8) | d[i + 2]; seen.set(key, (seen.get(key) || 0) + 1); if (seen.size > 64) break; }
@@ -3096,10 +3085,10 @@
   // src: where the editor image came from — 'file' (chosen by the user; kept while switching slots so it
   // can be uploaded to any slot) or 'slot' (loaded from the server; cleared when an empty slot is picked).
   // size = how much of the dial the image covers, in % (100 = full screen). Below 100 the image is a
-  // smaller square centred on the dial and the rest stays transparent = the watch's background colour.
+  // smaller square centred on the dial and the rest stays transparent = the watch's background color.
   // Frame shapes in the 320 master: square (default) and circle can be resized (size %) and moved
   // (cx, cy); the four half shapes are fixed halves of the dial. The image always fills the frame's
-  // bounding box and can be panned inside it; outside the frame stays transparent = background colour.
+  // bounding box and can be panned inside it; outside the frame stays transparent = background color.
   const SHAPES = [['square', 'Square'], ['circle', 'Circle'], ['half', 'Half circle'], ['heart', '♥ Heart'], ['cardd', '♦ Diamond'], ['spade', '♠ Spade'], ['club', '♣ Club'], ['star', '★ Star'], ['tri', '▲ Triangle'], ['penta', '⬟ Pentagon'], ['hexa', '⬢ Hexagon']];
   // Older layouts / drafts used a rotated square and four fixed halves; they map onto shape + rotation.
   const LEGACY_SHAPE = { diamond: ['square', 45], top: ['half', 0], right: ['half', 90], bottom: ['half', 180], left: ['half', 270] };
@@ -3107,7 +3096,7 @@
   const CAN_SIZE = SHAPES.map(([k]) => k);   // every shape can be resized and moved (the halves too, since 2026-09-07)
   // Shapes whose outline pokes outside the round dial at 100 %: the size they are opened at (fits the dial).
   const SHAPE_FIT = { heart: 86, spade: 96, club: 96 };   // heart: the lobes' shoulders are the farthest points (measured on the rendered mask)
-  // A "picture" is either a photo (IMG.cur) or a flat colour fill of the frame (IMG.fill, no photo).
+  // A "picture" is either a photo (IMG.cur) or a flat color fill of the frame (IMG.fill, no photo).
   const hasSource = () => !!(IMG.cur || IMG.fill);
   const IMG = { cur: null, src: null, k: 0, fill: null, dirty: false, fromSlot: 0, bgMode: 'auto', shape: 'square', shape2: null, rot: 0, rot2: null, size: 100, size2: null, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 32, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
@@ -3115,7 +3104,7 @@
   const absUrl = (u) => (!u || /^https?:/.test(u)) ? u : new URL($('api').value).origin + u;   // server gives /api/wf/... paths
   const imgCv = $('imgCanvas');
   // "Show on dial" = a live preview switch: while ON, the dial above shows the image exactly as it is
-  // in the editor right now (frame, size, zoom, colour count). It never reads the server — what the
+  // in the editor right now (frame, size, zoom, color count). It never reads the server — what the
   // watch shows is whatever was last uploaded.
   const stageImg = document.createElement('canvas');   // 文字盤の下敷きの絵 (部品の下)
   stageImg.className = 'stageimg';
@@ -3281,7 +3270,7 @@
     if (!hasSource()) return;
     const ctx = imgCv.getContext('2d');
     const [bx, by, bw, bh] = unionBox();
-    if (!IMG.cur) {   // colour fill: the frame shape(s) in one colour, no photo
+    if (!IMG.cur) {   // color fill: the frame shape(s) in one color, no photo
       ctx.clearRect(0, 0, 320, 320);
       for (const [k, i] of frameShapes()) { ctx.save(); framePath(ctx, k, i); ctx.clip(); ctx.fillStyle = IMG.fill; ctx.fillRect(0, 0, 320, 320); ctx.restore(); }
       hardenEdge(ctx);
@@ -3300,9 +3289,9 @@
     const x0 = bx + (bw - dw) / 2, y0 = by + (bh - dh) / 2;          // picture origin at pan 0
     const minX = vx + vw - dw - x0, maxX = vx - x0, minY = vy + vh - dh - y0, maxY = vy - y0;
     IMG.panX = Math.max(Math.min(minX, 0), Math.min(Math.max(maxX, 0), IMG.panX)); IMG.panY = Math.max(Math.min(minY, 0), Math.min(Math.max(maxY, 0), IMG.panY));
-    // Outside the frame everything stays transparent, so the watch shows its background colour there.
+    // Outside the frame everything stays transparent, so the watch shows its background color there.
     ctx.clearRect(0, 0, 320, 320);
-    // No fill behind the picture: transparent stays transparent (= the watch's background colour).
+    // No fill behind the picture: transparent stays transparent (= the watch's background color).
     // Two shapes: the picture is drawn through each, which gives their union without winding trouble.
     for (const [k, i] of frameShapes()) {
       ctx.save(); framePath(ctx, k, i); ctx.clip();
@@ -3313,7 +3302,7 @@
     hardenEdge(ctx);                                 // 縁の半透明を潰す (実機に透過が無いので輪郭に暗い線が出る)
     IMG.masked = imgCv.toDataURL('image/png');
     applyStageImage();                 // live: the dial follows every edit at once
-    IMG.reduced = null; paintQuality();   // keep the preview lit (Auto colour + raw image) — no black flash while dragging
+    IMG.reduced = null; paintQuality();   // keep the preview lit (Auto color + raw image) — no black flash while dragging
     renderShowToggle();
     IMG.dirty = true;                  // differs from what the slot holds until it is uploaded
     $('imgbgrow').hidden = false;
@@ -3425,12 +3414,12 @@
   });
   $('imgreset').addEventListener('click', () => { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; IMG.size = 100; IMG.size2 = null; IMG.cx = 160; IMG.cy = 160; IMG.cx2 = null; IMG.cy2 = null; IMG.rot = 0; IMG.rot2 = null; IMG.shape2 = null; setShape(IMG.shape, null);
     $('imgzoom').value = '1'; redrawImg(); });
-  // colours
-  const COLOR_STEPS = [2, 4, 8, 16, 32];   // a watch face cannot fetch more than 32 colours (fr965 measured, 2026-09-07)
+  // colors
+  const COLOR_STEPS = [2, 4, 8, 16, 32];   // a watch face cannot fetch more than 32 colors (fr965 measured, 2026-09-07)
   COLOR_STEPS.forEach((c) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = c; b.dataset.c = c; b.classList.toggle('on', c === IMG.colors);
     b.addEventListener('click', () => { IMG.colors = c; IMG.dirty = true; document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === c)); scheduleMeasure(); }); $('imgcolors').appendChild(b); });
-  // size / colour verdict (decoded bitmap = px² × bpp / 8; fr965: ≤150 KB safe, >210 KB fails). Watch faces: 16 colours at 320 px is the safe zone.
-  const bppFor = (c) => c <= 2 ? 1 : c <= 4 ? 2 : c <= 16 ? 4 : 8;   // decoded bitmap on the watch; 32 colours = 8 bpp
+  // size / color verdict (decoded bitmap = px² × bpp / 8; fr965: ≤150 KB safe, >210 KB fails). Watch faces: 16 colors at 320 px is the safe zone.
+  const bppFor = (c) => c <= 2 ? 1 : c <= 4 ? 2 : c <= 16 ? 4 : 8;   // decoded bitmap on the watch; 32 colors = 8 bpp
   let measureTimer = null;
   function scheduleMeasure() { clearTimeout(measureTimer); measureTimer = setTimeout(measure, 180); }
   function measure() {
@@ -3464,21 +3453,21 @@
     paintQuality();
   }
   $('imgbgdial').addEventListener('click', () => { IMG.bgMode = IMG.bgMode === 'dial' ? 'auto' : 'dial'; repaintQuality(); });
-  // Paint the preview overlay with the cached Auto colour (cheap: no palette work, safe on every pointermove).
+  // Paint the preview overlay with the cached Auto color (cheap: no palette work, safe on every pointermove).
   function paintQuality() {
     const ctx = $('imgQ').getContext('2d'); ctx.clearRect(0, 0, 320, 320);
-    // This preview belongs to the image: it shows the Auto colour behind it, so the slider and a new
-    // image are visible here at once. The dial above keeps its own background colour — the two are
-    // deliberately NOT linked; use the button to copy this colour to the dial.
+    // This preview belongs to the image: it shows the Auto color behind it, so the slider and a new
+    // image are visible here at once. The dial above keeps its own background color — the two are
+    // deliberately NOT linked; use the button to copy this color to the dial.
     ctx.save(); ctx.beginPath(); ctx.arc(160, 160, 160, 0, Math.PI * 2); ctx.clip(); ctx.fillStyle = IMG.autoBg; ctx.fillRect(0, 0, 320, 320); ctx.restore();
-    if (IMG.reduced) ctx.drawImage(IMG.reduced, 0, 0, 320, 320);   // reduced-colour result over the master
+    if (IMG.reduced) ctx.drawImage(IMG.reduced, 0, 0, 320, 320);   // reduced-color result over the master
     else ctx.drawImage(imgCv, 0, 0, 320, 320);
   }
   function renderQuality() {
     IMG.reduced = null;
     if (typeof RgbQuant !== 'undefined') { try { const q = new RgbQuant({ colors: IMG.colors, dithKern: 'FloydSteinberg', dithSerp: true }); q.sample(imgCv); const out = q.reduce(imgCv); const pal = q.palette(true);
       // RgbQuant's dithered output can leave a few pixels a shade off the palette (measured: 160 of 102,400 px
-      // one step away). Snap every pixel to the nearest palette colour so the PNG holds exactly N colours.
+      // one step away). Snap every pixel to the nearest palette color so the PNG holds exactly N colors.
       const pl = pal.map((c) => [c[0], c[1], c[2]]), seen = new Set(pl.map((c) => (c[0] << 16) | (c[1] << 8) | c[2]));
       for (let i = 0; i < out.length; i += 4) {
         const key = (out[i] << 16) | (out[i + 1] << 8) | out[i + 2];
@@ -3489,10 +3478,10 @@
       }
       const t = document.createElement('canvas'); t.width = 320; t.height = 320; const tc = t.getContext('2d'); const id = tc.createImageData(320, 320); id.data.set(out); tc.putImageData(id, 0, 0);
       // RgbQuant.reduce() returns opaque pixels everywhere, so restore the master's transparency —
-      // otherwise a shrunk image paints its colour over the whole dial and the background never shows.
+      // otherwise a shrunk image paints its color over the whole dial and the background never shows.
       tc.globalCompositeOperation = 'destination-in'; tc.drawImage(imgCv, 0, 0); tc.globalCompositeOperation = 'source-over';
       IMG.reduced = t; IMG.reducedPal = pal.map((c) => (c[0] << 16) | (c[1] << 8) | c[2]); } catch (e) { IMG.reduced = null; IMG.reducedPal = null; } }
-    applyStageImage();                 // and again once the reduced-colour version is ready
+    applyStageImage();                 // and again once the reduced-color version is ready
     repaintQuality();
   }
   $('imgbg').addEventListener('input', (e) => { IMG.bgMode = 'auto'; IMG.bgAuto = parseInt(e.target.value, 10) || 0; IMG.dirty = true; repaintQuality(); });
@@ -3520,7 +3509,7 @@
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { PHOTOS.list = []; renderPhotos(); return; }
     try { const r = await fetch(imgApi() + '/photos?device_id=' + encodeURIComponent(id)); if (!r.ok) return; const j = await r.json(); PHOTOS.list = j.photos || []; PHOTOS.max = j.max || 10; renderPhotos(); } catch (e) {}
   }
-  // Load a photo into the editor. keep=true leaves the frame/zoom/colours as they are (draft / collection restore).
+  // Load a photo into the editor. keep=true leaves the frame/zoom/colors as they are (draft / collection restore).
   async function loadPhoto(k, keep) {
     const p = PHOTOS.list.find((x) => x.k === k); if (!p) return;
     const img = new Image(); img.crossOrigin = 'anonymous';
@@ -3546,9 +3535,9 @@
   }
   function useFill(color) {
     IMG.cur = null; IMG.src = 'fill'; IMG.k = 0; IMG.fill = color; IMG.panX = 0; IMG.panY = 0;
-    renderPhotos(); $('imgfilename').textContent = 'Colour fill ' + color.toUpperCase(); redrawImg(); renderFillHist();
+    renderPhotos(); $('imgfilename').textContent = 'Color fill ' + color.toUpperCase(); redrawImg(); renderFillHist();
   }
-  // the five most recent fill colours, like the dial background's history
+  // the five most recent fill colors, like the dial background's history
   let fillHist = [];
   try { const h = JSON.parse(localStorage.getItem('faceComposer.fillHist') || '[]'); if (Array.isArray(h)) fillHist = h.filter((c) => /^#[0-9a-f]{6}$/i.test(c)).slice(0, BG_HIST_MAX); } catch (e) {}
   function pushFillHist(c) {
@@ -3619,9 +3608,9 @@
   // Upload the editor image to a slot. activate=false stores it only (the Upload button);
   // activate=true stores it and makes it the one the watch uses.
   async function uploadImage(id, slot, activate) {
-    // Send the reduced (dithered) picture, not the full-colour master: the watch then receives exactly the
+    // Send the reduced (dithered) picture, not the full-color master: the watch then receives exactly the
     // preview, and the palette below is the one those pixels use, so the Garmin proxy has nothing to re-quantise.
-    // (Before 2026-09-07 the master went up and only the palette changed with the colour count.)
+    // (Before 2026-09-07 the master went up and only the palette changed with the color count.)
     if (!IMG.reduced) renderQuality();
     const png = (IMG.reduced || imgCv).toDataURL('image/png');
     const palette = (IMG.reduced && IMG.reducedPal && IMG.reducedPal.length >= 2) ? IMG.reducedPal : computeOptimalPalette(IMG.colors);
@@ -3692,7 +3681,7 @@
       clearInterval(CAM.timer); CAM.timer = null; camNote('');
       renderCamLock();
       const p = CAM.prev; CAM.prev = null;
-      if (p && p.cur && p.src !== 'camera') { IMG.cur = p.cur; IMG.src = p.src; IMG.k = p.k; IMG.fill = p.fill; renderPhotos(); $('imgfilename').textContent = p.k ? `Photo ${p.k}` : (p.fill ? 'Colour fill ' + p.fill.toUpperCase() : ''); redrawImg(); }
+      if (p && p.cur && p.src !== 'camera') { IMG.cur = p.cur; IMG.src = p.src; IMG.k = p.k; IMG.fill = p.fill; renderPhotos(); $('imgfilename').textContent = p.k ? `Photo ${p.k}` : (p.fill ? 'Color fill ' + p.fill.toUpperCase() : ''); redrawImg(); }
       else if (p && p.fill) { useFill(p.fill); }
       else { clearImgPreview(); IMG.k = 0; renderPhotos(); }
     }
@@ -3755,109 +3744,6 @@
   loadWatchState();
 })();
 
-// 大きいカラーパネル (2026-09-19)。OS / ブラウザのパネルは大きさを変えられないので、同じ機能 (色の面・色相・
-// スポイト・HEX / RGB / HSL の入力切り替え) を大きくして出す。input[type=color] は値の置き場とイベントの
-// 出し元のまま: 動かしている間は input、閉じた時に値が変わっていれば change、開いた時 focus・閉じた時 blur
-// (部品の編集欄は開いている間は作り直さない = PICK_OPEN)。外を押す / Enter で閉じる、Esc は元の色に戻して閉じる。
-(() => {
-  const W = 340, H = 240, dpr = Math.max(1, window.devicePixelRatio || 1);
-  const pop = document.createElement('div'); pop.className = 'cpop'; pop.hidden = true;
-  pop.innerHTML = `<canvas class="sv"></canvas>
-    <div class="cprow"><button type="button" class="cpeye" title="Pick a colour from the screen">
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22l1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="M15 6l3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4z"/></svg></button>
-      <span class="cpsw"></span><div class="cphue"><canvas class="hue"></canvas><span class="cpthumb"></span></div></div>
-    <div class="cprow cpvals"><div class="cpin"></div><button type="button" class="cpfmt" title="Switch between HEX, RGB and HSL">&#8693;</button></div>`;
-  document.body.appendChild(pop);
-  const sv = pop.querySelector('.sv'), hu = pop.querySelector('.hue'), sw = pop.querySelector('.cpsw'), th = pop.querySelector('.cpthumb'), box = pop.querySelector('.cpin');
-  const HW = W - 90, HH = 14;
-  sv.width = W * dpr; sv.height = H * dpr; sv.style.width = W + 'px'; sv.style.height = H + 'px';
-  hu.width = HW * dpr; hu.height = HH * dpr; hu.style.width = HW + 'px'; hu.style.height = HH + 'px';
-  const eye = pop.querySelector('.cpeye'); if (!window.EyeDropper) eye.hidden = true;
-  let cur = null, start = '', h = 0, s = 0, v = 0, fmt = 0;   // fmt: 0 HEX, 1 RGB, 2 HSL
-  const rgb = () => { const f = (n) => { const k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); }; return [f(5), f(3), f(1)].map((x) => Math.round(x * 255)); };
-  const toHex = () => '#' + rgb().map((x) => x.toString(16).padStart(2, '0')).join('');
-  const setRgb = (r, g, b) => {
-    r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), d = mx - Math.min(r, g, b);
-    v = mx; s = mx ? d / mx : 0;
-    if (d) { const hh = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = (hh * 60 + 360) % 360; }
-  };
-  const fromHex = (str) => { const n = parseInt(String(str).replace('#', ''), 16) || 0; setRgb(n >> 16 & 255, n >> 8 & 255, n & 255); };
-  const hsl = () => { const l = v * (1 - s / 2), sl = (l === 0 || l === 1) ? 0 : (v - l) / Math.min(l, 1 - l); return [Math.round(h), Math.round(sl * 100), Math.round(l * 100)]; };
-  const setHsl = (hh, ss, ll) => { ss /= 100; ll /= 100; const vv = ll + ss * Math.min(ll, 1 - ll); h = ((hh % 360) + 360) % 360; s = vv ? 2 * (1 - ll / vv) : 0; v = vv; };
-  function fields() {
-    const lbl = [['HEX'], ['R', 'G', 'B'], ['H', 'S', 'L']][fmt];
-    box.innerHTML = lbl.map((l) => `<label><input type="text" spellcheck="false" autocomplete="off"><span>${l}</span></label>`).join('');
-    box.querySelectorAll('input').forEach((inp) => {
-      inp.addEventListener('input', readFields);
-      inp.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') close(); });
-    });
-    writeFields();
-  }
-  function writeFields() {
-    const ins = box.querySelectorAll('input'), vals = fmt === 0 ? [toHex().toUpperCase()] : fmt === 1 ? rgb() : hsl();
-    ins.forEach((inp, i) => { if (document.activeElement !== inp) inp.value = vals[i]; });
-  }
-  function readFields() {
-    const n = [...box.querySelectorAll('input')].map((x) => x.value.trim());
-    if (fmt === 0) { const m = /^#?([0-9a-f]{6})$/i.exec(n[0]); if (!m) return; fromHex(m[1]); }
-    else { const q = n.map(Number); if (q.some((x) => !Number.isFinite(x))) return;
-      if (fmt === 1) setRgb(...q.map((x) => Math.max(0, Math.min(255, x)))); else setHsl(q[0], Math.max(0, Math.min(100, q[1])), Math.max(0, Math.min(100, q[2]))); }
-    paint(); emit();
-  }
-  function paint() {
-    let c = sv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
-    c.fillStyle = `hsl(${h},100%,50%)`; c.fillRect(0, 0, W, H);
-    let g = c.createLinearGradient(0, 0, W, 0); g.addColorStop(0, '#fff'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, W, H);
-    g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, '#000'); c.fillStyle = g; c.fillRect(0, 0, W, H);
-    c.lineWidth = 2; c.strokeStyle = '#fff'; c.beginPath(); c.arc(s * W, (1 - v) * H, 8, 0, Math.PI * 2); c.stroke();
-    c.strokeStyle = 'rgba(0,0,0,.5)'; c.lineWidth = 1; c.beginPath(); c.arc(s * W, (1 - v) * H, 9.5, 0, Math.PI * 2); c.stroke();
-    c = hu.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
-    g = c.createLinearGradient(0, 0, HW, 0); for (let i = 0; i <= 6; i++) g.addColorStop(i / 6, `hsl(${i * 60},100%,50%)`);
-    c.fillStyle = g; c.fillRect(0, 0, HW, HH);
-    th.style.left = (h / 360 * HW) + 'px'; th.style.background = `hsl(${h},100%,50%)`;
-    sw.style.background = toHex(); writeFields();
-  }
-  const emit = () => { if (!cur) return; cur.value = toHex(); cur.dispatchEvent(new Event('input', { bubbles: true })); };
-  const drag = (el, cv, fn) => el.addEventListener('pointerdown', (ev) => {
-    ev.preventDefault(); try { el.setPointerCapture(ev.pointerId); } catch (e) {}
-    const at = (e2) => { const r = cv.getBoundingClientRect(); fn(Math.max(0, Math.min(1, (e2.clientX - r.left) / r.width)), Math.max(0, Math.min(1, (e2.clientY - r.top) / r.height))); paint(); emit(); };
-    at(ev);
-    const mv = (e2) => at(e2), up = () => { el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); };
-    el.addEventListener('pointermove', mv); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
-  });
-  drag(sv, sv, (x, y) => { s = x; v = 1 - y; });
-  drag(pop.querySelector('.cphue'), hu, (x) => { h = Math.min(359.9, x * 360); });
-  pop.querySelector('.cpfmt').addEventListener('click', () => { fmt = (fmt + 1) % 3; fields(); });
-  eye.addEventListener('click', async () => {
-    const t = cur; if (!t) return;
-    try { const r = await new window.EyeDropper().open(); if (cur !== t) return; fromHex(r.sRGBHex); paint(); emit(); } catch (e) {}
-  });
-  function open(t) {
-    if (cur) close();
-    cur = t; start = t.value; fromHex(start); pop.hidden = false; fields(); paint();
-    t.dispatchEvent(new Event('focus'));
-    const r = t.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight;
-    let left = Math.max(8, Math.min(r.left, innerWidth - pw - 8)), top = r.bottom + 6;
-    if (top + ph > innerHeight - 8) top = Math.max(8, r.top - ph - 6);
-    pop.style.left = left + 'px'; pop.style.top = top + 'px';
-  }
-  function close() {
-    if (!cur) return;
-    const t = cur; cur = null; pop.hidden = true;
-    if (t.value.toLowerCase() !== start.toLowerCase()) t.dispatchEvent(new Event('change', { bubbles: true }));
-    t.dispatchEvent(new Event('blur'));
-  }
-  const isPick = (el) => el && el.matches && el.matches('input[type="color"]');
-  document.addEventListener('mousedown', (ev) => { if (isPick(ev.target)) ev.preventDefault(); }, true);   // フォーカスを取らせない
-  document.addEventListener('click', (ev) => {
-    if (!isPick(ev.target)) return;
-    ev.preventDefault();                                   // ブラウザのパネルは開かない
-    if (cur === ev.target) close(); else open(ev.target);
-  }, true);
-  document.addEventListener('pointerdown', (ev) => { if (cur && !pop.contains(ev.target) && ev.target !== cur) close(); }, true);
-  document.addEventListener('keydown', (ev) => { if (cur && ev.key === 'Escape') { cur.value = start; cur.dispatchEvent(new Event('input', { bubbles: true })); close(); } });
-  window.addEventListener('resize', () => close());
-})();
 </script>
 </body>
 </html>

@@ -347,7 +347,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 19:50</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 21:18</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -965,6 +965,20 @@
       w = twSpan.getBoundingClientRect().width;
     } catch (e) {}
     return (twCache[key] = w);
+  }
+  // 数字は行の箱の中で上下に余白 (leading) を持つ。縦積みでアイコンとの間隔を測る時は
+  // この余白ぶんを引かないと、見た目の隙間が二重になる (2026-09-18)。
+  const inkTopCache = {};
+  function inkTop(px) {
+    if (px in inkTopCache) return inkTopCache[px];
+    let d = 0;
+    try {
+      const c = document.createElement('canvas').getContext('2d'); c.font = `400 ${px / FONT_EM}px Roboto`;
+      const m = c.measureText('8'), A = m.fontBoundingBoxAscent, D = m.fontBoundingBoxDescent;
+      const baseline = (px - (A + D)) / 2 + A;
+      d = Math.max(0, baseline - m.actualBoundingBoxAscent);
+    } catch (e) {}
+    return (inkTopCache[px] = d);
   }
   // Faux bold (layout "b" = 1): the watch draws the text twice, shifted right by round(px/36) (min 1).
   // 疑似ボールド: 同じ文字を右へずらして重ね描きする。1 = 1 回ぶん、2 = より太く (途中にもう 1 枚)。
@@ -1612,11 +1626,12 @@
       const art = (c) => (met === 2
         ? `<svg width="26" height="26" viewBox="-13 -13 26 26"><polygon points="${arrow(0, 0, WIND_DEG[c] || 225)}" fill="currentColor"/></svg>`
         : ICONS[iName]());
-      const icoOf = (c) => (showIco ? `<span class="ico" style="width:${iw.toFixed(1)}px;height:${(30 * ki).toFixed(1)}px;justify-content:center;align-items:center;transform:translateY(${iody}px) scale(${ki});">${art(c)}</span>` : '');
+      const icoH = 30 * ki;   // どの指標でも同じ高さ (値の段がそろう)
+      const icoOf = (c) => (showIco ? `<span class="ico" style="width:${iw.toFixed(1)}px;height:${icoH.toFixed(1)}px;justify-content:center;align-items:center;transform:translateY(${iody}px) scale(${ki});">${art(c)}</span>` : '');
       for (let c = 0; c < def.strip; c++) {
         const v = `<span class="val" style="display:inline-block;width:${vw.toFixed(1)}px;text-align:${lay === 2 ? 'center' : lay === 1 ? 'right' : 'left'};position:relative;top:${inkShift(px).toFixed(2)}px">${vals[c]}</span>`;
         const ico = icoOf(c);
-        cells.push(`<span class="scell" style="width:${colW.toFixed(1)}px;gap:${gp.toFixed(1)}px;${lay === 2 ? 'flex-direction:column;' : ''}${c < def.strip - 1 ? `margin-right:${(gp * 2).toFixed(1)}px` : ''}">${lay === 1 ? v + ico : ico + v}</span>`);
+        cells.push(`<span class="scell" style="width:${colW.toFixed(1)}px;gap:${(lay === 2 ? Math.max(0, gp - inkTop(px)) : gp).toFixed(1)}px;${lay === 2 ? 'flex-direction:column;' : ''}${c < def.strip - 1 ? `margin-right:${(gp * 2).toFixed(1)}px` : ''}">${lay === 1 ? v + ico : ico + v}</span>`);
       }
       div.style.gap = '0px';
       div.innerHTML = cells.join('') + '<span class="anchor"></span>';
@@ -1625,8 +1640,15 @@
       const sample = isStock(t) ? stkValue(t, f) : isBall(t) ? ballSample(t) : (t === 2 && !splitDate) ? 'Fri Sep 4' : def.sample;
       const lay = arrOf(e);       // 0 アイコン左 / 1 アイコン右 / 2 アイコン上
       const val = showVal ? `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px">${sample}</span>` : '';
-      if (lay === 2) div.style.flexDirection = 'column';
-      div.innerHTML = (lay === 1 ? val + icon : icon + val) + '<span class="anchor"></span>';
+      let ic2 = icon;
+      if (lay === 2) {
+        div.style.flexDirection = 'column';
+        div.style.gap = Math.max(0, GAP * ki - inkTop(px)).toFixed(1) + 'px';
+        // 絵の箱は原寸のままで中身だけ縮んでいるので、縦積みでは箱も実寸に合わせる
+        const hm = /height="([\d.]+)"/.exec(icon);
+        if (hm) ic2 = icon.replace('class="ico" style="', `class="ico" style="height:${(Number(hm[1]) * ki).toFixed(1)}px;`);
+      }
+      div.innerHTML = (lay === 1 ? val + ic2 : ic2 + val) + '<span class="anchor"></span>';
     }
     div.addEventListener('pointerdown', (ev) => startMove(ev, i));
     return div;

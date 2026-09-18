@@ -52,6 +52,7 @@
   #insp .swatches { gap: 5px; max-width: 530px; }   /* ピッカーまで同じ行に収める (折り返すと左端へ回る) */
   #insp .row { margin-top: 0 !important; }
   #insp .brk { flex: 0 0 100%; height: 0; }
+  #insp .field.off { opacity: .35; }
   #insp .brk + .brk, #insp .group > .brk:first-child { display: none; }   /* Align と Duplicate / Remove を必ず同じ行に置く */
   #insp > div:first-child { display: inline-block; margin-right: 18px; }
   .group { display: flex; flex-direction: column; gap: 6px; }
@@ -276,13 +277,20 @@
   #bgpick, #imgfill, .swatches .pick { width: 34px; height: 26px; padding: 0 2px; border: 1px solid var(--line-2); border-radius: 5px; background: var(--panel-2); cursor: pointer; }
   #bgpick { margin-right: 6px; }
   .swatches.simple .pick { margin: 0 4px 0 0; }
-  /* 大きいカラーパネル (OS のパネルは大きさを変えられない) */
-  .cpop { position: fixed; z-index: 1000; background: var(--panel); border: 1px solid var(--line-2); border-radius: 10px; padding: 12px; box-shadow: 0 16px 40px rgba(0,0,0,.55); display: flex; flex-direction: column; gap: 10px; touch-action: none; }
+  /* 大きいカラーパネル (ブラウザのパネルと同じ機能を大きく) */
+  .cpop { position: fixed; z-index: 1000; background: var(--panel); border: 1px solid var(--line-2); border-radius: 10px; padding: 0 0 14px; box-shadow: 0 16px 40px rgba(0,0,0,.55); display: flex; flex-direction: column; gap: 14px; touch-action: none; overflow: hidden; }
   .cpop[hidden] { display: none; }
-  .cpop canvas { display: block; border-radius: 6px; cursor: crosshair; }
-  .cpop .cprow { display: flex; gap: 8px; align-items: center; }
-  .cpop .cpsw { width: 34px; height: 30px; border-radius: 5px; border: 1px solid var(--line-2); }
-  .cpop .cphex { flex: 1 1 auto; width: 90px; font: 13px ui-monospace, monospace; }
+  .cpop canvas.sv { display: block; cursor: crosshair; }
+  .cpop .cprow { display: flex; gap: 12px; align-items: center; padding: 0 16px; }
+  .cpop .cpeye, .cpop .cpfmt { background: none; border: 0; color: var(--ink-2); cursor: pointer; padding: 4px; border-radius: 5px; font-size: 16px; }
+  .cpop .cpeye:hover, .cpop .cpfmt:hover { background: var(--line); color: var(--ink); }
+  .cpop .cpsw { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-2); flex: 0 0 auto; }
+  .cpop .cphue { position: relative; flex: 1 1 auto; padding: 6px 0; cursor: pointer; }
+  .cpop .cphue canvas { display: block; border-radius: 7px; }
+  .cpop .cpthumb { position: absolute; top: 3px; width: 20px; height: 20px; margin-left: -10px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.5); pointer-events: none; }
+  .cpop .cpin { flex: 1 1 auto; display: flex; gap: 8px; }
+  .cpop .cpin label { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; color: var(--ink-3); }
+  .cpop .cpin input { width: 100%; box-sizing: border-box; text-align: center; font: 13px var(--mono); }
   .swatches .pick { margin-left: 6px; }
   .pxs { display: inline-flex; gap: 18px; }
   .stp { display: inline-flex; align-items: center; gap: 6px; }
@@ -363,7 +371,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 07:52</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 08:09</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -412,7 +420,7 @@
     <div class="stage-row">
       <div class="stage-col">
         <div class="dialbar top">
-          <div class="grp"><span class="lbl">Dial</span>
+          <div class="grp"><div class="tier"><span class="num">2</span><span class="name">Dial</span><span class="what">Move the parts and the picture here</span></div>
             <div class="ctl"><button class="btn" id="undo" disabled title="Undo the last change to the dial (⌘Z / Ctrl+Z). Parts, colours, sizes and the background — not the image.">Undo</button><button class="btn" id="redo" disabled title="Put back what Undo took away (⇧⌘Z / Ctrl+Y)">Redo</button><button class="btn danger" id="reset" title="Empty the dial: every part, the background and the text / icon sizes go back to the start. Units and the grid stay. Undo puts it back.">Clear dial</button><span class="vsep"></span><button class="btn" id="imgparts" title="Hide the parts on the dial while you frame the picture. Only this view — nothing is saved.">Hide parts</button><button class="btn" id="imghide" title="Hide the picture on the dial. Only this view — nothing is saved.">Hide image</button><span class="vsep"></span><span class="sub"><span class="muted">Grid</span><select id="grid" title="Also the step for the - / + buttons. Pick a fine grid to place thin double lines close together."><option value="5">200 × 200 (5)</option><option value="10">100 × 100 (10)</option><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label><span class="cb units" id="gridcol" title="Grid colour. Bright is easier to see on a black or dark dial."></span></span></div>
             <div class="status" id="facestatus"></div>
           </div>
@@ -428,7 +436,7 @@
     </div>
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
     <div class="imgbox box">
-      <div class="tier"><span class="num">2</span><span class="name">Image</span><span class="what">Pick a photo and frame it for the dial</span></div>
+      <div class="tier"><span class="num">3</span><span class="name">Image</span><span class="what">Pick a photo and frame it for the dial</span></div>
       <div class="cols">
         <div class="grp"><span class="lbl">Frame</span>
           <div class="imgstage master" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas><canvas id="imgQ" width="320" height="320"></canvas></div>
@@ -458,7 +466,7 @@
       </div>
     </div>
     <div class="shelfbox box">
-      <div class="tier"><span class="num">3</span><span class="name">Collection</span><span class="what">Save the dial, then send it to the watch from here</span></div>
+      <div class="tier"><span class="num">4</span><span class="name">Collection</span><span class="what">Save the dial, then send it to the watch from here</span></div>
       <div class="grp">
         <div class="ctl"><span class="muted only-wide">Everything on the watch comes from here: save the dial above, then use <b>To watch</b> on it. The watch shows one dial — sending another replaces it, within 5 minutes.</span><span class="muted only-phone">Pick a dial below and press <b>To watch</b>. Your watch shows one dial — sending another replaces it, within 5 minutes.</span></div>
         <div class="status" id="syncstatus"></div>
@@ -468,7 +476,7 @@
       <div class="shelf" id="shelf"></div>
     </div>
     <div class="shelfbox box" id="watchbox">
-      <div class="tier"><span class="num">4</span><span class="name">Watch</span><span class="what">Two settings you make once: which watch receives your dials, and where its weather comes from</span></div>
+      <div class="tier"><span class="num">5</span><span class="name">Watch</span><span class="what">Two settings you make once: which watch receives your dials, and where its weather comes from</span></div>
       <div class="grp" id="syncbox">
           <span class="lbl">a · Which watch</span>
           <div class="ctl"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX" style="width:140px"><span class="muted">Your watch face shows this ID. Everything you send from Collection goes to this watch. It is kept on this computer — there is nothing to sign up for.</span></div>
@@ -2166,7 +2174,7 @@
     const all = none ? [e] : idx.map((i) => st.el[i]), multi = all.length > 1;
     const def = TYPES[e[0]];
     const same = (k) => all.every((x) => x[k] === e[k]);   // highlight a value only when every selected element has it
-    const seg = (label, vals, cur, key, base) => { base = base || 0; return `<div class="field"><span>${label}</span><span class="seg" data-key="${key}">${vals.map((v, i) => `<button class="${i + base === cur ? 'on' : ''}" data-v="${i + base}">${v}</button>`).join('')}</span></div>`; };
+    const seg = (label, vals, cur, key, base, off) => { base = base || 0; return `<div class="field${off ? ' off' : ''}"><span>${label}</span><span class="seg" data-key="${key}">${vals.map((v, i) => `<button class="${i + base === cur ? 'on' : ''}" data-v="${i + base}" ${off ? 'disabled' : ''}>${v}</button>`).join('')}</span></div>`; };
     // 線の位置と長さは +/- で動かす (グリッド 1 目盛りずつ)。値は全部そろっている時だけ出す。
     const stepRow = (label, key, val, ttl) => `<div class="field" title="${ttl}"><span>${label}</span><span class="cb units step" data-step="${key}"><button type="button" data-d="-1">&minus;</button><b>${val == null ? '—' : val}</b><button type="button" data-d="1">+</button></span></div>`;
     const isOf = (x) => (Number.isInteger(x[7]) && x[7] >= 0 && x[7] <= SIZE_MAX) ? x[7] : -1;
@@ -2183,11 +2191,32 @@
     const allStrip = !none && all.every((x) => isStrip(x[0]));   // 予報の帯 (29)
     const allText = !none && all.every((x) => !isLine(x[0]) && !isCircle(x[0]) && !isRect(x[0]) && !isGraph(x[0]) && !TYPES[x[0]].dial);
     const sameLen = all.every((x) => lineLen(x) === lineLen(e));
+    // 基本の 3 行 (位置と大きさ / 表示 / 色と並べ) はどの部品でも同じ場所に出す。使えない物は薄く押せなくするだけ。
+    const shapeOnly = !none && all.every((x) => isLine(x[0]) || isCircle(x[0]) || isRect(x[0]) || isGraph(x[0]));
     box.innerHTML = `
       <div style="font-weight:600;margin-bottom:8px">${none ? '<span class="muted" style="font-weight:400">No part selected — click one on the dial (Shift+click for several)</span>' : multi ? `${all.length} elements <span class="kbd">changes apply to all</span>` : `${def.name} <span class="kbd">type ${e[0]}</span>`}</div>
       <div class="group">
         ${(allLine || allCirc || allRect) && !none ? stepRow('X', 1, multi ? null : e[1], 'Move left / right by one grid step') : `<div class="field"><span>X</span><input type="number" id="fx" min="0" max="1000" step="${st.grid}" value="${none || multi ? '' : e[1]}" ${multi ? 'disabled title="Several parts selected: drag or use the arrow keys to move them together"' : ''}></div>`}
         ${(allLine || allCirc || allRect) && !none ? stepRow('Y', 2, multi ? null : e[2], 'Move up / down by one grid step') : `<div class="field"><span>Y</span><input type="number" id="fy" min="0" max="1000" step="${st.grid}" value="${none || multi ? '' : e[2]}" ${multi ? 'disabled' : ''}></div>`}
+        ${seg('Anchor', ['Center', 'Left', 'Right'], same(3) ? e[3] : -1, 3, 0, allCirc || allRect)}
+        ${allGraph ? seg('Size', ['Small', 'Large'], same(4) ? e[4] : -9, 4) : seg('Size', SIZES, shapeOnly ? -9 : (same(4) ? e[4] : -9), 4, 0, shapeOnly)}
+        ${seg('Icon size', ['Auto'].concat(SIZES), anyIcon && !shapeOnly ? (sameIs ? isOf(e) : -9) : -9, 7, -1, shapeOnly)}
+        <div class="brk"></div>
+        <div class="field${shapeOnly ? ' off' : ''}" title="${anyIcon ? 'What this part draws' : 'This part has no icon'}"><span>Show</span><span class="cb units" id="fshow">${
+          [['Icon + value', 1], ['Icon only', 3], ['Value only', 0]].map(([lbl, v]) =>
+            `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 3) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none || shapeOnly ? 'disabled' : ''}>${lbl}</button>`).join('')
+        }</span></div>
+        <div class="field${allText ? '' : ' off'}" title="Where the icon sits relative to the value"><span>Arrange</span><span class="cb units" id="farr">${
+          [['Icon left', 0], ['Icon right', 1], ['Icon above', 2]].map(([nm, v]) =>
+            `<button type="button" data-v="${v}" class="${allText && all.every((x) => arrOf(x) === v) ? 'on' : ''}" ${allText ? '' : 'disabled'}>${nm}</button>`).join('')
+        }</span></div>
+        <div class="brk"></div>
+        <div class="field"><span>Color</span><span class="swatches simple"><input type="color" class="pick" id="fpick" value="${colOf(e[5])}" title="Pick any colour — recent ones stay next to it">${
+          (same(5) && e[5] >= 0 && e[5] < PC_BASE ? [e[5]] : []).concat(shownColors(e[5]).reverse()).map((i) => `<button class="sw ${same(5) && i === e[5] ? 'on' : ''}" data-c="${i}" title="${colOf(i).toUpperCase()}" style="background:${colOf(i)}"></button>`).join('')
+        }</span></div>
+        <div class="field" title="Line the selected parts up on the one you clicked last (the highlighted row in the list)"><span>Align</span><span class="cb units" id="falign"><button type="button" data-v="x" ${multi ? '' : 'disabled'}>Same X &#8597;</button><button type="button" data-v="y" ${multi ? '' : 'disabled'}>Same Y &#8596;</button></span></div>
+        <div class="field"><button class="btn" id="tofront" title="Draw this part over the others (last in the list)">Front</button><button class="btn" id="toback" title="Draw this part under the others (first in the list)">Back</button><button class="btn" id="dup">Duplicate</button><button class="btn danger" id="del">Remove</button></div>
+        <div class="brk"></div>
         ${allCirc ? `
         ${stepRow('Diameter', 8, all.every((x) => circDia(x) === circDia(e)) ? circDia(e) : null, 'Bigger / smaller by one grid step')}
         ${seg('Thickness', ['Thin', 'Medium', 'Thick'], same(4) ? e[4] : -9, 4)}
@@ -2213,8 +2242,8 @@
           [[0, 'R'], [1, 'Sharp']].map(([v, lb]) =>
             `<button type="button" data-v="${v}" class="${all.every((x) => ((x[6] & F_SHARP) ? 1 : 0) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>
-        ` : allLine ? `
-        ${seg('Anchor', ['Center', 'Left', 'Right'], same(3) ? e[3] : -1, 3)}
+        ` : ''}
+        ${allLine ? `
         <div class="field" title="Which way the line runs"><span>Direction</span><span class="cb units" id="fdir">${
           [[70, '&#9474;'], [71, '&#9472;'], [72, '&#9586;'], [73, '&#9585;']].map(([tt, lb]) =>
             `<button type="button" data-t="${tt}" class="${all.every((x) => x[0] === tt) ? 'on' : ''}">${lb}</button>`).join('')
@@ -2225,24 +2254,7 @@
           [[0, 'R'], [1, 'Sharp']].map(([v, lb]) =>
             `<button type="button" data-v="${v}" class="${all.every((x) => (lineSharp(x) ? 1 : 0) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>
-        ` : allGraph ? `
-        ${seg('Anchor', ['Center', 'Left', 'Right'], same(3) ? e[3] : -1, 3)}
-        ${seg('Size', ['Small', 'Large'], same(4) ? e[4] : -9, 4)}
-        ` : (allCirc || allRect) ? '' : `
-        ${seg('Anchor', ['Center', 'Left', 'Right'], same(3) ? e[3] : -1, 3)}
-        ${seg('Size', SIZES, same(4) ? e[4] : -9, 4)}
-        ${seg('Icon size', ['Auto'].concat(SIZES), anyIcon ? (sameIs ? isOf(e) : -9) : -9, 7, -1)}
-        `}
-        <div class="brk"></div>
-        ${(allLine || allCirc || allRect || allGraph) ? '' : `<div class="field" title="${anyIcon ? 'What this part draws' : 'This part has no icon'}"><span>Show</span><span class="cb units" id="fshow">${
-          [['Icon + value', 1], ['Icon only', 3], ['Value only', 0]].map(([lbl, v]) =>
-            `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 3) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none ? 'disabled' : ''}>${lbl}</button>`).join('')
-        }</span></div>`}
-        ${allText ? `<div class="field" title="Where the icon sits relative to the value"><span>Arrange</span><span class="cb units" id="farr">${
-          [['Icon left', 0], ['Icon right', 1], ['Icon above', 2]].map(([nm, v]) =>
-            `<button type="button" data-v="${v}" class="${all.every((x) => arrOf(x) === v) ? 'on' : ''}">${nm}</button>`).join('')
-        }</span></div>` : ''}
-        <div class="brk"></div>
+        ` : ''}
         ${allCityClock ? `<div class="field" title="Show the time in another city. Summer time is followed automatically."><span>Time zone</span><select id="ftz">${
           [`<option value="0" ${all.every((x) => cityOf(x) === 0) ? 'selected' : ''}>This watch's time</option>`].concat(
             TZ_CITIES.map((c) => [c, tzOffsetNow(c[3])]).sort((a, b) => a[1] - b[1]).map(([c, off]) =>
@@ -2267,12 +2279,6 @@
         <div class="field" title="What the number shows"><span>Value</span><span class="cb units" id="fstkv"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 4)) ? 'on' : ''}">Price</button><button type="button" data-v="4" class="${all.every((x) => (x[6] & 4)) ? 'on' : ''}">Change %</button></span></div>
         <div class="field" title="Ticker (AAPL) or the company name as the data provider writes it"><span>Label</span><span class="cb units" id="fstkn"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 16)) ? 'on' : ''}">Symbol</button><button type="button" data-v="16" class="${all.every((x) => (x[6] & 16)) ? 'on' : ''}">Name</button></span></div>
         <div class="field" title="The price turns green when it is up and red when it is down. The symbol or name keeps the colour below."><span>Up / down</span><span class="cb units" id="fstkc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep colour</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By move</button></span></div>` : ''}
-        <div class="brk"></div>
-        <div class="field"><span>Color</span><span class="swatches simple"><input type="color" class="pick" id="fpick" value="${colOf(e[5])}" title="Pick any colour — recent ones stay next to it">${
-          (same(5) && e[5] >= 0 && e[5] < PC_BASE ? [e[5]] : []).concat(shownColors(e[5]).reverse()).map((i) => `<button class="sw ${same(5) && i === e[5] ? 'on' : ''}" data-c="${i}" title="${colOf(i).toUpperCase()}" style="background:${colOf(i)}"></button>`).join('')
-        }</span></div>
-        <div class="field" title="Line the selected parts up on the one you clicked last (the highlighted row in the list)"><span>Align</span><span class="cb units" id="falign"><button type="button" data-v="x" ${multi ? '' : 'disabled'}>Same X &#8597;</button><button type="button" data-v="y" ${multi ? '' : 'disabled'}>Same Y &#8596;</button></span></div>
-        <div class="field"><button class="btn" id="tofront" title="Draw this part over the others (last in the list)">Front</button><button class="btn" id="toback" title="Draw this part under the others (first in the list)">Back</button><button class="btn" id="dup">Duplicate</button><button class="btn danger" id="del">Remove</button></div>
         ${arcEl ? `<div class="field" title="Each arc can be a meter. Pick what it measures; none = plain arc."><span>Meters</span><span class="mts">${
           ARCSET[arcEl[0]].lbl.map((pos, i) => { const on = (st.mv || [])[i] !== 0; return `<label class="mt${on ? '' : ' off'}"><button type="button" class="mvb${on ? ' on' : ''}" data-i="${i}" title="Show or hide this arc">${pos}</button><select data-i="${i}" ${on ? '' : 'disabled'}>${
             METERS.map(([id, nm]) => `<option value="${id}" ${(st.mt || [])[i] === id ? 'selected' : ''}>${nm}</option>`).join('')
@@ -3749,56 +3755,86 @@
   loadWatchState();
 })();
 
-// 大きいカラーパネル (2026-09-19)。OS のパネルは大きさを変えられないので、input[type=color] を押したら
-// これを開く。input は値の置き場とイベントの出し元のまま: 動かしている間は input、閉じた時に値が変わって
-// いれば change、開いた時 focus・閉じた時 blur (部品の編集欄は開いている間は作り直さない = PICK_OPEN)。
+// 大きいカラーパネル (2026-09-19)。OS / ブラウザのパネルは大きさを変えられないので、同じ機能 (色の面・色相・
+// スポイト・HEX / RGB / HSL の入力切り替え) を大きくして出す。input[type=color] は値の置き場とイベントの
+// 出し元のまま: 動かしている間は input、閉じた時に値が変わっていれば change、開いた時 focus・閉じた時 blur
+// (部品の編集欄は開いている間は作り直さない = PICK_OPEN)。外を押す / Enter で閉じる、Esc は元の色に戻して閉じる。
 (() => {
-  const W = 300, H = 220, HB = 22, dpr = Math.max(1, window.devicePixelRatio || 1);
+  const W = 340, H = 240, dpr = Math.max(1, window.devicePixelRatio || 1);
   const pop = document.createElement('div'); pop.className = 'cpop'; pop.hidden = true;
-  pop.innerHTML = `<canvas class="sv"></canvas><canvas class="hue"></canvas>
-    <div class="cprow"><span class="cpsw"></span><input type="text" class="cphex" maxlength="7" spellcheck="false" autocomplete="off"><button type="button" class="btn cpok">Done</button></div>`;
+  pop.innerHTML = `<canvas class="sv"></canvas>
+    <div class="cprow"><button type="button" class="cpeye" title="Pick a colour from the screen">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22l1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="M15 6l3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4z"/></svg></button>
+      <span class="cpsw"></span><div class="cphue"><canvas class="hue"></canvas><span class="cpthumb"></span></div></div>
+    <div class="cprow cpvals"><div class="cpin"></div><button type="button" class="cpfmt" title="Switch between HEX, RGB and HSL">&#8693;</button></div>`;
   document.body.appendChild(pop);
-  const sv = pop.querySelector('.sv'), hu = pop.querySelector('.hue'), hx = pop.querySelector('.cphex'), sw = pop.querySelector('.cpsw');
-  [[sv, W, H], [hu, W, HB]].forEach(([c, w, h]) => { c.width = w * dpr; c.height = h * dpr; c.style.width = w + 'px'; c.style.height = h + 'px'; });
-  let cur = null, start = '', h = 0, s = 0, v = 0;
-  const toHex = () => {
-    const f = (n) => { const k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); };
-    return '#' + [f(5), f(3), f(1)].map((x) => Math.round(x * 255).toString(16).padStart(2, '0')).join('');
-  };
-  const fromHex = (str) => {
-    const n = parseInt(String(str).replace('#', ''), 16) || 0, r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
-    const mx = Math.max(r, g, b), d = mx - Math.min(r, g, b);
+  const sv = pop.querySelector('.sv'), hu = pop.querySelector('.hue'), sw = pop.querySelector('.cpsw'), th = pop.querySelector('.cpthumb'), box = pop.querySelector('.cpin');
+  const HW = W - 90, HH = 14;
+  sv.width = W * dpr; sv.height = H * dpr; sv.style.width = W + 'px'; sv.style.height = H + 'px';
+  hu.width = HW * dpr; hu.height = HH * dpr; hu.style.width = HW + 'px'; hu.style.height = HH + 'px';
+  const eye = pop.querySelector('.cpeye'); if (!window.EyeDropper) eye.hidden = true;
+  let cur = null, start = '', h = 0, s = 0, v = 0, fmt = 0;   // fmt: 0 HEX, 1 RGB, 2 HSL
+  const rgb = () => { const f = (n) => { const k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); }; return [f(5), f(3), f(1)].map((x) => Math.round(x * 255)); };
+  const toHex = () => '#' + rgb().map((x) => x.toString(16).padStart(2, '0')).join('');
+  const setRgb = (r, g, b) => {
+    r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), d = mx - Math.min(r, g, b);
     v = mx; s = mx ? d / mx : 0;
     if (d) { const hh = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = (hh * 60 + 360) % 360; }
   };
+  const fromHex = (str) => { const n = parseInt(String(str).replace('#', ''), 16) || 0; setRgb(n >> 16 & 255, n >> 8 & 255, n & 255); };
+  const hsl = () => { const l = v * (1 - s / 2), sl = (l === 0 || l === 1) ? 0 : (v - l) / Math.min(l, 1 - l); return [Math.round(h), Math.round(sl * 100), Math.round(l * 100)]; };
+  const setHsl = (hh, ss, ll) => { ss /= 100; ll /= 100; const vv = ll + ss * Math.min(ll, 1 - ll); h = ((hh % 360) + 360) % 360; s = vv ? 2 * (1 - ll / vv) : 0; v = vv; };
+  function fields() {
+    const lbl = [['HEX'], ['R', 'G', 'B'], ['H', 'S', 'L']][fmt];
+    box.innerHTML = lbl.map((l) => `<label><input type="text" spellcheck="false" autocomplete="off"><span>${l}</span></label>`).join('');
+    box.querySelectorAll('input').forEach((inp) => {
+      inp.addEventListener('input', readFields);
+      inp.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') close(); });
+    });
+    writeFields();
+  }
+  function writeFields() {
+    const ins = box.querySelectorAll('input'), vals = fmt === 0 ? [toHex().toUpperCase()] : fmt === 1 ? rgb() : hsl();
+    ins.forEach((inp, i) => { if (document.activeElement !== inp) inp.value = vals[i]; });
+  }
+  function readFields() {
+    const n = [...box.querySelectorAll('input')].map((x) => x.value.trim());
+    if (fmt === 0) { const m = /^#?([0-9a-f]{6})$/i.exec(n[0]); if (!m) return; fromHex(m[1]); }
+    else { const q = n.map(Number); if (q.some((x) => !Number.isFinite(x))) return;
+      if (fmt === 1) setRgb(...q.map((x) => Math.max(0, Math.min(255, x)))); else setHsl(q[0], Math.max(0, Math.min(100, q[1])), Math.max(0, Math.min(100, q[2]))); }
+    paint(); emit();
+  }
   function paint() {
     let c = sv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
     c.fillStyle = `hsl(${h},100%,50%)`; c.fillRect(0, 0, W, H);
     let g = c.createLinearGradient(0, 0, W, 0); g.addColorStop(0, '#fff'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, W, H);
     g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, '#000'); c.fillStyle = g; c.fillRect(0, 0, W, H);
-    c.lineWidth = 2; c.strokeStyle = v > 0.55 && s < 0.5 ? '#000' : '#fff'; c.beginPath(); c.arc(s * W, (1 - v) * H, 7, 0, Math.PI * 2); c.stroke();
+    c.lineWidth = 2; c.strokeStyle = '#fff'; c.beginPath(); c.arc(s * W, (1 - v) * H, 8, 0, Math.PI * 2); c.stroke();
+    c.strokeStyle = 'rgba(0,0,0,.5)'; c.lineWidth = 1; c.beginPath(); c.arc(s * W, (1 - v) * H, 9.5, 0, Math.PI * 2); c.stroke();
     c = hu.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
-    g = c.createLinearGradient(0, 0, W, 0); for (let i = 0; i <= 6; i++) g.addColorStop(i / 6, `hsl(${i * 60},100%,50%)`);
-    c.fillStyle = g; c.fillRect(0, 0, W, HB);
-    c.lineWidth = 3; c.strokeStyle = '#fff'; c.strokeRect(h / 360 * W - 3, 1.5, 6, HB - 3);
-    const x = toHex(); sw.style.background = x; if (document.activeElement !== hx) hx.value = x.toUpperCase();
+    g = c.createLinearGradient(0, 0, HW, 0); for (let i = 0; i <= 6; i++) g.addColorStop(i / 6, `hsl(${i * 60},100%,50%)`);
+    c.fillStyle = g; c.fillRect(0, 0, HW, HH);
+    th.style.left = (h / 360 * HW) + 'px'; th.style.background = `hsl(${h},100%,50%)`;
+    sw.style.background = toHex(); writeFields();
   }
   const emit = () => { if (!cur) return; cur.value = toHex(); cur.dispatchEvent(new Event('input', { bubbles: true })); };
-  const drag = (cv, fn) => cv.addEventListener('pointerdown', (ev) => {
-    ev.preventDefault(); try { cv.setPointerCapture(ev.pointerId); } catch (e) {}
+  const drag = (el, cv, fn) => el.addEventListener('pointerdown', (ev) => {
+    ev.preventDefault(); try { el.setPointerCapture(ev.pointerId); } catch (e) {}
     const at = (e2) => { const r = cv.getBoundingClientRect(); fn(Math.max(0, Math.min(1, (e2.clientX - r.left) / r.width)), Math.max(0, Math.min(1, (e2.clientY - r.top) / r.height))); paint(); emit(); };
     at(ev);
-    const mv = (e2) => at(e2), up = () => { cv.removeEventListener('pointermove', mv); cv.removeEventListener('pointerup', up); cv.removeEventListener('pointercancel', up); };
-    cv.addEventListener('pointermove', mv); cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+    const mv = (e2) => at(e2), up = () => { el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); };
+    el.addEventListener('pointermove', mv); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
   });
-  drag(sv, (x, y) => { s = x; v = 1 - y; });
-  drag(hu, (x) => { h = Math.min(359.9, x * 360); });
-  hx.addEventListener('input', () => { const m = /^#?([0-9a-f]{6})$/i.exec(hx.value.trim()); if (m) { fromHex(m[1]); paint(); emit(); } });
-  hx.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') close(); });
-  pop.querySelector('.cpok').addEventListener('click', () => close());
+  drag(sv, sv, (x, y) => { s = x; v = 1 - y; });
+  drag(pop.querySelector('.cphue'), hu, (x) => { h = Math.min(359.9, x * 360); });
+  pop.querySelector('.cpfmt').addEventListener('click', () => { fmt = (fmt + 1) % 3; fields(); });
+  eye.addEventListener('click', async () => {
+    const t = cur; if (!t) return;
+    try { const r = await new window.EyeDropper().open(); if (cur !== t) return; fromHex(r.sRGBHex); paint(); emit(); } catch (e) {}
+  });
   function open(t) {
     if (cur) close();
-    cur = t; start = t.value; fromHex(start); pop.hidden = false; paint();
+    cur = t; start = t.value; fromHex(start); pop.hidden = false; fields(); paint();
     t.dispatchEvent(new Event('focus'));
     const r = t.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight;
     let left = Math.max(8, Math.min(r.left, innerWidth - pw - 8)), top = r.bottom + 6;
@@ -3815,7 +3851,7 @@
   document.addEventListener('mousedown', (ev) => { if (isPick(ev.target)) ev.preventDefault(); }, true);   // フォーカスを取らせない
   document.addEventListener('click', (ev) => {
     if (!isPick(ev.target)) return;
-    ev.preventDefault();                                   // OS のパネルは開かない
+    ev.preventDefault();                                   // ブラウザのパネルは開かない
     if (cur === ev.target) close(); else open(ev.target);
   }, true);
   document.addEventListener('pointerdown', (ev) => { if (cur && !pop.contains(ev.target) && ev.target !== cur) close(); }, true);

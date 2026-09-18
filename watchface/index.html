@@ -119,6 +119,10 @@
   #stage .el.dialpart svg * { pointer-events: auto; }
   .el.linepart { pointer-events: none; padding: 0; margin: 0; }          /* 箱ではなく線の上だけを掴む */
   .el.linepart svg { flex: 0 0 auto; }
+  /* 四角形の右下のつまみ。選んでいる時だけ出る。つまみだけは掴めるようにする (箱は素通し) */
+  .el .rhandle { display: none; position: absolute; right: -7px; bottom: -7px; width: 14px; height: 14px; box-sizing: border-box;
+                 background: var(--accent); border: 2px solid #05070A; border-radius: 3px; cursor: nwse-resize; pointer-events: auto; touch-action: none; }
+  .el.sel .rhandle { display: block; }
   #stage .el.linepart svg line, #stage .el.linepart svg circle, #stage .el.linepart svg path, #stage .el.linepart svg rect { pointer-events: auto; cursor: move; }
   .empty { color: var(--ink-3); font-size: 13px; text-align: center; max-width: 34ch; }
   .drawer { width: 100%; max-width: 1040px; display: grid; grid-template-columns: 1fr; gap: 24px; }
@@ -347,7 +351,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 23:42</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 23:56</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1646,8 +1650,9 @@
       div.classList.add('linepart');
       div.style.width = bw + 'px'; div.style.height = bh + 'px';
       div.dataset.lw = bw; div.dataset.lh = bh;
-      div.innerHTML = `<svg width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" style="display:block;overflow:visible"><rect x="${(pen / 2).toFixed(1)}" y="${(pen / 2).toFixed(1)}" width="${W.toFixed(1)}" height="${H.toFixed(1)}" rx="${r.toFixed(1)}" ry="${r.toFixed(1)}" fill="none" stroke="currentColor" stroke-width="${pen.toFixed(1)}" stroke-linejoin="miter"/></svg><span class="anchor"></span>`;
+      div.innerHTML = `<svg width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" style="display:block;overflow:visible"><rect x="${(pen / 2).toFixed(1)}" y="${(pen / 2).toFixed(1)}" width="${W.toFixed(1)}" height="${H.toFixed(1)}" rx="${r.toFixed(1)}" ry="${r.toFixed(1)}" fill="none" stroke="currentColor" stroke-width="${pen.toFixed(1)}" stroke-linejoin="miter"/></svg><span class="anchor"></span><span class="rhandle" title="Drag to change the size and the shape"></span>`;
       div.addEventListener('pointerdown', (ev) => startMove(ev, i));
+      div.querySelector('.rhandle').addEventListener('pointerdown', (ev) => startRectResize(ev, i));
       return div;
     }
     if (def.line != null) {   // 線: 外接矩形の箱に引く。当たり判定は線の上だけ (下の部品を隠さない)
@@ -2440,6 +2445,26 @@
   // ── Dragging ───────────────────────────────────────────────────────────────
   let drag = null;
   function stagePoint(ev) { const r = stage.getBoundingClientRect(); return { x: (ev.clientX - r.left) * 1000 / r.width, y: (ev.clientY - r.top) * 1000 / r.height, inside: ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom }; }
+  let RESIZE = null;
+  function startRectResize(ev, i) {
+    ev.preventDefault(); ev.stopPropagation();
+    const e = st.el[i]; if (!e || !isRect(e[0])) return;
+    RESIZE = { i, left: e[1] - rectW(e) / 2, top: e[2] - rectH(e) / 2, id: ev.pointerId };
+  }
+  window.addEventListener('pointermove', (ev) => {
+    if (!RESIZE || ev.pointerId !== RESIZE.id) return;
+    const e = st.el[RESIZE.i]; if (!e) { RESIZE = null; return; }
+    const p = stagePoint(ev);
+    const w = Math.max(RECT_MIN, Math.min(1000, snapGrid(p.x) - RESIZE.left));
+    const h = Math.max(RECT_MIN, Math.min(1000, snapGrid(p.y) - RESIZE.top));
+    while (e.length < 10) e.push(e.length === 8 ? RECT_DEF.w : RECT_DEF.h);
+    if (w === e[8] && h === e[9]) return;
+    e[8] = w; e[9] = h; e[1] = clamp(RESIZE.left + w / 2); e[2] = clamp(RESIZE.top + h / 2);
+    render();
+  });
+  const endResize = (ev) => { if (!RESIZE || ev.pointerId !== RESIZE.id) return; RESIZE = null; commit(); };
+  window.addEventListener('pointerup', endResize);
+  window.addEventListener('pointercancel', endResize);
   function startMove(ev, i) {
     ev.preventDefault(); ev.stopPropagation();
     const dial = TYPES[st.el[i] && st.el[i][0]] && TYPES[st.el[i][0]].dial;

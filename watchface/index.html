@@ -352,7 +352,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 00:13</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 00:27</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2972,7 +2972,7 @@
     const wrap = $('shelf'); const id = devId();
     if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { wrap.innerHTML = '<span class="muted">Enter the Device ID to see your collection.</span>'; return; }
     try { const r = await fetch($('api').value + '/shelf?device_id=' + encodeURIComponent(id)); if (!r.ok) throw new Error(r.status); const j = await r.json();
-      SHELF.items = j.items || []; SHELF.max = j.max || 20; } catch (e) { return; }
+      SHELF.items = j.items || []; SHELF.max = j.max || 30; } catch (e) { return; }
     wrap.innerHTML = '';
     $('shelfcount').textContent = `${SHELF.items.length} of ${SHELF.max} saved`;
     if (!SHELF.items.length) { wrap.innerHTML = '<span class="muted">Nothing saved yet — Save to collection keeps the dial above here.</span>'; return; }

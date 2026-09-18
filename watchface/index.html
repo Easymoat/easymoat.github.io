@@ -278,7 +278,7 @@
   #bgpick { margin-right: 6px; }
   .swatches.simple .pick { margin: 0 4px 0 0; }
   /* 大きいカラーパネル (ブラウザのパネルと同じ機能を大きく) */
-  .cpop { position: fixed; z-index: 1000; background: var(--panel); border: 1px solid var(--line-2); border-radius: 10px; padding: 0 0 14px; box-shadow: 0 16px 40px rgba(0,0,0,.55); display: flex; flex-direction: column; gap: 14px; touch-action: none; overflow: hidden; }
+  .cpop { position: fixed; z-index: 1000; background: var(--panel); border: 1px solid var(--line-2); border-radius: 10px; padding: 0 0 14px; box-shadow: 0 16px 40px rgba(0,0,0,.55); display: flex; flex-direction: column; gap: 14px; touch-action: none; overflow: hidden; width: 340px; }
   .cpop[hidden] { display: none; }
   .cpop canvas.sv { display: block; cursor: crosshair; }
   .cpop .cprow { display: flex; gap: 12px; align-items: center; padding: 0 16px; }
@@ -290,7 +290,7 @@
   .cpop .cpthumb { position: absolute; top: 3px; width: 20px; height: 20px; margin-left: -10px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.5); pointer-events: none; }
   .cpop .cpin { flex: 1 1 auto; display: flex; gap: 8px; }
   .cpop .cpin label { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; color: var(--ink-3); }
-  .cpop .cpin input { width: 100%; box-sizing: border-box; text-align: center; font: 13px var(--mono); }
+  .cpop .cpin input { min-width: 0; width: 100%; box-sizing: border-box; text-align: center; font: 13px var(--mono); }
   .swatches .pick { margin-left: 6px; }
   .pxs { display: inline-flex; gap: 18px; }
   .stp { display: inline-flex; align-items: center; gap: 6px; }
@@ -371,7 +371,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 08:09</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 08:10</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2174,7 +2174,7 @@
     const all = none ? [e] : idx.map((i) => st.el[i]), multi = all.length > 1;
     const def = TYPES[e[0]];
     const same = (k) => all.every((x) => x[k] === e[k]);   // highlight a value only when every selected element has it
-    const seg = (label, vals, cur, key, base, off) => { base = base || 0; return `<div class="field${off ? ' off' : ''}"><span>${label}</span><span class="seg" data-key="${key}">${vals.map((v, i) => `<button class="${i + base === cur ? 'on' : ''}" data-v="${i + base}" ${off ? 'disabled' : ''}>${v}</button>`).join('')}</span></div>`; };
+    const seg = (label, vals, cur, key, base, off) => { base = base || 0; return `<div class="field${off ? ' off' : ''}"><span>${label}</span><span class="seg" data-key="${key}">${vals.map((v, i) => `<button class="${!off && i + base === cur ? 'on' : ''}" data-v="${i + base}" ${off ? 'disabled' : ''}>${v}</button>`).join('')}</span></div>`; };
     // 線の位置と長さは +/- で動かす (グリッド 1 目盛りずつ)。値は全部そろっている時だけ出す。
     const stepRow = (label, key, val, ttl) => `<div class="field" title="${ttl}"><span>${label}</span><span class="cb units step" data-step="${key}"><button type="button" data-d="-1">&minus;</button><b>${val == null ? '—' : val}</b><button type="button" data-d="1">+</button></span></div>`;
     const isOf = (x) => (Number.isInteger(x[7]) && x[7] >= 0 && x[7] <= SIZE_MAX) ? x[7] : -1;

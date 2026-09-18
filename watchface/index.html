@@ -347,7 +347,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 21:59</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 22:18</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -554,7 +554,7 @@
     10: { name: 'Heart rate',grp: 'body',  sample: '72',     icon: 'heart',     iw: 26 },
     11: { name: 'Steps',     grp: 'body',  sample: '8421',   icon: 'steps',     iw: 24 },
     12: { name: 'Floors',    grp: 'body',  sample: '12',     icon: 'floors',    iw: 24 },
-    13: { name: 'Calories',  grp: 'body',  sample: '1,850',  icon: 'cal',       iw: 20 },
+    13: { name: 'Calories',  grp: 'body',  sample: '1850',   icon: 'cal',       iw: 20 },
     14: { name: 'Weight',    grp: 'body',  sample: '68.5',   icon: 'weight',    iw: 26 },
     15: { name: 'Body Battery', grp: 'body', sample: '75',    icon: 'bodybat',   iw: 16 },
     16: { name: 'Stress',    grp: 'body',  sample: '32',     icon: 'stress',    iw: 26 },
@@ -1650,7 +1650,7 @@
     const splitDate = isSplitDate(e);
     const showIco = (f & 1) && def.icon && (t !== 2 || splitDate);
     const icon = showIco
-      ? (TEXT_ICON[def.icon] ? `<span class="ico">${def.icon === 'stock' ? stkLabel(t, f) : TEXT_ICON[def.icon]}</span>` : `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:translateY(${iody}px) scale(${ki});">${ICONS[def.icon]()}</span>`)
+      ? (TEXT_ICON[def.icon] ? `<span class="ico"${def.icon === 'stock' && (f & 8) ? ` style="color:${colOf(c)}"` : ''}>${def.icon === 'stock' ? stkLabel(t, f) : TEXT_ICON[def.icon]}</span>` : `<span class="ico" style="width:${def.iw*ki}px;justify-content:center;transform:translateY(${iody}px) scale(${ki});">${ICONS[def.icon]()}</span>`)
       : '';
     if (def.strip) {
       // 帯 (29)。3 コマとも同じ幅にするので、気温 / 降水 / 風を並べても縦がそろう。
@@ -2165,7 +2165,7 @@
         <div class="field" title="The name shown when Label is Name. Leave it empty to use the one that comes with the price. ASCII only, 12 characters."><span>Name</span><input type="text" id="fstkname" value="${stkOwn(e[0])}" placeholder="${(STKQ[stkOf(e[0])] || {}).n || 'Apple Inc.'}" style="width:140px" maxlength="12"></div>
         <div class="field" title="What the number shows"><span>Value</span><span class="cb units" id="fstkv"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 4)) ? 'on' : ''}">Price</button><button type="button" data-v="4" class="${all.every((x) => (x[6] & 4)) ? 'on' : ''}">Change %</button></span></div>
         <div class="field" title="Ticker (AAPL) or the company name as the data provider writes it"><span>Label</span><span class="cb units" id="fstkn"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 16)) ? 'on' : ''}">Symbol</button><button type="button" data-v="16" class="${all.every((x) => (x[6] & 16)) ? 'on' : ''}">Name</button></span></div>
-        <div class="field" title="Green when the price is up, red when it is down — instead of the colour below"><span>Up / down</span><span class="cb units" id="fstkc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep colour</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By move</button></span></div>` : ''}
+        <div class="field" title="The price turns green when it is up and red when it is down. The symbol or name keeps the colour below."><span>Up / down</span><span class="cb units" id="fstkc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep colour</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By move</button></span></div>` : ''}
         ${(allLine || allCirc || allRect) ? '' : `<div class="field" title="${anyIcon ? 'What this part draws' : 'This part has no icon'}"><span>Show</span><span class="cb units" id="fshow">${
           [['Icon + value', 1], ['Icon only', 3], ['Value only', 0]].map(([lbl, v]) =>
             `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 3) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none ? 'disabled' : ''}>${lbl}</button>`).join('')

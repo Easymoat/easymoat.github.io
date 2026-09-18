@@ -352,7 +352,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 00:27</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 06:59</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -402,7 +402,7 @@
       <div class="stage-col">
         <div class="dialbar top">
           <div class="grp"><span class="lbl">Dial</span>
-            <div class="ctl"><button class="btn" id="undo" disabled title="Undo the last change to the dial (⌘Z / Ctrl+Z). Parts, colours, sizes and the background — not the image.">Undo</button><button class="btn" id="redo" disabled title="Put back what Undo took away (⇧⌘Z / Ctrl+Y)">Redo</button><button class="btn danger" id="reset" title="Empty the dial: every part, the background and the text / icon sizes go back to the start. Units and the grid stay. Undo puts it back.">Clear dial</button><span class="vsep"></span><button class="btn" id="savedraft" title="Keeps a copy of the dial above (layout and image settings) in this browser.">Save draft</button><button class="btn" id="draft" title="Replaces the dial above with the saved draft.">Back to draft</button><span class="vsep"></span><span class="sub"><span class="muted">Grid</span><select id="grid" title="Also the step for the - / + buttons. Pick a fine grid to place thin double lines close together."><option value="5">200 × 200 (5)</option><option value="10">100 × 100 (10)</option><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label><span class="cb units" id="gridcol" title="Grid colour. Bright is easier to see on a black or dark dial."></span></span><span class="muted" id="draftnote"></span></div>
+            <div class="ctl"><button class="btn" id="undo" disabled title="Undo the last change to the dial (⌘Z / Ctrl+Z). Parts, colours, sizes and the background — not the image.">Undo</button><button class="btn" id="redo" disabled title="Put back what Undo took away (⇧⌘Z / Ctrl+Y)">Redo</button><button class="btn danger" id="reset" title="Empty the dial: every part, the background and the text / icon sizes go back to the start. Units and the grid stay. Undo puts it back.">Clear dial</button><span class="vsep"></span><button class="btn" id="imgparts" title="Hide the parts on the dial while you frame the picture. Only this view — nothing is saved.">Hide parts</button><button class="btn" id="imghide" title="Hide the picture on the dial. Only this view — nothing is saved.">Hide image</button><span class="vsep"></span><span class="sub"><span class="muted">Grid</span><select id="grid" title="Also the step for the - / + buttons. Pick a fine grid to place thin double lines close together."><option value="5">200 × 200 (5)</option><option value="10">100 × 100 (10)</option><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label><span class="cb units" id="gridcol" title="Grid colour. Bright is easier to see on a black or dark dial."></span></span></div>
             <div class="status" id="facestatus"></div>
           </div>
         </div>
@@ -418,17 +418,14 @@
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
     <div class="imgbox box">
       <div class="tier"><span class="num">2</span><span class="name">Image</span><span class="what">Pick a photo and frame it for the dial</span></div>
-      <div class="grp">
-        <div class="ctl"><span class="muted">The photo itself is never changed — the cut-out is made when you save to the collection.</span></div></div>
       <div class="cols">
         <div class="grp"><span class="lbl">Frame</span>
           <div class="imgstage master" id="imgstage"><canvas id="imgCanvas" width="320" height="320"></canvas><canvas id="imgQ" width="320" height="320"></canvas></div>
-          <div class="ctl"><span class="muted">Everything shows on the dial above — drag the empty part of it to move the picture.</span></div>
           <div class="ctl" id="imgsizerow">Size <span class="muted" id="imgsizewho"></span> <input id="imgsize" type="range" min="30" max="100" step="1" value="100"><span class="muted" id="imgsizev">100%</span></div>
           <div class="ctl">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"></div>
           <div class="ctl" title="Only the cut-out changes — the stored photo is never touched.">Brightness <input id="imgbr" type="range" min="20" max="180" step="1" value="100"><span class="muted" id="imgbrv">100%</span> Saturation <input id="imgsa" type="range" min="0" max="200" step="1" value="100"><span class="muted" id="imgsav">100%</span><button class="btn" id="imgtone" title="Brightness and saturation back to 100 %">Reset tone</button></div>
           <div class="ctl" id="imgdragrow" title="What dragging the empty part of the dial does. Dragging a part always moves that part.">Dragging the dial moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Picture</button><button type="button" data-m="frame">Frame</button></span></div>
-          <div class="ctl"><button class="btn toggle on" id="imgshow" disabled title="While ON, the dial above shows the image exactly as it is here (frame, size, zoom, colours) and it is saved with the dial. While OFF, the saved dial has no image.">Show on dial: ON</button><button class="btn" id="imgreset" title="Put the frame back to the middle at 100 % (the picture stays)">Reset frame</button><button class="btn danger" id="imgclear" title="Take the picture (or the colour) out of this editor and start over. Nothing is deleted from the server or from the collection.">Reset image</button><button class="btn" id="imgparts" title="Hide the parts on the dial above while you frame the picture">Hide parts</button><button class="btn" id="imghide" title="Hide the picture on the dial above">Hide image</button></div>
+          <div class="ctl"><button class="btn" id="imgreset" title="Put the frame back to the middle at 100 % (the picture stays)">Reset frame</button><button class="btn danger" id="imgclear" title="Take the picture (or the colour) out of this editor and start over. Nothing is deleted from the server or from the collection.">Reset image</button></div>
         </div>
         <div class="opts">
           <div class="grp" title="The shape of the image frame on the dial."><span class="lbl">Shape</span><div class="ctl"><span class="cb" id="imgshape"></span></div>
@@ -2852,25 +2849,6 @@
   // カメラの面はコマが 3 分ごとに変わるので、開いている間は絵札も見直す。
   setInterval(() => { if (Object.values(WSLOTS.faces || {}).some((f) => f.kind === 'camera')) loadWatchSlots(); }, 60000);
   const fmtTime = (t) => { const d = new Date(t); return isNaN(d) ? '' : d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); };
-  function renderDraftNote() {
-    const d = readDraft(), has = !!(d && Array.isArray(d.el));
-    $('draft').disabled = !has;
-    const im = has && d.img ? (d.img.none ? ', no image' : d.img.data ? ', image from file' : d.img.k ? `, photo ${d.img.k}` : '') : '';
-    $('draftnote').textContent = has ? `Draft saved ${d.savedAt ? fmtTime(d.savedAt) : ''} (${d.el.length} elements${im})` : 'No draft saved yet.';
-  }
-  $('savedraft').addEventListener('click', () => {
-    const full = saveDraft(); setEditing('draft'); renderDraftNote();
-    setStatus('facestatus', full ? 'Draft saved in this browser (layout and image settings).' : 'Draft saved, but the picture was too large to keep — choose the file again after Back to draft.', full ? 'ok' : 'err');
-  });
-  $('draft').addEventListener('click', () => {
-    const d = readDraft(), c = d && faceLayout(d);
-    if (!c) return setStatus('facestatus', 'No draft saved yet — use Save draft first.', 'err');
-    setEditing('draft'); loadIntoEditor(c);
-    st.park = Array.isArray(d.park) ? d.park.map((e) => e.slice()) : [];   // 騨置き場も下書きと一緒に
-    commit();
-    if (d.img) applyImgDraft(d.img);
-    setStatus('facestatus', `Draft loaded (${c.el.length} elements${d.img ? ', image settings restored' : ''}).`, 'ok');
-  });
   // Layout → the watch's face 1 (and make it the ★).
   async function uploadLayout(id, layout) {
     const r = await fetch($('api').value + '/layout', { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -3044,7 +3022,7 @@
     else if (rc.k && PHOTOS.list.some((p) => p.k === rc.k)) { applyImgDraft(Object.assign({}, rc)); }   // the photo is still on the shelf: fully editable
     else if (full.url) {   // photo gone: show the finished cut-out (frame changes only; no re-crop possible)
       applyImgDraft({ none: true }); const img = new Image(); img.crossOrigin = 'anonymous';
-      img.onload = () => { IMG.cur = img; IMG.src = 'shelf'; IMG.k = 0; setShape('square'); IMG.size = 100; IMG.size2 = null; IMG.rot2 = null; IMG.cx = 160; IMG.cy = 160; IMG.zoom = 1; IMG.panX = 0; IMG.panY = 0; $('imgzoom').value = '1'; renderShapeSel(); IMG.show = rc.show !== false; renderShowToggle(); redrawImg(); $('imgfilename').textContent = 'From the collection (photo no longer on the shelf)'; };
+      img.onload = () => { IMG.cur = img; IMG.src = 'shelf'; IMG.k = 0; setShape('square'); IMG.size = 100; IMG.size2 = null; IMG.rot2 = null; IMG.cx = 160; IMG.cy = 160; IMG.zoom = 1; IMG.panX = 0; IMG.panY = 0; $('imgzoom').value = '1'; renderShapeSel(); IMG.show = true; renderShowToggle(); redrawImg(); $('imgfilename').textContent = 'From the collection (photo no longer on the shelf)'; };
       img.src = absUrl(full.url) + '&c=1';
     }
     setStatus('shelfstatus', `Loaded ${full.name || 'item ' + n} into the editors.`, 'ok');
@@ -3511,10 +3489,7 @@
   function renderNoPic() { const el = $('shelfnopic'); if (el) el.hidden = !!(IMG.show && hasSource() && IMG.masked); }
   function renderShowToggle() {
     renderNoPic();
-    const b = $('imgshow'); b.classList.toggle('on', IMG.show); b.textContent = 'Show on dial: ' + (IMG.show ? 'ON' : 'OFF');
-    b.disabled = !hasSource();
   }
-  $('imgshow').addEventListener('click', () => { IMG.show = !IMG.show; renderShowToggle(); applyStageImage(); });
   // slots
   // ── Photo shelf: originals kept as they are (≤1024 px JPEG), up to 10 per Device ID ──
   const PHOTOS = { list: [], max: 10 };
@@ -3611,7 +3586,7 @@
     IMG.zoom = Math.max(1, Math.min(3, Number(d.zoom) || 1)); $('imgzoom').value = IMG.zoom;
     if (COLOR_STEPS.includes(d.colors)) { IMG.colors = d.colors; document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === IMG.colors)); }
     IMG.bgAuto = Math.max(0, Math.min(100, Number(d.bgAuto) || 0)); $('imgbg').value = IMG.bgAuto;
-    IMG.show = d.show !== false;
+    IMG.show = true;   // Show on dial は廃止 (2026-09-19): 絵を外すのは Reset image
     IMG.br = Number.isFinite(Number(d.br)) ? Math.max(20, Math.min(180, Number(d.br))) : 100;
     IMG.sa = Number.isFinite(Number(d.sa)) ? Math.max(0, Math.min(200, Number(d.sa))) : 100;
     renderTone();

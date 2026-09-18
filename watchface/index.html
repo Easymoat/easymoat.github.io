@@ -347,7 +347,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 19:13</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 19:50</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1607,9 +1607,15 @@
       const gp = GAP * ki, iw = showIco ? iArt * ki : 0;
       const vw = Math.max(textW(px, '-12\u00B0'), textW(px, '100')) + bo;
       const colW = (lay === 2) ? Math.max(iw, vw) : iw + (iw ? gp : 0) + vw;
-      const ico = showIco ? `<span class="ico" style="width:${iw.toFixed(1)}px;height:${(30 * ki).toFixed(1)}px;justify-content:center;align-items:center;transform:translateY(${iody}px) scale(${ki});">${ICONS[iName]()}</span>` : '';
+      // 風はコマごとに向きが変わる (予報の 1 時間ごとの風向)。見本は南西から西寄りへ振れる風。
+      const WIND_DEG = [200, 245, 290];
+      const art = (c) => (met === 2
+        ? `<svg width="26" height="26" viewBox="-13 -13 26 26"><polygon points="${arrow(0, 0, WIND_DEG[c] || 225)}" fill="currentColor"/></svg>`
+        : ICONS[iName]());
+      const icoOf = (c) => (showIco ? `<span class="ico" style="width:${iw.toFixed(1)}px;height:${(30 * ki).toFixed(1)}px;justify-content:center;align-items:center;transform:translateY(${iody}px) scale(${ki});">${art(c)}</span>` : '');
       for (let c = 0; c < def.strip; c++) {
         const v = `<span class="val" style="display:inline-block;width:${vw.toFixed(1)}px;text-align:${lay === 2 ? 'center' : lay === 1 ? 'right' : 'left'};position:relative;top:${inkShift(px).toFixed(2)}px">${vals[c]}</span>`;
+        const ico = icoOf(c);
         cells.push(`<span class="scell" style="width:${colW.toFixed(1)}px;gap:${gp.toFixed(1)}px;${lay === 2 ? 'flex-direction:column;' : ''}${c < def.strip - 1 ? `margin-right:${(gp * 2).toFixed(1)}px` : ''}">${lay === 1 ? v + ico : ico + v}</span>`);
       }
       div.style.gap = '0px';

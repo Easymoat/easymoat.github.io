@@ -347,7 +347,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 21:18</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 21:32</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1627,7 +1627,12 @@
         ? `<svg width="26" height="26" viewBox="-13 -13 26 26"><polygon points="${arrow(0, 0, WIND_DEG[c] || 225)}" fill="currentColor"/></svg>`
         : ICONS[iName]());
       const icoH = 30 * ki;   // どの指標でも同じ高さ (値の段がそろう)
-      const icoOf = (c) => (showIco ? `<span class="ico" style="width:${iw.toFixed(1)}px;height:${icoH.toFixed(1)}px;justify-content:center;align-items:center;transform:translateY(${iody}px) scale(${ki});">${art(c)}</span>` : '');
+      // 絵は枠の中央ではなく**数字と反対側の端**にそろえる。中央に置くと、幅の狭い絵
+      // (傘 26 / 風 26) が広い絵 (天気 34) より内側に寄り、3 種を並べた時に絵の列がずれる。
+      // scale() は基準点も端に合わせないと、同じだけ動いてしまう。
+      const jx = lay === 1 ? 'flex-end' : lay === 2 ? 'center' : 'flex-start';
+      const ox = lay === 1 ? 'right' : lay === 2 ? 'center' : 'left';
+      const icoOf = (c) => (showIco ? `<span class="ico" style="width:${iw.toFixed(1)}px;height:${icoH.toFixed(1)}px;justify-content:${jx};align-items:center;transform-origin:${ox} center;transform:translateY(${iody}px) scale(${ki});">${art(c)}</span>` : '');
       for (let c = 0; c < def.strip; c++) {
         const v = `<span class="val" style="display:inline-block;width:${vw.toFixed(1)}px;text-align:${lay === 2 ? 'center' : lay === 1 ? 'right' : 'left'};position:relative;top:${inkShift(px).toFixed(2)}px">${vals[c]}</span>`;
         const ico = icoOf(c);

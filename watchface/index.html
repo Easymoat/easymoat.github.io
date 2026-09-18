@@ -347,7 +347,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 22:18</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-18 23:15</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -545,6 +545,38 @@
   ];
   // 大きい数字の時計用サイズ表 (tm) を使う種別: 1 時刻 / 4 時刻+秒 / 5 秒
   const isClock = (t) => t === 1 || t === 4 || t === 5;
+  // 世界時計 (2026-09-18)。時刻の部品 (1 / 4) の el の 10 番目 = 都市の番号 (0 = ウォッチの時刻)。
+  // 夏時間はサーバが都市ごとの「今の差 + 次の変わり目」を実機へ渡すので自動。番号は wf_tz.js と同じ。
+  const TZ_CITIES = [[1, 'TYO', 'Tokyo', 'Asia/Tokyo'], [2, 'SEL', 'Seoul', 'Asia/Seoul'], [3, 'PEK', 'Beijing', 'Asia/Shanghai'],
+    [4, 'HKG', 'Hong Kong', 'Asia/Hong_Kong'], [5, 'TPE', 'Taipei', 'Asia/Taipei'], [6, 'MNL', 'Manila', 'Asia/Manila'],
+    [7, 'SIN', 'Singapore', 'Asia/Singapore'], [8, 'BKK', 'Bangkok', 'Asia/Bangkok'], [9, 'JKT', 'Jakarta', 'Asia/Jakarta'],
+    [10, 'DEL', 'Delhi', 'Asia/Kolkata'], [11, 'KTM', 'Kathmandu', 'Asia/Kathmandu'], [12, 'DXB', 'Dubai', 'Asia/Dubai'],
+    [13, 'MOW', 'Moscow', 'Europe/Moscow'], [14, 'IST', 'Istanbul', 'Europe/Istanbul'], [15, 'CAI', 'Cairo', 'Africa/Cairo'],
+    [16, 'JNB', 'Johannesburg', 'Africa/Johannesburg'], [17, 'ATH', 'Athens', 'Europe/Athens'], [18, 'BER', 'Berlin', 'Europe/Berlin'],
+    [19, 'PAR', 'Paris', 'Europe/Paris'], [20, 'LON', 'London', 'Europe/London'], [21, 'UTC', 'UTC', 'Etc/UTC'],
+    [22, 'SAO', 'São Paulo', 'America/Sao_Paulo'], [23, 'NYC', 'New York', 'America/New_York'], [24, 'TOR', 'Toronto', 'America/Toronto'],
+    [25, 'CHI', 'Chicago', 'America/Chicago'], [26, 'MEX', 'Mexico City', 'America/Mexico_City'], [27, 'DEN', 'Denver', 'America/Denver'],
+    [28, 'LAX', 'Los Angeles', 'America/Los_Angeles'], [29, 'ANC', 'Anchorage', 'America/Anchorage'], [30, 'HNL', 'Honolulu', 'Pacific/Honolulu'],
+    [31, 'SYD', 'Sydney', 'Australia/Sydney'], [32, 'AKL', 'Auckland', 'Pacific/Auckland']];
+  const hasCity = (t) => t === 1 || t === 4;
+  const cityOf = (e) => { if (!hasCity(e[0])) return 0; const v = Number(e[9]); return TZ_CITIES.some((c) => c[0] === v) ? v : 0; };
+  // その都市の今の UTC からの差 (分)。ブラウザの Intl で出す (見本とメニューの表示用)。
+  function tzOffsetNow(zone) {
+    try {
+      const p = new Intl.DateTimeFormat('en-US', { timeZone: zone, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' }).formatToParts(new Date());
+      const g = (k) => Number((p.find((x) => x.type === k) || {}).value);
+      return Math.round((Date.UTC(g('year'), g('month') - 1, g('day'), g('hour'), g('minute')) - Math.floor(Date.now() / 60000) * 60000) / 60000);
+    } catch (e) { return 0; }
+  }
+  const fmtOff = (m) => `${m < 0 ? '−' : '+'}${Math.floor(Math.abs(m) / 60)}:${String(Math.abs(m) % 60).padStart(2, '0')}`;
+  // 見本の 10:08 を、ブラウザの時刻との差だけずらす (実際にその都市が今何時かは実機が出す)
+  function citySample(t, city) {
+    const c = TZ_CITIES.find((x) => x[0] === city); if (!c) return TYPES[t].sample;
+    const d = tzOffsetNow(c[3]) + new Date().getTimezoneOffset();      // 都市 − ブラウザ (分)
+    const m = ((10 * 60 + 8 + d) % 1440 + 1440) % 1440;
+    const hm = `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
+    return t === 4 ? hm + ':30' : hm;
+  }
   const TYPES = {
     1:  { name: 'Time',      grp: 'clock', sample: '10:08',  icon: null,        iw: 0 },
     4:  { name: 'Time + sec',  grp: 'clock', sample: '10:08:30', icon: null,      iw: 0 },
@@ -1683,7 +1715,7 @@
       div.innerHTML = cells.join('') + '<span class="anchor"></span>';
     } else {
       const showVal = !(f & 2);   // f の bit 1 = 値を出さない (アイコンだけ)
-      const sample = isStock(t) ? stkValue(t, f) : isBall(t) ? ballSample(t) : (t === 2 && !splitDate) ? 'Fri Sep 4' : def.sample;
+      const sample = isStock(t) ? stkValue(t, f) : isBall(t) ? ballSample(t) : (t === 2 && !splitDate) ? 'Fri Sep 4' : cityOf(e) ? citySample(t, cityOf(e)) : def.sample;
       const lay = arrOf(e);       // 0 アイコン左 / 1 アイコン右 / 2 アイコン上
       const val = showVal ? `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px">${sample}</span>` : '';
       let ic2 = icon;
@@ -2093,6 +2125,7 @@
     const allBall = !none && all.every((x) => isBall(x[0]));
     const allCirc = !none && all.every((x) => isCircle(x[0]));
     const allRect = !none && all.every((x) => isRect(x[0]));   // 四角形
+    const allCityClock = !none && all.every((x) => hasCity(x[0]));   // 時刻 (世界時計にできる)
     const allStrip = !none && all.every((x) => isStrip(x[0]));   // 予報の帯 (29)
     const allText = !none && all.every((x) => !isLine(x[0]) && !isCircle(x[0]) && !isRect(x[0]) && !TYPES[x[0]].dial);
     const sameLen = all.every((x) => lineLen(x) === lineLen(e));
@@ -2147,6 +2180,11 @@
         ${seg('Size', SIZES, same(4) ? e[4] : -9, 4)}
         ${seg('Icon size', ['Auto'].concat(SIZES), anyIcon ? (sameIs ? isOf(e) : -9) : -9, 7, -1)}
         `}
+        ${allCityClock ? `<div class="field" title="Show the time in another city. Summer time is followed automatically."><span>Time zone</span><select id="ftz">${
+          [`<option value="0" ${all.every((x) => cityOf(x) === 0) ? 'selected' : ''}>This watch's time</option>`].concat(
+            TZ_CITIES.map((c) => [c, tzOffsetNow(c[3])]).sort((a, b) => a[1] - b[1]).map(([c, off]) =>
+              `<option value="${c[0]}" ${all.every((x) => cityOf(x) === c[0]) ? 'selected' : ''}>${c[2]} (UTC${fmtOff(off)})</option>`)).join('')
+        }</select></div>` : ''}
         ${allBall ? `<div class="field" title="Which league and team this slot follows"><span>Game ${bbSlot(e[0]) + 1}</span><select id="fleague">${
           [['USA Sports', LEAGUES], ['Soccer', SOC_LEAGUES]].map(([gp, list]) => `<optgroup label="${gp}">` + list.map(([k, nm]) =>
             `<option value="${k}" ${bbLg(bbSlot(e[0])) === k ? 'selected' : ''}>${nm}</option>`).join('') + '</optgroup>').join('')
@@ -2303,6 +2341,13 @@
       const lg = bbLg(slot), v = ev.target.value;
       setBb(slot, v ? { lg, tm: lg === 'mlb' ? Number(v) : String(v) } : null); commit();
     });
+    const ftz = $('ftz');
+    if (ftz) ftz.addEventListener('change', (ev) => each((x) => {
+      if (!hasCity(x[0])) return;
+      const v = Number(ev.target.value);
+      while (x.length < 9) x.push(x.length === 7 ? -1 : 0);
+      if (v) { if (x.length < 10) x.push(v); else x[9] = v; } else if (x.length > 9) x.length = 9;
+    }));
     const fl = $('fleague');
     if (fl) fl.addEventListener('change', (ev) => { setBb(slot, { lg: ev.target.value, tm: 0 }); commit(); });   // リーグを変えたらチームは選び直し
     document.querySelectorAll('#fshow button').forEach((b) => b.addEventListener('click', () => {
@@ -2611,6 +2656,7 @@
       if (n[1] < 0 || n[1] > 1000 || n[2] < 0 || n[2] > 1000 || n[3] < 0 || n[3] > 2 || n[4] < 0 || n[4] > SIZE_MAX || n[5] < 0 || n[5] > PC_BASE + PC_MAX || n[6] < 0 || n[6] > F_MAX || n[7] < -1 || n[7] > SIZE_MAX) return null;
       if (isLine(n[0])) { const L = Number(e[8]); n.push(Number.isFinite(L) && L >= LINE_LEN_MIN && L <= 1000 ? Math.round(L) : LINE_LEN_DEF); }   // 線は 9 番目の長さを落とさない
       else if (isRect(n[0])) { n.push(rectW(e), rectH(e)); }   // 四角形は 9・10 番目に幅と高さ
+      else if (hasCity(n[0]) && TZ_CITIES.some((c) => c[0] === Number(e[9]))) { n.push((Number(e[8]) === 1 || Number(e[8]) === 2) ? Number(e[8]) : 0, Number(e[9])); }   // 世界時計の都市
       else if (isCircle(n[0])) {                                  // 円は 9..13 番目
         const dia = Number(e[8]), fill = Number(e[10]), met = Number(e[11]), dir = Number(e[12]);
         n.push(Number.isFinite(dia) && dia >= 20 && dia <= 1000 ? dia : CIRC_DEF.dia, 0,

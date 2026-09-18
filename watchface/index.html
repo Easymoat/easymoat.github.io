@@ -91,6 +91,7 @@
   .dialbar.top .grp { width: 100%; }
   .dialsec { width: 100%; max-width: 1040px; justify-content: flex-start; border-top: 1px solid var(--line); padding-top: 22px; }
   .dialsec .ctl { flex-wrap: nowrap; white-space: nowrap; }
+  .fillctl { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   @media (max-width: 760px) { .dialsec .ctl { flex-wrap: wrap; } }
   .dialbar.top select { height: 28px; }
   .dialbar.top .sub { display: flex; align-items: center; gap: 10px; }   /* Grid は見出しごと折り返す */
@@ -360,7 +361,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 08:22</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 08:41</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -441,16 +442,15 @@
         <div class="opts">
           <div class="grp" title="The shape of the image frame on the dial."><span class="lbl">Shape <span class="lblnote">Shift+click to add a second shape</span></span><div class="ctl"><span class="cb" id="imgshape"></span></div>
             <div class="ctl" id="shapeselrow" hidden title="Size and Rotate change the shape chosen here.">Adjust <span class="cb" id="shapesel"></span></div>
-            <div class="ctl">Rotate <span class="cb"><button type="button" id="rotl" title="Turn the frame 45° anticlockwise">&#8634; 45°</button><button type="button" id="rotr" title="Turn the frame 45° clockwise">&#8635; 45°</button></span><span class="muted" id="rotv">0°</span></div>
+            <div class="ctl">Rotate <span class="cb"><button type="button" id="rotl" title="Turn the frame 45° anticlockwise">&#8634; 45°</button><button type="button" id="rotr" title="Turn the frame 45° clockwise">&#8635; 45°</button></span><span class="muted" id="rotv">0°</span><span class="vsep"></span><span class="fillctl" title="No photo: the frame shape is filled with one color instead."><span class="muted">Fill color</span><input type="color" id="imgfill" value="#3a7bd5"><span class="swatches" id="fillsw" title="Recently used fill colors"></span><button class="btn" id="imgfillon">Use color (no photo)</button></span></div>
 </div>
           <div class="grp"><span class="lbl">Photos</span><div class="photos" id="photos"></div><div class="muted" id="imgslotnote"></div></div>
-          <div class="grp"><span class="lbl">Actions</span>
+          <div class="grp">
             <div class="ctl"><label class="btn file" for="imgfile">Add photo…</label><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp" hidden><span class="muted" id="imgfilename"></span><button class="btn danger" id="imgremove" disabled>Delete photo</button></div>
-            <div class="ctl" title="No photo: the frame shape is filled with one color instead."><span class="muted">Fill color</span><input type="color" id="imgfill" value="#3a7bd5"><span class="swatches" id="fillsw" title="Recently used fill colors"></span><button class="btn" id="imgfillon">Use color (no photo)</button></div>
             <div class="status" id="imgstatus"></div></div>
-          <div class="grp" title="How many colors the cut-out is reduced to when you save. The watch can show at most 32."><span class="lbl">Colors on the watch</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div>
+          <div class="grp" title="How many colors the cut-out is reduced to when you save. The watch can show at most 32."><span class="lbl">Colors</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div>
           </div>
-          <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span><button class="btn" id="imgbgapply" title="Copy this color to the dial background (one-off; the dial is not linked to the image)">Use as dial background</button><button class="btn toggle" id="imgbgdial" title="Preview the photo against the dial's own background color (follows the Layout background while ON; move the slider to go back to Auto)">Use dial background</button></div></div>
+          <div class="grp" id="imgbgrow" hidden title="Used when the watch background is set to Auto. Taken from the image; drag for deeper / paler."><span class="lbl">Auto background</span><div class="ctl"><button class="btn toggle" id="imgbgdial" title="ON: the background around the picture is taken from the picture (Deep / Pale). OFF: the dial background color is used.">ON</button><span class="muted">Deep</span><input id="imgbg" type="range" min="0" max="100" step="1" value="33"><span class="muted">Pale</span><span id="imgbgsw" style="display:inline-block;width:24px;height:24px;border-radius:5px;border:1px solid var(--line-2)"></span></div></div>
         </div>
       </div>
     </div>
@@ -2149,7 +2149,8 @@
   function lockInspHeight() {
     const el = $('insp'); if (!el) return;
     const h = Math.ceil(el.getBoundingClientRect().height);
-    if (h > INSP_MIN) { INSP_MIN = h; el.style.minHeight = h + 'px'; }
+    // 2026-09-19: 基本の 3 行が固定になったので高さは確保しない (Dial を上へ詰める)。
+    void h;
   }
   window.addEventListener('resize', () => { INSP_MIN = 0; const el = $('insp'); if (el) el.style.minHeight = ''; });
   let PICK_OPEN = 0;        // 開いている OS のカラーパネルの数
@@ -3449,7 +3450,7 @@
   function currentAutoBg() { return autoBgColorJS(computeOptimalPalette(IMG.colors), IMG.bgAuto); }
   function repaintQuality() {
     IMG.autoBg = IMG.bgMode === 'dial' ? hex(st.bg) : currentAutoBg(); $('imgbgsw').style.background = IMG.autoBg;
-    $('imgbgdial').classList.toggle('on', IMG.bgMode === 'dial'); $('imgbg').style.opacity = IMG.bgMode === 'dial' ? '0.45' : '1';
+    $('imgbgdial').classList.toggle('on', IMG.bgMode !== 'dial'); $('imgbgdial').textContent = IMG.bgMode === 'dial' ? 'OFF' : 'ON'; $('imgbg').style.opacity = IMG.bgMode === 'dial' ? '0.45' : '1';
     paintQuality();
   }
   $('imgbgdial').addEventListener('click', () => { IMG.bgMode = IMG.bgMode === 'dial' ? 'auto' : 'dial'; repaintQuality(); });
@@ -3485,10 +3486,6 @@
     repaintQuality();
   }
   $('imgbg').addEventListener('input', (e) => { IMG.bgMode = 'auto'; IMG.bgAuto = parseInt(e.target.value, 10) || 0; IMG.dirty = true; repaintQuality(); });
-  $('imgbgapply').addEventListener('click', () => {
-    st.bg = parseInt(IMG.autoBg.slice(1), 16) || 0; pushBgHist(st.bg); commit();
-    setStatus('imgstatus', `Dial background set to ${IMG.autoBg.toUpperCase()}.`, 'ok');
-  });
   // 絵が入っていない状態は保存前から見えていないといけない (無音で kind:none になるのを防ぐ)。
   function renderNoPic() { const el = $('shelfnopic'); if (el) el.hidden = !!(IMG.show && hasSource() && IMG.masked); }
   function renderShowToggle() {
@@ -3500,7 +3497,8 @@
   function renderPhotos() {
     const w = $('photos'); w.innerHTML = '';
     for (const p of PHOTOS.list) { const b = document.createElement('button'); b.type = 'button'; b.className = 'photo' + (p.k === IMG.k ? ' on' : ''); b.title = p.name || `Photo ${p.k}`; b.style.backgroundImage = `url("${absUrl(p.url)}")`;
-      b.addEventListener('click', () => loadPhoto(p.k)); w.appendChild(b); }
+      // もう一度押すと外す (2026-09-19)
+      b.addEventListener('click', () => { if (p.k === IMG.k && hasSource()) { clearImgPreview(); IMG.k = 0; renderPhotos(); $('imgfilename').textContent = ''; } else loadPhoto(p.k); }); w.appendChild(b); }
     if (!PHOTOS.list.length) w.innerHTML = '<span class="muted">No photos yet — Add photo… below.</span>';
     $('imgslotnote').textContent = PHOTOS.list.length ? `${PHOTOS.list.length} of ${PHOTOS.max} photos` + (IMG.k ? ` · photo ${IMG.k} in the editor` : '') : '';
     $('imgremove').disabled = !IMG.k;

@@ -369,7 +369,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 22:06</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 22:07</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1796,7 +1796,8 @@
     // vs 108px for CSS 44px). Keep the box height = px so vertical centering matches VCENTER.
     div.style.fontSize = (px / FONT_EM) + 'px';
     div.style.lineHeight = px + 'px';
-    const lv = st.b === 2 ? 2 : st.b === 1 ? 1 : 0, bo = lv ? boldOff(px, lv) : 0;
+    // ベクターフォントの無い機種 (固定の 3 段) は時計が太字を自動で切る (b0919j) ので、見本も太字にしない。
+    const lv = prof()[2] !== 1 ? 0 : st.b === 2 ? 2 : st.b === 1 ? 1 : 0, bo = lv ? boldOff(px, lv) : 0;
     if (bo) {
       div.style.textShadow = lv === 2 ? `${bo}px 0 0 currentColor, ${(bo / 2).toFixed(1)}px 0 0 currentColor` : `${bo}px 0 0 currentColor`;
       div.style.paddingRight = (2 + bo) + 'px';

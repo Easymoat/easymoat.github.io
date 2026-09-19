@@ -369,7 +369,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 06:53</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 07:45</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -577,7 +577,7 @@
     [25, 'CHI', 'Chicago', 'America/Chicago'], [26, 'MEX', 'Mexico City', 'America/Mexico_City'], [27, 'DEN', 'Denver', 'America/Denver'],
     [28, 'LAX', 'Los Angeles', 'America/Los_Angeles'], [29, 'ANC', 'Anchorage', 'America/Anchorage'], [30, 'HNL', 'Honolulu', 'Pacific/Honolulu'],
     [31, 'SYD', 'Sydney', 'Australia/Sydney'], [32, 'AKL', 'Auckland', 'Pacific/Auckland']];
-  const hasCity = (t) => t === 1 || t === 4;
+  const hasCity = (t) => t === 1 || t === 4;   // 時刻の部品 (アナログ部品は 13 番目に都市を持つので別扱い)
   const cityOf = (e) => { if (!hasCity(e[0])) return 0; const v = Number(e[9]); return TZ_CITIES.some((c) => c[0] === v) ? v : 0; };
   // その都市の今の UTC からの差 (分)。ブラウザの Intl で出す (見本とメニューの表示用)。
   function tzOffsetNow(zone) {
@@ -586,6 +586,16 @@
       const g = (k) => Number((p.find((x) => x.type === k) || {}).value);
       return Math.round((Date.UTC(g('year'), g('month') - 1, g('day'), g('hour'), g('minute')) - Math.floor(Date.now() / 60000) * 60000) / 60000);
     } catch (e) { return 0; }
+  }
+  // アナログの針の角度。見本は他の部品と同じ 10:08:30。都市を選んだ時はその時差ぶんだけ進める。
+  function anaAngles(e) {
+    let hh = 10, mm = 8;
+    const city = anaCity(e);
+    if (city) {
+      const c = TZ_CITIES.find((x) => x[0] === city);
+      if (c) { const d = tzOffsetNow(c[3]) + new Date().getTimezoneOffset(); const t = (10 * 60 + 8 + d + 1440 * 2) % 1440; hh = Math.floor(t / 60); mm = t % 60; }
+    }
+    return { h: ((hh % 12) + mm / 60) * 30, m: mm * 6, s: 180 };
   }
   const fmtOff = (m) => `${m < 0 ? '−' : '+'}${Math.floor(Math.abs(m) / 60)}:${String(Math.abs(m) % 60).padStart(2, '0')}`;
   // 見本の 10:08 を、ブラウザの時刻との差だけずらす (実際にその都市が今何時かは実機が出す)
@@ -627,6 +637,9 @@
     42: { name: 'Stress graph', grp: 'graph', graph: 'stress' },
     43: { name: 'Steps graph',  grp: 'graph', graph: 'steps' },
     40: { name: 'Notifications', grp: 'clock', sample: '3',  icon: 'bell',      iw: 26 },
+    // アナログ時計 (2026-09-20 Phase A)。部品として好きな位置・大きさで置ける。
+    // 行: [44, x, y, a, s, c, f, -1, 直径‰, mode, 針の形, 目盛り, 都市]  (送る時は「針の形」を as の番号に置き換える)
+    44: { name: 'Analog',      grp: 'clock', analog: true },
     // 50-54 / 60-64 = whole-dial parts: they sit at the centre, cover the dial and are not moved.
     50: { name: 'Hands: Bars',        grp: 'hands', dial: true },
     51: { name: 'Hands: Needles',     grp: 'hands', dial: true },
@@ -836,6 +849,16 @@
   const LINE_W = [3, 5, 7], LINE_LEN_DEF = 200, LINE_LEN_MIN = 20;   // 奇数 = 実機で端の丸めがぴったり合う
   const isLine = (t) => !!(TYPES[t] && TYPES[t].line != null);
   const isCircle = (t) => !!(TYPES[t] && TYPES[t].circle);
+  const isAnalog = (t) => !!(TYPES[t] && TYPES[t].analog);
+  // アナログ部品の中身 (9 番目以降)。既定は盤の 1/3 の大きさ・時+分・Needles・12 本の目盛り・ウォッチの時刻。
+  const ANA_DEF = { dia: 320, mode: 0, style: 51, ticks: 1, city: 0 };
+  const ANA_STYLES = [[51, 'Needles'], [50, 'Bars'], [52, 'Kite'], [53, 'Outline'], [56, 'Classic'], [57, 'Outline round']];
+  const ANA_MODES = [[0, 'Hour + minute'], [1, 'Seconds']];
+  const anaDia = (e) => { const v = Number(e[8]); return Number.isFinite(v) && v >= 60 ? Math.min(1000, Math.round(v)) : ANA_DEF.dia; };
+  const anaMode = (e) => (Number(e[9]) === 1 ? 1 : 0);
+  const anaStyle = (e) => (ANA_STYLES.some(([v]) => v === Number(e[10])) ? Number(e[10]) : ANA_DEF.style);
+  const anaTicks = (e) => (Number(e[11]) === 1 ? 1 : 0);
+  const anaCity = (e) => { const v = Number(e[12]); return TZ_CITIES.some((c) => c[0] === v) ? v : 0; };
   const isRect = (t) => !!(TYPES[t] && TYPES[t].rect);
   const isGraph = (t) => !!(TYPES[t] && TYPES[t].graph);
   // グラフの箱 [幅, 高さ] (どちらも盤面の幅の千分率、実機と同じ値)。0 = 小、1 = 大
@@ -1535,7 +1558,21 @@
       if (h) return handSvg(h[1], T.h) + handSvg(h[2], T.m) + (h[0] > 0 ? `<circle cx="${R}" cy="${R}" r="${h[0]}"/>` : '');
       return rimSvg(rim(t, k, mt, mc, mk, mv, edge));
     }
-    return { R, hands, rim, svgFor };
+    // アナログ部品 (2026-09-20)。dia = 直径‰。針は 454 の座標のまま dia に比例して縮め、
+    // viewBox でその円のぶんだけ切り出す = 実機も同じ点列を中心 (x,y) で回すだけで同じ絵になる。
+    function analogArt(t, k, dia, mode, ticks, ang) {
+      const h = hands(t, k); if (!h) return null;
+      const half = R * dia / 1000;
+      let o = '';
+      if (ticks) {                                        // 12 本の目盛り (サブダイヤル)
+        const w = Math.max(1.4, half * 0.055), len = half * 0.16;
+        for (let i = 0; i < 12; i++) o += g(i * 30, `<rect x="${r1(R - w / 2)}" y="${r1(R - half)}" width="${r1(w)}" height="${r1(len)}"/>`);
+      }
+      o += (mode === 1) ? handSvg(h[2], ang.s) : handSvg(h[1], ang.h) + handSvg(h[2], ang.m);
+      if (h[0] > 0) o += `<circle cx="${R}" cy="${R}" r="${h[0]}"/>`;
+      return { inner: o, vb: `${r1(R - half)} ${r1(R - half)} ${r1(2 * half)} ${r1(2 * half)}`, hands: h };
+    }
+    return { R, hands, rim, svgFor, analogArt };
   })();
   // One dial part as an <svg> that fills the dial; color comes from the element (currentColor).
   function dialArt(t, s, w, h, col, edge) {
@@ -1612,6 +1649,7 @@
     }
     else if (d.graph) p.innerHTML = `<span class="ico" style="color:#1D222B">${graphArt(d.graph, 30, 16, 0.5)}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     else if (d.rect) p.innerHTML = `<span class="ico" style="color:#1D222B"><svg width="24" height="20" viewBox="0 0 24 20"><rect x="2" y="2" width="20" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="3"/></svg></span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
+    else if (d.analog) p.innerHTML = `<span class="ico" style="color:#1D222B"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 12 V6 M12 12 L16 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     else if (d.circle) p.innerHTML = `<span class="ico" style="color:#1D222B"><svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="8.5" fill="none" stroke="currentColor" stroke-width="3"/></svg></span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     else if (d.line != null) p.innerHTML = `<span class="ico" style="color:#1D222B">${lineArt(d.line, 22, 3).svg}</span><span class="nm">Line</span><span class="hint">${t}</span>`;
     else p.innerHTML = `<span class="ico">${d.noPal ? '' : d.icon && !TEXT_ICON[d.icon] ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${TEXT_ICON[d.icon] || d.sample || ''}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
@@ -1766,6 +1804,17 @@
       div.classList.add('dialpart');
       div.style.width = dv.w + 'px'; div.style.height = dv.h + 'px';
       div.innerHTML = dialArt(t, s, dv.w, dv.h, colOf(c), !!(f & F_EDGE)) + '<span class="anchor"></span>';
+      div.addEventListener('pointerdown', (ev) => startMove(ev, i));
+      return div;
+    }
+    if (def.analog) {        // アナログ時計 (部品)。箱 = 直径、当たり判定は描いた線の上だけ
+      const dv = dev(), dia = anaDia(e), S = dia * dv.w / 1000;
+      const kk = DIAL_SCALE[Math.min(Math.max(s, 0), 3)], kd = { l: kk.l * dia / 1000, w: kk.w * dia / 1000 };
+      const art = DIAL.analogArt(anaStyle(e), kd, dia, anaMode(e), anaTicks(e), anaAngles(e));
+      div.classList.add('linepart');
+      div.style.width = S + 'px'; div.style.height = S + 'px';
+      div.dataset.lw = S; div.dataset.lh = S;
+      div.innerHTML = `<svg width="${S.toFixed(1)}" height="${S.toFixed(1)}" viewBox="${art.vb}" fill="currentColor" style="display:block;overflow:visible">${art.inner}</svg><span class="anchor"></span>`;
       div.addEventListener('pointerdown', (ev) => startMove(ev, i));
       return div;
     }
@@ -2082,14 +2131,31 @@
     return { x: clamp(x), y: clamp(y), len: out, m0, m1 };
   }
   // 実機へ渡す el。並びは上と同じ。線だけ 10 番目に太さ (454 盤面の実 px) を足す = 太さを変えても実機のビルドは不要。
-  const elOut = () => { const X = expandRects(st.el), joins = lineJoins(X); return elOrder(X).map(([e, i]) => (isCircle(e[0])
+  // アナログ部品の針の形は面ごとに 1 つずつ (as)。同じ形・同じ大きさは共有する = 面のデータを小さく保つ
+  // (実機の応答は 12.5KB までが安全)。el の 11 番目は as の番号になる。
+  let ANA_SHAPES = [];
+  function anaShapeIdx(e) {
+    const style = anaStyle(e), dia = anaDia(e), sz = Math.min(Math.max(e[4], 0), 3);
+    const key = `${style}|${dia}|${sz}`;
+    const hit = ANA_SHAPES.findIndex((x) => x.key === key);
+    if (hit >= 0) return hit;
+    const kk = DIAL_SCALE[sz], h = DIAL.hands(style, { l: kk.l * dia / 1000, w: kk.w * dia / 1000 });
+    ANA_SHAPES.push({ key, style, spec: h });
+    return ANA_SHAPES.length - 1;
+  }
+  const elOut = () => { ANA_SHAPES = []; const X = expandRects(st.el), joins = lineJoins(X); return elOrder(X).map(([e, i]) => (isAnalog(e[0])
+    ? [e[0], e[1], e[2], 0, e[4], e[5], e[6], -1, anaDia(e), anaMode(e), anaShapeIdx(e), anaTicks(e), anaCity(e)]
+    : isCircle(e[0])
     ? (() => { const b = [e[0], e[1], e[2], 0, e[4], e[5], e[6], -1, circDiaOut(circDia(e)), circPen(e[4]), circFill(e), circMet(e), circDir(e)];
                  return (circSpan(e) !== 360 || circFrom(e)) ? b.concat([circSpan(e), circFrom(e)]) : b; })()
     : isLine(e[0])
     ? (() => { const g = lineGeom(e, joins, i); const b = [e[0], g.x, g.y, e[3], e[4], e[5], e[6], -1, g.len, linePen(e[4])];
                  return (g.m0 || g.m1) ? b.concat([g.m0, g.m1]) : b; })()
     : e)); };
-  const layoutObj = () => { const o = Object.assign({ bg: st.bg, el: elOut(), pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined, mc: (st.mc || []).some((c) => c >= 0) ? st.mc : undefined,
+  const layoutObj = () => { const el0 = elOut();
+    // as = [形の種別 (Composer が読み戻す用), キャップ半径, 時針, 分針]。実機は 2 番目以降だけ見る。
+    const as0 = ANA_SHAPES.length ? ANA_SHAPES.map((x) => [x.style, x.spec[0], x.spec[1], x.spec[2]]) : undefined;
+    const o = Object.assign({ bg: st.bg, el: el0, as: as0, pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined, mc: (st.mc || []).some((c) => c >= 0) ? st.mc : undefined,
     mk: (st.mk || []).some((c) => c >= 0) ? st.mk : undefined, mv: (st.mv || []).some((v) => v === 0) ? st.mv : undefined,
     st: (st.stk || []).some((v) => v) ? (st.stk || ['', '']).slice(0, 2).map(stkClean) : undefined,
     sn: (st.stn || []).some((v) => v) ? (st.stn || ['', '']).slice(0, 2).map(nameClean) : undefined,
@@ -2293,20 +2359,21 @@
     const sameLen = all.every((x) => lineLen(x) === lineLen(e));
     // 基本の 3 行 (位置と大きさ / 表示 / 色と並べ) はどの部品でも同じ場所に出す。使えない物は薄く押せなくするだけ。
     const shapeOnly = !none && all.every((x) => isLine(x[0]) || isCircle(x[0]) || isRect(x[0]) || isGraph(x[0]) || (TYPES[x[0]] && TYPES[x[0]].dial));
+    const allAna = !none && all.every((x) => isAnalog(x[0]));   // アナログ時計: 大きさ (針の太さ) は使うが、そろえ方とアイコンは使わない
     box.innerHTML = `
       <div style="font-weight:600;margin-bottom:8px">${none ? '<span class="muted" style="font-weight:400">No part selected — click one on the dial (Shift+click for several)</span>' : multi ? `${all.length} elements <span class="kbd">changes apply to all</span>` : `${def.name} <span class="kbd">type ${e[0]}</span>`}</div>
       <div class="group">
         ${`<div class="field"><span>X</span><input type="number" id="fx" min="0" max="1000" step="${st.grid}" value="${none || multi ? '' : e[1]}" ${multi ? 'disabled title="Several parts selected: drag or use the arrow keys to move them together"' : ''}></div>`}
         ${`<div class="field"><span>Y</span><input type="number" id="fy" min="0" max="1000" step="${st.grid}" value="${none || multi ? '' : e[2]}" ${multi ? 'disabled' : ''}></div>`}
-        ${seg('Anchor', ['Center', 'Left', 'Right'], same(3) ? e[3] : -1, 3, 0, allCirc || allRect)}
+        ${seg('Anchor', ['Center', 'Left', 'Right'], same(3) ? e[3] : -1, 3, 0, allCirc || allRect || allAna)}
         ${allGraph ? seg('Size', ['Small', 'Large'], same(4) ? e[4] : -9, 4) : seg('Size', SIZES, shapeOnly ? -9 : (same(4) ? e[4] : -9), 4, 0, shapeOnly)}
-        ${seg('Icon size', ['Auto'].concat(SIZES), anyIcon && !shapeOnly ? (sameIs ? isOf(e) : -9) : -9, 7, -1, shapeOnly)}
+        ${seg('Icon size', ['Auto'].concat(SIZES), anyIcon && !shapeOnly && !allAna ? (sameIs ? isOf(e) : -9) : -9, 7, -1, shapeOnly || allAna)}
         <div class="brk"></div>
-        <div class="field${shapeOnly ? ' off' : ''}" title="${anyIcon ? 'What this part draws' : 'This part has no icon'}"><span>Show</span><span class="cb units" id="fshow">${
+        <div class="field${shapeOnly || allAna ? ' off' : ''}" title="${anyIcon ? 'What this part draws' : 'This part has no icon'}"><span>Show</span><span class="cb units" id="fshow">${
           [['Icon + value', 1], ['Icon only', 3], ['Value only', 0]].map(([lbl, v]) =>
-            `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 3) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none || shapeOnly ? 'disabled' : ''}>${lbl}</button>`).join('')
+            `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 3) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none || shapeOnly || allAna ? 'disabled' : ''}>${lbl}</button>`).join('')
         }</span></div>
-        <div class="field${allText ? '' : ' off'}" title="Where the icon sits relative to the value"><span>Arrange</span><span class="cb units" id="farr">${
+        <div class="field${allText && !allAna ? '' : ' off'}" title="Where the icon sits relative to the value"><span>Arrange</span><span class="cb units" id="farr">${
           [['Icon left', 0], ['Icon right', 1], ['Icon above', 2]].map(([nm, v]) =>
             `<button type="button" data-v="${v}" class="${allText && all.every((x) => arrOf(x) === v) ? 'on' : ''}" ${allText ? '' : 'disabled'}>${nm}</button>`).join('')
         }</span></div>
@@ -2355,6 +2422,22 @@
             `<button type="button" data-v="${v}" class="${all.every((x) => (lineSharp(x) ? 1 : 0) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>
         ` : ''}
+        ${allAna ? `
+        ${stepRow('Diameter', 8, all.every((x) => anaDia(x) === anaDia(e)) ? anaDia(e) : null, 'How wide the clock is, in grid steps')}
+        <div class="field" title="What the hands show"><span>Shows</span><span class="cb units" id="fanamode">${
+          ANA_MODES.map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => anaMode(x) === v) ? 'on' : ''}">${lb}</button>`).join('')
+        }</span></div>
+        <div class="field" title="The shape of the hands"><span>Hands</span><span class="cb units" id="fanastyle">${
+          ANA_STYLES.map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => anaStyle(x) === v) ? 'on' : ''}">${lb}</button>`).join('')
+        }</span></div>
+        <div class="field" title="12 small marks around the clock"><span>Marks</span><span class="cb units" id="fanaticks">${
+          [[1, 'On'], [0, 'Off']].map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => anaTicks(x) === v) ? 'on' : ''}">${lb}</button>`).join('')
+        }</span></div>
+        <div class="field" title="Show another city's time on this clock. Summer time is followed automatically."><span>Time zone</span><select id="fanatz">${
+          [`<option value="0" ${all.every((x) => anaCity(x) === 0) ? 'selected' : ''}>This watch's time</option>`].concat(
+            TZ_CITIES.map((c) => [c, tzOffsetNow(c[3])]).sort((a, b) => a[1] - b[1]).map(([c, off]) =>
+              `<option value="${c[0]}" ${all.every((x) => anaCity(x) === c[0]) ? 'selected' : ''}>${c[2]} (UTC${fmtOff(off)})</option>`)).join('')
+        }</select></div>` : ''}
         ${!none && all.every((x) => RIM_POS.includes(x[0])) ? `<div class="field" title="Inner leaves room for the Meter arcs; Edge sits close to the bezel."><span>Position</span><span class="cb units" id="frimpos">${
           [[1, 'Inner'], [0, 'Edge']].map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => rimInner(x) === !!v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>` : ''}
@@ -2454,6 +2537,12 @@
     const fp = $('fpick');
     if (fp) fp.addEventListener('change', (ev) => { const i = pickColor(ev.target, ev.target.value); each((x) => { x[5] = i; }); });
     bindMeters(); bindAlign(); bindPickers();
+    box.querySelectorAll('#fanamode button, #fanastyle button, #fanaticks button').forEach((b) => b.addEventListener('click', () => {
+      const key = b.closest('.cb').id === 'fanamode' ? 9 : b.closest('.cb').id === 'fanastyle' ? 10 : 11;
+      each((x) => { while (x.length < 13) x.push(0); x[key] = +b.dataset.v; });
+    }));
+    const fatz = $('fanatz');
+    if (fatz) fatz.addEventListener('change', () => each((x) => { while (x.length < 13) x.push(0); x[12] = Number(fatz.value) || 0; }));
     box.querySelectorAll('#frimpos button').forEach((b) => b.addEventListener('click', () => each((x) => {
       const inner = +b.dataset.v === 1, alt = (x[0] === 69) ? !inner : inner;
       x[6] = alt ? (x[6] | F_EDGE) : (x[6] & ~F_EDGE);
@@ -2461,7 +2550,8 @@
     box.querySelectorAll('.step').forEach((sp) => sp.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
       const k = Number(sp.dataset.step), d = Number(b.dataset.d) * st.grid;
       each((x) => {
-        if (isRect(x[0]) && (k === 8 || k === 9)) {
+        if (isAnalog(x[0]) && k === 8) { while (x.length < 13) x.push(0); x[8] = Math.max(60, Math.min(1000, anaDia(x) + d)); }
+        else if (isRect(x[0]) && (k === 8 || k === 9)) {
           while (x.length < 10) x.push(x.length === 8 ? RECT_DEF.w : RECT_DEF.h);
           x[k] = Math.max(RECT_MIN, Math.min(1000, (k === 8 ? rectW(x) : rectH(x)) + d));
         }
@@ -2679,7 +2769,8 @@
       const sl = bbSlot(t);
       if (!bbTm(sl) && isSoccer(bbLg(sl)) !== !!soc) setBb(sl, { lg: soc ? SOC_DEF : 'mlb', tm: 0 });
     }
-    const e = isRect(t) ? [t, 500, 500, 0, 1, 0, 0, -1, RECT_DEF.w, RECT_DEF.h]
+    const e = isAnalog(t) ? [t, 500, 500, 0, 1, 0, 0, -1, ANA_DEF.dia, ANA_DEF.mode, ANA_DEF.style, ANA_DEF.ticks, ANA_DEF.city]
+            : isRect(t) ? [t, 500, 500, 0, 1, 0, 0, -1, RECT_DEF.w, RECT_DEF.h]
             : isCircle(t) ? [t, 500, 500, 0, 1, 0, 0, -1, CIRC_DEF.dia, 0, CIRC_DEF.fill, CIRC_DEF.met, CIRC_DEF.dir]
             : isLine(t) ? [t, 500, 500, 0, 1, 0, 0, -1, LINE_LEN_DEF]
             : isGraph(t) ? [t, 500, 500, 0, 0, 0, 0, -1]
@@ -2853,6 +2944,15 @@
       if (isLine(n[0])) { const L = Number(e[8]); n.push(Number.isFinite(L) && L >= LINE_LEN_MIN && L <= 1000 ? Math.round(L) : LINE_LEN_DEF); }   // 線は 9 番目の長さを落とさない
       else if (isRect(n[0])) { n.push(rectW(e), rectH(e)); }   // 四角形は 9・10 番目に幅と高さ
       else if (hasCity(n[0]) && TZ_CITIES.some((c) => c[0] === Number(e[9]))) { n.push((Number(e[8]) === 1 || Number(e[8]) === 2) ? Number(e[8]) : 0, Number(e[9])); }   // 世界時計の都市
+      else if (isAnalog(n[0])) {                                  // アナログは 9..13 番目 (11 番目は as の番号 → 形に戻す)
+        const dia = Number(e[8]), mode = Number(e[9]), idx = Number(e[10]), ticks = Number(e[11]), city = Number(e[12]);
+        const st0 = (Array.isArray(j.as) && j.as[idx] && Number.isInteger(Number(j.as[idx][0]))) ? Number(j.as[idx][0]) : ANA_DEF.style;
+        n.push(Number.isFinite(dia) && dia >= 60 && dia <= 1000 ? Math.round(dia) : ANA_DEF.dia,
+               mode === 1 ? 1 : 0,
+               ANA_STYLES.some(([v]) => v === st0) ? st0 : ANA_DEF.style,
+               ticks === 1 ? 1 : 0,
+               TZ_CITIES.some((c) => c[0] === city) ? city : 0);
+      }
       else if (isCircle(n[0])) {                                  // 円は 9..13 番目
         const dia = Number(e[8]), fill = Number(e[10]), met = Number(e[11]), dir = Number(e[12]);
         n.push(Number.isFinite(dia) && dia >= 20 && dia <= 1000 ? dia : CIRC_DEF.dia, 0,

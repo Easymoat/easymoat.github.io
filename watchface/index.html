@@ -369,7 +369,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 23:09</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 23:11</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1902,7 +1902,7 @@
       // 文字の部品は padding 2 / margin -2 の箱。左右そろえは中身 (幅 − 4) で決める = 実機の total (アイコン + gap + 文字 + bo)。
       // 箱の幅のままだと右揃えで 4px・中央で 2px 左へずれていた (文字盤担当の実測、2026-09-19)。
       const padX = (div.dataset.lw || div.classList.contains('linepart') || div.classList.contains('dialpart') || div.classList.contains('graphpart')) ? 0 : 4;
-      const { left, top } = boxPos(e, px, py, w - padX, h);
+      const { left, top } = boxPos(e, px, py, w - padX, h - padX);   // 縦も中身の高さで (数字のインクの中心が 2px 上だった)
       div.style.left = left + 'px'; div.style.top = top + 'px';
       const an = div.querySelector('.anchor');
       // .el は margin:-2px なので、中の絶対配置の基準は left/top より 2px 外側から始まる。
@@ -2926,7 +2926,7 @@
       const gx = div.dataset.lx ? +div.dataset.lx : e[1], gy = div.dataset.ly ? +div.dataset.ly : e[2];
       const px = gx * d.w / 1000, py = gy * d.h / 1000;
       const padX = (div.dataset.lw || div.classList.contains('linepart') || div.classList.contains('dialpart') || div.classList.contains('graphpart')) ? 0 : 4;   // 本体と同じ (中身の幅でそろえる)
-      const { left, top } = boxPos(e, px, py, (div.dataset.lw ? +div.dataset.lw : div.offsetWidth) - padX, div.dataset.lh ? +div.dataset.lh : div.offsetHeight);
+      const { left, top } = boxPos(e, px, py, (div.dataset.lw ? +div.dataset.lw : div.offsetWidth) - padX, (div.dataset.lh ? +div.dataset.lh : div.offsetHeight) - padX);
       div.style.left = left + 'px'; div.style.top = top + 'px';
     });
     if (arcs.length) {

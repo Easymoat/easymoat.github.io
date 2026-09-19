@@ -369,7 +369,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 00:17</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 00:56</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -378,7 +378,7 @@
   <div id="phonebar" class="box">
     <div class="psign" id="psign">
       <div class="lbl">Your watch</div>
-      <p class="pnote">Type the ID <span class="pname">The Face</span> shows on your watch — four characters, a dash, four more (like <b>a1b2-3456</b>). It stays on this phone.</p>
+      <p class="pnote">Type your watch's Device ID — on the watch: hold the watch face → Customize → Device ID. Four characters, a dash, four more (like <b>a1b2-3456</b>). It stays on this phone.</p>
       <div class="prow">
         <input type="text" id="devid2" placeholder="XXXX-XXXX" inputmode="text" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" maxlength="40">
         <button class="btn primary" id="psignin">Sign in</button>
@@ -475,7 +475,7 @@
       <div class="tier"><span class="num">5</span><span class="name">Watch</span><span class="what">Two settings you make once: which watch receives your dials, and where its weather comes from</span></div>
       <div class="grp" id="syncbox">
           <span class="lbl">a · Which watch</span>
-          <div class="ctl"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX" style="width:140px"><span class="muted">The Face shows this ID on your watch. Everything you send from Collection goes to this watch. It is kept on this computer — there is nothing to sign up for.</span></div>
+          <div class="ctl"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX" style="width:140px"><span class="muted">On the watch: hold the watch face → Customize → Device ID. Everything you send from Collection goes to this watch. It is kept on this computer — there is nothing to sign up for.</span></div>
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
           <div class="ctl" id="passrow"><span>Pass</span><span id="passnote" class="muted">…</span></div>
           <div class="ctl" id="passkeyrow" hidden><span>Pass key</span><input type="text" id="passkey" placeholder="XXXXX-XXXXX-XXXXX-XXXXX" maxlength="30" spellcheck="false" autocomplete="off" style="width:240px"><button class="btn" id="passuse">Use key</button><span class="status" id="passstatus"></span></div>
@@ -3119,7 +3119,7 @@
     return { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, shape2: IMG.shape2 || null, rot: IMG.rot, rot2: IMG.shape2 ? rotOf(2) : undefined, size: IMG.size, size2: IMG.shape2 ? sizeOf(2) : undefined, cx: IMG.cx, cy: IMG.cy, cx2: IMG.shape2 ? cxOf(2) : undefined, cy2: IMG.shape2 ? cyOf(2) : undefined, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom, colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, br: brOf(), sa: saOf(), plId: IMG.src === 'camera' ? plId() : undefined };
   }
   $('shelfsave').addEventListener('click', async () => {
-    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID (XXXX-XXXX) — on the watch: hold the watch face → Customize → Device ID.', 'err');
     if (elCount(st.el) > EL_MAX) return setStatus('shelfstatus', `Too many parts: ${elCount(st.el)} (lines do not count). The watch takes ${EL_MAX} — remove ${elCount(st.el) - EL_MAX} and save again.`, 'err');
     const hasImg = !!(IMG.show && hasSource() && IMG.masked);
     // 絵のない品はウォッチでも絵なしになる。意図しない「絵なし」で保存してしまうのを防ぐ。
@@ -3231,7 +3231,7 @@
   // ID を知っていれば誰の面でも上書きできるので、取り違えの被害が大きい (2026-09-18)。
   let SENT_TO = null;
   async function sendShelfItem(n) {
-    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('syncstatus', 'Enter the Device ID shown on the watch (XXXX-XXXX).', 'err');
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('syncstatus', 'Enter the Device ID (XXXX-XXXX) — on the watch: hold the watch face → Customize → Device ID.', 'err');
     if (SENT_TO !== id && !confirm(`Send this dial to the watch ${id}?\n\nIt replaces whatever that watch is showing now.`)) return;
     SENT_TO = id;
     const it = SHELF.items.find((i) => i.n === n) || {};
@@ -3711,7 +3711,7 @@
   }
   // Store a picked file on the photo shelf as it is (downscaled to ≤1024 px JPEG), then open it.
   async function addPhoto(img, name) {
-    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('imgstatus', 'Enter the Device ID shown on the watch first.', 'err');
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('imgstatus', 'Enter the Device ID first — on the watch: hold the watch face → Customize → Device ID.', 'err');
     if (PHOTOS.list.length >= PHOTOS.max) return setStatus('imgstatus', `The photo shelf is full (${PHOTOS.max}) — delete one first.`, 'err');
     const m = 1024, sc = Math.min(1, m / Math.max(img.width, img.height)); const c = document.createElement('canvas');
     c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
@@ -3898,7 +3898,7 @@
     }
     function signIn() {
       const v = d2.value.trim();
-      if (!ok(v)) { setStatus('psignerr', 'That ID does not look right. It is like a1b2-3456 — check The Face on your watch.', 'err'); d2.focus(); return; }
+      if (!ok(v)) { setStatus('psignerr', 'That ID does not look right. It is like a1b2-3456 — on the watch: hold the watch face → Customize → Device ID.', 'err'); d2.focus(); return; }
       setStatus('psignerr', '');
       $('devid').value = v; $('devid').dispatchEvent(new Event('change', { bubbles: true }));
       showSigned();

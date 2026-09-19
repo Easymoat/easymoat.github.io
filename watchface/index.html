@@ -369,7 +369,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 22:44</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 23:09</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1816,8 +1816,8 @@
     // ベクターフォントの無い機種 (固定の 3 段) は時計が太字を自動で切る (b0919j) ので、見本も太字にしない。
     const lv = prof()[2] !== 1 ? 0 : st.b === 2 ? 2 : st.b === 1 ? 1 : 0, bo = lv ? boldOff(px, lv) : 0;
     if (bo) {
-      div.style.textShadow = lv === 2 ? `${bo}px 0 0 currentColor, ${(bo / 2).toFixed(1)}px 0 0 currentColor` : `${bo}px 0 0 currentColor`;
-      div.style.paddingRight = (2 + bo) + 'px';
+      div.style.textShadow = lv === 2 ? `${bo}px 0 0 currentColor, ${Math.floor(bo / 2)}px 0 0 currentColor` : `${bo}px 0 0 currentColor`;   // 中間のずらしは実機と同じ切り捨て
+      if (def.strip) div.style.paddingRight = (2 + bo) + 'px';   // 帯はコマ幅に bo を含めている。それ以外は値の後ろに bo を空ける (下)
     }
     const si = (Number.isInteger(is) && is >= 0 && is <= SIZE_MAX) ? is : s;   // per-part icon size, else the text step (WfLayout.drawEl)
     const ki = (st.ic[Math.min(si, st.ic.length - 1)] / ICON_ART) * k, iody = st.io * k;
@@ -1864,7 +1864,8 @@
       const showVal = !(f & 2);   // f の bit 1 = 値を出さない (アイコンだけ)
       const sample = isStock(t) ? stkValue(t, f) : isBall(t) ? ballSample(t) : (t === 2 && !splitDate) ? 'Fri Sep 4' : cityOf(e) ? citySample(t, cityOf(e)) : def.sample;
       const lay = arrOf(e);       // 0 アイコン左 / 1 アイコン右 / 2 アイコン上
-      const val = showVal ? `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px">${sample}</span>` : '';
+      // 太字で右へ伸びた分 (bo) は値の幅に含める = 実機の「文字幅 + bo」。アイコン右 (arr 1) でもアイコンが bo だけ離れる。
+      const val = showVal ? `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px${bo ? `;padding-right:${bo}px` : ''}">${sample}</span>` : '';
       let ic2 = icon;
       if (lay === 2) {
         div.style.flexDirection = 'column';
@@ -1898,7 +1899,10 @@
       const gx = div.dataset.lx ? +div.dataset.lx : e[1], gy = div.dataset.ly ? +div.dataset.ly : e[2];
       const px = gx * d.w / 1000, py = gy * d.h / 1000;
       const w = div.dataset.lw ? +div.dataset.lw : div.offsetWidth, h = div.dataset.lh ? +div.dataset.lh : div.offsetHeight;
-      const { left, top } = boxPos(e, px, py, w, h);
+      // 文字の部品は padding 2 / margin -2 の箱。左右そろえは中身 (幅 − 4) で決める = 実機の total (アイコン + gap + 文字 + bo)。
+      // 箱の幅のままだと右揃えで 4px・中央で 2px 左へずれていた (文字盤担当の実測、2026-09-19)。
+      const padX = (div.dataset.lw || div.classList.contains('linepart') || div.classList.contains('dialpart') || div.classList.contains('graphpart')) ? 0 : 4;
+      const { left, top } = boxPos(e, px, py, w - padX, h);
       div.style.left = left + 'px'; div.style.top = top + 'px';
       const an = div.querySelector('.anchor');
       // .el は margin:-2px なので、中の絶対配置の基準は left/top より 2px 外側から始まる。
@@ -2921,7 +2925,8 @@
       const e = lay.el[+div.dataset.i]; if (!e) return;
       const gx = div.dataset.lx ? +div.dataset.lx : e[1], gy = div.dataset.ly ? +div.dataset.ly : e[2];
       const px = gx * d.w / 1000, py = gy * d.h / 1000;
-      const { left, top } = boxPos(e, px, py, div.dataset.lw ? +div.dataset.lw : div.offsetWidth, div.dataset.lh ? +div.dataset.lh : div.offsetHeight);
+      const padX = (div.dataset.lw || div.classList.contains('linepart') || div.classList.contains('dialpart') || div.classList.contains('graphpart')) ? 0 : 4;   // 本体と同じ (中身の幅でそろえる)
+      const { left, top } = boxPos(e, px, py, (div.dataset.lw ? +div.dataset.lw : div.offsetWidth) - padX, div.dataset.lh ? +div.dataset.lh : div.offsetHeight);
       div.style.left = left + 'px'; div.style.top = top + 'px';
     });
     if (arcs.length) {

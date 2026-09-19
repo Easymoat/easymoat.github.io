@@ -362,7 +362,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 10:08</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 10:10</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3447,7 +3447,7 @@
     if (hasSource()) renderQuality();
   }
   function autoBgColorJS(pal, p) {
-    if (!pal || pal.length < 2) return '#000000';
+    if (!pal || !pal.length) return '#000000';   // 塗り 1 色でも取る (2026-09-19)
     const W = [0,0,0,0,0,0], R = [0,0,0,0,0,0], G = [0,0,0,0,0,0], B = [0,0,0,0,0,0];
     for (const c of pal) { const r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), sat = mx - mn;
       if (mx < 30 || sat < 16) continue; let s; if (r >= g && r >= b) s = g >= b ? 0 : 5; else if (g >= r && g >= b) s = r >= b ? 1 : 2; else s = g >= r ? 3 : 4;
@@ -3462,7 +3462,7 @@
   }
   function computeOptimalPalette(n) {
     if (typeof RgbQuant === 'undefined' || !hasSource()) return null;
-    try { const q = new RgbQuant({ colors: n, dithKern: 'FloydSteinberg' }); q.sample(imgCv); const pal = q.palette(true); if (!pal || pal.length < 2) return null; return pal.map((c) => (c[0] << 16) | (c[1] << 8) | c[2]); } catch (e) { return null; }
+    try { const q = new RgbQuant({ colors: n, dithKern: 'FloydSteinberg' }); q.sample(imgCv); const pal = q.palette(true); if (!pal || !pal.length) return null; return pal.map((c) => (c[0] << 16) | (c[1] << 8) | c[2]); } catch (e) { return null; }
   }
   function currentAutoBg() { return autoBgColorJS(computeOptimalPalette(IMG.colors), IMG.bgAuto); }
   function repaintQuality() {

@@ -363,7 +363,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 19:52</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 20:29</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -493,7 +493,7 @@
           <button class="btn" id="copy">Copy</button>
           <button class="btn" id="apply">Apply edited JSON</button>
         </div>
-        <div class="opt"><button class="btn" id="preset-lobby">Start from Lobby</button><span class="muted">The dial The Face ships with: time, date, battery, heart rate, steps, floors, calories, weather and wind.</span></div>
+        <div class="opt"><button class="btn" id="preset-lobby">Start from Lobby</button><span class="muted">The dial The Face ships with: classic hands, date, battery, body data, weather, two stocks and two games.</span></div>
         <div class="opt"><button class="btn" id="preset-min">Start from Minimal</button><span class="muted">Three parts only — time, date and battery. A quiet dial to build on.</span></div>
         <div class="opt"><button class="btn danger" id="clear">Take every part off</button><span class="muted">Leaves an empty dial. The background color, the text sizes and the picture stay as they are.</span></div>
         <div class="status" id="jsonstatus"></div>
@@ -1123,6 +1123,9 @@
   // 疑似ボールド: 同じ文字を右へずらして重ね描きする。1 = 1 回ぶん、2 = より太く (途中にもう 1 枚)。
   const boldOff = (px, lv) => (lv === 2 ? Math.max(2, Math.round(px / 20)) : Math.max(1, Math.round(px / 36)));
   const BOLDS = [['Off', 0], ['Bold', 1], ['Bold 2', 2]];
+  // 同梱の文字盤 (The Face の初期表示と同じ、2026-09-19 ユーザー決定: 実機の Item 122)。元データは presets/lobby.json 1 か所で、
+  // publish.sh がここへ埋め込む (手元で開いた時は null → 下の旧 Lobby の部品だけ)。ウォッチ担当も同じファイルから同梱する。
+  const LOBBY = {"bg":2302755,"el":[[66,500,500,0,1,0,0],[60,500,500,0,1,0,0],[2,460,405,0,1,0,33,1,1],[21,450,175,2,1,16,1],[10,505,785,1,1,18,1,-1,2],[11,130,290,1,0,21,1],[28,560,175,1,1,16,1],[5,500,900,0,0,1,0],[14,855,290,2,0,21,1],[15,430,850,2,1,19,1],[16,575,845,1,1,19,1],[71,613,775,1,1,1,0,-1,226,5.2,11.9,0],[73,0,825,0,0,1,0,-1,100,3.2],[71,382,775,2,1,1,0,-1,221,5.2,0,11.9],[71,425,895,2,0,1,0,-1,125,3.2],[71,440,220,2,0,1,0,-1,151,3.2],[32,470,575,2,0,0,0],[33,170,505,1,0,0,8],[30,530,575,1,0,0,17],[71,580,900,1,0,1,0,-1,125,3.2],[30,665,510,1,0,0,28],[71,650,345,1,0,1,0,-1,210,3.2],[71,365,345,2,0,1,0,-1,210,3.2],[71,613,455,1,1,1,0,-1,242,5.2,11.9,0],[72,440,515,0,1,1,0,-1,123,5.2,8.4,20.2],[73,555,515,0,1,1,0,-1,123,5.2,20.2,8.4],[71,382,455,2,1,1,0,-1,227,5.2,0,11.9],[73,440,715,0,1,1,0,-1,123,5.2,8.4,20.2],[72,555,715,0,1,1,0,-1,123,5.2,20.2,8.4],[71,560,220,1,0,1,0,-1,151,3.2],[3,500,95,0,0,5,1],[22,135,405,1,0,0,1],[56,500,500,0,1,0,0],[20,505,285,0,1,0,1],[31,530,665,1,0,0,17],[31,665,725,1,0,0,12],[34,470,665,2,0,0,0],[35,170,725,1,0,0,8],[75,435,175,0,0,1,0,-1,88.8,3.2,-1,0,1,180,0],[75,565,175,0,0,1,0,-1,88.8,3.2,-1,0,1,180,180],[75,855,400,0,0,1,0,-1,110.8,3.2,-1,0,1,180,0],[75,155,400,0,0,1,0,-1,110.8,3.2,-1,0,1,180,180],[24,890,405,2,0,0,1]],"tx":[27,34,42,60],"tm":[48,69,91,111],"ic":[24,29,35,61],"b":2,"bb":[{"lg":"mlb","tm":147},{"lg":"mlb","tm":119},null,null],"uc":1,"sn":["Garmin","SpaceX"],"st":["GRMN","SPCX"],"pc":[5592405,11141120,43520,255,11141375,16767704,14273278,16773845,16372704,13299966,16776121,16762027,7645182,9757694,14914302,15845886,63744,16758191],"hd":[4,[0,-3,0,3,0,3,124.9,-3,124.9],[0,-1.5,0,1.5,0,1.5,195.2,-1.5,195.2]],"mt":[3,11,21,28],"lj":[[624.5,752.1,22.9,180,225,5.2,1],[370.5,752.1,22.9,135,180,5.2,1],[624.5,477.9,22.9,315,360,5.2,1],[497.5,540.1,22.9,135,225,5.2,1],[370.5,477.9,22.9,360,405,5.2,1],[497.5,689.9,22.9,315,405,5.2,1]],"mv":[1,0,0,0],"mc":[26,27,16,16],"rc":[0,0],"rm":[[5,0,30,216.2,11.2,3,1,26,-1],[0,60,5,2,10,3.2,22,7.2]],"hf":2};
   const PRESET_LOBBY = [[3,500,150,0,0,5,1],[1,500,320,0,2,0,0],[2,500,465,0,0,1,0],[10,130,560,1,1,2,1],[13,870,560,2,1,3,1],[11,130,650,1,1,0,1],[12,870,650,2,1,0,1],[20,130,760,1,1,4,1],[22,870,760,2,1,6,1]];
   const PRESET_MIN   = [[1,500,420,0,2,0,0],[2,500,540,0,0,1,0],[3,500,700,0,0,5,1]];
 
@@ -1240,7 +1243,8 @@
     else { selSet.clear(); selSet.add(i); sel = i; }
   }
   const addKey = (ev) => ev.shiftKey || ev.metaKey || ev.ctrlKey;
-  try { const s = JSON.parse(localStorage.getItem('faceComposer') || 'null'); if (s && Array.isArray(s.el)) st = Object.assign(st, s); } catch (e) {}
+  let FIRST_RUN = true;
+  try { const s = JSON.parse(localStorage.getItem('faceComposer') || 'null'); if (s && Array.isArray(s.el)) { st = Object.assign(st, s); FIRST_RUN = false; } } catch (e) {}
   st.tx = intArr3(st.tx, 10, 200, DEF_TX) || DEF_TX.slice(); st.tm = intArr3(st.tm, 10, 200, DEF_TM) || DEF_TM.slice();
   st.ic = intArr3(st.ic, 6, 120, DEF_IC) || DEF_IC.slice(); st.b = (st.b === 1 || st.b === 2) ? st.b : 0;
   UNITS.forEach((U) => { st[U.key] = U.opts[st[U.key]] ? st[U.key] : 0; });
@@ -2778,7 +2782,11 @@
       st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; st.ic = clean.ic; st.io = clean.io; st.b = clean.b; clearSel(); commit(); setStatus('jsonstatus', `Applied ${clean.el.length} elements.`, 'ok');
     } catch (e) { setStatus('jsonstatus', 'Not a valid layout. Expect {"bg":n,"el":[[t,x,y,a,s,c,f],…]} with 0..1000 coordinates.', 'err'); }
   });
-  $('preset-lobby').addEventListener('click', () => { st.el = migrateDate(PRESET_LOBBY.map(e => e.slice())); clearSel(); commit(); });
+  $('preset-lobby').addEventListener('click', () => {
+    const c = LOBBY && faceLayout(JSON.parse(JSON.stringify(LOBBY)));
+    if (c) loadIntoEditor(c); else st.el = migrateDate(PRESET_LOBBY.map(e => e.slice()));
+    clearSel(); commit();
+  });
   $('preset-min').addEventListener('click', () => { st.el = migrateDate(PRESET_MIN.map(e => e.slice())); clearSel(); commit(); });
   $('clear').addEventListener('click', () => { st.el = []; clearSel(); commit(); });
   $('undo').addEventListener('click', () => { if (!undo()) setStatus('jsonstatus', 'Nothing left to undo.', ''); });
@@ -3876,6 +3884,7 @@
       $('tofulled').textContent = document.body.classList.contains('full') ? 'Collection' : 'Editor';
     });
   })();
+  if (FIRST_RUN && LOBBY) { const c = faceLayout(JSON.parse(JSON.stringify(LOBBY))); if (c) loadIntoEditor(c); }   // 初めての人は同梱の文字盤から
   UNDO_SNAP = undoSnap();   // 起動時の姿を基準にする (最初の 1 回も戻せるように)
   render();
   (st.stk || []).forEach(loadStock);   // 面に既に入っている銘柄も起動時に下見する (名前と値をプレビューへ)

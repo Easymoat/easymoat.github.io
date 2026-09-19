@@ -362,7 +362,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 10:10</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 10:11</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3464,7 +3464,10 @@
     if (typeof RgbQuant === 'undefined' || !hasSource()) return null;
     try { const q = new RgbQuant({ colors: n, dithKern: 'FloydSteinberg' }); q.sample(imgCv); const pal = q.palette(true); if (!pal || !pal.length) return null; return pal.map((c) => (c[0] << 16) | (c[1] << 8) | c[2]); } catch (e) { return null; }
   }
-  function currentAutoBg() { return autoBgColorJS(computeOptimalPalette(IMG.colors), IMG.bgAuto); }
+  function currentAutoBg() {
+    if (IMG.fill && !IMG.cur) return autoBgColorJS([parseInt(IMG.fill.slice(1), 16)], IMG.bgAuto);   // 塗りはその色から
+    return autoBgColorJS(computeOptimalPalette(IMG.colors), IMG.bgAuto);
+  }
   function repaintQuality() {
     IMG.autoBg = IMG.bgMode === 'dial' ? hex(st.bg) : currentAutoBg(); $('imgbgsw').style.background = IMG.autoBg;
     $('imgbgdial').classList.toggle('on', IMG.bgMode !== 'dial'); $('imgbgdial').textContent = IMG.bgMode === 'dial' ? 'OFF' : 'ON'; $('imgbg').style.opacity = IMG.bgMode === 'dial' ? '0.45' : '1';

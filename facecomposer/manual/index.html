@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Face Composer &amp; The Face — User Manual</title>
+<link rel="icon" type="image/png" href="../../favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FC; --white: #FFFFFF; --border: #E2E6EF;
+    --accent: #B7791F; --accent-light: #FEF3C7; --accent-dark: #92400E;
+    --accent2: #DB2777;
+    --text: #111827; --text2: #374151; --muted: #6B7280; --muted2: #9CA3AF;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+    --warn-bg: #FEF3C7; --warn-border: #F59E0B; --warn-text: #92400E;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.7; }
+
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 24px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); position: sticky; top: 0; z-index: 200; }
+  .lang-bar a.home { color: var(--accent-dark); text-decoration: none; font-weight: 600; }
+  .lang-bar a.home:hover { text-decoration: underline; }
+  .lang-bar .toggle { display: flex; gap: 8px; }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: inherit; cursor: pointer; color: var(--muted); }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; display: grid; grid-template-columns: 240px 1fr; gap: 48px; }
+  @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; padding: 24px 16px 60px; gap: 24px; } }
+
+  /* ─── Sidebar ─── */
+  aside { position: sticky; top: 60px; align-self: start; max-height: calc(100vh - 80px); overflow-y: auto; }
+  aside h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 12px; }
+  aside ol { list-style: none; counter-reset: chnum; }
+  aside ol li { counter-increment: chnum; }
+  aside ol li a {
+    display: block; padding: 6px 0 6px 28px; color: var(--text2); text-decoration: none;
+    font-size: 14px; border-left: 2px solid transparent; position: relative;
+  }
+  aside ol li a::before { content: counter(chnum); position: absolute; left: 6px; color: var(--muted2); font-size: 12px; font-weight: 600; }
+  aside ol li a:hover { color: var(--accent-dark); border-left-color: var(--accent); }
+  @media (max-width: 900px) { aside { position: static; max-height: none; border: 1px solid var(--border); border-radius: 8px; padding: 16px; background: var(--white); } }
+  /* 目次下の Web ツール導線。章リンクと同じ余白感で並べつつ、区切り線で別物と分かるように。 */
+  aside .toc-tools { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+  aside .toc-tools h3 { margin-bottom: 8px; }
+  aside .toc-tools ul { list-style: none; }
+  aside .toc-tools li a { display: block; padding: 5px 0 5px 4px; color: var(--text2); text-decoration: none; font-size: 13.5px; }
+  aside .toc-tools li a:hover { color: var(--accent-dark); }
+  aside .toc-tools .all { margin-top: 6px; font-weight: 600; color: var(--accent); font-size: 13px; }
+
+  /* ─── Article ─── */
+  article > h1 { font-size: 36px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; }
+  article > .subtitle { color: var(--muted); margin-bottom: 40px; font-size: 16px; }
+
+  section.chapter { margin-bottom: 60px; scroll-margin-top: 60px; }
+  section.chapter > h2 { font-size: 24px; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-light); color: var(--accent-dark); }
+  section.chapter > h3 { font-size: 17px; font-weight: 600; margin: 28px 0 10px; color: var(--text); }
+  /* トラブルシューティングの個別ケース見出し。h3 (グループ) の下の階層で、
+     アクセント色の縦線を添えて「ここから1件」の切れ目を分かりやすくする。 */
+  section.chapter > h4 { font-size: 15px; font-weight: 600; margin: 20px 0 6px; color: var(--text);
+    padding-left: 10px; border-left: 3px solid var(--accent-light); }
+  section.chapter > p { color: var(--text2); margin-bottom: 12px; }
+  section.chapter > ul, section.chapter > ol { margin: 8px 0 16px 24px; color: var(--text2); }
+  section.chapter > ul li, section.chapter > ol li { margin-bottom: 6px; }
+  section.chapter strong { color: var(--text); font-weight: 600; }
+  section.chapter code { background: var(--accent-light); color: var(--accent-dark); padding: 1px 6px; border-radius: 3px; font-size: 13px; font-family: 'SF Mono', monospace; }
+
+  /* ─── Annotated figure (SVG overlay) ─── */
+  /* stage は画像表示エリア (max-width 480px、padding-hack で正方形)。
+     SVG オーバーレイは stage の外 (figure 内の余白) まで広がり、ラベルや
+     引き出し線を画像の左右外側に置ける (overflow: visible)。
+     SVG の viewBox は 0 0 500 500 のままで画像と座標一致、余白は負値/500超
+     範囲 (例: x=-50 や x=540) で配置できる。 */
+  figure.annotated {
+    background: var(--white); border: 1px solid var(--border); border-radius: 12px;
+    padding: 24px 80px; margin: 16px 0 24px; box-shadow: var(--shadow);
+  }
+  @media (max-width: 700px) { figure.annotated { padding: 16px 32px; } }
+  figure.annotated .stage {
+    position: relative; max-width: 480px; margin: 0 auto;
+  }
+  figure.annotated .stage::before {
+    content: ''; display: block; padding-bottom: 100%;
+  }
+  figure.annotated .stage img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; border-radius: 50%; background: #111;
+  }
+  figure.annotated .stage .placeholder {
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; aspect-ratio: 1 / 1; border-radius: 50%;
+    background: #111; color: #555; font-size: 13px;
+  }
+  /* オーバーレイを画像と完全一致 (inset:0) させ、viewBox 0-500 を画像に 1:1 対応。
+     ブラウザ・画面幅に依存せず注釈が常に画像と揃う。円外/枠外のラベルは overflow:visible で余白へ。 */
+  figure.annotated .stage svg.overlay {
+    position: absolute; inset: 0;
+    overflow: visible; pointer-events: none;
+  }
+  figure.annotated .stage svg.overlay line { stroke: var(--accent); stroke-width: 1.5; }
+  figure.annotated .stage svg.overlay circle.dot { fill: var(--accent); }
+  figure.annotated .stage svg.overlay rect.box,
+  figure.annotated .stage svg.overlay circle.ring {
+    fill: none; stroke: var(--accent2); stroke-width: 2; stroke-dasharray: 4 3;
+  }
+  figure.annotated .stage svg.overlay text {
+    fill: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+    paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round;
+  }
+  figure.annotated figcaption { text-align: center; margin-top: 12px; color: var(--muted); font-size: 13px; }
+
+  /* ─── Callout boxes ─── */
+  .callout {
+    border-radius: 8px; padding: 12px 16px; margin: 12px 0; font-size: 14px;
+    background: var(--accent-light); border-left: 3px solid var(--accent); color: var(--accent-dark);
+  }
+  .callout.warn { background: var(--warn-bg); border-left-color: var(--warn-border); color: var(--warn-text); }
+  .callout strong { color: inherit; }
+  /* 本文中のリンク (章内から関連ページへ飛ぶ用)。setLang は子要素を持つ要素を
+     翻訳対象から外すため、リンクは翻訳される文中に入れず「独立した a」として置き、
+     a 自身に data-en/data-ja を持たせること。 */
+  .chapter li a, .chapter p a { color: var(--accent-dark); text-decoration: underline; }
+  .chapter li a:hover, .chapter p a:hover { color: var(--accent); }
+  .beta-tag { display: inline-block; background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 7px; border-radius: 10px; vertical-align: middle; }
+  p.note { font-size: 13px; color: var(--muted); font-style: italic; margin-top: 8px; }
+
+  /* ─── Step list ─── */
+  ol.steps { counter-reset: step; list-style: none !important; margin-left: 0 !important; }
+  ol.steps li { counter-increment: step; position: relative; padding-left: 40px; margin-bottom: 14px !important; }
+  ol.steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 2px;
+    width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
+  }
+  figure.shot { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin: 16px 0 24px; box-shadow: var(--shadow); }
+  figure.shot img { display: block; width: 100%; height: auto; border-radius: 8px; margin: 0 auto; }
+  figure.shot.narrow img { max-width: 260px; }
+  figure.shot.round img { max-width: 360px; border-radius: 50%; }
+  figure.shot figcaption { text-align: center; margin-top: 10px; color: var(--muted); font-size: 13px; }
+  table.ref { width: 100%; border-collapse: collapse; margin: 8px 0 20px; font-size: 14px; background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  table.ref th, table.ref td { text-align: left; vertical-align: top; padding: 8px 12px; border-top: 1px solid var(--border); color: var(--text2); }
+  table.ref th { background: var(--bg); color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; border-top: none; }
+  table.ref td:first-child { font-weight: 600; color: var(--text); width: 34%; }
+  kbd { font-family: 'SF Mono', monospace; font-size: 12px; background: var(--white); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; }
+</style>
+
+</head>
+<body>
+
+<div class="lang-bar">
+  <a href="../" class="home">← Face Composer</a>
+  <div class="toggle">
+    <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+    <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <aside>
+    <h3 data-en="Contents" data-ja="目次">Contents</h3>
+    <ol>
+        <li><a href="#getting-started" data-en="Getting Started" data-ja="はじめに">Getting Started</a></li>
+        <li><a href="#the-face" data-en="The Face on Your Watch" data-ja="ウォッチの The Face">The Face on Your Watch</a></li>
+        <li><a href="#composer" data-en="The Face Composer Screen" data-ja="Face Composer の画面">The Face Composer Screen</a></li>
+        <li><a href="#editing" data-en="Placing and Editing Parts" data-ja="部品を置く・編集する">Placing and Editing Parts</a></li>
+        <li><a href="#parts" data-en="Parts Reference" data-ja="部品の一覧">Parts Reference</a></li>
+        <li><a href="#style" data-en="Style and Sizes" data-ja="スタイルとサイズ">Style and Sizes</a></li>
+        <li><a href="#image" data-en="Photos and Shapes" data-ja="写真と形">Photos and Shapes</a></li>
+        <li><a href="#collection" data-en="Collection and To Watch" data-ja="Collection と To watch">Collection and To Watch</a></li>
+        <li><a href="#watch" data-en="Watch Settings" data-ja="Watch の設定">Watch Settings</a></li>
+        <li><a href="#phone" data-en="On Your Phone" data-ja="スマホで使う">On Your Phone</a></li>
+        <li><a href="#pass" data-en="Trial and Pass" data-ja="トライアルと Pass">Trial and Pass</a></li>
+        <li><a href="#devices" data-en="Supported Devices" data-ja="対応機種">Supported Devices</a></li>
+        <li><a href="#troubleshooting" data-en="Troubleshooting" data-ja="トラブルシューティング">Troubleshooting</a></li>
+    </ol>
+    <div class="toc-tools">
+      <h3 data-en="Links" data-ja="リンク">Links</h3>
+      <ul>
+        <li><a href="../../watchface/" data-en="🎨 Open Face Composer" data-ja="🎨 Face Composer を開く">🎨 Open Face Composer</a></li>
+        <li><a href="../#pricing" data-en="🎟️ 1-Year Pass" data-ja="🎟️ 1 年パス">🎟️ 1-Year Pass</a></li>
+        <li><a href="../privacy/" data-en="🔒 Privacy Policy" data-ja="🔒 プライバシーポリシー">🔒 Privacy Policy</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <article>
+    <h1 data-en="Face Composer &amp; The Face — User Manual" data-ja="Face Composer と The Face ユーザーマニュアル">Face Composer &amp; The Face — User Manual</h1>
+    <p class="subtitle" data-en="Build a Garmin watch face on the web and wear it within 5 minutes. Every screen, part and setting." data-ja="Web で Garmin の文字盤を組み立て、5 分で手首へ。すべての画面・部品・設定のガイド。">Build a Garmin watch face on the web and wear it within 5 minutes. Every screen, part and setting.</p>
+
+    <section class="chapter" id="getting-started">
+      <h2 data-en="1. Getting Started" data-ja="1. はじめに">1. Getting Started</h2>
+      <p data-en="Face Composer is a web page where you build your Garmin watch face. The Face is the watch face that shows it on your wrist. There is no account and no password: your watch&#x27;s Device ID is the only thing that connects the two." data-ja="Face Composer は Garmin の文字盤を組み立てる Web ページで、The Face はそれを手首に表示する文字盤アプリです。アカウントもパスワードもありません。2 つをつなぐのは、ウォッチの Device ID だけです。">Face Composer is a web page where you build your Garmin watch face. The Face is the watch face that shows it on your wrist. There is no account and no password: your watch's Device ID is the only thing that connects the two.</p>
+      <ol class="steps">
+        <li data-en="Install The Face from the Connect IQ Store and choose it as your watch face." data-ja="Connect IQ ストアから The Face をインストールし、文字盤に選びます。">Install The Face from the Connect IQ Store and choose it as your watch face.</li>
+        <li data-en="Look at the bottom of the dial. A small line shows a build code and your Device ID, four characters, a dash and four more (like a1b2-3456). If you do not see it, turn on Show diagnostics in The Face&#x27;s settings (chapter 2)." data-ja="文字盤の下の方に、ビルドの印と Device ID を並べた小さな行があります。ID は「英数字 4 文字・ハイフン・4 文字」の形です (例 a1b2-3456)。見えない場合は、The Face の設定で Show diagnostics を ON にしてください (第 2 章)。">Look at the bottom of the dial. A small line shows a build code and your Device ID, four characters, a dash and four more (like a1b2-3456). If you do not see it, turn on Show diagnostics in The Face's settings (chapter 2).</li>
+        <li data-en="On a computer, open easymoat.com/watchface/ and type the ID into 5 Watch → Device ID. It is kept in that browser, so you type it once." data-ja="パソコンで easymoat.com/watchface/ を開き、5 Watch の Device ID 欄に入力します。ID はそのブラウザに保存されるので、入力は一度だけです。">On a computer, open easymoat.com/watchface/ and type the ID into 5 Watch → Device ID. It is kept in that browser, so you type it once.</li>
+        <li data-en="Build your dial: place parts, pick a photo, choose colors and sizes (chapters 4 to 7)." data-ja="文字盤を組み立てます。部品を置き、写真を選び、色と大きさを決めます (第 4〜7 章)。">Build your dial: place parts, pick a photo, choose colors and sizes (chapters 4 to 7).</li>
+        <li data-en="In 4 Collection, press Save to collection, then press To watch on the saved item. The watch shows it within 5 minutes." data-ja="4 Collection で Save to collection を押し、保存したアイテムの To watch を押します。5 分以内にウォッチに出ます。">In 4 Collection, press Save to collection, then press To watch on the saved item. The watch shows it within 5 minutes.</li>
+      </ol>
+      <div class="callout"><span data-en="Treat your Device ID like a house key. Whoever types it into Face Composer can send a dial to your watch, so share it only with people you trust. Face Composer asks you to confirm before the first send to a watch." data-ja="Device ID は家の鍵のように扱ってください。Face Composer にその ID を入れた人は、あなたのウォッチに文字盤を送れます。信頼できる人にだけ教えてください。Face Composer は、そのウォッチへの最初の送信の前に確認を求めます。">Treat your Device ID like a house key. Whoever types it into Face Composer can send a dial to your watch, so share it only with people you trust. Face Composer asks you to confirm before the first send to a watch.</span></div>
+    </section>
+
+    <section class="chapter" id="the-face">
+      <h2 data-en="2. The Face on Your Watch" data-ja="2. ウォッチの The Face">2. The Face on Your Watch</h2>
+      <p data-en="Right after you install it, The Face shows the Lobby dial: classic hands, the date, battery, body data, weather, two stocks and two games. The first dial you send from Face Composer replaces it." data-ja="インストール直後の The Face は Lobby の文字盤を表示します。クラシックな針、日付、電池、身体データ、天気、株価 2 銘柄、試合 2 枠の組み合わせです。Face Composer から最初の文字盤を送ると置き換わります。">Right after you install it, The Face shows the Lobby dial: classic hands, the date, battery, body data, weather, two stocks and two games. The first dial you send from Face Composer replaces it.</p>
+      <figure class="shot round"><img src="screens/lobby.png" alt="The Lobby dial" loading="lazy"><figcaption data-en="The Lobby dial, the one The Face ships with (shown as Face Composer previews it)." data-ja="同梱の Lobby 文字盤 (Face Composer のプレビューで表示したもの)。">The Lobby dial, the one The Face ships with (shown as Face Composer previews it).</figcaption></figure>
+      <h3 data-en="How the watch gets your dial" data-ja="文字盤の届き方">How the watch gets your dial</h3>
+      <ul>
+        <li><strong data-en="Every 5 minutes" data-ja="5 分ごと">Every 5 minutes</strong>: <span data-en="The Face checks for a new dial in the background. There is no cable and nothing to press on the watch." data-ja="The Face がバックグラウンドで新しい文字盤を取りに来ます。ケーブルも、ウォッチでの操作も要りません。">The Face checks for a new dial in the background. There is no cable and nothing to press on the watch.</span></li>
+        <li><strong data-en="One dial at a time" data-ja="表示するのは 1 つ">One dial at a time</strong>: <span data-en="Sending another dial replaces the one on the watch." data-ja="別の文字盤を送ると、ウォッチの文字盤が置き換わります。">Sending another dial replaces the one on the watch.</span></li>
+        <li><strong data-en="Through your phone" data-ja="スマホ経由">Through your phone</strong>: <span data-en="The watch reaches the internet through Garmin Connect on your phone. Without it, The Face keeps showing the last dial it received." data-ja="ウォッチはスマホの Garmin Connect を通してインターネットにつながります。つながらない間は、最後に受け取った文字盤を表示し続けます。">The watch reaches the internet through Garmin Connect on your phone. Without it, The Face keeps showing the last dial it received.</span></li>
+        <li><strong data-en="Live data" data-ja="ライブデータ">Live data</strong>: <span data-en="Forecasts, stock prices and scores refresh with each check. A forecast older than 3 hours is dropped and the watch&#x27;s own Garmin weather is used instead." data-ja="予報・株価・試合は取得のたびに更新されます。3 時間より古い予報は使わず、ウォッチ本体の Garmin の天気に切り替えます。">Forecasts, stock prices and scores refresh with each check. A forecast older than 3 hours is dropped and the watch's own Garmin weather is used instead.</span></li>
+      </ul>
+      <h3 data-en="The diagnostics line" data-ja="診断の行">The diagnostics line</h3>
+      <p data-en="Two small lines at the bottom of the dial show the build code with your Device ID, and the result of the last check. They are hidden in low-power mode, and you can turn them off with Show diagnostics once you no longer need the ID." data-ja="文字盤の下にある小さな 2 行は、ビルドの印と Device ID、最後の取得の結果です。低電力モードの間は消えます。ID が不要になったら Show diagnostics で消せます。">Two small lines at the bottom of the dial show the build code with your Device ID, and the result of the last check. They are hidden in low-power mode, and you can turn them off with Show diagnostics once you no longer need the ID.</p>
+      <h3 data-en="Hold for details" data-ja="長押しで詳細">Hold for details</h3>
+      <p data-en="With the Hold for details setting on (the default), touching and holding a part opens a detail screen. Holding an empty area opens the watch face menu as usual." data-ja="設定の Hold for details が ON (既定) のとき、部品を長押しすると詳細画面が開きます。何も無い所を長押しすると、通常どおり文字盤のメニューが開きます。">With the Hold for details setting on (the default), touching and holding a part opens a detail screen. Holding an empty area opens the watch face menu as usual.</p>
+      <table class="ref"><thead><tr><th data-en="Hold" data-ja="長押しした所">Hold</th><th data-en="Opens" data-ja="開くもの">Opens</th></tr></thead><tbody>
+        <tr><td data-en="Weather parts" data-ja="天気の部品">Weather parts</td><td data-en="The weather detail screens below. With Weather detail set to Garmin, the watch&#x27;s own weather screen instead." data-ja="下の天気の詳細画面。Weather detail を Garmin にした場合は、ウォッチ本体の天気画面。">The weather detail screens below. With Weather detail set to Garmin, the watch's own weather screen instead.</td></tr>
+        <tr><td data-en="Battery, heart rate, steps, floors, calories, Body Battery, stress, respiration, altitude, notifications, and the graphs" data-ja="電池、心拍、歩数、階段、カロリー、Body Battery、ストレス、呼吸、高度、通知、グラフ">Battery, heart rate, steps, floors, calories, Body Battery, stress, respiration, altitude, notifications, and the graphs</td><td data-en="The watch&#x27;s own detail screen for that metric." data-ja="その指標の、ウォッチ本体の詳細画面。">The watch's own detail screen for that metric.</td></tr>
+        <tr><td data-en="Stock 1 / Stock 2" data-ja="Stock 1 / Stock 2">Stock 1 / Stock 2</td><td data-en="MarketWatch, if it is installed." data-ja="MarketWatch (インストールされている場合)。">MarketWatch, if it is installed.</td></tr>
+        <tr><td data-en="Game 1 / Game 2 when set to MLB" data-ja="Game 1 / Game 2 (MLB の場合)">Game 1 / Game 2 when set to MLB</td><td data-en="BaseballWatch, if it is installed. Games 3 and 4 and the other leagues open nothing." data-ja="BaseballWatch (インストールされている場合)。Game 3・4 と他のリーグは何も開きません。">BaseballWatch, if it is installed. Games 3 and 4 and the other leagues open nothing.</td></tr>
+      </tbody></table>
+      <p class="note" data-en="Hold for details needs a watch that supports complications. On other watches, holding does nothing." data-ja="Hold for details はコンプリケーションに対応した機種で働きます。それ以外の機種では、長押ししても何も起きません。">Hold for details needs a watch that supports complications. On other watches, holding does nothing.</p>
+      <h3 data-en="Weather detail screens" data-ja="天気の詳細画面">Weather detail screens</h3>
+      <ul>
+        <li><strong data-en="Hourly" data-ja="1 時間ごと">Hourly</strong>: <span data-en="the next 5 hours: time, weather, temperature, wind and chance of rain." data-ja="この先 5 時間の時刻・天気・気温・風・降水確率。">the next 5 hours: time, weather, temperature, wind and chance of rain.</span></li>
+        <li><strong data-en="Daily" data-ja="日別">Daily</strong>: <span data-en="5 days: weather, high, low and chance of rain." data-ja="5 日分の天気・最高・最低・降水確率。">5 days: weather, high, low and chance of rain.</span></li>
+        <li><strong data-en="Now" data-ja="現在">Now</strong>: <span data-en="a large icon and temperature, today&#x27;s high and low, humidity, wind, chance of rain and pressure." data-ja="大きな天気と気温、今日の最高と最低、湿度・風・降水確率・気圧。">a large icon and temperature, today's high and low, humidity, wind, chance of rain and pressure.</span></li>
+      </ul>
+      <p data-en="Hold again to go to the next page. After the last page you are back on the dial." data-ja="もう一度長押しすると次のページへ進み、最後のページの次は文字盤に戻ります。">Hold again to go to the next page. After the last page you are back on the dial.</p>
+      <h3 data-en="Settings in the Connect IQ app" data-ja="Connect IQ アプリの設定">Settings in the Connect IQ app</h3>
+      <p data-en="Open the Connect IQ app on your phone, choose The Face, then Settings." data-ja="スマホの Connect IQ アプリで The Face を選び、設定を開きます。">Open the Connect IQ app on your phone, choose The Face, then Settings.</p>
+      <ul>
+        <li><strong data-en="Show diagnostics" data-ja="Show diagnostics">Show diagnostics</strong>: <span data-en="the two lines at the bottom with your Device ID and the last check. On by default." data-ja="画面下の 2 行 (Device ID と最後の取得)。既定は ON。">the two lines at the bottom with your Device ID and the last check. On by default.</span></li>
+        <li><strong data-en="Hold for details" data-ja="Hold for details">Hold for details</strong>: <span data-en="hold a part to open its detail screen. On by default." data-ja="部品の長押しで詳細画面を開く。既定は ON。">hold a part to open its detail screen. On by default.</span></li>
+        <li><strong data-en="Credits" data-ja="Credits">Credits</strong>: <span data-en="the icon license (read only)." data-ja="アイコンのライセンス表記 (読み取り専用)。">the icon license (read only).</span></li>
+      </ul>
+      <p class="note" data-en="On AMOLED watches in low-power mode, the Seconds part is not drawn and Time + sec shows only the time. Everything comes back when you raise your wrist." data-ja="AMOLED の機種は、低電力モードの間は Seconds の部品を描かず、Time + sec は時刻だけになります。手首を上げると元に戻ります。">On AMOLED watches in low-power mode, the Seconds part is not drawn and Time + sec shows only the time. Everything comes back when you raise your wrist.</p>
+    </section>
+
+    <section class="chapter" id="composer">
+      <h2 data-en="3. The Face Composer Screen" data-ja="3. Face Composer の画面">3. The Face Composer Screen</h2>
+      <p data-en="Face Composer is made for a computer screen. On a phone it opens a smaller screen for switching dials (chapter 10)." data-ja="Face Composer はパソコンの画面向けです。スマホで開くと、文字盤を切り替えるための小さな画面になります (第 10 章)。">Face Composer is made for a computer screen. On a phone it opens a smaller screen for switching dials (chapter 10).</p>
+      <figure class="shot "><img src="screens/overview.png" alt="Face Composer" loading="lazy"><figcaption data-en="Face Composer: the parts palette on the left, the numbered steps in the middle, style and live data on the right." data-ja="Face Composer: 左に部品のパレット、中央に番号付きの段、右にスタイルとライブデータ。">Face Composer: the parts palette on the left, the numbered steps in the middle, style and live data on the right.</figcaption></figure>
+      <ul>
+        <li><strong data-en="Parts (left)" data-ja="Parts (左)">Parts (left)</strong>: <span data-en="every part you can place, in groups. Click a group heading to fold it." data-ja="置ける部品をグループ別に並べています。グループの見出しをクリックすると畳めます。">every part you can place, in groups. Click a group heading to fold it.</span></li>
+        <li><strong data-en="1 Layout" data-ja="1 Layout">1 Layout</strong>: <span data-en="the device you are designing for, and the settings of the part you selected." data-ja="作る対象の機種と、選んだ部品の設定。">the device you are designing for, and the settings of the part you selected.</span></li>
+        <li><strong data-en="2 Dial" data-ja="2 Dial">2 Dial</strong>: <span data-en="the dial itself, where you move parts and the picture." data-ja="文字盤そのもの。部品と絵をここで動かします。">the dial itself, where you move parts and the picture.</span></li>
+        <li><strong data-en="3 Image" data-ja="3 Image">3 Image</strong>: <span data-en="the photo and the shape it is cut to." data-ja="写真と、切り抜く形。">the photo and the shape it is cut to.</span></li>
+        <li><strong data-en="4 Collection" data-ja="4 Collection">4 Collection</strong>: <span data-en="your saved dials and the To watch button." data-ja="保存した文字盤と To watch のボタン。">your saved dials and the To watch button.</span></li>
+        <li><strong data-en="5 Watch" data-ja="5 Watch">5 Watch</strong>: <span data-en="your Device ID, where the weather comes from, and your Pass." data-ja="Device ID、天気の場所、Pass。">your Device ID, where the weather comes from, and your Pass.</span></li>
+        <li><strong data-en="Right panel" data-ja="右のパネル">Right panel</strong>: <span data-en="background, sizes, style, stocks, games and the list of parts on the dial." data-ja="背景、サイズ、スタイル、株価、試合、文字盤の部品一覧。">background, sizes, style, stocks, games and the list of parts on the dial.</span></li>
+      </ul>
+      <p data-en="Choose your watch in 1 Layout → Device first, so the dial has the right size and fonts. Your work is kept in this browser as you go, and comes back when you reopen the page." data-ja="最初に 1 Layout の Device で自分のウォッチを選ぶと、文字盤の大きさと文字が実機に合います。作業内容はその都度このブラウザに保存され、ページを開き直しても戻ります。">Choose your watch in 1 Layout → Device first, so the dial has the right size and fonts. Your work is kept in this browser as you go, and comes back when you reopen the page.</p>
+    </section>
+
+    <section class="chapter" id="editing">
+      <h2 data-en="4. Placing and Editing Parts" data-ja="4. 部品を置く・編集する">4. Placing and Editing Parts</h2>
+      <h3 data-en="Adding parts" data-ja="部品を足す">Adding parts</h3>
+      <ul>
+        <li><strong data-en="Drag" data-ja="ドラッグ">Drag</strong>: <span data-en="a part from the palette onto the dial. It snaps to the grid. Let go outside the dial to cancel." data-ja="パレットの部品を文字盤へ運びます。グリッドに吸着します。文字盤の外で離すと取り消しです。">a part from the palette onto the dial. It snaps to the grid. Let go outside the dial to cancel.</span></li>
+        <li><strong data-en="Click" data-ja="クリック">Click</strong>: <span data-en="a part in the palette. It lands near the center, in a free space." data-ja="パレットの部品をクリックすると、中央付近の空いている所に置かれます。">a part in the palette. It lands near the center, in a free space.</span></li>
+        <li><strong data-en="Hands and rims" data-ja="針と縁">Hands and rims</strong>: <span data-en="click to put on, click again to take off. One set of hands at a time; rims can be stacked two deep." data-ja="クリックで付け、もう一度で外します。針は 1 組だけ、縁は 2 つまで重ねられます。">click to put on, click again to take off. One set of hands at a time; rims can be stacked two deep.</span></li>
+      </ul>
+      <h3 data-en="Selecting and moving" data-ja="選ぶ・動かす">Selecting and moving</h3>
+      <ul>
+        <li><strong data-en="Click" data-ja="クリック">Click</strong>: <span data-en="a part on the dial, or its row in the Elements list on the right." data-ja="文字盤の部品か、右の Elements 一覧の行をクリック。">a part on the dial, or its row in the Elements list on the right.</span></li>
+        <li><strong data-en="Shift / ⌘ / Ctrl + click" data-ja="Shift / ⌘ / Ctrl + クリック">Shift / ⌘ / Ctrl + click</strong>: <span data-en="add or remove parts from the selection." data-ja="選択に足す・外す。">add or remove parts from the selection.</span></li>
+        <li><strong data-en="Drag an empty area" data-ja="空いている所をドラッグ">Drag an empty area</strong>: <span data-en="draw a box to select every part it touches. When the dial has a picture, hold Shift, ⌘ or Ctrl while you drag (a plain drag moves the picture). Hands and rims are not boxed." data-ja="枠を描いて、かかった部品をすべて選びます。絵がある時は Shift・⌘・Ctrl を押しながら (素のドラッグは絵が動きます)。針と縁は枠で選ばれません。">draw a box to select every part it touches. When the dial has a picture, hold Shift, ⌘ or Ctrl while you drag (a plain drag moves the picture). Hands and rims are not boxed.</span></li>
+        <li><strong data-en="Arrow keys" data-ja="矢印キー">Arrow keys</strong>: <span data-en="move the selection one grid step." data-ja="選んだ部品をグリッド 1 目盛り動かす。">move the selection one grid step.</span></li>
+        <li><strong data-en="Delete / Backspace" data-ja="Delete / Backspace">Delete / Backspace</strong>: <span data-en="remove the selection. Esc clears it." data-ja="選んだ部品を消す。Esc で選択を解除。">remove the selection. Esc clears it.</span></li>
+        <li><strong data-en="⌘Z / Ctrl+Z" data-ja="⌘Z / Ctrl+Z">⌘Z / Ctrl+Z</strong>: <span data-en="undo, up to 60 steps. ⇧⌘Z or Ctrl+Y redoes. The Undo button does not undo picture changes." data-ja="元に戻す (60 段まで)。⇧⌘Z か Ctrl+Y でやり直し。Undo ボタンは絵の変更は戻しません。">undo, up to 60 steps. ⇧⌘Z or Ctrl+Y redoes. The Undo button does not undo picture changes.</span></li>
+      </ul>
+      <h3 data-en="Selected part" data-ja="Selected part">Selected part</h3>
+      <figure class="shot "><img src="screens/layout.png" alt="1 Layout" loading="lazy"><figcaption data-en="1 Layout: the device and the settings of the selected part." data-ja="1 Layout: 機種と、選んだ部品の設定。">1 Layout: the device and the settings of the selected part.</figcaption></figure>
+      <ul>
+        <li><strong data-en="Anchor" data-ja="Anchor">Anchor</strong>: <span data-en="Center, Left or Right: which edge of the text stays put when the value grows." data-ja="Center / Left / Right。値の桁が増えた時に、文字のどちら側を固定するか。">Center, Left or Right: which edge of the text stays put when the value grows.</span></li>
+        <li><strong data-en="Size" data-ja="Size">Size</strong>: <span data-en="S, M, L or XL (graphs: Small or Large)." data-ja="S / M / L / XL (グラフは Small / Large)。">S, M, L or XL (graphs: Small or Large).</span></li>
+        <li><strong data-en="Icon size" data-ja="Icon size">Icon size</strong>: <span data-en="Auto, or a size of its own." data-ja="Auto か、個別のサイズ。">Auto, or a size of its own.</span></li>
+        <li><strong data-en="Show" data-ja="Show">Show</strong>: <span data-en="Icon + value, Icon only or Value only." data-ja="Icon + value / Icon only / Value only。">Icon + value, Icon only or Value only.</span></li>
+        <li><strong data-en="Arrange" data-ja="Arrange">Arrange</strong>: <span data-en="Icon left, Icon right or Icon above." data-ja="Icon left / Icon right / Icon above。">Icon left, Icon right or Icon above.</span></li>
+        <li><strong data-en="Color" data-ja="Color">Color</strong>: <span data-en="the picker, plus the five colors you used last. A dial can use up to 22 colors." data-ja="カラーピッカーと、最近使った 5 色。1 つの文字盤で使える色は 22 色までです。">the picker, plus the five colors you used last. A dial can use up to 22 colors.</span></li>
+        <li><strong data-en="Align" data-ja="Align">Align</strong>: <span data-en="Same X or Same Y lines up several selected parts with the one you clicked last." data-ja="Same X / Same Y。複数選んだ部品を、最後にクリックした部品に揃えます。">Same X or Same Y lines up several selected parts with the one you clicked last.</span></li>
+        <li><strong data-en="Front / Back" data-ja="Front / Back">Front / Back</strong>: <span data-en="draw the part over or under the others." data-ja="その部品を他の部品の上・下に描く。">draw the part over or under the others.</span></li>
+        <li><strong data-en="Duplicate / Remove" data-ja="Duplicate / Remove">Duplicate / Remove</strong>: <span data-en="copy the part one grid step below, or delete it." data-ja="1 目盛り下に複製する、または削除する。">copy the part one grid step below, or delete it.</span></li>
+      </ul>
+      <h3 data-en="Dial tools" data-ja="Dial の道具">Dial tools</h3>
+      <figure class="shot "><img src="screens/dial.png" alt="2 Dial" loading="lazy"><figcaption data-en="2 Dial: the dial, its tools, and the Parked area on the right." data-ja="2 Dial: 文字盤と道具、右は Parked (退避場所)。">2 Dial: the dial, its tools, and the Parked area on the right.</figcaption></figure>
+      <ul>
+        <li><strong data-en="Grid" data-ja="Grid">Grid</strong>: <span data-en="200 × 200 down to 10 × 10. Show turns the lines on and off; Dim and Bright set how strong they are." data-ja="200 × 200 から 10 × 10 まで。show で線の表示、Dim / Bright で濃さ。">200 × 200 down to 10 × 10. Show turns the lines on and off; Dim and Bright set how strong they are.</span></li>
+        <li><strong data-en="Parked" data-ja="Parked">Parked</strong>: <span data-en="drag a part here to take it off the dial while you arrange the rest. Parked parts are not saved and do not go to the watch." data-ja="他を並べる間、部品をここに退避できます。退避中の部品は保存されず、ウォッチにも送られません。">drag a part here to take it off the dial while you arrange the rest. Parked parts are not saved and do not go to the watch.</span></li>
+        <li><strong data-en="Hide parts / Hide image" data-ja="Hide parts / Hide image">Hide parts / Hide image</strong>: <span data-en="look at the picture or the parts alone. Nothing changes." data-ja="絵だけ、部品だけを見る。何も変わりません。">look at the picture or the parts alone. Nothing changes.</span></li>
+        <li><strong data-en="Clear dial" data-ja="Clear dial">Clear dial</strong>: <span data-en="empties the dial and resets the background and sizes, after asking. Undo brings it back." data-ja="確認のうえ、文字盤を空にして背景とサイズを初期値に戻します。Undo で戻せます。">empties the dial and resets the background and sizes, after asking. Undo brings it back.</span></li>
+      </ul>
+      <h3 data-en="Limits" data-ja="上限">Limits</h3>
+      <p data-en="The watch takes 40 parts. Lines and rectangles do not count (up to 60 lines). Above 32 parts the count turns amber: the watch draws more slowly." data-ja="ウォッチに送れる部品は 40 個までです。線と四角形は数えません (線は 60 本まで)。32 個を超えると件数が注意色になります。ウォッチの描画が遅くなるためです。">The watch takes 40 parts. Lines and rectangles do not count (up to 60 lines). Above 32 parts the count turns amber: the watch draws more slowly.</p>
+      <h3 data-en="Start the dial over" data-ja="Start the dial over">Start the dial over</h3>
+      <p data-en="At the bottom of the page. These replace the parts on the dial; nothing is sent to the watch and your Collection does not change." data-ja="ページの下にあります。文字盤の部品を置き換えるだけで、ウォッチには何も送られず、Collection も変わりません。">At the bottom of the page. These replace the parts on the dial; nothing is sent to the watch and your Collection does not change.</p>
+      <ul>
+        <li><strong data-en="Start from Lobby" data-ja="Start from Lobby">Start from Lobby</strong>: <span data-en="the dial The Face ships with." data-ja="The Face に同梱の文字盤。">the dial The Face ships with.</span></li>
+        <li><strong data-en="Start from Minimal" data-ja="Start from Minimal">Start from Minimal</strong>: <span data-en="three parts: time, date and battery." data-ja="時刻・日付・電池の 3 つだけ。">three parts: time, date and battery.</span></li>
+        <li><strong data-en="Take every part off" data-ja="Take every part off">Take every part off</strong>: <span data-en="an empty dial. The background, text sizes and picture stay." data-ja="部品をすべて外す。背景・文字サイズ・絵は残ります。">an empty dial. The background, text sizes and picture stay.</span></li>
+      </ul>
+    </section>
+
+    <section class="chapter" id="parts">
+      <h2 data-en="5. Parts Reference" data-ja="5. 部品の一覧">5. Parts Reference</h2>
+      <h3 data-en="Clock" data-ja="Clock">Clock</h3>
+      <table class="ref"><thead><tr><th data-en="Part" data-ja="部品">Part</th><th data-en="What it shows" data-ja="表示するもの">What it shows</th></tr></thead><tbody>
+        <tr><td data-en="Time" data-ja="Time">Time</td><td data-en="The time. Time zone: this watch&#x27;s time or one of 32 cities (summer time follows automatically). Hours: Auto, 12 or 24 in Style." data-ja="時刻。Time zone でこのウォッチの時刻か 32 都市を選べます (夏時間は自動)。12/24 時間は Style の Hours。">The time. Time zone: this watch's time or one of 32 cities (summer time follows automatically). Hours: Auto, 12 or 24 in Style.</td></tr>
+        <tr><td data-en="Date" data-ja="Date">Date</td><td data-en="The date. Show sets the weekday: Icon + value = weekday and date, Icon only = weekday, Value only = date." data-ja="日付。曜日は Show で決まります: Icon + value = 曜日と日付、Icon only = 曜日、Value only = 日付。">The date. Show sets the weekday: Icon + value = weekday and date, Icon only = weekday, Value only = date.</td></tr>
+        <tr><td data-en="Battery" data-ja="Battery">Battery</td><td data-en="The watch battery." data-ja="ウォッチの電池残量。">The watch battery.</td></tr>
+        <tr><td data-en="Time + sec / Seconds" data-ja="Time + sec / Seconds">Time + sec / Seconds</td><td data-en="The time with seconds, or the seconds alone." data-ja="秒付きの時刻、または秒だけ。">The time with seconds, or the seconds alone.</td></tr>
+        <tr><td data-en="Notifications" data-ja="Notifications">Notifications</td><td data-en="How many phone notifications are waiting." data-ja="届いているスマホ通知の数。">How many phone notifications are waiting.</td></tr>
+      </tbody></table>
+      <h3 data-en="Body and graphs" data-ja="Body と Graphs">Body and graphs</h3>
+      <table class="ref"><thead><tr><th data-en="Part" data-ja="部品">Part</th><th data-en="What it shows" data-ja="表示するもの">What it shows</th></tr></thead><tbody>
+        <tr><td data-en="Heart rate, Steps, Floors, Calories, Weight, Body Battery, Stress, Respiration" data-ja="Heart rate, Steps, Floors, Calories, Weight, Body Battery, Stress, Respiration">Heart rate, Steps, Floors, Calories, Weight, Body Battery, Stress, Respiration</td><td data-en="Read on the watch. These values never leave it." data-ja="ウォッチ上で読み取ります。これらの値はウォッチの外に出ません。">Read on the watch. These values never leave it.</td></tr>
+        <tr><td data-en="HR graph" data-ja="HR graph">HR graph</td><td data-en="The last 6 hours of heart rate, every 5 minutes." data-ja="直近 6 時間の心拍 (5 分ごと)。">The last 6 hours of heart rate, every 5 minutes.</td></tr>
+        <tr><td data-en="Stress graph" data-ja="Stress graph">Stress graph</td><td data-en="The last 6 hours of stress, as bars every 10 minutes." data-ja="直近 6 時間のストレス (10 分ごとの棒)。">The last 6 hours of stress, as bars every 10 minutes.</td></tr>
+        <tr><td data-en="Steps graph" data-ja="Steps graph">Steps graph</td><td data-en="The last 7 days of steps; today on the right." data-ja="直近 7 日の歩数。右端が今日。">The last 7 days of steps; today on the right.</td></tr>
+      </tbody></table>
+      <h3 data-en="Weather" data-ja="Weather">Weather</h3>
+      <table class="ref"><thead><tr><th data-en="Part" data-ja="部品">Part</th><th data-en="What it shows" data-ja="表示するもの">What it shows</th></tr></thead><tbody>
+        <tr><td data-en="Weather" data-ja="Weather">Weather</td><td data-en="The current weather icon and temperature." data-ja="現在の天気と気温。">The current weather icon and temperature.</td></tr>
+        <tr><td data-en="Humidity, Wind, Pressure, Altitude" data-ja="Humidity, Wind, Pressure, Altitude">Humidity, Wind, Pressure, Altitude</td><td data-en="Units are set in Style." data-ja="単位は Style で選びます。">Units are set in Style.</td></tr>
+        <tr><td data-en="Moon age" data-ja="Moon age">Moon age</td><td data-en="The moon phase and its age in days." data-ja="月の満ち欠けと月齢。">The moon phase and its age in days.</td></tr>
+        <tr><td data-en="Today hi/lo" data-ja="Today hi/lo">Today hi/lo</td><td data-en="Today&#x27;s high and low." data-ja="今日の最高と最低。">Today's high and low.</td></tr>
+        <tr><td data-en="Rain today" data-ja="Rain today">Rain today</td><td data-en="Today&#x27;s chance of rain." data-ja="今日の降水確率。">Today's chance of rain.</td></tr>
+        <tr><td data-en="Now 1h 2h" data-ja="Now 1h 2h">Now 1h 2h</td><td data-en="Now, in 1 hour and in 2 hours. Shows: Temp, Rain % or Wind." data-ja="現在・1 時間後・2 時間後。Shows で Temp / Rain % / Wind を選びます。">Now, in 1 hour and in 2 hours. Shows: Temp, Rain % or Wind.</td></tr>
+      </tbody></table>
+      <p data-en="Where the forecast comes from is set once in 5 Watch (chapter 9)." data-ja="予報の場所は 5 Watch で一度だけ設定します (第 9 章)。">Where the forecast comes from is set once in 5 Watch (chapter 9).</p>
+      <h3 data-en="Hands and rim" data-ja="Hands と Rim">Hands and rim</h3>
+      <ul>
+        <li><strong data-en="Hands" data-ja="Hands">Hands</strong>: <span data-en="Bars, Needles, Kite, Outline, Rim marks, Classic, Outline round." data-ja="Bars, Needles, Kite, Outline, Rim marks, Classic, Outline round。">Bars, Needles, Kite, Outline, Rim marks, Classic, Outline round.</span></li>
+        <li><strong data-en="Rim" data-ja="Rim">Rim</strong>: <span data-en="Ticks, Dots, 12 3 6 9, Ring and Batons. Position: Inner or Edge." data-ja="Ticks, Dots, 12 3 6 9, Ring, Batons。Position で Inner / Edge。">Ticks, Dots, 12 3 6 9, Ring and Batons. Position: Inner or Edge.</span></li>
+        <li><strong data-en="Meter 1 to 4" data-ja="Meter 1〜4">Meter 1 to 4</strong>: <span data-en="arcs around the edge, each one measuring battery, steps, Body Battery, stress, humidity or rain today. Each arc has its own on/off, color and track color; right-click a color to set it back to automatic." data-ja="縁に沿った弧のメーター。弧ごとに電池・歩数・Body Battery・ストレス・湿度・今日の雨から選び、表示の入/切・色・下地の色を決めます。色を右クリックすると自動に戻ります。">arcs around the edge, each one measuring battery, steps, Body Battery, stress, humidity or rain today. Each arc has its own on/off, color and track color; right-click a color to set it back to automatic.</span></li>
+      </ul>
+      <h3 data-en="Lines and shapes" data-ja="Lines">Lines and shapes</h3>
+      <ul>
+        <li><strong data-en="Line" data-ja="Line">Line</strong>: <span data-en="Direction (│ ─ ╲ ╱), Length, Thickness, and Joint: R rounds the corner where two lines meet (both need R) or Sharp." data-ja="Direction (│ ─ ╲ ╱)、Length、Thickness、Joint。R は 2 本が接する角を丸めます (両方を R に)。Sharp は角のまま。">Direction (│ ─ ╲ ╱), Length, Thickness, and Joint: R rounds the corner where two lines meet (both need R) or Sharp.</span></li>
+        <li><strong data-en="Circle" data-ja="Circle">Circle</strong>: <span data-en="Diameter, Thickness, Shape (Full, Half, Quarter), Turn in 45° steps, Fill (full circles only), and Meter: the ring can fill up with battery, steps, Body Battery, stress, humidity or rain today." data-ja="Diameter、Thickness、Shape (Full / Half / Quarter)、Turn (45° 刻み)、Fill (全周のときだけ)、Meter (電池・歩数・Body Battery・ストレス・湿度・今日の雨で輪が伸びる)。">Diameter, Thickness, Shape (Full, Half, Quarter), Turn in 45° steps, Fill (full circles only), and Meter: the ring can fill up with battery, steps, Body Battery, stress, humidity or rain today.</span></li>
+        <li><strong data-en="Rectangle" data-ja="Rectangle">Rectangle</strong>: <span data-en="Width, Height, Thickness and Join (R or Sharp)." data-ja="Width、Height、Thickness、Join (R / Sharp)。">Width, Height, Thickness and Join (R or Sharp).</span></li>
+      </ul>
+      <h3 data-en="Markets (right panel)" data-ja="Markets (右のパネル)">Markets (right panel)</h3>
+      <p data-en="Stock 1 and Stock 2 show a price; the % versions show the day&#x27;s change. Drop one on the dial, then fill in Selected part:" data-ja="Stock 1 と Stock 2 は価格を、% の付いたものは当日の変化率を表示します。文字盤に置いてから Selected part で設定します。">Stock 1 and Stock 2 show a price; the % versions show the day's change. Drop one on the dial, then fill in Selected part:</p>
+      <ul>
+        <li><strong data-en="Symbol" data-ja="Symbol">Symbol</strong>: <span data-en="as Yahoo Finance writes it: AAPL, 7203.T for Tokyo, ^GSPC for an index, BTC-USD for crypto. Face Composer looks it up and shows the price, or not found." data-ja="Yahoo Finance の書き方で: AAPL、東証は 7203.T、指数は ^GSPC、暗号資産は BTC-USD。入力すると検索して価格か not found を表示します。">as Yahoo Finance writes it: AAPL, 7203.T for Tokyo, ^GSPC for an index, BTC-USD for crypto. Face Composer looks it up and shows the price, or not found.</span></li>
+        <li><strong data-en="Name" data-ja="Name">Name</strong>: <span data-en="your own label, up to 12 letters and digits." data-ja="表示名。英数字 12 文字まで。">your own label, up to 12 letters and digits.</span></li>
+        <li><strong data-en="Value / Label" data-ja="Value / Label">Value / Label</strong>: <span data-en="Price or Change %; show the Symbol or your Name." data-ja="Price / Change %。Symbol と Name のどちらを出すか。">Price or Change %; show the Symbol or your Name.</span></li>
+        <li><strong data-en="Up / down" data-ja="Up / down">Up / down</strong>: <span data-en="Keep color, or By move: green or red by direction (which is up is set in Style)." data-ja="Keep color か By move (上げ下げで緑・赤。どちらを上とするかは Style)。">Keep color, or By move: green or red by direction (which is up is set in Style).</span></li>
+      </ul>
+      <h3 data-en="Games (right panel)" data-ja="試合 (右のパネル)">Games (right panel)</h3>
+      <figure class="shot narrow"><img src="screens/livedata.png" alt="Markets, USA Sports and Soccer" loading="lazy"><figcaption data-en="The right panel: Markets, USA Sports and Soccer." data-ja="右のパネル: Markets、USA Sports、Soccer。">The right panel: Markets, USA Sports and Soccer.</figcaption></figure>
+      <p data-en="There are four game slots, Game 1 to Game 4. USA Sports (MLB, NFL, NBA, NHL) and Soccer (Premier League, LaLiga, Serie A, Bundesliga, Ligue 1, J1 League) are the same four slots, so Game 1 from either group is the same slot. Each part is a score or a status line." data-ja="試合の枠は Game 1〜4 の 4 つです。USA Sports (MLB・NFL・NBA・NHL) と Soccer (Premier League・LaLiga・Serie A・Bundesliga・Ligue 1・J1 League) は同じ 4 枠なので、どちらのグループの Game 1 も同じ枠です。部品はスコアの行と状況の行の 2 種類です。">There are four game slots, Game 1 to Game 4. USA Sports (MLB, NFL, NBA, NHL) and Soccer (Premier League, LaLiga, Serie A, Bundesliga, Ligue 1, J1 League) are the same four slots, so Game 1 from either group is the same slot. Each part is a score or a status line.</p>
+      <ul>
+        <li><strong data-en="Game N" data-ja="Game N">Game N</strong>: <span data-en="the league. Changing it asks you to pick the team again." data-ja="リーグ。変えるとチームを選び直します。">the league. Changing it asks you to pick the team again.</span></li>
+        <li><strong data-en="Team" data-ja="Team">Team</strong>: <span data-en="your team." data-ja="応援するチーム。">your team.</span></li>
+        <li><strong data-en="State" data-ja="State">State</strong>: <span data-en="Keep color, or By state: blue at the top of an inning, red at the bottom, green in play, orange when final, your color before the start." data-ja="Keep color か By state。表=青、裏=赤、試合中=緑、終了=橙、開始前=選んだ色。">Keep color, or By state: blue at the top of an inning, red at the bottom, green in play, orange when final, your color before the start.</span></li>
+      </ul>
+      <p class="note" data-en="When your team has no game today, the slot shows its next game within 7 days, or -- when there is none (for example out of season)." data-ja="チームの試合が当日に無いときは、7 日先までの次の試合を表示します。それも無ければ -- です (シーズンオフなど)。">When your team has no game today, the slot shows its next game within 7 days, or -- when there is none (for example out of season).</p>
+    </section>
+
+    <section class="chapter" id="style">
+      <h2 data-en="6. Style and Sizes" data-ja="6. スタイルとサイズ">6. Style and Sizes</h2>
+      <figure class="shot narrow"><img src="screens/rightpanel.png" alt="Background, sizes and style" loading="lazy"><figcaption data-en="The right panel: background, sizes and style." data-ja="右のパネル: 背景、サイズ、スタイル。">The right panel: background, sizes and style.</figcaption></figure>
+      <ul>
+        <li><strong data-en="Background" data-ja="Background">Background</strong>: <span data-en="the dial color: the picker and the five you used last. Auto background (chapter 7) makes it from the photo." data-ja="文字盤の地の色。ピッカーと最近の 5 色。Auto background (第 7 章) なら写真から作ります。">the dial color: the picker and the five you used last. Auto background (chapter 7) makes it from the photo.</span></li>
+        <li><strong data-en="Text size / Time size" data-ja="Text size / Time size">Text size / Time size</strong>: <span data-en="the pixel height of S, M, L and XL, for values and for the clock. − and + step by one." data-ja="S / M / L / XL の文字の高さ (px)。値用と時計用。− と + で 1 ずつ。">the pixel height of S, M, L and XL, for values and for the clock. − and + step by one.</span></li>
+        <li><strong data-en="Icon size" data-ja="Icon size">Icon size</strong>: <span data-en="the same for icons, plus ↕ to move every icon up or down." data-ja="アイコンの高さ。↕ で全アイコンを上下にずらせます。">the same for icons, plus ↕ to move every icon up or down.</span></li>
+      </ul>
+      <table class="ref"><thead><tr><th data-en="Style" data-ja="Style">Style</th><th data-en="Choices" data-ja="選択肢">Choices</th></tr></thead><tbody>
+        <tr><td data-en="Bold" data-ja="Bold">Bold</td><td data-en="Off, Bold, Bold 2" data-ja="Off / Bold / Bold 2">Off, Bold, Bold 2</td></tr>
+        <tr><td data-en="Up is" data-ja="Up is">Up is</td><td data-en="Green or Red (for stocks set to By move)" data-ja="Green / Red (By move の株価)">Green or Red (for stocks set to By move)</td></tr>
+        <tr><td data-en="Wind" data-ja="Wind">Wind</td><td data-en="m/s, km/h, mph, kn" data-ja="m/s / km/h / mph / kn">m/s, km/h, mph, kn</td></tr>
+        <tr><td data-en="Temp" data-ja="Temp">Temp</td><td data-en="°C, °F" data-ja="°C / °F">°C, °F</td></tr>
+        <tr><td data-en="Pressure" data-ja="Pressure">Pressure</td><td data-en="hPa, inHg, mmHg" data-ja="hPa / inHg / mmHg">hPa, inHg, mmHg</td></tr>
+        <tr><td data-en="Distance" data-ja="Distance">Distance</td><td data-en="m, ft" data-ja="m / ft">m, ft</td></tr>
+        <tr><td data-en="Hours" data-ja="Hours">Hours</td><td data-en="Auto (follow the watch), 12, 24" data-ja="Auto (ウォッチに従う) / 12 / 24">Auto (follow the watch), 12, 24</td></tr>
+        <tr><td data-en="Weather detail" data-ja="Weather detail">Weather detail</td><td data-en="In face (the detail screens in chapter 2) or Garmin (the watch&#x27;s own weather screen)" data-ja="In face (第 2 章の詳細画面) / Garmin (ウォッチ本体の天気画面)">In face (the detail screens in chapter 2) or Garmin (the watch's own weather screen)</td></tr>
+      </tbody></table>
+      <div class="callout"><span data-en="On watches without vector fonts (chapter 12), text comes in fixed sizes: the px values and Bold are ignored and XL draws as L. Face Composer tells you this under the sizes when you pick such a watch. Icon size still works." data-ja="ベクターフォントの無い機種 (第 12 章) では文字が固定サイズになり、px の指定と Bold は効かず、XL は L で描かれます。そうした機種を選ぶと、Face Composer がサイズ欄の下で知らせます。アイコンのサイズは効きます。">On watches without vector fonts (chapter 12), text comes in fixed sizes: the px values and Bold are ignored and XL draws as L. Face Composer tells you this under the sizes when you pick such a watch. Icon size still works.</span></div>
+    </section>
+
+    <section class="chapter" id="image">
+      <h2 data-en="7. Photos and Shapes" data-ja="7. 写真と形">7. Photos and Shapes</h2>
+      <figure class="shot "><img src="screens/image.png" alt="3 Image" loading="lazy"><figcaption data-en="3 Image: frame, shape, photos and colors." data-ja="3 Image: 枠、形、写真、色。">3 Image: frame, shape, photos and colors.</figcaption></figure>
+      <h3 data-en="Adding a photo" data-ja="写真を加える">Adding a photo</h3>
+      <ul>
+        <li><strong data-en="Add photo…" data-ja="Add photo…">Add photo…</strong>: <span data-en="pick a PNG, JPEG or WebP. It is stored at up to 1024 pixels on the long side. Up to 10 photos." data-ja="PNG・JPEG・WebP を選びます。長辺 1024px 以下で保存します。10 枚まで。">pick a PNG, JPEG or WebP. It is stored at up to 1024 pixels on the long side. Up to 10 photos.</span></li>
+        <li><strong data-en="Use it" data-ja="使う">Use it</strong>: <span data-en="click a photo to put it on the dial; click it again to take it off." data-ja="写真をクリックすると文字盤に入り、もう一度で外れます。">click a photo to put it on the dial; click it again to take it off.</span></li>
+        <li><strong data-en="Delete photo" data-ja="Delete photo">Delete photo</strong>: <span data-en="removes it from your photos. Dials already saved from it keep their cut-out but can no longer be re-adjusted." data-ja="写真を削除します。その写真から保存した文字盤は切り抜きが残りますが、再調整はできなくなります。">removes it from your photos. Dials already saved from it keep their cut-out but can no longer be re-adjusted.</span></li>
+      </ul>
+      <h3 data-en="Framing" data-ja="枠とトーン">Framing</h3>
+      <ul>
+        <li><strong data-en="Dragging the dial moves" data-ja="Dragging the dial moves">Dragging the dial moves</strong>: <span data-en="Picture moves the photo inside the shape; Frame moves the shape." data-ja="Picture は形の中で写真を、Frame は形そのものを動かします。">Picture moves the photo inside the shape; Frame moves the shape.</span></li>
+        <li><strong data-en="Size, Zoom" data-ja="Size, Zoom">Size, Zoom</strong>: <span data-en="the size of the shape (30 to 100%) and of the photo inside it (1 to 3×)." data-ja="形の大きさ (30〜100%) と、その中の写真の拡大 (1〜3 倍)。">the size of the shape (30 to 100%) and of the photo inside it (1 to 3×).</span></li>
+        <li><strong data-en="Brightness, Saturation" data-ja="Brightness, Saturation">Brightness, Saturation</strong>: <span data-en="tone the photo. Reset tone puts them back." data-ja="写真の明るさと彩度。Reset tone で戻ります。">tone the photo. Reset tone puts them back.</span></li>
+        <li><strong data-en="Reset frame / Reset image" data-ja="Reset frame / Reset image">Reset frame / Reset image</strong>: <span data-en="re-center the shape at 100%, or start the picture over. Nothing is deleted." data-ja="形を中央 100% に戻す、絵を最初からやり直す。どちらも何も削除しません。">re-center the shape at 100%, or start the picture over. Nothing is deleted.</span></li>
+      </ul>
+      <h3 data-en="Shape" data-ja="形">Shape</h3>
+      <p data-en="Square, Circle, Half circle, Heart, Diamond, Spade, Club, Star, Triangle, Pentagon or Hexagon. Shift+click adds a second shape, and Adjust chooses which one you are editing. Rotate turns it in 45° steps. Fill color paints the shape one color instead of using a photo." data-ja="Square, Circle, Half circle, Heart, Diamond, Spade, Club, Star, Triangle, Pentagon, Hexagon から選びます。Shift+クリックで 2 つ目の形を足し、Adjust でどちらを調整するかを選びます。Rotate で 45° ずつ回転。Fill color は写真の代わりに形を 1 色で塗ります。">Square, Circle, Half circle, Heart, Diamond, Spade, Club, Star, Triangle, Pentagon or Hexagon. Shift+click adds a second shape, and Adjust chooses which one you are editing. Rotate turns it in 45° steps. Fill color paints the shape one color instead of using a photo.</p>
+      <h3 data-en="Colors on the watch" data-ja="ウォッチでの色数">Colors on the watch</h3>
+      <p data-en="2, 4, 8, 16 or 32 colors (the watch shows at most 32). Next to it, Face Composer shows the picture&#x27;s size on the watch: OK, borderline or too big. Fewer colors make a lighter picture; logos and flat artwork look good with very few." data-ja="2 / 4 / 8 / 16 / 32 色 (ウォッチは 32 色まで)。横に、ウォッチ上での絵の容量を OK / borderline / too big で表示します。色数を減らすと軽くなります。ロゴや平面的な絵は少ない色数でもきれいに出ます。">2, 4, 8, 16 or 32 colors (the watch shows at most 32). Next to it, Face Composer shows the picture's size on the watch: OK, borderline or too big. Fewer colors make a lighter picture; logos and flat artwork look good with very few.</p>
+      <ul>
+        <li><strong data-en="Auto background" data-ja="Auto background">Auto background</strong>: <span data-en="on, it picks the dial&#x27;s background color from the photo, from Deep to Pale." data-ja="ON にすると、写真から文字盤の背景色を作ります (Deep〜Pale)。">on, it picks the dial's background color from the photo, from Deep to Pale.</span></li>
+        <li><strong data-en="PulseLink camera" data-ja="PulseLink camera">PulseLink camera</strong>: <span data-en="for people who also use PulseLink, another Easymoat app that can turn a spare phone into a fixed camera. With Camera on and your PulseLink ID, the latest camera picture fills the shape." data-ja="PulseLink (余ったスマホを定点カメラにできる Easymoat の別アプリ) を使っている方向け。Camera を ON にして PulseLink の ID を入れると、最新のカメラの画像が形に入ります。">for people who also use PulseLink, another Easymoat app that can turn a spare phone into a fixed camera. With Camera on and your PulseLink ID, the latest camera picture fills the shape.</span></li>
+      </ul>
+      <p class="note" data-en="Garmin watches have no transparency. Where a shape&#x27;s edge meets the background, Face Composer blends the two into solid colors, so the preview and the watch match." data-ja="Garmin のウォッチには透過がありません。形の縁と背景が接する所は、Face Composer が 2 色を混ぜた不透明の色にするので、プレビューと実機が一致します。">Garmin watches have no transparency. Where a shape's edge meets the background, Face Composer blends the two into solid colors, so the preview and the watch match.</p>
+    </section>
+
+    <section class="chapter" id="collection">
+      <h2 data-en="8. Collection and To Watch" data-ja="8. Collection と To watch">8. Collection and To Watch</h2>
+      <figure class="shot "><img src="screens/collection.png" alt="4 Collection" loading="lazy"><figcaption data-en="4 Collection." data-ja="4 Collection。">4 Collection.</figcaption></figure>
+      <ul>
+        <li><strong data-en="Save to collection" data-ja="Save to collection">Save to collection</strong>: <span data-en="keeps the dial and its picture as an item. The name is optional (Item N otherwise). Up to 30 items." data-ja="文字盤と絵をアイテムとして保存します。名前は任意で、無ければ Item N。30 個まで。">keeps the dial and its picture as an item. The name is optional (Item N otherwise). Up to 30 items.</span></li>
+        <li><strong data-en="To watch &lt;ID&gt;" data-ja="To watch &lt;ID&gt;">To watch &lt;ID&gt;</strong>: <span data-en="sends the item to the watch whose ID is on the button. It replaces whatever that watch shows, within 5 minutes." data-ja="ボタンに表示された ID のウォッチへ送ります。そのウォッチの文字盤が 5 分以内に置き換わります。">sends the item to the watch whose ID is on the button. It replaces whatever that watch shows, within 5 minutes.</span></li>
+        <li><strong data-en="Showing" data-ja="Showing">Showing</strong>: <span data-en="marks the item that is on the watch now." data-ja="いまウォッチに出ているアイテムの印。">marks the item that is on the watch now.</span></li>
+        <li><strong data-en="Edit / Delete" data-ja="Edit / Delete">Edit / Delete</strong>: <span data-en="bring the item back into the editor, or remove it." data-ja="アイテムを編集に戻す、または削除する。">bring the item back into the editor, or remove it.</span></li>
+      </ul>
+      <p data-en="The first time you send in a session, and after you change the Device ID, Face Composer asks you to confirm the watch. Parked parts are not saved; the save message tells you if any were left out." data-ja="ページを開いて最初の送信と、Device ID を変えた後の最初の送信では、送り先の確認が出ます。Parked の部品は保存されず、残っていれば保存時に知らせます。">The first time you send in a session, and after you change the Device ID, Face Composer asks you to confirm the watch. Parked parts are not saved; the save message tells you if any were left out.</p>
+    </section>
+
+    <section class="chapter" id="watch">
+      <h2 data-en="9. Watch Settings" data-ja="9. Watch の設定">9. Watch Settings</h2>
+      <figure class="shot "><img src="screens/watch.png" alt="5 Watch" loading="lazy"><figcaption data-en="5 Watch: which watch receives your dials, and where its weather comes from." data-ja="5 Watch: 文字盤を受け取るウォッチと、天気の場所。">5 Watch: which watch receives your dials, and where its weather comes from.</figcaption></figure>
+      <h3 data-en="A · Which watch" data-ja="A · Which watch">A · Which watch</h3>
+      <p data-en="Type the Device ID The Face shows (chapter 2). It is stored in this browser. The line below tells you what the watch is doing:" data-ja="The Face に出ている Device ID を入力します (第 2 章)。ID はこのブラウザに保存されます。下の行でウォッチの状態が分かります。">Type the Device ID The Face shows (chapter 2). It is stored in this browser. The line below tells you what the watch is doing:</p>
+      <table class="ref"><thead><tr><th data-en="Message" data-ja="表示">Message</th><th data-en="Meaning" data-ja="意味">Meaning</th></tr></thead><tbody>
+        <tr><td data-en="No dial has been sent to this watch yet" data-ja="No dial has been sent to this watch yet">No dial has been sent to this watch yet</td><td data-en="Save one in Collection and press To watch." data-ja="Collection に保存して To watch を押してください。">Save one in Collection and press To watch.</td></tr>
+        <tr><td data-en="Your watch has not connected yet" data-ja="Your watch has not connected yet">Your watch has not connected yet</td><td data-en="The Face has not checked in with this ID yet. Make sure The Face is your watch face and the ID matches." data-ja="この ID でまだ取りに来ていません。The Face が文字盤に選ばれているか、ID が合っているかを確認してください。">The Face has not checked in with this ID yet. Make sure The Face is your watch face and the ID matches.</td></tr>
+        <tr><td data-en="The dial you sent is on its way" data-ja="The dial you sent is on its way">The dial you sent is on its way</td><td data-en="It will appear within 5 minutes." data-ja="5 分以内に表示されます。">It will appear within 5 minutes.</td></tr>
+        <tr><td data-en="Your watch is showing the dial you sent" data-ja="Your watch is showing the dial you sent">Your watch is showing the dial you sent</td><td data-en="Done. It also tells you when the watch last checked." data-ja="届いています。最後に取りに来た時刻も表示します。">Done. It also tells you when the watch last checked.</td></tr>
+        <tr><td data-en="Your watch has not checked for …" data-ja="Your watch has not checked for …">Your watch has not checked for …</td><td data-en="The watch may be off or away from your phone." data-ja="ウォッチの電源が切れているか、スマホから離れている可能性があります。">The watch may be off or away from your phone.</td></tr>
+      </tbody></table>
+      <h3 data-en="B · Where the weather parts get their forecast" data-ja="B · 天気の場所">B · Where the weather parts get their forecast</h3>
+      <ul>
+        <li><strong data-en="Use this computer&#x27;s place" data-ja="Use this computer&#x27;s place">Use this computer's place</strong>: <span data-en="asks this browser where you are and sends it, rounded to about 11 km. Opening the page updates it, so it follows you when you travel." data-ja="このブラウザの位置を約 11km 単位に丸めて送ります。ページを開くたびに更新されるので、旅行先でも追従します。">asks this browser where you are and sends it, rounded to about 11 km. Opening the page updates it, so it follows you when you travel.</span></li>
+        <li><strong data-en="Follow PulseLink" data-ja="Follow PulseLink">Follow PulseLink</strong>: <span data-en="if PulseLink runs on the same watch, type its ID and the forecast follows the watch wherever it goes." data-ja="同じウォッチで PulseLink を使っていれば、その ID を入れると予報がウォッチの場所に追従します。">if PulseLink runs on the same watch, type its ID and the forecast follows the watch wherever it goes.</span></li>
+        <li><strong data-en="Use the watch&#x27;s own GPS" data-ja="Use the watch&#x27;s own GPS">Use the watch's own GPS</strong>: <span data-en="stops sending a place from here. The watch then has to find its position itself, which can be slow or fail indoors." data-ja="ここからは場所を送りません。ウォッチ自身が位置を探すので、時間がかかったり室内で失敗したりします。">stops sending a place from here. The watch then has to find its position itself, which can be slow or fail indoors.</span></li>
+      </ul>
+      <h3 data-en="Pass" data-ja="Pass">Pass</h3>
+      <p data-en="The Pass line shows your trial or Pass: days left, the date it is valid until, or that it has ended, with a link to buy or renew. Pass key appears when you hold a Pass; it is used for sharing, which is coming soon. Saving and To watch work without it." data-ja="Pass の行に、トライアルか Pass の状態 (残り日数、有効期限、終了) と、購入・更新へのリンクが出ます。Pass key の欄は Pass をお持ちの場合に出ます。近日提供の共有機能で使うもので、保存と To watch には要りません。">The Pass line shows your trial or Pass: days left, the date it is valid until, or that it has ended, with a link to buy or renew. Pass key appears when you hold a Pass; it is used for sharing, which is coming soon. Saving and To watch work without it.</p>
+    </section>
+
+    <section class="chapter" id="phone">
+      <h2 data-en="10. On Your Phone" data-ja="10. スマホで使う">10. On Your Phone</h2>
+      <figure class="shot narrow"><img src="screens/phone.png" alt="Face Composer on a phone" loading="lazy"><figcaption data-en="On a phone, Face Composer asks for your Device ID, then shows your Collection." data-ja="スマホでは、Device ID を入れると Collection が表示されます。">On a phone, Face Composer asks for your Device ID, then shows your Collection.</figcaption></figure>
+      <ul>
+        <li><strong data-en="Sign in" data-ja="サインイン">Sign in</strong>: <span data-en="type your Device ID once. It stays on the phone." data-ja="Device ID を一度入力します。スマホに保存されます。">type your Device ID once. It stays on the phone.</span></li>
+        <li><strong data-en="Switch dials" data-ja="文字盤を切り替える">Switch dials</strong>: <span data-en="press To watch on any item. Delete works too; editing needs a computer." data-ja="アイテムの To watch を押します。Delete もできます。編集はパソコンで行います。">press To watch on any item. Delete works too; editing needs a computer.</span></li>
+        <li><strong data-en="Change / Editor" data-ja="Change / Editor">Change / Editor</strong>: <span data-en="Change switches to another watch. Editor opens the full editor if you really need it." data-ja="Change で別のウォッチに切り替え。Editor で全体の編集画面を開けます。">Change switches to another watch. Editor opens the full editor if you really need it.</span></li>
+      </ul>
+    </section>
+
+    <section class="chapter" id="pass">
+      <h2 data-en="11. Trial and Pass" data-ja="11. トライアルと Pass">11. Trial and Pass</h2>
+      <ul>
+        <li><strong data-en="14 days free" data-ja="14 日間無料">14 days free</strong>: <span data-en="every feature, from your first save. No card, no account." data-ja="最初の保存から、全機能を 14 日間。カードもアカウントも不要です。">every feature, from your first save. No card, no account.</span></li>
+        <li><strong data-en="1-Year Pass" data-ja="1 年パス">1-Year Pass</strong>: <span data-en="$9.99, one payment, valid for 365 days from the day you buy. No subscription and no auto-renewal." data-ja="$9.99 の一回払いで、購入日から 365 日有効。サブスクリプションでも自動更新でもありません。">$9.99, one payment, valid for 365 days from the day you buy. No subscription and no auto-renewal.</span></li>
+        <li><strong data-en="Buying" data-ja="購入">Buying</strong>: <span data-en="on the Face Composer page. Enter The Face&#x27;s Device ID at checkout (not the ID of another Easymoat app; each app has its own). The key is emailed to you." data-ja="Face Composer のページから。決済時に The Face の Device ID を入力します (Easymoat の他のアプリの ID ではありません。アプリごとに違います)。キーはメールで届きます。">on the Face Composer page. Enter The Face's Device ID at checkout (not the ID of another Easymoat app; each app has its own). The key is emailed to you.</span></li>
+        <li><strong data-en="Renewing" data-ja="更新">Renewing</strong>: <span data-en="buy again with the same Device ID whenever you like. 365 days are added to what is left, so renewing early loses nothing." data-ja="同じ Device ID でいつでも買い直せます。残りの期間に 365 日が足されるので、早めの更新でも損はありません。">buy again with the same Device ID whenever you like. 365 days are added to what is left, so renewing early loses nothing.</span></li>
+      </ul>
+      <h3 data-en="When the trial or Pass ends" data-ja="トライアルや Pass が終わると">When the trial or Pass ends</h3>
+      <ul>
+        <li><strong data-en="Face Composer" data-ja="Face Composer">Face Composer</strong>: <span data-en="still opens. You can look at your dials and delete them, but saving to Collection and To watch are off until you buy or renew." data-ja="開けます。文字盤を見たり削除したりできますが、購入か更新まで、Collection への保存と To watch はできません。">still opens. You can look at your dials and delete them, but saving to Collection and To watch are off until you buy or renew.</span></li>
+        <li><strong data-en="The Face" data-ja="The Face">The Face</strong>: <span data-en="keeps showing the last dial you sent, with its live data. Nothing on the watch stops." data-ja="最後に送った文字盤を、ライブデータ込みで表示し続けます。ウォッチ上で止まるものはありません。">keeps showing the last dial you sent, with its live data. Nothing on the watch stops.</span></li>
+      </ul>
+      <p class="note" data-en="A watch that has held a Pass does not start a new free trial when it ends." data-ja="Pass を一度使ったウォッチでは、期限切れの後に新しいトライアルは始まりません。">A watch that has held a Pass does not start a new free trial when it ends.</p>
+    </section>
+
+    <section class="chapter" id="devices">
+      <h2 data-en="12. Supported Devices" data-ja="12. 対応機種">12. Supported Devices</h2>
+      <p data-en="Face Composer lists every supported watch in 1 Layout → Device. There are two levels of support:" data-ja="対応機種はすべて 1 Layout の Device に並んでいます。対応には 2 段階あります。">Face Composer lists every supported watch in 1 Layout → Device. There are two levels of support:</p>
+      <ul>
+        <li><strong data-en="Full (20 watches)" data-ja="フル対応 (20 機種)">Full (20 watches)</strong>: <span data-en="AMOLED watches with vector fonts: every text size, Bold and the photo work exactly as you compose them. Forerunner 165, 265, 265s, 570, 965 and 970; fēnix 8 (AMOLED), 8 Pro and E; Venu 3, 3S, 4 and X1; vívoactive 6; D2 Mach 2." data-ja="ベクターフォントを持つ AMOLED 機。文字サイズ・Bold・写真が組んだとおりに出ます。Forerunner 165 / 265 / 265s / 570 / 965 / 970、fēnix 8 (AMOLED) / 8 Pro / E、Venu 3 / 3S / 4 / X1、vívoactive 6、D2 Mach 2。">AMOLED watches with vector fonts: every text size, Bold and the photo work exactly as you compose them. Forerunner 165, 265, 265s, 570, 965 and 970; fēnix 8 (AMOLED), 8 Pro and E; Venu 3, 3S, 4 and X1; vívoactive 6; D2 Mach 2.</span></li>
+        <li><strong data-en="Partial (42 watches)" data-ja="一部対応 (42 機種)">Partial (42 watches)</strong>: <span data-en="placement, colors and icons work; text comes in fixed sizes. Includes epix Gen 2, fēnix 7 series, Venu 2 family, vívoactive 5, Instinct 3, Approach, MARQ Gen 2, Descent and Forerunner 255 / 955." data-ja="配置・色・アイコンは動き、文字は固定サイズになります。epix Gen 2、fēnix 7 系、Venu 2 系、vívoactive 5、Instinct 3、Approach、MARQ Gen 2、Descent、Forerunner 255 / 955 など。">placement, colors and icons work; text comes in fixed sizes. Includes epix Gen 2, fēnix 7 series, Venu 2 family, vívoactive 5, Instinct 3, Approach, MARQ Gen 2, Descent and Forerunner 255 / 955.</span></li>
+      </ul>
+      <h3 data-en="Photos" data-ja="写真">Photos</h3>
+      <ul>
+        <li><strong data-en="Connect IQ 5.0 watches" data-ja="Connect IQ 5.0 の機種">Connect IQ 5.0 watches</strong>: <span data-en="Venu 2, Venu 2 Plus, Venu 2S, Venu Sq 2, Venu Sq 2 Music and D2 Air X10 cannot show the photo. The dial appears without it." data-ja="Venu 2 / 2 Plus / 2S、Venu Sq 2 / Sq 2 Music、D2 Air X10 は写真を表示できません。文字盤は写真なしで表示されます。">Venu 2, Venu 2 Plus, Venu 2S, Venu Sq 2, Venu Sq 2 Music and D2 Air X10 cannot show the photo. The dial appears without it.</span></li>
+        <li><strong data-en="MIP screens" data-ja="MIP の画面">MIP screens</strong>: <span data-en="fēnix 7, Forerunner 255 / 955, Enduro and other memory-in-pixel watches show 256 colors (Instinct E and Instinct 3 Solar: black and white). Photos break up; logos and flat shapes work well." data-ja="fēnix 7、Forerunner 255 / 955、Enduro などの MIP 画面は 256 色 (Instinct E と Instinct 3 Solar は白黒) です。写真は崩れます。ロゴや単色の形はきれいに出ます。">fēnix 7, Forerunner 255 / 955, Enduro and other memory-in-pixel watches show 256 colors (Instinct E and Instinct 3 Solar: black and white). Photos break up; logos and flat shapes work well.</span></li>
+      </ul>
+      <p class="note" data-en="Instinct 3 Solar 45 mm and Instinct E 40 / 45 mm have very little memory for watch faces. Before you send a dial they show a simpler starting dial, and their icons are drawn more simply." data-ja="Instinct 3 Solar 45mm と Instinct E 40 / 45mm は文字盤に使えるメモリが小さいため、文字盤を送る前はより簡素な初期文字盤を表示し、アイコンも簡素な描き方になります。">Instinct 3 Solar 45 mm and Instinct E 40 / 45 mm have very little memory for watch faces. Before you send a dial they show a simpler starting dial, and their icons are drawn more simply.</p>
+      <p class="note" data-en="On MIP watches the Seconds part is redrawn every second, and any part placed over it disappears each time. Keep seconds clear of other parts." data-ja="MIP の機種では秒の部品が毎秒描き直され、その上に重ねた部品はそのたびに消えます。秒の部品には他の部品を重ねないでください。">On MIP watches the Seconds part is redrawn every second, and any part placed over it disappears each time. Keep seconds clear of other parts.</p>
+    </section>
+
+    <section class="chapter" id="troubleshooting">
+      <h2 data-en="13. Troubleshooting" data-ja="13. トラブルシューティング">13. Troubleshooting</h2>
+      <h4 data-en="The dial does not arrive" data-ja="文字盤が届かない">The dial does not arrive</h4>
+      <p data-en="Check the line under Device ID in 5 Watch. The watch checks every 5 minutes, and only while The Face is your watch face and your phone is nearby with Garmin Connect running. Make sure the ID on the watch and in Face Composer are exactly the same." data-ja="5 Watch の Device ID の下の行を確認してください。ウォッチが取りに来るのは 5 分ごとで、The Face が文字盤に選ばれていて、Garmin Connect が動いているスマホが近くにある間だけです。ウォッチと Face Composer の ID が完全に同じかも確かめてください。">Check the line under Device ID in 5 Watch. The watch checks every 5 minutes, and only while The Face is your watch face and your phone is nearby with Garmin Connect running. Make sure the ID on the watch and in Face Composer are exactly the same.</p>
+      <h4 data-en="I cannot see my Device ID on the watch" data-ja="ウォッチに Device ID が見えない">I cannot see my Device ID on the watch</h4>
+      <p data-en="Turn on Show diagnostics in The Face&#x27;s settings. The line is also hidden in low-power mode; raise your wrist." data-ja="The Face の設定で Show diagnostics を ON にしてください。低電力モードの間も消えるので、手首を上げてから見てください。">Turn on Show diagnostics in The Face's settings. The line is also hidden in low-power mode; raise your wrist.</p>
+      <h4 data-en="Face Composer asks me to confirm the watch" data-ja="送り先の確認が出る">Face Composer asks me to confirm the watch</h4>
+      <p data-en="It asks on the first send after you open the page or change the Device ID. Check the ID on the button and in the message before you press OK." data-ja="ページを開いて最初の送信と、Device ID を変えた後の最初の送信で確認が出ます。OK の前に、ボタンとメッセージの ID を確かめてください。">It asks on the first send after you open the page or change the Device ID. Check the ID on the button and in the message before you press OK.</p>
+      <h4 data-en="The weather is for the wrong place" data-ja="天気の場所が違う">The weather is for the wrong place</h4>
+      <p data-en="Choose where the forecast comes from in 5 Watch → B. Watch faces often cannot get a position on their own, so Use this computer&#x27;s place or Follow PulseLink is more reliable." data-ja="5 Watch の B で予報の場所を選んでください。文字盤は自分では位置を取れないことが多いので、Use this computer&#x27;s place か Follow PulseLink の方が確実です。">Choose where the forecast comes from in 5 Watch → B. Watch faces often cannot get a position on their own, so Use this computer's place or Follow PulseLink is more reliable.</p>
+      <h4 data-en="The text looks different on my watch" data-ja="ウォッチで文字の大きさが違う">The text looks different on my watch</h4>
+      <p data-en="Your watch may be a partial-support model with fixed font sizes (chapter 12). Pick your exact watch in 1 Layout → Device to see it as the watch does." data-ja="文字が固定サイズの一部対応機種の可能性があります (第 12 章)。1 Layout の Device で自分の機種を選ぶと、実機と同じ見え方になります。">Your watch may be a partial-support model with fixed font sizes (chapter 12). Pick your exact watch in 1 Layout → Device to see it as the watch does.</p>
+      <h4 data-en="A stock shows -- or not found" data-ja="株価が -- や not found になる">A stock shows -- or not found</h4>
+      <p data-en="Check the symbol as Yahoo Finance writes it (7203.T, ^GSPC, BTC-USD)." data-ja="Yahoo Finance の書き方で銘柄を確かめてください (7203.T、^GSPC、BTC-USD)。">Check the symbol as Yahoo Finance writes it (7203.T, ^GSPC, BTC-USD).</p>
+      <h4 data-en="A game slot shows --" data-ja="試合の枠が -- になる">A game slot shows --</h4>
+      <p data-en="Your team has no game today or in the next 7 days, often out of season." data-ja="当日から 7 日先まで試合がありません。シーズンオフのことが多いです。">Your team has no game today or in the next 7 days, often out of season.</p>
+      <h4 data-en="The photo looks rough" data-ja="写真が荒い">The photo looks rough</h4>
+      <p data-en="Try more colors in 3 Image (up to 32). On MIP watches photos always break up; use a logo or a flat shape instead." data-ja="3 Image で色数を増やしてください (32 色まで)。MIP の機種では写真は必ず崩れるので、ロゴや単色の形を使ってください。">Try more colors in 3 Image (up to 32). On MIP watches photos always break up; use a logo or a flat shape instead.</p>
+      <h4 data-en="Holding a part opens nothing" data-ja="長押しで何も開かない">Holding a part opens nothing</h4>
+      <p data-en="Check that Hold for details is on and that your watch supports complications. Stocks need MarketWatch; Games 1 and 2 need BaseballWatch and MLB; Games 3 and 4 and other leagues open nothing." data-ja="Hold for details が ON か、機種がコンプリケーションに対応しているかを確かめてください。株価は MarketWatch、Game 1・2 は BaseballWatch と MLB が必要です。Game 3・4 と他のリーグは何も開きません。">Check that Hold for details is on and that your watch supports complications. Stocks need MarketWatch; Games 1 and 2 need BaseballWatch and MLB; Games 3 and 4 and other leagues open nothing.</p>
+      <h4 data-en="I cannot reach the watch face menu" data-ja="文字盤のメニューが開けない">I cannot reach the watch face menu</h4>
+      <p data-en="Hold an empty area of the dial, or turn off Hold for details." data-ja="文字盤の何も無い所を長押しするか、Hold for details を OFF にしてください。">Hold an empty area of the dial, or turn off Hold for details.</p>
+      <h4 data-en="Some parts are missing on the watch" data-ja="ウォッチで部品が足りない">Some parts are missing on the watch</h4>
+      <p data-en="Parked parts are not sent. The watch also takes at most 40 parts (lines do not count)." data-ja="Parked の部品は送られません。また、ウォッチに送れる部品は 40 個までです (線は数えません)。">Parked parts are not sent. The watch also takes at most 40 parts (lines do not count).</p>
+      <h4 data-en="I deleted a photo and cannot re-adjust a dial" data-ja="写真を消したら文字盤を再調整できない">I deleted a photo and cannot re-adjust a dial</h4>
+      <p data-en="Dials keep their cut-out, but the original photo is gone. Add the photo again and save a new item." data-ja="文字盤の切り抜きは残りますが、元の写真はありません。写真を加え直して、新しいアイテムとして保存してください。">Dials keep their cut-out, but the original photo is gone. Add the photo again and save a new item.</p>
+      <h4 data-en="Saving and To watch are off" data-ja="保存と To watch ができない">Saving and To watch are off</h4>
+      <p data-en="Your trial or Pass has ended. Buy or renew from the link in 5 Watch; your dials and the watch are untouched." data-ja="トライアルか Pass が終わっています。5 Watch のリンクから購入・更新してください。文字盤とウォッチはそのままです。">Your trial or Pass has ended. Buy or renew from the link in 5 Watch; your dials and the watch are untouched.</p>
+      <p data-en="Anything else: easymoat@gmail.com. Please include your Device ID and your watch model." data-ja="その他のお問い合わせ: easymoat@gmail.com。Device ID と機種名を添えてください。">Anything else: easymoat@gmail.com. Please include your Device ID and your watch model.</p>
+    </section>
+
+    <p class="note" data-en="Icons in Face Composer and The Face: Material Design Icons by Pictogrammers, Apache License 2.0." data-ja="Face Composer と The Face のアイコン: Material Design Icons by Pictogrammers、Apache License 2.0。">Icons in Face Composer and The Face: Material Design Icons by Pictogrammers, Apache License 2.0.</p>
+  </article>
+</div>
+
+<script>
+function setLang(lang) {
+  document.documentElement.lang = lang === 'ja' ? 'ja' : 'en';
+  document.querySelectorAll('[data-en]').forEach(function (el) {
+    if (el.children.length > 0) return;
+    var t = el.getAttribute('data-' + lang);
+    if (t) el.textContent = t;
+  });
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+  try { localStorage.setItem('em_lang', lang); } catch (e) {}
+}
+try {
+  var saved = localStorage.getItem('em_lang') || localStorage.getItem('pl_lang');
+  if (saved === 'ja') { setLang('ja'); }
+} catch (e) {}
+</script>
+</body>
+</html>

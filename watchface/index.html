@@ -362,7 +362,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 09:48</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 10:08</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -391,9 +391,9 @@
   <aside class="left">
     <div class="group"><span class="lbl">Parts</span><span class="muted">Drag onto the dial, or click to drop at center.</span></div>
     <div class="group"><span class="lbl">Clock</span><div class="parts" id="parts-clock"></div></div>
-    <div class="group"><span class="lbl">Lines</span><div class="parts" id="parts-line"></div><span class="muted">Circles can also be meters. Lines do not count toward the part limit.</span></div>
+    <div class="group"><span class="lbl">Lines</span><div class="parts" id="parts-line"></div></div>
     <div class="group"><span class="lbl">Body</span><div class="parts" id="parts-body"></div></div>
-    <div class="group"><span class="lbl">Graphs</span><div class="parts" id="parts-graph"></div><span class="muted">Heart rate and stress: the last 6 hours. Steps: the last 7 days, today on the right. Two sizes.</span></div>
+    <div class="group"><span class="lbl">Graphs</span><div class="parts" id="parts-graph"></div></div>
     <div class="group"><span class="lbl">Weather</span><div class="parts" id="parts-wx"></div></div>
     <div class="group"><span class="lbl">Hands</span><div class="parts" id="parts-hands"></div></div>
     <div class="group"><span class="lbl">Rim</span><div class="parts" id="parts-rim"></div></div>
@@ -512,8 +512,8 @@
       <div class="ctl" title="Clock format. Device = follow the watch's own setting.">Hours <span class="cb units" id="hourfmt"></span></div>
       <div class="ctl" title="What a long press on a weather part opens. In face = the dial redraws as a detail screen (now / hourly / daily). Garmin = the watch's own weather screen (scrolls freely, no time limit, Garmin's own look).">Weather detail <span class="cb units" id="wxdetail"></span></div></div>
     <div class="group"><span class="lbl">Markets</span><div class="parts" id="parts-mkt"></div><span class="muted">Drop one on the dial, then type its ticker in Selected part. The % parts show the change instead of the price.</span></div>
-    <div class="group"><span class="lbl">USA Sports</span><div class="parts" id="parts-bb"></div><span class="muted">Four slots, Game 1-4. Pick each slot's league (MLB / NFL / NBA / NHL) and team in Selected part. Out of season, the part stays blank.</span></div>
-    <div class="group"><span class="lbl">Soccer</span><div class="parts" id="parts-soc"></div><span class="muted">Premier League, LaLiga, Serie A, Bundesliga, Ligue 1 and J1. <b>Game 1-4 are the same four slots as USA Sports</b> — each slot follows one team in one competition.</span></div>
+    <div class="group"><span class="lbl">USA Sports</span><div class="parts" id="parts-bb"></div></div>
+    <div class="group"><span class="lbl">Soccer</span><div class="parts" id="parts-soc"></div></div>
     <div class="group"><span class="lbl">Elements <span id="elcount" class="cnt"></span></span><div class="list" id="list"></div></div>
   </aside>
 </main>
@@ -3116,7 +3116,7 @@
   const SHAPE_FIT = { heart: 86, spade: 96, club: 96 };   // heart: the lobes' shoulders are the farthest points (measured on the rendered mask)
   // A "picture" is either a photo (IMG.cur) or a flat color fill of the frame (IMG.fill, no photo).
   const hasSource = () => !!(IMG.cur || IMG.fill);
-  const IMG = { cur: null, src: null, k: 0, fill: null, dirty: false, fromSlot: 0, bgMode: 'auto', shape: 'square', shape2: null, rot: 0, rot2: null, size: 100, size2: null, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 32, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
+  const IMG = { cur: null, src: null, k: 0, fill: null, dirty: false, fromSlot: 0, bgMode: 'dial', shape: 'square', shape2: null, rot: 0, rot2: null, size: 100, size2: null, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 32, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
   const imgApi = () => $('api').value.replace(/\/$/, '');
   const absUrl = (u) => (!u || /^https?:/.test(u)) ? u : new URL($('api').value).origin + u;   // server gives /api/wf/... paths
@@ -3470,7 +3470,19 @@
     $('imgbgdial').classList.toggle('on', IMG.bgMode !== 'dial'); $('imgbgdial').textContent = IMG.bgMode === 'dial' ? 'OFF' : 'ON'; $('imgbg').style.opacity = IMG.bgMode === 'dial' ? '0.45' : '1';
     paintQuality();
   }
-  $('imgbgdial').addEventListener('click', () => { IMG.bgMode = IMG.bgMode === 'dial' ? 'auto' : 'dial'; repaintQuality(); });
+  // Auto background (2026-09-19): ON = 文字盤の背景色を絵から取った色にする (Deep / Pale で調整、絵が変われば追従)。
+  // OFF = ON にする前の背景色へ戻す。以前は写真の枠の下見だけが変わり、文字盤には何も起きなかった。
+  let BG_BEFORE = null;
+  function followAutoBg(save) {
+    if (IMG.bgMode === 'dial' || !hasSource()) return;
+    const v = parseInt(String(IMG.autoBg).slice(1), 16);
+    if (!Number.isFinite(v) || v === st.bg) return;
+    st.bg = v; if (save) { pushBgHist(v); commit(); } else render();
+  }
+  $('imgbgdial').addEventListener('click', () => {
+    if (IMG.bgMode === 'dial') { BG_BEFORE = st.bg; IMG.bgMode = 'auto'; repaintQuality(); followAutoBg(true); }
+    else { IMG.bgMode = 'dial'; if (BG_BEFORE != null) { st.bg = BG_BEFORE; BG_BEFORE = null; commit(); } repaintQuality(); }
+  });
   // Paint the preview overlay with the cached Auto color (cheap: no palette work, safe on every pointermove).
   function paintQuality() {
     const ctx = $('imgQ').getContext('2d'); ctx.clearRect(0, 0, 320, 320);
@@ -3500,9 +3512,10 @@
       tc.globalCompositeOperation = 'destination-in'; tc.drawImage(imgCv, 0, 0); tc.globalCompositeOperation = 'source-over';
       IMG.reduced = t; IMG.reducedPal = pal.map((c) => (c[0] << 16) | (c[1] << 8) | c[2]); } catch (e) { IMG.reduced = null; IMG.reducedPal = null; } }
     applyStageImage();                 // and again once the reduced-color version is ready
-    repaintQuality();
+    repaintQuality(); followAutoBg(false);
   }
-  $('imgbg').addEventListener('input', (e) => { IMG.bgMode = 'auto'; IMG.bgAuto = parseInt(e.target.value, 10) || 0; IMG.dirty = true; repaintQuality(); });
+  $('imgbg').addEventListener('input', (e) => { IMG.bgAuto = parseInt(e.target.value, 10) || 0; IMG.dirty = true; repaintQuality(); followAutoBg(false); });
+  $('imgbg').addEventListener('change', () => followAutoBg(true));
   // 絵が入っていない状態は保存前から見えていないといけない (無音で kind:none になるのを防ぐ)。
   function renderFillOn() { const b = $('imgfillon'); if (!b) return; const on = !!(IMG.fill && !IMG.cur); b.classList.toggle('on', on); b.textContent = on ? 'ON' : 'OFF'; }
   function renderNoPic() { const el = $('shelfnopic'); if (el) el.hidden = !!(IMG.show && hasSource() && IMG.masked); }

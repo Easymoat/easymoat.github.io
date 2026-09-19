@@ -363,7 +363,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 10:55</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 14:14</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -602,15 +602,15 @@
     15: { name: 'Body Battery', grp: 'body', sample: '75',    icon: 'bodybat',   iw: 26 },
     16: { name: 'Stress',    grp: 'body',  sample: '32',     icon: 'stress',    iw: 26 },
     17: { name: 'Respiration', grp: 'body', sample: '14',    icon: 'breath',    iw: 26 },
-    20: { name: 'Weather',   grp: 'wx',    sample: '23°',    icon: 'weather',   iw: 26 },
-    21: { name: 'Humidity',  grp: 'wx',    sample: '55%',    icon: 'humidity',  iw: 26 },
+    20: { name: 'Weather',   grp: 'wx',    sample: '23°',    icon: 'weather',   iw: 34 },
+    21: { name: 'Humidity',  grp: 'wx',    sample: '55%',    icon: 'humidity',  iw: 20 },
     22: { name: 'Wind',      grp: 'wx',    sample: '3',      icon: 'wind',      iw: 26 },
     23: { name: 'Pressure',  grp: 'wx',    sample: '1013',   icon: 'pressure',  iw: 26 },
-    24: { name: 'Altitude',  grp: 'wx',    sample: '45m',    icon: 'altitude',  iw: 26 },
+    24: { name: 'Altitude',  grp: 'wx',    sample: '45m',    icon: 'altitude',  iw: 30 },
     // 27-29 = Open-Meteo forecast fetched by the watch's background service (server /api/wf/forecast), 2026-09-06
     27: { name: 'Today hi/lo', grp: 'wx',  sample: '31°/24°', icon: 'hilo',     iw: 16 },
     28: { name: 'Rain today', grp: 'wx',   sample: '40%',    icon: 'umbrella',  iw: 26 },
-    29: { name: 'Now 1h 2h', grp: 'wx',    sample: '29°',    icon: 'weather',   iw: 26, strip: 3 },
+    29: { name: 'Now 1h 2h', grp: 'wx',    sample: '29°',    icon: 'weather',   iw: 34, strip: 3 },
     25: { name: 'Precip %',  grp: 'wx',    sample: '40%',    icon: 'umbrella',  iw: 26 , hidden: true },   // removed from the palette 2026-09-06 (Garmin's current-hour value; use 28 Rain today). Kept so saved faces still render.
     26: { name: 'Moon age',  grp: 'wx',    sample: moonAgeStr(), icon: 'moon',  iw: 26 },
     // 41-43 = グラフ (2026-09-19)。s = 大きさ (0 小 / 1 大)。心拍とストレスは 6 時間、歩数は過去 7 日 (今日を含む)。
@@ -1094,6 +1094,7 @@
 
   // ── Material Symbols Rounded (FILL 1, wght 400) — Apache License 2.0 (2026-09-19 ユーザー決定) ──
   // 取得元: github.com/google/material-design-icons symbols/web/<name>/materialsymbolsrounded/<name>_fill1_24px.svg
+  // 使うのは体の組 (10-17) と通知 (40) だけ。天気の組はカラーの絵を残すため従来の図形 (2026-09-19 ユーザー指示)。
   // ウォッチ (The Face) も同じ SVG からフォントを作る。24 の升目 (viewBox 0 -960 960 960) を丸ごと
   // アイコンの大きさ (M = 26px) に合わせる = 升目の余白も含めて実機と同じ置き方。仕様: docs/ICONS_AND_NAMING.md
   const MS = {
@@ -1132,16 +1133,18 @@
     floors: () => msIcon('stairs'),
     cal: () => msIcon('local_fire_department'),
     weight: () => msIcon('monitor_weight'),
-    weather: () => msIcon('sunny'),
-    humidity: () => msIcon('humidity_percentage'),
+    weather:  () => `<svg width="34" height="30" viewBox="-17 -15 34 30"><circle cx="0" cy="0" r="9" fill="currentColor"/><g stroke="currentColor" stroke-width="2"><line x1="0" y1="-15" x2="0" y2="-11"/><line x1="0" y1="15" x2="0" y2="11"/><line x1="-17" y1="0" x2="-13" y2="0"/><line x1="17" y1="0" x2="13" y2="0"/><line x1="-12" y1="-12" x2="-9" y2="-9"/><line x1="12" y1="-12" x2="9" y2="-9"/><line x1="-12" y1="12" x2="-9" y2="9"/><line x1="12" y1="12" x2="9" y2="9"/></g></svg>`,
+    // 湿度: しずくは輪郭だけ (中は塗らない)。抜きを背景色で塗ると写真の上で背景色の穴に見えるため。
+    humidity: () => `<svg width="20" height="26" viewBox="-10 -13 20 26"><path d="M 0 -12 L 6.93 0 A 8 8 0 1 1 -6.93 0 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><line x1="-3.5" y1="8" x2="3.5" y2="0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="-3.5" cy="1" r="1.7" fill="currentColor"/><circle cx="3.5" cy="7" r="1.7" fill="currentColor"/></svg>`,
     wind:     () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><polygon points="${arrow(0,0,225)}" fill="currentColor"/></svg>`,
-    pressure: () => msIcon('speed'),
-    altitude: () => msIcon('landscape'),
+    pressure: () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="3"/><g stroke="currentColor" stroke-width="3"><line x1="0" y1="-10" x2="0" y2="-7"/><line x1="0" y1="0" x2="5" y2="-5"/></g><circle cx="0" cy="0" r="2" fill="currentColor"/></svg>`,
+    altitude: () => `<svg width="30" height="24" viewBox="-15 -13 30 24"><polygon points="-15,11 -6,-13 1,2 7,-8 15,11" fill="currentColor"/></svg>`,
     bodybat: () => msIcon('battery_android_bolt'),
     stress: () => msIcon('bolt'),
     breath: () => msIcon('pulmonology'),
     hilo:     () => `<svg width="16" height="26" viewBox="-8 -13 16 26"><polygon points="0,-11 8,-2 -8,-2" fill="currentColor"/><polygon points="-8,2 8,2 0,11" fill="currentColor"/></svg>`,
-    umbrella: () => msIcon('umbrella'),
+    // 傘: 下端は骨の間がたわむので 3 つの弧 (直線だとドームに見える)、柄の先は J 字のフック。
+    umbrella: () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><path d="M-13,-1 A13,12 0 0 1 13,-1 Q8.7,2.4 4.3,-1 Q0,2.4 -4.3,-1 Q-8.7,2.4 -13,-1 Z" fill="currentColor"/><path d="M0,-1 L0,8 A3.5,3.5 0 0 1 -7,8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
     moon:     () => { const r = 12, ph = moonPhaseDeg(), rad = ph * Math.PI / 180, k = Math.cos(rad), rx = (Math.abs(k) * r).toFixed(2);
                       if (ph < 12 || ph > 348) return `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="2"/></svg>`;
                       const sweep = k > 0 ? 0 : 1;   // crescent bulges out, gibbous bulges in

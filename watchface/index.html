@@ -73,7 +73,7 @@
   .part:active { cursor: grabbing; }
   .part .ico { width: 34px; display: flex; justify-content: center; color: var(--ink-2); }
   .part .ico svg { max-height: 26px; }
-  .part .nm { flex: 1; }
+  .part .nm { flex: 1; white-space: nowrap; }   /* 部品名は 1 行 (2026-09-19) */
   .part .hint { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
   /* 針と縁は置く場所が無い (中心固定) ので、掴んで運ぶのではなく入 / 切のボタン。
      形も並びも他の部品と同じで、使用中だけ色が付く (.sw は色見本が使っている名前なので使わない)。*/
@@ -82,7 +82,7 @@
   .part.tgl.on .ico { color: #05170c; }
   .stagewrap { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 18px 16px 40px; }
   .stagebar { display: flex; flex-wrap: wrap; gap: 22px 40px; align-items: flex-start; justify-content: center;
-              width: 100%; max-width: 1040px; padding: 12px 0 18px; }   /* no box: tier 1 reads as one area with the dial */
+              width: 100%; max-width: 1040px; padding: 12px 0 0; }   /* no box: tier 1 reads as one area with the dial */
   .grp { display: flex; flex-direction: column; gap: 10px; }
   .devrow { display: flex; align-items: flex-start; gap: 28px; }   /* Device は 1 行で使う */
   /* 盤面の真下。盤面の位置を動かさないよう下に置く (上に置くと文字盤が下へずれる) */
@@ -91,7 +91,6 @@
   .dialbar.top .grp { width: 100%; }
   .dialsec { width: 100%; max-width: 1040px; justify-content: flex-start; border-top: 1px solid var(--line); padding-top: 22px; }
   .dialsec .ctl { flex-wrap: nowrap; white-space: nowrap; }
-  .bposrow { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
   .fillctl { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   @media (max-width: 760px) { .dialsec .ctl { flex-wrap: wrap; } }
   .dialbar.top select { height: 28px; }
@@ -363,7 +362,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 09:17</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 09:48</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -397,7 +396,7 @@
     <div class="group"><span class="lbl">Graphs</span><div class="parts" id="parts-graph"></div><span class="muted">Heart rate and stress: the last 6 hours. Steps: the last 7 days, today on the right. Two sizes.</span></div>
     <div class="group"><span class="lbl">Weather</span><div class="parts" id="parts-wx"></div></div>
     <div class="group"><span class="lbl">Hands</span><div class="parts" id="parts-hands"></div></div>
-    <div class="group"><span class="lbl">Rim</span><div class="parts" id="parts-rim"></div><div class="bposrow" title="Where the Batons sit. Inner leaves room for the Meter arcs; Edge is close to the bezel."><span class="muted">Batons</span><span class="cb units" id="bpos"><button type="button" data-v="0">Inner</button><button type="button" data-v="1">Edge</button></span></div></div>
+    <div class="group"><span class="lbl">Rim</span><div class="parts" id="parts-rim"></div></div>
   </aside>
 
   <section class="stagewrap">
@@ -993,7 +992,9 @@
   // 四角形 → 上下左右の 4 本の線。実機はこの線と、線どうしの角の R (lj) を描く。
   // f の bit4 = 四角形から作った線 (読み直す時に捨て、rq から四角形に戻す)。
   const F_RECTLINE = 16;
-  const F_EDGE = 16;       // Rim: Batons (69) だけ: 縁ぎりぎりに置く (2026-09-19)。線の F_RECTLINE とは種別が違うので重ならない
+  const F_EDGE = 16;       // 縁 (60-63, 69): 既定と反対の位置 (Inner / Edge) に置く印 (2026-09-19)。線の F_RECTLINE とは種別が違うので重ならない
+  const RIM_POS = [60, 61, 62, 63, 69];
+  const rimInner = (e) => (e[0] === 69) !== !!(e[6] & F_EDGE);
   function rectLines(e) {
     const [, x, y, , s, c, f] = e, w = rectW(e), h = rectH(e), d = dev();
     const vlen = Math.round(h * d.h / d.w);              // 線の長さは幅の千分率
@@ -1329,21 +1330,24 @@
       return null;
     }
     // 縁の仕様 (複数可)
-    function rim(t, k, mt, mc, mk, mv, edge) {
+    // alt = 部品の el[6] の F_EDGE。位置は Inner (Meter の弧と重ならない) と Edge (縁ぎりぎり) の 2 つ (2026-09-19)。
+    // 既定は Batons だけ Inner、他は Edge (既存の面の見た目を変えないため)。alt はその逆側を選ぶ印。
+    function rim(t, k, mt, mc, mk, mv, alt) {
       const L = (v) => v * k.l, W = (v) => v * k.w;
-      if (t === 60) return [[0, 60, 5, 2, r1(L(10)), odd(W(3)), r1(L(22)), odd(W(6))]];
-      if (t === 61) return [[1, 12, 3, 3, r1(W(4)), r1(W(7))]];
-      if (t === 62) return [[4, r1(R - L(22)), r1(W(38))]];
+      const inner = (t === 69) ? !alt : !!alt, d = inner ? L(18) : 0;
+      if (t === 60) return [[0, 60, 5, r1(2 + d), r1(L(10)), odd(W(3)), r1(L(22)), odd(W(6))]];
+      if (t === 61) return [[1, 12, 3, r1(3 + d), r1(W(4)), r1(W(7))]];
+      if (t === 62) return [[4, r1(R - L(22) - d), r1(W(38))]];
       // Batons: 高級腕時計の文字盤。外周に「鉄道目盛り (chemin de fer)」=
       // 細い 2 本の円を 60 本の細線で橋渡し、内側に細長い植字バトン。角は丸めない (実機と同じ)。
       if (t === 69) {
         // 太いバトンだけ (2026-09-18 ユーザー指示: 二重線と細い目盛りを外す)。位置は以前のまま。
         // 位置は 2 つ (2026-09-19): Inner = Meter の弧と重ならない位置 (従来)、Edge = 縁ぎりぎり。
-        const ins = r1(L(edge ? 3 : 21));
+        const ins = r1(L(inner ? 21 : 3));
         return [[0, 12, 0, ins, r1(L(40)), odd(W(7)), r1(L(40)), odd(W(7)), 0],
                 [0, 1, 1, ins, r1(L(40)), odd(W(13)), r1(L(40)), odd(W(13)), 0]];
       }
-      if (t === 63) return [[2, rad(R - 2 - W(2.5)), odd(W(5))], [0, 4, 1, 2, r1(L(26)), odd(W(7)), r1(L(26)), odd(W(7))]];
+      if (t === 63) return [[2, rad(R - 2 - W(2.5) - d), odd(W(5))], [0, 4, 1, r1(2 + d), r1(L(26)), odd(W(7)), r1(L(26)), odd(W(7))]];
       if (ARCSET[t]) {
         const A = ARCSET[t];                              // 位置・長さ・向き
         const mt = (arguments[2] || [0, 0, 0, 0]), mcol = (arguments[3] || [-1, -1, -1, -1]);
@@ -1669,7 +1673,7 @@
       const dv = dev();
       div.classList.add('dialpart');
       div.style.width = dv.w + 'px'; div.style.height = dv.h + 'px';
-      div.innerHTML = dialArt(t, s, dv.w, dv.h, colOf(c), t === 69 && (f & F_EDGE)) + '<span class="anchor"></span>';
+      div.innerHTML = dialArt(t, s, dv.w, dv.h, colOf(c), !!(f & F_EDGE)) + '<span class="anchor"></span>';
       div.addEventListener('pointerdown', (ev) => startMove(ev, i));
       return div;
     }
@@ -1842,7 +1846,7 @@
       const k = DIAL_SCALE[Math.min(Math.max(e[4], 0), 3)];
       const h = DIAL.hands(e[0], k);
       if (h && !out.hd) { out.hd = h; continue; }
-      const r = DIAL.rim(e[0], k, st.mt, st.mc, st.mk, st.mv, e[0] === 69 && (e[6] & F_EDGE));
+      const r = DIAL.rim(e[0], k, st.mt, st.mc, st.mk, st.mv, !!(e[6] & F_EDGE));
       // 縁は 2 つまで重ねられるので、原型ごとにその部品の色を添える (実機は rc[i] で塗り分ける)。
       if (r) { out.rm = (out.rm || []).concat(r); out.rc = (out.rc || []).concat(r.map(() => e[5])); }
     }
@@ -2156,7 +2160,7 @@
     // 基本の 3 行 + 種類ごとの項目 2 行ぶんを常に確保する (2 行までなら Dial が動かない、2026-09-19)。
     void h; const f = $('tofront'); if (!f) return;
     const row = f.closest('.field'), top = el.getBoundingClientRect().top, base = row.getBoundingClientRect().bottom - top;
-    el.style.minHeight = Math.ceil(base + 2 * (row.offsetHeight + 10) + 26) + 'px';
+    el.style.minHeight = Math.ceil(base + 2 * (row.offsetHeight + 10)) + 'px';
   }
   window.addEventListener('resize', () => { INSP_MIN = 0; const el = $('insp'); if (el) el.style.minHeight = ''; });
   let PICK_OPEN = 0;        // 開いている OS のカラーパネルの数
@@ -2251,6 +2255,9 @@
             `<button type="button" data-v="${v}" class="${all.every((x) => (lineSharp(x) ? 1 : 0) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>
         ` : ''}
+        ${!none && all.every((x) => RIM_POS.includes(x[0])) ? `<div class="field" title="Inner leaves room for the Meter arcs; Edge sits close to the bezel."><span>Position</span><span class="cb units" id="frimpos">${
+          [[1, 'Inner'], [0, 'Edge']].map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => rimInner(x) === !!v) ? 'on' : ''}">${lb}</button>`).join('')
+        }</span></div>` : ''}
         ${allCityClock ? `<div class="field" title="Show the time in another city. Summer time is followed automatically."><span>Time zone</span><select id="ftz">${
           [`<option value="0" ${all.every((x) => cityOf(x) === 0) ? 'selected' : ''}>This watch's time</option>`].concat(
             TZ_CITIES.map((c) => [c, tzOffsetNow(c[3])]).sort((a, b) => a[1] - b[1]).map(([c, off]) =>
@@ -2347,6 +2354,10 @@
     const fp = $('fpick');
     if (fp) fp.addEventListener('change', (ev) => { const i = pickColor(ev.target, ev.target.value); each((x) => { x[5] = i; }); });
     bindMeters(); bindAlign(); bindPickers();
+    box.querySelectorAll('#frimpos button').forEach((b) => b.addEventListener('click', () => each((x) => {
+      const inner = +b.dataset.v === 1, alt = (x[0] === 69) ? !inner : inner;
+      x[6] = alt ? (x[6] | F_EDGE) : (x[6] & ~F_EDGE);
+    })));
     box.querySelectorAll('.step').forEach((sp) => sp.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
       const k = Number(sp.dataset.step), d = Number(b.dataset.d) * st.grid;
       each((x) => {
@@ -2532,7 +2543,6 @@
   }
   // 針と縁は入 / 切。同じ組の中では 1 つだけ (針を 2 種類同時には置かない)。
   const DIAL_MAX = { rim: 2, hands: 1 };   // 縁は 2 つまで重ねられる (針は 1 つ)
-  document.querySelectorAll('#bpos button').forEach((b) => b.addEventListener('click', () => setBatonsPos(+b.dataset.v === 1)));
   function toggleDialPart(t) {
     if (elCount(st.el) >= EL_MAX && !st.el.some((x) => x[0] === t)) { setStatus('shelfstatus', `The watch takes ${EL_MAX} parts — remove one before adding another. Lines do not count.`, 'err'); return; }
     const grp = TYPES[t].grp, was = st.el.findIndex((e) => e[0] === t);
@@ -2543,24 +2553,13 @@
       if (max === 1) { st.el = st.el.filter((e) => same.indexOf(e) < 0); }   // 針は 1 つ = 入れ替え
       else { setStatus('shelfstatus', `${grp === 'rim' ? 'Rim' : 'Hands'} can be stacked ${max} deep — take one off first.`, 'err'); return; }
     }
-    st.el.push([t, 500, 500, 0, 1, 0, t === 69 && st.bpos ? F_EDGE : 0, -1]); setSel(st.el.length - 1, false);
+    st.el.push([t, 500, 500, 0, 1, 0, 0, -1]); setSel(st.el.length - 1, false);
     commit();
-  }
-  // Batons の位置 (Parts の Rim 欄で選ぶ)。置いてあればその部品に、無ければ次に置く時に使う。
-  function setBatonsPos(edge) {
-    st.bpos = edge ? 1 : 0;
-    st.el.forEach((e) => { if (e[0] === 69) e[6] = edge ? (e[6] | F_EDGE) : (e[6] & ~F_EDGE); });
-    commit();
-  }
-  function renderBatonsPos() {
-    const b = st.el.find((e) => e[0] === 69), edge = b ? !!(b[6] & F_EDGE) : !!st.bpos;
-    document.querySelectorAll('#bpos button').forEach((x) => x.classList.toggle('on', (+x.dataset.v === 1) === edge));
   }
   function renderDialToggles() {
     document.querySelectorAll('.part.tgl').forEach((p) => {
       p.classList.toggle('on', st.el.some((e) => e[0] === +p.dataset.t));
     });
-    renderBatonsPos();
   }
   let PAL_PEND = null;                 // 押したところ。動かすか離すまで部品は作らない
   function startPaletteDrag(ev, t) {

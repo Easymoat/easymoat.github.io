@@ -369,7 +369,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 07:45</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 08:01</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1412,7 +1412,7 @@
     }
     const barPts = (len, w, back) => [-w / 2, -back, w / 2, -back, w / 2, len, -w / 2, len].map(r1);
     const kitePts = (len, w, back) => [0, len, w / 2, len * 0.62, 0, -back, -w / 2, len * 0.62].map(r1);
-    const needlePts = (len, w) => [0, len, w / 2, -14, -w / 2, -14].map(r1);
+    const needlePts = (len, w, back) => { const b = (back == null ? 14 : back); return [0, len, w / 2, -b, -w / 2, -b].map(r1); };
     // 角丸の棒 (両端が半円) の輪郭。円弧は seg 分割の点で近似する = 実機も同じ点を辿るだけで済む。
     const roundBarPts = (len, w, back, seg) => {
       const hw = w / 2, c1 = -back + hw, c2 = len - hw, pts = [];
@@ -1425,17 +1425,19 @@
 
     // 針の仕様 [キャップ半径, 時針, 分針]
     function hands(t, k) {
-      const L = (v) => v * k.l, W = (v) => v * k.w;
-      if (t === 50) return [r1(W(9)), [0].concat(barPts(L(118), W(15), 20)), [0].concat(barPts(L(178), W(11), 20))];
-      if (t === 51) return [r1(W(8)), [0].concat(needlePts(L(120), W(17))), [0].concat(needlePts(L(180), W(12)))];
-      if (t === 52) return [r1(W(7)), [0].concat(kitePts(L(122), W(30), 26)), [0].concat(kitePts(L(182), W(22), 26))];
-      if (t === 53) return [r1(W(8)), [1, odd(W(4))].concat(barPts(L(120), W(20), 20)), [1, odd(W(4))].concat(barPts(L(180), W(15), 20))];
+      // B = 軸より後ろに出る長さ。小さなアナログ部品 (k.b = 直径の割合) では針と同じだけ縮める。
+      // 縮めないと、尻尾だけが残って「軸がずれた 2 本の線」に見える (2026-09-20 修正)。
+      const L = (v) => v * k.l, W = (v) => v * k.w, B = (v) => v * (k.b == null ? 1 : k.b);
+      if (t === 50) return [r1(W(9)), [0].concat(barPts(L(118), W(15), B(20))), [0].concat(barPts(L(178), W(11), B(20)))];
+      if (t === 51) return [r1(W(8)), [0].concat(needlePts(L(120), W(17), B(14))), [0].concat(needlePts(L(180), W(12), B(14)))];
+      if (t === 52) return [r1(W(7)), [0].concat(kitePts(L(122), W(30), B(26))), [0].concat(kitePts(L(182), W(22), B(26)))];
+      if (t === 53) return [r1(W(8)), [1, odd(W(4))].concat(barPts(L(120), W(20), B(20))), [1, odd(W(4))].concat(barPts(L(180), W(15), B(20)))];
       if (t === 55) {                                   // Rim marks: 縁に沿う短い針
         const ro = R - 40, inner = ro - L(44), hw = W(9.5), ringR = W(9), out = ro + W(6);
         return [0, [0].concat(spanKite(inner + 1, out, hw)), [2, r1(ringR), odd(W(3)), odd(W(4)), r1(inner + ringR), r1(out)]];
       }
-      if (t === 57) return [r1(W(8)), [1, odd(W(4))].concat(roundBarPts(L(120), W(20), 20, 6)),
-                                       [1, odd(W(4))].concat(roundBarPts(L(180), W(15), 20, 6))];
+      if (t === 57) return [r1(W(8)), [1, odd(W(4))].concat(roundBarPts(L(120), W(20), B(20), 6)),
+                                       [1, odd(W(4))].concat(roundBarPts(L(180), W(15), B(20), 6))];
       if (t === 56) return [r1(W(4)), [0].concat(barPts(L(R * 0.55), W(6), 0)), [0].concat(barPts(L(R * 0.86), W(3), 0))];
       return null;
     }
@@ -1809,7 +1811,7 @@
     }
     if (def.analog) {        // アナログ時計 (部品)。箱 = 直径、当たり判定は描いた線の上だけ
       const dv = dev(), dia = anaDia(e), S = dia * dv.w / 1000;
-      const kk = DIAL_SCALE[Math.min(Math.max(s, 0), 3)], kd = { l: kk.l * dia / 1000, w: kk.w * dia / 1000 };
+      const kk = DIAL_SCALE[Math.min(Math.max(s, 0), 3)], kd = { l: kk.l * dia / 1000, w: kk.w * dia / 1000, b: dia / 1000 };
       const art = DIAL.analogArt(anaStyle(e), kd, dia, anaMode(e), anaTicks(e), anaAngles(e));
       div.classList.add('linepart');
       div.style.width = S + 'px'; div.style.height = S + 'px';
@@ -2139,7 +2141,7 @@
     const key = `${style}|${dia}|${sz}`;
     const hit = ANA_SHAPES.findIndex((x) => x.key === key);
     if (hit >= 0) return hit;
-    const kk = DIAL_SCALE[sz], h = DIAL.hands(style, { l: kk.l * dia / 1000, w: kk.w * dia / 1000 });
+    const kk = DIAL_SCALE[sz], h = DIAL.hands(style, { l: kk.l * dia / 1000, w: kk.w * dia / 1000, b: dia / 1000 });
     ANA_SHAPES.push({ key, style, spec: h });
     return ANA_SHAPES.length - 1;
   }

@@ -311,6 +311,11 @@
   .pwho b { font-family: var(--mono); font-size: 15px; letter-spacing: .04em; }
   .pnote { margin: 6px 0 12px; color: var(--ink-2); font-size: 13px; line-height: 1.5; }
   .pnote b { font-family: var(--mono); color: var(--ink); }
+  .pnote .pname { font-weight: 600; color: var(--ink); }
+  /* 携帯のサインイン: どの幅でも横にはみ出さない (412px で右が切れるという報告、2026-09-19) */
+  .psign, .pon { max-width: 100%; box-sizing: border-box; min-width: 0; }
+  .pnote { overflow-wrap: anywhere; }
+  .prow .btn { flex: 0 0 auto; }
   #phonebar .status { white-space: normal; height: auto; line-height: 1.5; margin-top: 8px;
                       font-family: var(--sans); font-size: 13px; }
   #watchseen { white-space: normal; height: auto; line-height: 1.5; max-width: 520px;
@@ -364,7 +369,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 20:44</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 20:50</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -373,7 +378,7 @@
   <div id="phonebar" class="box">
     <div class="psign" id="psign">
       <div class="lbl">Your watch</div>
-      <p class="pnote">Type the ID <b>The Face</b> shows on your watch — four characters, a dash, four more (like <b>a1b2-3456</b>). It stays on this phone.</p>
+      <p class="pnote">Type the ID <span class="pname">The Face</span> shows on your watch — four characters, a dash, four more (like <b>a1b2-3456</b>). It stays on this phone.</p>
       <div class="prow">
         <input type="text" id="devid2" placeholder="XXXX-XXXX" inputmode="text" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" maxlength="40">
         <button class="btn primary" id="psignin">Sign in</button>

@@ -369,7 +369,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 23:11</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 00:17</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1477,10 +1477,10 @@
       let o = '';
       for (const e of list || []) {
         if (e[0] === 0) {                                   // 目盛り
-          const [, n, every, top, len, w, len2, w2, rx] = e;   // rx = 角の丸め (省略時は半円)。実機は矩形で塗るので 0 が実機と一致
+          const [, n, every, top, len, w, len2, w2, rx] = e;   // rx = 角の丸め。実機は矩形で塗る (端は平ら) ので省略時も 0 (2026-09-20 Sim と照合)
           for (let i = 0; i < n; i++) {
             const big = every && (i % every === 0), l = big ? len2 : len, t = big ? w2 : w;
-            o += g(i * 360 / n, `<rect x="${r1(R - t / 2)}" y="${top}" width="${t}" height="${l}" rx="${r1(rx === undefined ? t / 2 : rx)}"/>`);
+            o += g(i * 360 / n, `<rect x="${r1(R - t / 2)}" y="${top}" width="${t}" height="${l}" rx="${r1(rx === undefined ? 0 : rx)}"/>`);
           }
         } else if (e[0] === 1) {                            // 点
           const [, n, every, top, rad, rad2] = e;
@@ -1501,8 +1501,12 @@
           const stroke = (Number.isInteger(colIn) && colIn >= 0) ? colOf(colIn) : (elCol || 'currentColor');
           // 下地は「その色を 45% の透過で重ねる」= 下にある写真が透ける (2026-09-13 ユーザー指定)。
           const p = (a) => [R + rr * Math.cos((a - 90) * Math.PI / 180), R + rr * Math.sin((a - 90) * Math.PI / 180)];
+          // 下地は実機と同じく「色 45 : 背景 55」を混ぜた不透明な 1 色 (実機に透過は無い。2026-09-20 ユーザー指示で実機に合わせる)。
+          const mixBg = (c, t) => { const m = /^#?([0-9a-f]{6})$/i.exec(String(c)); if (!m) return c; const a = parseInt(m[1], 16), b = st.bg || 0;
+            const ch = (sh) => Math.round(((a >> sh) & 255) * t + ((b >> sh) & 255) * (1 - t)); return '#' + [16, 8, 0].map((sh) => ch(sh).toString(16).padStart(2, '0')).join(''); };
           const arc = (a0, a1, op) => { const [x0, y0] = p(a0), [x1, y1] = p(a1);
-            return `<path d="M ${r1(x0)} ${r1(y0)} A ${rr} ${rr} 0 0 1 ${r1(x1)} ${r1(y1)}" fill="none" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" opacity="${op}"/>`; };
+            const col = op < 1 ? mixBg(stroke, op) : stroke, keepOp = op < 1 && col === stroke;   // 色が分からない時 (currentColor) だけ従来の透過
+            return `<path d="M ${r1(x0)} ${r1(y0)} A ${rr} ${rr} 0 0 1 ${r1(x1)} ${r1(y1)}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round"${keepOp ? ` opacity="${op}"` : ''}/>`; };
           // 下地 (track) の色を選んでいればその色で塗る = 実機と完全に一致する。
           const trkCol = (Number.isInteger(trkIn) && trkIn >= 0) ? colOf(trkIn) : null;
           if (trkCol) {

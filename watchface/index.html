@@ -369,7 +369,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 01:15</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 06:53</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1942,7 +1942,8 @@
     for (const e of st.el) {
       const k = DIAL_SCALE[Math.min(Math.max(e[4], 0), 3)];
       const h = DIAL.hands(e[0], k);
-      if (h && !out.hd) { out.hd = h; continue; }
+      // 針の中心は動かせる (2026-09-20 ユーザー指示)。盤の真ん中以外に置いた時だけ hp = [x‰, y‰] を送る。
+      if (h && !out.hd) { out.hd = h; if (e[1] !== 500 || e[2] !== 500) out.hp = [e[1], e[2]]; continue; }
       const r = DIAL.rim(e[0], k, st.mt, st.mc, st.mk, st.mv, !!(e[6] & F_EDGE));
       // 縁は 2 つまで重ねられるので、原型ごとにその部品の色を添える (実機は rc[i] で塗り分ける)。
       if (r) { out.rm = (out.rm || []).concat(r); out.rc = (out.rc || []).concat(r.map(() => e[5])); }
@@ -2291,7 +2292,7 @@
     const allText = !none && all.every((x) => !isLine(x[0]) && !isCircle(x[0]) && !isRect(x[0]) && !isGraph(x[0]) && !TYPES[x[0]].dial);
     const sameLen = all.every((x) => lineLen(x) === lineLen(e));
     // 基本の 3 行 (位置と大きさ / 表示 / 色と並べ) はどの部品でも同じ場所に出す。使えない物は薄く押せなくするだけ。
-    const shapeOnly = !none && all.every((x) => isLine(x[0]) || isCircle(x[0]) || isRect(x[0]) || isGraph(x[0]));
+    const shapeOnly = !none && all.every((x) => isLine(x[0]) || isCircle(x[0]) || isRect(x[0]) || isGraph(x[0]) || (TYPES[x[0]] && TYPES[x[0]].dial));
     box.innerHTML = `
       <div style="font-weight:600;margin-bottom:8px">${none ? '<span class="muted" style="font-weight:400">No part selected — click one on the dial (Shift+click for several)</span>' : multi ? `${all.length} elements <span class="kbd">changes apply to all</span>` : `${def.name} <span class="kbd">type ${e[0]}</span>`}</div>
       <div class="group">

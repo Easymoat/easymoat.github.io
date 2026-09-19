@@ -369,7 +369,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 20:50</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 21:27</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -885,7 +885,9 @@
       const d = a1 - a0;
       if (Math.abs(d) >= 359.5) return `<circle cx="${c}" cy="${c}" r="${R.toFixed(1)}" fill="none" stroke="currentColor" stroke-width="${pen.toFixed(1)}" opacity="${op}"/>`;
       const [x0, y0] = p(a0), [x1, y1] = p(a1);
-      return `<path d="M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${R.toFixed(1)} ${R.toFixed(1)} 0 ${Math.abs(d) > 180 ? 1 : 0} ${d > 0 ? 1 : 0} ${x1.toFixed(1)} ${y1.toFixed(1)}" fill="none" stroke="currentColor" stroke-width="${pen.toFixed(1)}" stroke-linecap="round" opacity="${op}"/>`;
+      // 半径と端は丸めない: 半円 (180°) で半径を 0.1 単位へ丸めると、両端の距離の半分より大きい半径 = 半円より浅い弧になり
+      // 中心が 1.5px ほどずれて端が平たく見えた (文字盤担当の突き合わせ、2026-09-19)。
+      return `<path d="M ${x0.toFixed(3)} ${y0.toFixed(3)} A ${R.toFixed(3)} ${R.toFixed(3)} 0 ${Math.abs(d) > 180 ? 1 : 0} ${d > 0 ? 1 : 0} ${x1.toFixed(3)} ${y1.toFixed(3)}" fill="none" stroke="currentColor" stroke-width="${pen.toFixed(1)}" stroke-linecap="round" opacity="${op}"/>`;
     };
     let o = '';
     // 塗りは全周の時だけ (実機は扇型を塗れない)
@@ -2033,7 +2035,7 @@
       const cx = a[0] * d.w / 1000, cy = a[1] * d.h / 1000, r = a[2] * d.w / 1000, pen = a[5] * k;
       const pt = (deg) => [cx + r * Math.sin(deg * Math.PI / 180), cy - r * Math.cos(deg * Math.PI / 180)];
       const [x0, y0] = pt(a[3]), [x1, y1] = pt(a[4]);
-      o += `<path d="M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${r.toFixed(1)} ${r.toFixed(1)} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}" fill="none" stroke="${colOf(a[6])}" stroke-width="${pen.toFixed(1)}" stroke-linecap="round"/>`;
+      o += `<path d="M ${x0.toFixed(3)} ${y0.toFixed(3)} A ${r.toFixed(3)} ${r.toFixed(3)} 0 0 1 ${x1.toFixed(3)} ${y1.toFixed(3)}" fill="none" stroke="${colOf(a[6])}" stroke-width="${pen.toFixed(1)}" stroke-linecap="round"/>`;
     }
     return o + '</svg>';
   }

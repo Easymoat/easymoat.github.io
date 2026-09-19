@@ -369,7 +369,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 22:07</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 22:18</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -734,9 +734,21 @@
     venux1: [448,486,1,37,53,61,112,152,171],
     vivoactive5: [390,390,0,32,48,54,74,99,144],
     vivoactive6: [390,390,1,30,45,53,97,130,148],
+    // fēnix 9 シリーズ (2026-08 発売)。SDK の機種データがまだ手元に無いので、同じ画面の fēnix 8 の値を仮に使う。
+    // SDK Manager で機種データが入ったら simulator.json の実測に置き換える。466 は fēnix 8 の 454 を拡大した値。
+    fenix943mm: [416,416,1,34,50,58,103,141,159],
+    fenix947mm: [454,454,1,37,53,61,113,153,173],
+    px466: [466,466,1,38,54,63,116,157,178],
+    fenix9solar47mm: [260,260,0,21,32,39,58,65,99],
+    fenix9solar51mm: [280,280,0,22,34,39,62,69,107],
   };
   const DEVICES = {
-    px466: { name: "466 px device (466)", w: 466, h: 466, round: true },   // 新機種用 (2026-09-13)
+    // fēnix 9 シリーズ。キーは仮 (px466 は保存済みの面が参照するので変えない)。実機の product id は SDK に機種データが入ってから。
+    px466: { name: "f\u0113nix 9 / 9 Pro / 9 Pro inReach 51mm (466)", w: 466, h: 466, round: true },
+    fenix947mm: { name: "f\u0113nix 9 / 9 Pro / 9 Pro inReach 47mm (454)", w: 454, h: 454, round: true },
+    fenix943mm: { name: "f\u0113nix 9 / 9 Pro / 9 Pro inReach 43mm (416)", w: 416, h: 416, round: true },
+    fenix9solar51mm: { name: "f\u0113nix 9 Pro Solar / inReach Solar 51mm (280)", w: 280, h: 280, round: true },
+    fenix9solar47mm: { name: "f\u0113nix 9 Pro Solar / inReach Solar 47mm (260)", w: 260, h: 260, round: true },
     approachs7047mm: { name: "Approach S70 47mm (454)", w: 454, h: 454, round: true },
     d2mach2: { name: "D2 Mach 2 (454)", w: 454, h: 454, round: true },
     d2mach2pro: { name: "D2 Mach 2 Pro (454)", w: 454, h: 454, round: true },

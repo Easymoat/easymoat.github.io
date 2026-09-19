@@ -14,6 +14,7 @@
     --bw: #1E3A8A; --bw-light: #E5EBFA;
     --pl: #0891B2; --pl-light: #CFFAFE;
     --wm: #4F46E5; --wm-light: #EEF2FF;
+    --fc: #B7791F; --fc-light: #FEF3C7;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.75; }
@@ -41,6 +42,7 @@
   .card.bw:hover { border-color: var(--bw); } .card.bw .card-tag { color: var(--bw); }
   .card.pl:hover { border-color: var(--pl); } .card.pl .card-tag { color: var(--pl); }
   .card.wm:hover { border-color: var(--wm); } .card.wm .card-tag { color: var(--wm); }
+  .card.fc:hover { border-color: var(--fc); } .card.fc .card-tag { color: var(--fc); }
   .common { margin-top: 40px; background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 22px 24px; }
   .common h2 { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 800; margin-bottom: 10px; }
   .common ul { margin: 0 0 0 20px; }
@@ -100,6 +102,15 @@
         <div class="card-tag" data-en="Web + Garmin app" data-ja="Web + Garmin アプリ">Web + Garmin app</div>
         <div class="card-name">WebMemo &amp; MarketWatch Max</div>
         <div class="card-desc" data-en="Portfolios you build on the web, stored on our server under your Device ID." data-ja="Web で作成したポートフォリオを Device ID に紐づけて当社サーバーに保存。">Portfolios you build on the web, stored on our server under your Device ID.</div>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+    <a class="card fc" href="../facecomposer/privacy/">
+      <img src="../facecomposer_icon.png" alt="Face Composer">
+      <div class="card-body">
+        <div class="card-tag" data-en="Web + Garmin watch face" data-ja="Web + Garmin 文字盤">Web + Garmin watch face</div>
+        <div class="card-name">Face Composer &amp; The Face</div>
+        <div class="card-desc" data-en="Dials and photos you compose, stored under your Device ID so the watch can fetch them. Sharing and purchase records." data-ja="組み立てた文字盤と写真を Device ID に紐づけて保存 (ウォッチが取りに来るため)。共有と購入記録について。">Dials and photos you compose, stored under your Device ID so the watch can fetch them. Sharing and purchase records.</div>
       </div>
       <span class="card-arrow">→</span>
     </a>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Face Composer for Garmin | Easymoat</title>
+<meta name="description" content="Compose your Garmin watch face on the web and it arrives on the watch within 5 minutes. Photos, live stock prices, live scores, weather.">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FC;
+    --white: #FFFFFF;
+    --border: #E2E6EF;
+    --accent: #B7791F;
+    --accent-light: #FEF3C7;
+    --accent-dark: #92400E;
+    --accent2: #DB2777;
+    --text: #111827;
+    --text2: #374151;
+    --muted: #6B7280;
+    --muted2: #9CA3AF;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.6; overflow-x: hidden; }
+
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 40px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); position: sticky; top: 0; z-index: 200; }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; color: var(--muted); transition: all 0.15s; }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+
+  nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 40px; display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: var(--accent); letter-spacing: -0.01em; }
+  .logo span { color: var(--muted2); font-weight: 700; }
+  .nav-badge { background: var(--accent-light); color: var(--accent); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; padding: 4px 10px; border-radius: 20px; text-decoration: none; display: inline-block; white-space: nowrap; transition: background 0.15s, color 0.15s; }
+  @media (max-width: 480px) { .logo { font-size: 18px; } .logo a > span:last-child { display: none; } .logo img { height: 30px !important; width: 30px !important; } }
+  a.nav-badge:hover { background: var(--accent); color: var(--white); }
+  .beta-tag { display: inline-block; background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 8px; border-radius: 10px; vertical-align: middle; margin-left: 6px; }
+
+  main { max-width: 960px; margin: 0 auto; padding: 0 40px 80px; }
+
+  .hero { padding: 64px 0 48px; display: grid; grid-template-columns: 1fr 1.3fr; gap: 40px; align-items: center; }
+  @media (max-width: 720px) { .hero { grid-template-columns: 1fr; gap: 32px; } }
+
+  .hero-visual { display: flex; justify-content: center; align-items: center; }
+  .hero-logo {
+    width: 280px;
+    height: 280px;
+    border-radius: 56px;
+    box-shadow: var(--shadow-lg);
+    background: var(--white);
+    padding: 24px;
+    object-fit: contain;
+  }
+  .screenshots { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 720px) { .screenshots { grid-template-columns: 1fr 1fr; max-width: 420px; margin: 0 auto; } }
+  .screenshot { background: transparent; }
+  .screenshot img { width: 100%; height: auto; display: block; }
+  .screenshot-label { background: var(--white); padding: 10px 14px; font-size: 12px; font-weight: 500; color: var(--muted); border-top: 1px solid var(--border); text-align: center; }
+  .hero-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; padding: 5px 12px; border-radius: 20px; margin-bottom: 20px; }
+  .hero-tag::before { content: ''; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
+  h1 { font-family: 'Syne', sans-serif; font-size: clamp(36px, 5vw, 56px); font-weight: 800; line-height: 1.05; letter-spacing: -0.02em; color: var(--text); margin-bottom: 16px; }
+  h1 em { font-style: normal; color: var(--accent); }
+  .hero-desc { font-size: 16px; line-height: 1.7; color: var(--muted); margin-bottom: 32px; max-width: 680px; }
+  .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  .btn-primary { display: inline-flex; align-items: center; gap: 8px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 8px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(8,145,178,0.3); }
+  .btn-primary:hover { background: var(--accent-dark); transform: translateY(-1px); }
+  .btn-primary.disabled { background: var(--muted2); cursor: not-allowed; pointer-events: none; box-shadow: none; }
+  .btn-secondary { display: inline-flex; align-items: center; gap: 8px; background: var(--white); color: var(--text); font-size: 14px; font-weight: 500; text-decoration: none; padding: 12px 24px; border-radius: 8px; border: 1px solid var(--border); transition: all 0.2s; }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  .section { padding: 64px 0; border-top: 1px solid var(--border); }
+  .section-header { margin-bottom: 32px; }
+  .section-tag { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  h2 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.01em; color: var(--text); margin-bottom: 8px; }
+  .section-desc { font-size: 15px; color: var(--muted); max-width: 680px; }
+
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .feature { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: box-shadow 0.2s, border-color 0.2s; }
+  .feature:hover { box-shadow: var(--shadow); border-color: var(--accent); }
+  .feature-icon { font-size: 28px; margin-bottom: 12px; }
+  .feature h3 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .feature p { font-size: 13px; line-height: 1.6; color: var(--muted); }
+  /* Account セクション: カード枠全体をクリック可能なリンクに */
+  a.feature { display: block; text-decoration: none; color: inherit; cursor: pointer; }
+  a.feature .cta { display: inline-block; margin-top: 12px; font-weight: 600; color: var(--accent); }
+  a.feature.danger:hover { border-color: #DC2626; }
+  a.feature.danger .cta { color: #DC2626; }
+
+  .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 880px; margin: 0 auto; }
+  @media (max-width: 720px) { .pricing-grid { grid-template-columns: 1fr; max-width: 480px; } }
+  .plan { background: var(--white); border: 2px solid var(--accent); border-radius: 16px; padding: 32px; position: relative; box-shadow: 0 0 0 4px rgba(183,121,31,0.10); display: flex; flex-direction: column; }
+  .plan.free { border-color: var(--border); box-shadow: none; }
+  .plan.free .plan-badge { background: var(--muted); }
+  .plan.free .plan-price { color: var(--accent); }
+  .plan.free .plan-features li.included::before { color: var(--accent); }
+  .plan-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; padding: 4px 16px; border-radius: 20px; white-space: nowrap; }
+  .plan-trial-banner { display: inline-block; background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 6px; margin-bottom: 10px; letter-spacing: 0.02em; }
+  .plan-name { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .plan-price { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 800; color: var(--text); line-height: 1; margin-bottom: 4px; }
+  .plan-price-unit { font-size: 18px; color: var(--muted); font-weight: 500; }
+  .plan-note { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+  .plan-features { list-style: none; margin-bottom: 28px; }
+  .plan-features li { font-size: 14px; color: var(--text2); padding: 7px 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .plan-features li.included::before { content: '✓'; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+  .btn-plan { display: block; text-align: center; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px; border-radius: 8px; transition: all 0.2s; background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(8,145,178,0.3); }
+  .btn-plan:hover { background: var(--accent-dark); transform: translateY(-1px); }
+  .btn-plan.disabled { background: var(--muted2); cursor: not-allowed; pointer-events: none; box-shadow: none; }
+  .plan-sub { font-size: 11px; color: var(--muted2); text-align: center; margin-top: 10px; }
+
+  .data-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .data-item { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
+  .data-type { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted2); margin-bottom: 6px; }
+  .data-example { font-size: 13px; font-weight: 600; color: var(--accent); }
+
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .step { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .step-num { width: 32px; height: 32px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+  .step h4 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .step p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  .privacy-box { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; }
+  .privacy-box h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+  .privacy-box p { font-size: 13px; color: var(--muted); line-height: 1.8; margin-bottom: 10px; }
+  .privacy-box a { color: var(--accent); text-decoration: none; }
+  .privacy-box .accent-callout { background: var(--accent-light); padding: 16px; border-radius: 8px; color: var(--text2); border-left: 3px solid var(--accent); }
+
+  footer { background: var(--white); border-top: 1px solid var(--border); padding: 32px 40px; text-align: center; font-size: 13px; color: var(--muted); }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer .footer-links { margin-top: 8px; display: flex; justify-content: center; align-items: center; gap: 16px; flex-wrap: wrap; }
+  footer .footer-links a { color: var(--muted); font-size: 12px; }
+  footer .footer-links a:hover { color: var(--accent); }
+
+  @media (max-width: 768px) {
+    nav, .lang-bar { padding: 12px 20px; }
+    main { padding: 0 20px 60px; }
+    .features { grid-template-columns: 1fr 1fr; }
+    .data-grid { grid-template-columns: repeat(2, 1fr); }
+    .steps { grid-template-columns: 1fr 1fr; }
+    .hero-logo { width: 220px; height: 220px; }
+  }
+  @media (max-width: 480px) {
+    .features { grid-template-columns: 1fr; }
+    .data-grid { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr; }
+  }
+  .hero-note { font-size: 13px; color: var(--muted); margin-top: 10px; }
+  .shots { display:grid; grid-template-columns: 1fr 1fr; gap:16px; align-items:start; }
+  .shot { background: var(--white); border:1px solid var(--border); border-radius:16px; overflow:hidden; box-shadow: var(--shadow); }
+  .shot img { width:100%; display:block; }
+  .shot .cap { padding:10px 14px; font-size:12px; color:var(--muted); border-top:1px solid var(--border); text-align:center; }
+  .badge-soon { display:inline-block; background:var(--accent-light); color:var(--accent-dark); font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:2px 8px; border-radius:10px; margin-left:6px; vertical-align:middle; }
+  .devices { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+  @media (max-width:720px){ .devices{grid-template-columns:1fr} .shots{grid-template-columns:1fr; max-width:420px; margin:0 auto} }
+  .devices .box { background:var(--white); border:1px solid var(--border); border-radius:12px; padding:20px; }
+  .devices h3 { font-size:15px; font-weight:700; margin-bottom:6px; }
+  .devices p { font-size:13px; color:var(--muted); line-height:1.7; }
+</style>
+
+</head>
+<body>
+<div class="lang-bar">
+  <span>🌐</span>
+  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+  <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+</div>
+
+<nav>
+  <div class="logo" style="display:flex; align-items:center; gap:10px;">
+    <a href="../" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;">
+      <img src="../easymoat_logo.png" alt="Easymoat" style="height:36px; width:36px; border-radius:8px; object-fit:cover;">
+      <span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:800;">Easymoat</span><span>.com</span>
+    </a>
+  </div>
+  <a class="nav-badge" href="../watchface/" data-en="Open Face Composer" data-ja="Face Composer を開く">Open Face Composer</a>
+</nav>
+
+<main>
+
+  <div class="hero">
+    <div>
+      <div class="hero-tag" data-en="14-day free trial" data-ja="14日間無料トライアル">14-day free trial</div>
+      <h1><em>Face</em><br>Composer</h1>
+<p class="hero-desc" data-en="Compose your Garmin watch face on the web: your photo, the parts you want, exactly where you want them. Send it, and it is on your wrist within 5 minutes. No app to install on the phone, no account to create." data-ja="Garmin の文字盤を Web で組み立てる。好きな写真、好きな部品、好きな位置に。送れば 5 分以内に手首へ届きます。スマホにアプリを入れる必要も、アカウントを作る必要もありません。">Compose your Garmin watch face on the web: your photo, the parts you want, exactly where you want them. Send it, and it is on your wrist within 5 minutes. No app to install on the phone, no account to create.</p>      <div class="hero-cta">
+        <a href="../watchface/" class="btn-primary" data-en="Open Face Composer" data-ja="Face Composer を開く">Open Face Composer</a>
+        <a href="#pricing" class="btn-secondary" id="btn-pass" data-en="Get the 1-Year Pass — $9.99" data-ja="1 年パスを購入 — $9.99">Get the 1-Year Pass — $9.99</a>
+      </div>
+<p class="hero-note" data-en="Every feature is free for 14 days, no payment to start. After that, one purchase: $9.99 for a full year from the day you buy. No subscription, nothing to cancel." data-ja="全機能を 14 日間無料で、開始時の支払いは不要。その後は購入日から 1 年間有効の $9.99 の 1 年パス。サブスクではなく、解約手続きもありません。">Every feature is free for 14 days, no payment to start. After that, one purchase: $9.99 for a full year from the day you buy. No subscription, nothing to cancel.</p>    </div>
+    <div class="shots">
+      <div class="shot"><img src="composer.png" alt="Face Composer on a laptop"><div class="cap" data-en="Face Composer (web)" data-ja="Face Composer (Web)">Face Composer (web)</div></div>
+      <div class="shot"><img src="theface.png" alt="The Face on a Garmin watch"><div class="cap" data-en="The Face (watch)" data-ja="The Face (ウォッチ)">The Face (watch)</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="How it works" data-ja="使い方">How it works</div>
+<h2 data-en="Two pieces: The Face on the watch, Face Composer on the web" data-ja="ウォッチの The Face と、Web の Face Composer の 2 つで動きます">Two pieces: The Face on the watch, Face Composer on the web</h2><p class="section-desc" data-en="The Face is a Connect IQ watch face that shows whatever you compose. It checks for a new dial every 5 minutes, so you never plug anything in." data-ja="The Face は Connect IQ の文字盤アプリで、Web で組んだ文字盤をそのまま表示します。5 分ごとに新しい文字盤を取りに来るので、ケーブルをつなぐ作業はありません。">The Face is a Connect IQ watch face that shows whatever you compose. It checks for a new dial every 5 minutes, so you never plug anything in.</p>    </div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><h4 data-en="Install The Face" data-ja="The Face を入れる">Install The Face</h4><p data-en="From the Connect IQ Store. The watch face shows your Device ID (XXXX-XXXX) at the bottom of the dial." data-ja="Connect IQ ストアから。文字盤の下部にあなたの Device ID (XXXX-XXXX) が表示されます。">From the Connect IQ Store. The watch face shows your Device ID (XXXX-XXXX) at the bottom of the dial.</p></div>
+      <div class="step"><div class="step-num">2</div><h4 data-en="Open Face Composer" data-ja="Face Composer を開く">Open Face Composer</h4><p data-en="On a computer, type the Device ID once. That is the whole sign-in: there is no account and no password." data-ja="パソコンで Device ID を一度入力します。サインインはそれだけで、アカウントもパスワードもありません。">On a computer, type the Device ID once. That is the whole sign-in: there is no account and no password.</p></div>
+      <div class="step"><div class="step-num">3</div><h4 data-en="Compose" data-ja="組み立てる">Compose</h4><p data-en="Drag parts onto the dial, pick a photo and frame it, choose colours and sizes. Save it to your Collection (up to 30)." data-ja="部品を文字盤にドラッグし、写真を選んで枠にはめ、色と大きさを決めます。Collection に保存 (最大 30 個)。">Drag parts onto the dial, pick a photo and frame it, choose colours and sizes. Save it to your Collection (up to 30).</p></div>
+      <div class="step"><div class="step-num">4</div><h4 data-en="Send" data-ja="送る">Send</h4><p data-en="Press To watch. Within 5 minutes the watch shows it. Switch between saved dials from your phone's browser, anywhere." data-ja="To watch を押すと 5 分以内にウォッチに出ます。保存した文字盤の切り替えはスマホのブラウザからどこでも。">Press To watch. Within 5 minutes the watch shows it. Switch between saved dials from your phone's browser, anywhere.</p></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Features" data-ja="機能">Features</div>
+<h2 data-en="Everything on the dial is a part you place" data-ja="文字盤の上のものは、すべてあなたが置いた部品です">Everything on the dial is a part you place</h2>    </div>
+    <div class="features">
+      <div class="feature"><div class="feature-icon">🧩</div><h3 data-en="Free placement" data-ja="自由な配置">Free placement</h3><p data-en="Time, date, battery, seconds, notifications, hands, rim ticks and meters, lines, circles and rectangles. Put them anywhere, with undo, align and multi-select." data-ja="時刻・日付・電池・秒・通知、針、縁の目盛とメーター、線・円・四角。どこにでも置け、元に戻す・整列・複数選択も揃っています。">Time, date, battery, seconds, notifications, hands, rim ticks and meters, lines, circles and rectangles. Put them anywhere, with undo, align and multi-select.</p></div>
+      <div class="feature"><div class="feature-icon">🖼️</div><h3 data-en="Your photo, framed your way" data-ja="写真を好きな形で">Your photo, framed your way</h3><p data-en="Square, circle, heart, star and more. Zoom, move, brightness and saturation. The cut-out travels to the watch in 32 colours, tuned for AMOLED." data-ja="四角・円・ハート・星など。拡大・移動・明るさ・彩度。切り抜きは AMOLED 向けの 32 色でウォッチへ届きます。">Square, circle, heart, star and more. Zoom, move, brightness and saturation. The cut-out travels to the watch in 32 colours, tuned for AMOLED.</p></div>
+      <div class="feature"><div class="feature-icon">❤️</div><h3 data-en="Body and weather" data-ja="身体と天気">Body and weather</h3><p data-en="Heart rate, steps, floors, calories, weight, Body Battery, stress, respiration. Weather now, humidity, wind, pressure, altitude, rain, moon age, today's high/low and a now / +1h / +2h strip." data-ja="心拍・歩数・階段・カロリー・体重・Body Battery・ストレス・呼吸。現在の天気・湿度・風・気圧・高度・雨・月齢・今日の最高最低、現在 / 1 時間後 / 2 時間後の帯。">Heart rate, steps, floors, calories, weight, Body Battery, stress, respiration. Weather now, humidity, wind, pressure, altitude, rain, moon age, today's high/low and a now / +1h / +2h strip.</p></div>
+      <div class="feature"><div class="feature-icon">📈</div><h3 data-en="Live markets" data-ja="株価をライブで">Live markets</h3><p data-en="Two stock parts: price or daily change for any ticker Yahoo Finance knows, on the dial itself." data-ja="株価の部品が 2 つ。Yahoo Finance にある銘柄なら、価格か当日の変化率を文字盤に。">Two stock parts: price or daily change for any ticker Yahoo Finance knows, on the dial itself.</p></div>
+      <div class="feature"><div class="feature-icon">⚾</div><h3 data-en="Live scores" data-ja="試合をライブで">Live scores</h3><p data-en="Four game slots for pro baseball, football, basketball, hockey and the major soccer leagues including J1. Score and status, your team, updated while the game is on." data-ja="4 つの試合枠。プロ野球・アメフト・バスケ・ホッケーと、J1 を含む主要サッカーリーグ。スコアと状況を、試合中に更新。">Four game slots for pro baseball, football, basketball, hockey and the major soccer leagues including J1. Score and status, your team, updated while the game is on.</p></div>
+      <div class="feature"><div class="feature-icon">⏱️</div><h3 data-en="Arrives in 5 minutes" data-ja="5 分で届く">Arrives in 5 minutes</h3><p data-en="The watch fetches your dial in the background. No cable, no phone app, no waiting for a sync." data-ja="ウォッチがバックグラウンドで取りに来ます。ケーブルも、スマホアプリも、同期待ちもありません。">The watch fetches your dial in the background. No cable, no phone app, no waiting for a sync.</p></div>
+      <div class="feature"><div class="feature-icon">📚</div><h3 data-en="A Collection of 30" data-ja="30 個の Collection">A Collection of 30</h3><p data-en="Keep up to 30 dials and switch between them from any browser, including your phone." data-ja="最大 30 個の文字盤を保存し、スマホを含むどのブラウザからでも切り替えられます。">Keep up to 30 dials and switch between them from any browser, including your phone.</p></div>
+      <div class="feature"><div class="feature-icon">🎁</div><h3 data-en="Share with friends" data-ja="友だちと共有">Share with friends</h3><span class="badge-soon" data-en="Coming" data-ja="近日">Coming</span><p data-en="Send a dial to a friend's Collection, or publish it to the gallery with an optional passphrase. Pass holders only." data-ja="友だちの Collection へ送る、合言葉付きでギャラリーに公開する。Pass をお持ちの方の機能です。">Send a dial to a friend's Collection, or publish it to the gallery with an optional passphrase. Pass holders only.</p></div>
+      <div class="feature"><div class="feature-icon">🔒</div><h3 data-en="No account" data-ja="アカウント不要">No account</h3><p data-en="Your Device ID is the only identifier. Nothing to sign up for, nothing to remember." data-ja="識別子は Device ID だけ。登録するものも、覚えるものもありません。">Your Device ID is the only identifier. Nothing to sign up for, nothing to remember.</p></div>
+    </div>
+  </div>
+
+  <div class="section" id="pricing">
+    <div class="section-header">
+      <div class="section-tag" data-en="Pricing" data-ja="料金">Pricing</div>
+<h2 data-en="14 days free, then one simple purchase" data-ja="14 日間無料、その後はシンプルな買い切り 1 本">14 days free, then one simple purchase</h2><p class="section-desc" data-en="Start with a 14-day free trial. No credit card, no account. After that, a single one-time purchase covers a full year. No subscription, no auto-renewal, nothing to cancel." data-ja="まずは 14 日間の無料トライアル。クレジットカードもアカウントも不要です。その後は一回払いで 1 年間。サブスクも自動更新もなく、解約手続きも要りません。">Start with a 14-day free trial. No credit card, no account. After that, a single one-time purchase covers a full year. No subscription, no auto-renewal, nothing to cancel.</p>    </div>
+    <div class="pricing-grid" style="grid-template-columns:1fr; max-width:480px;">
+      <div class="plan">
+        <div class="plan-badge" data-en="One-time · No subscription" data-ja="買い切り · サブスクなし">One-time · No subscription</div>
+        <div class="plan-name" data-en="1-Year Pass" data-ja="1 年パス">1-Year Pass</div>
+        <div class="plan-price">$9.99 <span class="plan-price-unit" data-en="once" data-ja="買い切り">once</span></div>
+        <div class="plan-note" data-en="One payment · Full features for 365 days from the day you buy · No auto-renewal" data-ja="一回払い · 購入日から 365 日間フル機能 · 自動更新なし">One payment · Full features for 365 days from the day you buy · No auto-renewal</div>
+        <ul class="plan-features">
+          <li data-en="Face Composer: every part, photos, live markets and scores" data-ja="Face Composer の全部品、写真、株価と試合">Face Composer: every part, photos, live markets and scores</li>
+          <li data-en="Collection of 30 dials, switch from any browser" data-ja="30 個の Collection、どのブラウザからでも切替">Collection of 30 dials, switch from any browser</li>
+          <li data-en="Sharing with friends and the gallery (coming)" data-ja="友だちとの共有とギャラリー (近日)">Sharing with friends and the gallery (coming)</li>
+          <li data-en="Renew for another year whenever you like. Your dials stay on the watch either way." data-ja="続けたいときにもう 1 年分を購入。買わなくても文字盤はウォッチに残ります。">Renew for another year whenever you like. Your dials stay on the watch either way.</li>
+        </ul>
+        <a href="#" class="btn-plan" id="btn-pass-2" data-en="Get the 1-Year Pass — $9.99" data-ja="1 年パスを購入 — $9.99">Get the 1-Year Pass — $9.99</a>
+        <div class="plan-sub" data-en="Enter The Face's Device ID at checkout. The activation key is emailed to you instantly." data-ja="決済時に The Face の Device ID を入力します。有効化キーはすぐにメールで届きます。">Enter The Face's Device ID at checkout. The activation key is emailed to you instantly.</div>
+      </div>
+    </div>
+    <p id="cancellation-policy" style="font-size:12px; color:var(--muted); max-width:680px; margin:24px auto 0; line-height:1.7;"></p>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Devices" data-ja="対応デバイス">Devices</div>
+<h2 data-en="62 Garmin watches" data-ja="Garmin の 62 機種">62 Garmin watches</h2>    </div>
+    <div class="devices">
+      <div class="box"><h3 data-en="Full support (20)" data-ja="フル対応 (20 機種)">Full support (20)</h3><p data-en="AMOLED watches with vector fonts: every text size, bold and the photo background work exactly as composed. Forerunner 165 / 265 / 265s / 570 / 965 / 970, fēnix 8 (AMOLED) / 8 Pro / E, Venu 3 / 3S / 4 / X1, vívoactive 6, D2 Mach 2." data-ja="ベクターフォントを持つ AMOLED 機。文字サイズ・太字・写真の背景が組んだとおりに出ます。Forerunner 165 / 265 / 265s / 570 / 965 / 970、fēnix 8 (AMOLED) / 8 Pro / E、Venu 3 / 3S / 4 / X1、vívoactive 6、D2 Mach 2。">AMOLED watches with vector fonts: every text size, bold and the photo background work exactly as composed. Forerunner 165 / 265 / 265s / 570 / 965 / 970, fēnix 8 (AMOLED) / 8 Pro / E, Venu 3 / 3S / 4 / X1, vívoactive 6, D2 Mach 2.</p></div>
+      <div class="box"><h3 data-en="Partial support (42)" data-ja="一部対応 (42 機種)">Partial support (42)</h3><p data-en="Placement, colours, icons and photos work; text comes in three fixed sizes (S / M / L). Includes epix Gen 2, fēnix 7 series, Venu 2 / 2 Plus / 2S, vívoactive 5, Instinct 3 AMOLED, Approach S50 / S70, MARQ Gen 2 and Descent Mk3. Face Composer lists every device." data-ja="配置・色・アイコン・写真は動き、文字は S / M / L の 3 段固定になります。epix Gen 2、fēnix 7 系、Venu 2 / 2 Plus / 2S、vívoactive 5、Instinct 3 AMOLED、Approach S50 / S70、MARQ Gen 2、Descent Mk3 など。全機種の一覧は Face Composer にあります。">Placement, colours, icons and photos work; text comes in three fixed sizes (S / M / L). Includes epix Gen 2, fēnix 7 series, Venu 2 / 2 Plus / 2S, vívoactive 5, Instinct 3 AMOLED, Approach S50 / S70, MARQ Gen 2 and Descent Mk3. Face Composer lists every device.</p></div>
+    </div>
+  </div>
+
+  <div class="section" id="privacy">
+    <div class="section-header">
+      <div class="section-tag" data-en="Privacy" data-ja="プライバシー">Privacy</div>
+<h2 data-en="What we keep, and why" data-ja="何を預かり、なぜ必要か">What we keep, and why</h2>    </div>
+    <div class="privacy-box">
+<p data-en="Face Composer stores your dials, your photos and your settings on our server under your watch's Device ID, because that is how the watch fetches them. There is no account and no password. Prices come from Yahoo Finance, scores from public sports feeds, forecasts from Open-Meteo. Payment is handled by Stripe; we receive your email and Device ID to send the key and to contact you if needed." data-ja="Face Composer は、文字盤・写真・設定をウォッチの Device ID に紐づけて当社サーバーに保存します。ウォッチがそこから取りに来るためです。アカウントもパスワードもありません。株価は Yahoo Finance、試合は公開のスポーツデータ、予報は Open-Meteo から取得します。決済は Stripe が処理し、当社はキーの送付と必要な連絡のためにメールアドレスと Device ID を受け取ります。">Face Composer stores your dials, your photos and your settings on our server under your watch's Device ID, because that is how the watch fetches them. There is no account and no password. Prices come from Yahoo Finance, scores from public sports feeds, forecasts from Open-Meteo. Payment is handled by Stripe; we receive your email and Device ID to send the key and to contact you if needed.</p>      <p><a href="privacy/" data-en="Read the full Privacy Policy →" data-ja="プライバシーポリシー全文を読む →">Read the full Privacy Policy →</a></p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>© 2026 Easymoat. All rights reserved.</p>
+  <div class="footer-links">
+    <span class="em-footer"></span>
+    <span style="color:var(--border)">|</span>
+    <a href="privacy/" data-en="Privacy Policy" data-ja="プライバシーポリシー">Privacy Policy</a>
+    <span style="color:var(--border)">|</span>
+    <a href="../tokutei.html" data-en="Specified Commercial Transactions Act" data-ja="特定商取引法に基づく表記">Specified Commercial Transactions Act</a>
+    <span style="color:var(--border)">|</span>
+    <a href="../" data-en="← Back to Easymoat" data-ja="← Easymoatに戻る">← Back to Easymoat</a>
+  </div>
+  <p style="margin-top:10px; font-size:11px; color:var(--muted2);">Icons in Face Composer and The Face: Material Design Icons by Pictogrammers, Apache License 2.0.</p>
+</footer>
+
+<script>
+var _e = 'easymoat' + '@' + 'gmail.com';
+var POLICY = {
+  en: 'Billing Policy: Face Composer starts with a 14-day free trial (no credit card required). Nothing is charged and nothing auto-renews. After the trial, the 1-Year Pass is a one-time purchase valid for 365 days from the purchase date. It does not renew automatically. When it ends, Face Composer becomes read-only and the watch keeps showing the last dial you sent. Refunds are not provided once the activation key has been delivered; if the key does not work, contact <span class="em"></span> and we will fix it.',
+  ja: 'お支払いについて：Face Composer は 14 日間の無料トライアル (クレジットカード登録不要) から始まります。トライアル中は課金されず、自動更新もありません。トライアル後の 1 年パスは、購入日から 365 日間有効の買い切りで、自動更新はされません。期限が切れると Face Composer は閲覧のみになり、ウォッチは最後に送った文字盤を表示し続けます。有効化キーの送付後の返金はお受けできません。キーが機能しない場合は <span class="em"></span> までご連絡ください。'
+};
+function injectEmails() {
+  document.querySelectorAll('.em').forEach(function(el) { el.innerHTML = '<a href="mailto:' + _e + '" style="color:var(--accent); text-decoration:none;">' + _e + '</a>'; });
+  document.querySelectorAll('.em-footer').forEach(function(el) { el.innerHTML = '<a href="mailto:' + _e + '">' + _e + '</a>'; });
+}
+function setLang(lang) {
+  var L = (lang === 'ja') ? 'ja' : 'en';
+  document.documentElement.lang = L;
+  document.querySelectorAll('[data-en]').forEach(function (el) {
+    if (el.children.length > 0) return;
+    var t = el.getAttribute('data-' + L);
+    if (t != null) el.textContent = t;
+  });
+  document.getElementById('cancellation-policy').innerHTML = POLICY[L];
+  document.getElementById('btn-en').classList.toggle('active', L === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', L === 'ja');
+  try { localStorage.setItem('em_lang', L); } catch (e) {}
+  injectEmails();
+}
+(function () {
+  var saved = 'en';
+  try { saved = localStorage.getItem('em_lang') || localStorage.getItem('pl_lang') || 'en'; } catch (e) {}
+  setLang(saved === 'ja' ? 'ja' : 'en');
+})();
+</script>
+</body>
+</html>

@@ -363,7 +363,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 17:02</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 19:52</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -934,9 +934,41 @@
     if (isSoccer(lg)) return String(tm || SOC_TEAMS[lg][0][0]);
     return String(tm || (lg === 'nfl' ? 'KC' : lg === 'nba' ? 'TOR' : 'MTL')); };
   // 見本は選んだチームとリーグで組む (実機は試合が無ければ次の試合、それも無ければ --)。
+  // 試合の実データ (2026-09-19): 株と同じく文字盤の見本にも本物を出す。/api/wf/game?bb=lg:tm,… (面を介さない)。
+  // 文字の組み立ては実機 (WfData.gameLine / gameState) と同じ。取れるまでは見本の文字。
+  const GAMEQ = { key: '', at: 0, g: [] };
+  const gameKey = () => [0, 1, 2, 3].map((i) => (bbTm(i) ? `${bbLg(i)}:${bbTm(i)}` : '')).join(',');
+  function syncGames(force) {
+    const key = gameKey();
+    if (!key.replace(/,/g, '')) { GAMEQ.key = key; GAMEQ.g = []; return; }
+    if (!force && key === GAMEQ.key && Date.now() - GAMEQ.at < 60000) return;
+    const want = key; GAMEQ.key = key; GAMEQ.at = Date.now();
+    const tzo = -new Date().getTimezoneOffset() * 60;
+    fetch(`${$('api').value}/game?bb=${encodeURIComponent(key)}&tzo=${tzo}`).then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (j && GAMEQ.key === want) { GAMEQ.g = j.g || []; render(); } }).catch(() => {});
+  }
+  setInterval(() => { if (GAMEQ.key.replace(/,/g, '')) syncGames(true); }, 60000);
+  const gameOf = (i) => (GAMEQ.key === gameKey() ? GAMEQ.g[i] : undefined);   // undefined = まだ / null = 試合なし
+  function gameText(t) {
+    const g = gameOf(bbSlot(t));
+    if (g === undefined) return null;
+    if (!g) return '--';
+    if (t % 2 === 0) { if (!g.a && !g.hm) return '--'; return g.sc ? `${g.a} ${g.sc} ${g.hm}` : `${g.a} @ ${g.hm}`; }
+    if (!g.c && g.tm) return g.tm;
+    return g.s || '--';
+  }
+  // By state の色 (実機と同じ: 進行中 表 = 青 / 裏 = 赤 / その他 = 緑、終了 = 橙、未開始 = 選んだ色)。見本の間は表の青。
+  function gameColor(t, own) {
+    const g = gameOf(bbSlot(t));
+    if (g === undefined) return C_BLUE;
+    if (!g) return own;
+    if (g.c === 1) return g.h === 1 ? C_BLUE : g.h === 2 ? C_RED : C_GREEN;
+    return g.c === 2 ? C_ORANGE : own;
+  }
   const ballSample = (t) => {
     const i = bbSlot(t), lg = bbLg(i), ab = teamAbbr(i);
     if (!bbTm(i)) return '--';
+    const real = gameText(t); if (real !== null) return real;
     if (t % 2 === 0) {
       if (isSoccer(lg)) { const o = (SOC_TEAMS[lg].find(([x]) => x !== ab) || ['CHE'])[0]; return `${ab} 1-1 ${o}`; }
       return `${ab} 3-5 ${lg === 'nfl' ? 'DEN' : lg === 'nba' ? 'BOS' : lg === 'nhl' ? 'MTL' : 'BOS'}`;
@@ -1654,6 +1686,7 @@
 
   // ── Render ─────────────────────────────────────────────────────────────────
   function render() {
+    if (st.el.some((e) => isBall(e[0]))) syncGames(false);
     const d = dev(), k = d.w / 454;
     stage.style.width = d.w + 'px'; stage.style.height = d.h + 'px';
     const vs = DIAL_PX / Math.max(d.w, d.h);   // visual scale only
@@ -1696,7 +1729,7 @@
     div.dataset.i = i;
     // 株の部品で「上げ下げで色を変える」を選んでいる間は、分かっていればその向きの色で描く。
     div.style.color = (isStock(t) && (f & 8)) ? (stkInfo(t) ? (stkInfo(t).u < 0 ? downCol() : stkInfo(t).u > 0 ? upCol() : colOf(c)) : upCol())
-                    : (isBall(t) && (f & 8)) ? C_BLUE                     // 見本は進行中の表 (青)
+                    : (isBall(t) && (f & 8)) ? gameColor(t, colOf(c))      // 実データの状態の色 (取れるまでは表の青)
                     : colOf(c);
     if (def.dial) {   // hands / rim: one drawing over the whole dial, color from the element
       // 画面全体を覆うので、当たり判定は「描かれた線の上」だけにする。板のまま置くと

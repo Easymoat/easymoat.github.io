@@ -91,6 +91,7 @@
   .dialbar.top .grp { width: 100%; }
   .dialsec { width: 100%; max-width: 1040px; justify-content: flex-start; border-top: 1px solid var(--line); padding-top: 22px; }
   .dialsec .ctl { flex-wrap: nowrap; white-space: nowrap; }
+  .bposrow { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
   .fillctl { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   @media (max-width: 760px) { .dialsec .ctl { flex-wrap: wrap; } }
   .dialbar.top select { height: 28px; }
@@ -262,6 +263,7 @@
   .status { font-family: var(--mono); font-size: 12px; color: var(--ink-2); height: 17px; line-height: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   #facenote, #imgslotnote { display: block; min-height: 1.4em; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   #insp .hint { min-height: 1.4em; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .imgbox .status:empty { display: none; }
   .status.ok { color: var(--ok); } .status.err { color: var(--danger); } .status.warn { color: var(--accent); }
   .field { display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 12px; }
   .opt { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -361,7 +363,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 08:42</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 09:15</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -395,7 +397,7 @@
     <div class="group"><span class="lbl">Graphs</span><div class="parts" id="parts-graph"></div><span class="muted">Heart rate and stress: the last 6 hours. Steps: the last 7 days, today on the right. Two sizes.</span></div>
     <div class="group"><span class="lbl">Weather</span><div class="parts" id="parts-wx"></div></div>
     <div class="group"><span class="lbl">Hands</span><div class="parts" id="parts-hands"></div></div>
-    <div class="group"><span class="lbl">Rim</span><div class="parts" id="parts-rim"></div></div>
+    <div class="group"><span class="lbl">Rim</span><div class="parts" id="parts-rim"></div><div class="bposrow" title="Where the Batons sit. Inner leaves room for the Meter arcs; Edge is close to the bezel."><span class="muted">Batons</span><span class="cb units" id="bpos"><button type="button" data-v="0">Inner</button><button type="button" data-v="1">Edge</button></span></div></div>
   </aside>
 
   <section class="stagewrap">
@@ -442,10 +444,9 @@
         <div class="opts">
           <div class="grp" title="The shape of the image frame on the dial."><span class="lbl">Shape <span class="lblnote">Shift+click to add a second shape</span></span><div class="ctl"><span class="cb" id="imgshape"></span></div>
             <div class="ctl" id="shapeselrow" hidden title="Size and Rotate change the shape chosen here.">Adjust <span class="cb" id="shapesel"></span></div>
-            <div class="ctl">Rotate <span class="cb"><button type="button" id="rotl" title="Turn the frame 45° anticlockwise">&#8634; 45°</button><button type="button" id="rotr" title="Turn the frame 45° clockwise">&#8635; 45°</button></span><span class="muted" id="rotv">0°</span><span class="vsep"></span><span class="fillctl" title="No photo: the frame shape is filled with one color instead."><span class="muted">Fill color</span><input type="color" id="imgfill" value="#3a7bd5"><span class="swatches" id="fillsw" title="Recently used fill colors"></span><button class="btn" id="imgfillon">Use color (no photo)</button></span></div>
+            <div class="ctl">Rotate <span class="cb"><button type="button" id="rotl" title="Turn the frame 45° anticlockwise">&#8634; 45°</button><button type="button" id="rotr" title="Turn the frame 45° clockwise">&#8635; 45°</button></span><span class="muted" id="rotv">0°</span><span class="vsep"></span><span class="fillctl" title="No photo: the frame shape is filled with one color instead.">Fill color<input type="color" id="imgfill" value="#3a7bd5"><span class="swatches" id="fillsw" title="Recently used fill colors"></span><button class="btn toggle" id="imgfillon" title="ON: the frame is filled with this color instead of a photo">OFF</button></span></div>
 </div>
-          <div class="grp"><span class="lbl">Photos</span><div class="photos" id="photos"></div><div class="muted" id="imgslotnote"></div></div>
-          <div class="grp">
+          <div class="grp"><span class="lbl">Photos</span><div class="photos" id="photos"></div><div class="muted" id="imgslotnote"></div>
             <div class="ctl"><label class="btn file" for="imgfile">Add photo…</label><input type="file" id="imgfile" accept="image/png,image/jpeg,image/webp" hidden><span class="muted" id="imgfilename"></span><button class="btn danger" id="imgremove" disabled>Delete photo</button></div>
             <div class="status" id="imgstatus"></div></div>
           <div class="grp" title="How many colors the cut-out is reduced to when you save. The watch can show at most 32."><span class="lbl">Colors</span><div class="ctl"><span class="cb" id="imgcolors"></span><span class="verdict" id="imgverdict"></span></div>
@@ -992,6 +993,7 @@
   // 四角形 → 上下左右の 4 本の線。実機はこの線と、線どうしの角の R (lj) を描く。
   // f の bit4 = 四角形から作った線 (読み直す時に捨て、rq から四角形に戻す)。
   const F_RECTLINE = 16;
+  const F_EDGE = 16;       // Rim: Batons (69) だけ: 縁ぎりぎりに置く (2026-09-19)。線の F_RECTLINE とは種別が違うので重ならない
   function rectLines(e) {
     const [, x, y, , s, c, f] = e, w = rectW(e), h = rectH(e), d = dev();
     const vlen = Math.round(h * d.h / d.w);              // 線の長さは幅の千分率
@@ -1327,7 +1329,7 @@
       return null;
     }
     // 縁の仕様 (複数可)
-    function rim(t, k, mt, mc, mk, mv) {
+    function rim(t, k, mt, mc, mk, mv, edge) {
       const L = (v) => v * k.l, W = (v) => v * k.w;
       if (t === 60) return [[0, 60, 5, 2, r1(L(10)), odd(W(3)), r1(L(22)), odd(W(6))]];
       if (t === 61) return [[1, 12, 3, 3, r1(W(4)), r1(W(7))]];
@@ -1336,8 +1338,10 @@
       // 細い 2 本の円を 60 本の細線で橋渡し、内側に細長い植字バトン。角は丸めない (実機と同じ)。
       if (t === 69) {
         // 太いバトンだけ (2026-09-18 ユーザー指示: 二重線と細い目盛りを外す)。位置は以前のまま。
-        return [[0, 12, 0, r1(L(21)), r1(L(40)), odd(W(7)), r1(L(40)), odd(W(7)), 0],
-                [0, 1, 1, r1(L(21)), r1(L(40)), odd(W(13)), r1(L(40)), odd(W(13)), 0]];
+        // 位置は 2 つ (2026-09-19): Inner = Meter の弧と重ならない位置 (従来)、Edge = 縁ぎりぎり。
+        const ins = r1(L(edge ? 3 : 21));
+        return [[0, 12, 0, ins, r1(L(40)), odd(W(7)), r1(L(40)), odd(W(7)), 0],
+                [0, 1, 1, ins, r1(L(40)), odd(W(13)), r1(L(40)), odd(W(13)), 0]];
       }
       if (t === 63) return [[2, rad(R - 2 - W(2.5)), odd(W(5))], [0, 4, 1, 2, r1(L(26)), odd(W(7)), r1(L(26)), odd(W(7))]];
       if (ARCSET[t]) {
@@ -1430,18 +1434,18 @@
       return o;
     }
     let elCol = '';                                   // 部品の色 (下地の混色に使う)
-    function svgFor(t, k, mt, mc, col, mk, mv) {
+    function svgFor(t, k, mt, mc, col, mk, mv, edge) {
       elCol = col || '';
       const h = hands(t, k);
       if (h) return handSvg(h[1], T.h) + handSvg(h[2], T.m) + (h[0] > 0 ? `<circle cx="${R}" cy="${R}" r="${h[0]}"/>` : '');
-      return rimSvg(rim(t, k, mt, mc, mk, mv));
+      return rimSvg(rim(t, k, mt, mc, mk, mv, edge));
     }
     return { R, hands, rim, svgFor };
   })();
   // One dial part as an <svg> that fills the dial; color comes from the element (currentColor).
-  function dialArt(t, s, w, h, col) {
+  function dialArt(t, s, w, h, col, edge) {
     const k = DIAL_SCALE[Math.min(Math.max(s, 0), 3)];
-    const inner = DIAL.svgFor(t, k, st.mt, st.mc, col, st.mk, st.mv);
+    const inner = DIAL.svgFor(t, k, st.mt, st.mc, col, st.mk, st.mv, edge);
     if (!inner) return '';
     return `<svg width="${w}" height="${h}" viewBox="0 0 454 454" fill="currentColor" style="display:block">${inner}</svg>`;
   }
@@ -1665,7 +1669,7 @@
       const dv = dev();
       div.classList.add('dialpart');
       div.style.width = dv.w + 'px'; div.style.height = dv.h + 'px';
-      div.innerHTML = dialArt(t, s, dv.w, dv.h, colOf(c)) + '<span class="anchor"></span>';
+      div.innerHTML = dialArt(t, s, dv.w, dv.h, colOf(c), t === 69 && (f & F_EDGE)) + '<span class="anchor"></span>';
       div.addEventListener('pointerdown', (ev) => startMove(ev, i));
       return div;
     }
@@ -1838,7 +1842,7 @@
       const k = DIAL_SCALE[Math.min(Math.max(e[4], 0), 3)];
       const h = DIAL.hands(e[0], k);
       if (h && !out.hd) { out.hd = h; continue; }
-      const r = DIAL.rim(e[0], k, st.mt, st.mc, st.mk, st.mv);
+      const r = DIAL.rim(e[0], k, st.mt, st.mc, st.mk, st.mv, e[0] === 69 && (e[6] & F_EDGE));
       // 縁は 2 つまで重ねられるので、原型ごとにその部品の色を添える (実機は rc[i] で塗り分ける)。
       if (r) { out.rm = (out.rm || []).concat(r); out.rc = (out.rc || []).concat(r.map(() => e[5])); }
     }
@@ -2149,8 +2153,10 @@
   function lockInspHeight() {
     const el = $('insp'); if (!el) return;
     const h = Math.ceil(el.getBoundingClientRect().height);
-    // 2026-09-19: 基本の 3 行が固定になったので高さは確保しない (Dial を上へ詰める)。
-    void h;
+    // 基本の 3 行 + 種類ごとの項目 2 行ぶんを常に確保する (2 行までなら Dial が動かない、2026-09-19)。
+    void h; const f = $('tofront'); if (!f) return;
+    const row = f.closest('.field'), top = el.getBoundingClientRect().top, base = row.getBoundingClientRect().bottom - top;
+    el.style.minHeight = Math.ceil(base + 2 * (row.offsetHeight + 10) + 26) + 'px';
   }
   window.addEventListener('resize', () => { INSP_MIN = 0; const el = $('insp'); if (el) el.style.minHeight = ''; });
   let PICK_OPEN = 0;        // 開いている OS のカラーパネルの数
@@ -2275,7 +2281,7 @@
           }</select><input type="color" class="pick mtc" data-i="${i}" value="${colOf((st.mc || [])[i] >= 0 ? st.mc[i] : arcEl[5])}" title="Color of the arc itself — right-click to follow the Rim part again"><input type="color" class="pick mtk" data-i="${i}" value="${colOf((st.mk || [])[i] >= 0 ? st.mk[i] : arcEl[5])}" title="Color of the track (the empty part of the arc) — right-click for the automatic faint shade"></label>`; }).join('')
         }</span></div>` : ''}
       </div>
-      <div class="muted hint">${COLOR_NOTE ? `<span class="status err">${COLOR_NOTE}</span> ` : ''}${none ? 'Shift+click (or Cmd/Ctrl+click) selects several parts.' : multi ? `${all.length} parts selected — Anchor, Size, Icon size, Color and Icon apply to all of them.` : ''}</div>`;
+      <div class="muted hint">${COLOR_NOTE ? `<span class="status err">${COLOR_NOTE}</span> ` : ''}${none ? '' : multi ? `${all.length} parts selected — Anchor, Size, Icon size, Color and Icon apply to all of them.` : ''}</div>`;
     // 色の入力欄を触っている間は右の欄を作り直さない (作り直すとパネルごと消える)。
     const bindPickers = () => box.querySelectorAll('input[type="color"]').forEach((pk) => {
       pk.addEventListener('focus', () => { PICK_OPEN++; });
@@ -2526,6 +2532,7 @@
   }
   // 針と縁は入 / 切。同じ組の中では 1 つだけ (針を 2 種類同時には置かない)。
   const DIAL_MAX = { rim: 2, hands: 1 };   // 縁は 2 つまで重ねられる (針は 1 つ)
+  document.querySelectorAll('#bpos button').forEach((b) => b.addEventListener('click', () => setBatonsPos(+b.dataset.v === 1)));
   function toggleDialPart(t) {
     if (elCount(st.el) >= EL_MAX && !st.el.some((x) => x[0] === t)) { setStatus('shelfstatus', `The watch takes ${EL_MAX} parts — remove one before adding another. Lines do not count.`, 'err'); return; }
     const grp = TYPES[t].grp, was = st.el.findIndex((e) => e[0] === t);
@@ -2536,13 +2543,24 @@
       if (max === 1) { st.el = st.el.filter((e) => same.indexOf(e) < 0); }   // 針は 1 つ = 入れ替え
       else { setStatus('shelfstatus', `${grp === 'rim' ? 'Rim' : 'Hands'} can be stacked ${max} deep — take one off first.`, 'err'); return; }
     }
-    st.el.push([t, 500, 500, 0, 1, 0, 0, -1]); setSel(st.el.length - 1, false);
+    st.el.push([t, 500, 500, 0, 1, 0, t === 69 && st.bpos ? F_EDGE : 0, -1]); setSel(st.el.length - 1, false);
     commit();
+  }
+  // Batons の位置 (Parts の Rim 欄で選ぶ)。置いてあればその部品に、無ければ次に置く時に使う。
+  function setBatonsPos(edge) {
+    st.bpos = edge ? 1 : 0;
+    st.el.forEach((e) => { if (e[0] === 69) e[6] = edge ? (e[6] | F_EDGE) : (e[6] & ~F_EDGE); });
+    commit();
+  }
+  function renderBatonsPos() {
+    const b = st.el.find((e) => e[0] === 69), edge = b ? !!(b[6] & F_EDGE) : !!st.bpos;
+    document.querySelectorAll('#bpos button').forEach((x) => x.classList.toggle('on', (+x.dataset.v === 1) === edge));
   }
   function renderDialToggles() {
     document.querySelectorAll('.part.tgl').forEach((p) => {
       p.classList.toggle('on', st.el.some((e) => e[0] === +p.dataset.t));
     });
+    renderBatonsPos();
   }
   let PAL_PEND = null;                 // 押したところ。動かすか離すまで部品は作らない
   function startPaletteDrag(ev, t) {
@@ -3487,9 +3505,10 @@
   }
   $('imgbg').addEventListener('input', (e) => { IMG.bgMode = 'auto'; IMG.bgAuto = parseInt(e.target.value, 10) || 0; IMG.dirty = true; repaintQuality(); });
   // 絵が入っていない状態は保存前から見えていないといけない (無音で kind:none になるのを防ぐ)。
+  function renderFillOn() { const b = $('imgfillon'); if (!b) return; const on = !!(IMG.fill && !IMG.cur); b.classList.toggle('on', on); b.textContent = on ? 'ON' : 'OFF'; }
   function renderNoPic() { const el = $('shelfnopic'); if (el) el.hidden = !!(IMG.show && hasSource() && IMG.masked); }
   function renderShowToggle() {
-    renderNoPic();
+    renderNoPic(); renderFillOn();
   }
   // slots
   // ── Photo shelf: originals kept as they are (≤1024 px JPEG), up to 10 per Device ID ──
@@ -3549,7 +3568,10 @@
       b.addEventListener('click', () => { $('imgfill').value = c; pushFillHist(c); useFill(c); }); w.appendChild(b); });
   }
   renderFillHist();
-  $('imgfillon').addEventListener('click', () => { pushFillHist($('imgfill').value); useFill($('imgfill').value); });
+  $('imgfillon').addEventListener('click', () => {
+    if (IMG.fill && !IMG.cur) { clearImgPreview(); $('imgfilename').textContent = ''; renderPhotos(); }   // ON → OFF: 塗りを外す
+    else { pushFillHist($('imgfill').value); useFill($('imgfill').value); }
+  });
   $('imgfill').addEventListener('input', (e) => { if (IMG.fill) useFill(e.target.value); });    // live while in fill mode
   $('imgfill').addEventListener('change', (e) => { if (IMG.fill) pushFillHist(e.target.value); });   // remember when the picker closes
   $('imgremove').addEventListener('click', async () => {

@@ -362,7 +362,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 10:11</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 10:12</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3479,7 +3479,8 @@
   function followAutoBg(save) {
     if (IMG.bgMode === 'dial' || !hasSource()) return;
     const v = parseInt(String(IMG.autoBg).slice(1), 16);
-    if (!Number.isFinite(v) || v === st.bg) return;
+    if (!Number.isFinite(v)) return;
+    if (v === st.bg && !save) return;
     st.bg = v; if (save) { pushBgHist(v); commit(); } else render();
   }
   $('imgbgdial').addEventListener('click', () => {

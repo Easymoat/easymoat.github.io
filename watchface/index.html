@@ -369,7 +369,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 22:18</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 22:44</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -734,21 +734,24 @@
     venux1: [448,486,1,37,53,61,112,152,171],
     vivoactive5: [390,390,0,32,48,54,74,99,144],
     vivoactive6: [390,390,1,30,45,53,97,130,148],
-    // fēnix 9 シリーズ (2026-08 発売)。SDK の機種データがまだ手元に無いので、同じ画面の fēnix 8 の値を仮に使う。
-    // SDK Manager で機種データが入ったら simulator.json の実測に置き換える。466 は fēnix 8 の 454 を拡大した値。
+    // fēnix 9 シリーズ (SDK 9.2.0 の機種データ、文字盤担当の Sim 実測 2026-09-19)。
     fenix943mm: [416,416,1,34,50,58,103,141,159],
+    fenix9pro43mm: [416,416,1,34,50,58,103,141,159],
     fenix947mm: [454,454,1,37,53,61,113,153,173],
-    px466: [466,466,1,38,54,63,116,157,178],
-    fenix9solar47mm: [260,260,0,21,32,39,58,65,99],
-    fenix9solar51mm: [280,280,0,22,34,39,62,69,107],
+    fenix9pro47mm: [454,454,1,37,53,61,113,153,173],
+    fenix9pro51mm: [466,466,1,37,53,61,113,153,173],
+    fenix9prosolar47mm: [260,260,0,21,32,38,58,65,99],
+    fenix9prosolar51mm: [280,280,1,22,34,38,62,69,107],
   };
   const DEVICES = {
-    // fēnix 9 シリーズ。キーは仮 (px466 は保存済みの面が参照するので変えない)。実機の product id は SDK に機種データが入ってから。
-    px466: { name: "f\u0113nix 9 / 9 Pro / 9 Pro inReach 51mm (466)", w: 466, h: 466, round: true },
-    fenix947mm: { name: "f\u0113nix 9 / 9 Pro / 9 Pro inReach 47mm (454)", w: 454, h: 454, round: true },
-    fenix943mm: { name: "f\u0113nix 9 / 9 Pro / 9 Pro inReach 43mm (416)", w: 416, h: 416, round: true },
-    fenix9solar51mm: { name: "f\u0113nix 9 Pro Solar / inReach Solar 51mm (280)", w: 280, h: 280, round: true },
-    fenix9solar47mm: { name: "f\u0113nix 9 Pro Solar / inReach Solar 47mm (260)", w: 260, h: 260, round: true },
+    // fēnix 9 シリーズ。キー = product id (manifest と同じ)。無印の 51mm は 47mm と同じ機種データ (454)。
+    fenix9pro51mm: { name: "f\u0113nix 9 Pro 51mm (466)", w: 466, h: 466, round: true },
+    fenix947mm: { name: "f\u0113nix 9 47mm / 51mm (454)", w: 454, h: 454, round: true },
+    fenix9pro47mm: { name: "f\u0113nix 9 Pro 47mm (454)", w: 454, h: 454, round: true },
+    fenix943mm: { name: "f\u0113nix 9 43mm (416)", w: 416, h: 416, round: true },
+    fenix9pro43mm: { name: "f\u0113nix 9 Pro 43mm (416)", w: 416, h: 416, round: true },
+    fenix9prosolar51mm: { name: "f\u0113nix 9 Pro Solar 51mm (280)", w: 280, h: 280, round: true },
+    fenix9prosolar47mm: { name: "f\u0113nix 9 Pro Solar 47mm (260)", w: 260, h: 260, round: true },
     approachs7047mm: { name: "Approach S70 47mm (454)", w: 454, h: 454, round: true },
     d2mach2: { name: "D2 Mach 2 (454)", w: 454, h: 454, round: true },
     d2mach2pro: { name: "D2 Mach 2 Pro (454)", w: 454, h: 454, round: true },
@@ -1260,6 +1263,8 @@
   const addKey = (ev) => ev.shiftKey || ev.metaKey || ev.ctrlKey;
   let FIRST_RUN = true;
   try { const s = JSON.parse(localStorage.getItem('faceComposer') || 'null'); if (s && Array.isArray(s.el)) { st = Object.assign(st, s); FIRST_RUN = false; } } catch (e) {}
+  // 仮のキーで保存された機種を product id へ (2026-09-19 fēnix 9)
+  st.dev = ({ px466: 'fenix9pro51mm', fenix9solar47mm: 'fenix9prosolar47mm', fenix9solar51mm: 'fenix9prosolar51mm' })[st.dev] || st.dev;
   st.tx = intArr3(st.tx, 10, 200, DEF_TX) || DEF_TX.slice(); st.tm = intArr3(st.tm, 10, 200, DEF_TM) || DEF_TM.slice();
   st.ic = intArr3(st.ic, 6, 120, DEF_IC) || DEF_IC.slice(); st.b = (st.b === 1 || st.b === 2) ? st.b : 0;
   UNITS.forEach((U) => { st[U.key] = U.opts[st[U.key]] ? st[U.key] : 0; });

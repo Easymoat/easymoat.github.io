@@ -91,6 +91,7 @@
   .dialbar.top .grp { width: 100%; }
   .dialsec { width: 100%; max-width: 1040px; justify-content: flex-start; border-top: 1px solid var(--line); padding-top: 22px; }
   .dialsec .ctl { flex-wrap: nowrap; white-space: nowrap; }
+  footer.credits { padding: 14px 16px 22px; text-align: center; font-size: 11px; color: var(--ink-3); }
   .fillctl { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   @media (max-width: 760px) { .dialsec .ctl { flex-wrap: wrap; } }
   .dialbar.top select { height: 28px; }
@@ -362,7 +363,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 10:12</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-19 10:55</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -371,7 +372,7 @@
   <div id="phonebar" class="box">
     <div class="psign" id="psign">
       <div class="lbl">Your watch</div>
-      <p class="pnote">Type the ID your watch face shows — four characters, a dash, four more (like <b>a1b2-3456</b>). It stays on this phone.</p>
+      <p class="pnote">Type the ID <b>The Face</b> shows on your watch — four characters, a dash, four more (like <b>a1b2-3456</b>). It stays on this phone.</p>
       <div class="prow">
         <input type="text" id="devid2" placeholder="XXXX-XXXX" inputmode="text" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" maxlength="40">
         <button class="btn primary" id="psignin">Sign in</button>
@@ -468,7 +469,7 @@
       <div class="tier"><span class="num">5</span><span class="name">Watch</span><span class="what">Two settings you make once: which watch receives your dials, and where its weather comes from</span></div>
       <div class="grp" id="syncbox">
           <span class="lbl">a · Which watch</span>
-          <div class="ctl"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX" style="width:140px"><span class="muted">Your watch face shows this ID. Everything you send from Collection goes to this watch. It is kept on this computer — there is nothing to sign up for.</span></div>
+          <div class="ctl"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX" style="width:140px"><span class="muted">The Face shows this ID on your watch. Everything you send from Collection goes to this watch. It is kept on this computer — there is nothing to sign up for.</span></div>
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
           <div class="status" id="watchseen" title="Your watch asks the server for a new dial about every 5 minutes. This line says when it last asked, and whether it already has the dial you sent."></div>
       </div>
@@ -490,7 +491,7 @@
           <button class="btn" id="copy">Copy</button>
           <button class="btn" id="apply">Apply edited JSON</button>
         </div>
-        <div class="opt"><button class="btn" id="preset-lobby">Start from Lobby</button><span class="muted">The dial the watch face ships with: time, date, battery, heart rate, steps, floors, calories, weather and wind.</span></div>
+        <div class="opt"><button class="btn" id="preset-lobby">Start from Lobby</button><span class="muted">The dial The Face ships with: time, date, battery, heart rate, steps, floors, calories, weather and wind.</span></div>
         <div class="opt"><button class="btn" id="preset-min">Start from Minimal</button><span class="muted">Three parts only — time, date and battery. A quiet dial to build on.</span></div>
         <div class="opt"><button class="btn danger" id="clear">Take every part off</button><span class="muted">Leaves an empty dial. The background color, the text sizes and the picture stay as they are.</span></div>
         <div class="status" id="jsonstatus"></div>
@@ -517,6 +518,7 @@
     <div class="group"><span class="lbl">Elements <span id="elcount" class="cnt"></span></span><div class="list" id="list"></div></div>
   </aside>
 </main>
+<footer class="credits">Icons: Material Symbols (Apache 2.0)</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/rgbquant@1.1.2/src/rgbquant.js"></script>
 <script>
@@ -593,22 +595,22 @@
     2:  { name: 'Date',      grp: 'clock', sample: 'Sep 4',     icon: 'dow',    iw: 0 },
     3:  { name: 'Battery',   grp: 'clock', sample: '85%',    icon: 'battery',   iw: 28 },
     10: { name: 'Heart rate',grp: 'body',  sample: '72',     icon: 'heart',     iw: 26 },
-    11: { name: 'Steps',     grp: 'body',  sample: '8421',   icon: 'steps',     iw: 24 },
-    12: { name: 'Floors',    grp: 'body',  sample: '12',     icon: 'floors',    iw: 24 },
-    13: { name: 'Calories',  grp: 'body',  sample: '1850',   icon: 'cal',       iw: 20 },
+    11: { name: 'Steps',     grp: 'body',  sample: '8421',   icon: 'steps',     iw: 26 },
+    12: { name: 'Floors',    grp: 'body',  sample: '12',     icon: 'floors',    iw: 26 },
+    13: { name: 'Calories',  grp: 'body',  sample: '1850',   icon: 'cal',       iw: 26 },
     14: { name: 'Weight',    grp: 'body',  sample: '68.5',   icon: 'weight',    iw: 26 },
-    15: { name: 'Body Battery', grp: 'body', sample: '75',    icon: 'bodybat',   iw: 16 },
+    15: { name: 'Body Battery', grp: 'body', sample: '75',    icon: 'bodybat',   iw: 26 },
     16: { name: 'Stress',    grp: 'body',  sample: '32',     icon: 'stress',    iw: 26 },
     17: { name: 'Respiration', grp: 'body', sample: '14',    icon: 'breath',    iw: 26 },
-    20: { name: 'Weather',   grp: 'wx',    sample: '23°',    icon: 'weather',   iw: 34 },
-    21: { name: 'Humidity',  grp: 'wx',    sample: '55%',    icon: 'humidity',  iw: 20 },
+    20: { name: 'Weather',   grp: 'wx',    sample: '23°',    icon: 'weather',   iw: 26 },
+    21: { name: 'Humidity',  grp: 'wx',    sample: '55%',    icon: 'humidity',  iw: 26 },
     22: { name: 'Wind',      grp: 'wx',    sample: '3',      icon: 'wind',      iw: 26 },
     23: { name: 'Pressure',  grp: 'wx',    sample: '1013',   icon: 'pressure',  iw: 26 },
-    24: { name: 'Altitude',  grp: 'wx',    sample: '45m',    icon: 'altitude',  iw: 30 },
+    24: { name: 'Altitude',  grp: 'wx',    sample: '45m',    icon: 'altitude',  iw: 26 },
     // 27-29 = Open-Meteo forecast fetched by the watch's background service (server /api/wf/forecast), 2026-09-06
     27: { name: 'Today hi/lo', grp: 'wx',  sample: '31°/24°', icon: 'hilo',     iw: 16 },
     28: { name: 'Rain today', grp: 'wx',   sample: '40%',    icon: 'umbrella',  iw: 26 },
-    29: { name: 'Now 1h 2h', grp: 'wx',    sample: '29°',    icon: 'weather',   iw: 34, strip: 3 },
+    29: { name: 'Now 1h 2h', grp: 'wx',    sample: '29°',    icon: 'weather',   iw: 26, strip: 3 },
     25: { name: 'Precip %',  grp: 'wx',    sample: '40%',    icon: 'umbrella',  iw: 26 , hidden: true },   // removed from the palette 2026-09-06 (Garmin's current-hour value; use 28 Rain today). Kept so saved faces still render.
     26: { name: 'Moon age',  grp: 'wx',    sample: moonAgeStr(), icon: 'moon',  iw: 26 },
     // 41-43 = グラフ (2026-09-19)。s = 大きさ (0 小 / 1 大)。心拍とストレスは 6 時間、歩数は過去 7 日 (今日を含む)。
@@ -1090,37 +1092,63 @@
   const PRESET_LOBBY = [[3,500,150,0,0,5,1],[1,500,320,0,2,0,0],[2,500,465,0,0,1,0],[10,130,560,1,1,2,1],[13,870,560,2,1,3,1],[11,130,650,1,1,0,1],[12,870,650,2,1,0,1],[20,130,760,1,1,4,1],[22,870,760,2,1,6,1]];
   const PRESET_MIN   = [[1,500,420,0,2,0,0],[2,500,540,0,0,1,0],[3,500,700,0,0,5,1]];
 
+  // ── Material Symbols Rounded (FILL 1, wght 400) — Apache License 2.0 (2026-09-19 ユーザー決定) ──
+  // 取得元: github.com/google/material-design-icons symbols/web/<name>/materialsymbolsrounded/<name>_fill1_24px.svg
+  // ウォッチ (The Face) も同じ SVG からフォントを作る。24 の升目 (viewBox 0 -960 960 960) を丸ごと
+  // アイコンの大きさ (M = 26px) に合わせる = 升目の余白も含めて実機と同じ置き方。仕様: docs/ICONS_AND_NAMING.md
+  const MS = {
+    favorite: 'M480-147q-14 0-28.5-5T426-168l-69-63q-106-97-191.5-192.5T80-634q0-94 63-157t157-63q53 0 100 22.5t80 61.5q33-39 80-61.5T660-854q94 0 157 63t63 157q0 115-85 211T602-230l-68 62q-11 11-25.5 16t-28.5 5Z',
+    steps: 'M216-580H88q4-14 10.5-26.5T114-631l154-206q17-23 45.5-30.5T368-861l28 14q21 11 32.5 30t11.5 42v84l74-19q30-8 58 7.5t38 44.5l65 196 170 170q20 20 27.5 43t7.5 49q0 37-20 66t-52 43L354-525q-29-27-64-41t-74-14ZM566-80q-30 0-57-11t-50-31L134-417q-19-17-31-38.5T86-500h130q23 0 44.5 8t38.5 25L703-80H566Z',
+    stairs: 'M417-373h63q17 0 28.5-11.5T520-413v-93h63q17 0 28.5-11.5T623-546v-94h57q17 0 28.5-11.5T720-680q0-17-11.5-28.5T680-720h-97q-17 0-28.5 11.5T543-680v93h-63q-17 0-28.5 11.5T440-547v93h-63q-17 0-28.5 11.5T337-414v94h-57q-17 0-28.5 11.5T240-280q0 17 11.5 28.5T280-240h97q17 0 28.5-11.5T417-280v-93ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Z',
+    local_fire_department: 'M160-400q0-113 67-217t184-182q22-15 45.5-1.5T480-760v52q0 34 23.5 57t57.5 23q17 0 32.5-7.5T621-657q8-10 20.5-12.5T665-664q63 45 99 115t36 149q0 88-43 160.5T644-125q17-24 26.5-52.5T680-238q0-40-15-75.5T622-377L480-516 339-377q-29 29-44 64t-15 75q0 32 9.5 60.5T316-125q-70-42-113-114.5T160-400Zm320-4 85 83q17 17 26 38t9 45q0 49-35 83.5T480-120q-50 0-85-34.5T360-238q0-23 9-44.5t26-38.5l85-83Z',
+    monitor_weight: 'M480-480q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35Zm-60-100q-8 0-14-6t-6-14q0-8 6-14t14-6q8 0 14 6t6 14q0 8-6 14t-14 6Zm60 0q-8 0-14-6t-6-14q0-8 6-14t14-6q8 0 14 6t6 14q0 8-6 14t-14 6Zm60 0q-8 0-14-6t-6-14q0-8 6-14t14-6q8 0 14 6t6 14q0 8-6 14t-14 6ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Z',
+    battery_android_bolt: 'M390-330h20l180-180H463l27-120h-20L290-450h127l-27 120ZM160-210q-33 0-56.5-23.5T80-290v-380q0-33 23.5-56.5T160-750h560q33 0 56.5 23.5T800-670v90h20q25 0 42.5 17.5T880-520v80q0 26-17.5 43T820-380h-20v90q0 33-23.5 56.5T720-210H160Z',
+    bolt: 'M360-360H236q-24 0-35.5-21.5T203-423l299-430q10-14 26-19.5t33 .5q17 6 25 21t6 32l-32 259h155q26 0 36.5 23t-6.5 43L416-100q-11 13-27 17t-31-3q-15-7-23.5-21.5T328-139l32-221Z',
+    pulmonology: 'M200-120q-51 0-85.5-34.5T80-240v-153q0-8 1.5-14.5T85-421l100-267q12-33 42-52.5t65-19.5q26 0 49 13t38 35v112l-81 81q-9 9-8.5 21t9.5 21q9 9 21 9t21-9l99-99v-264q0-17 11.5-28.5T480-880q17 0 28.5 11.5T520-840v264l99 99q9 9 21 9t21-9q9-9 9-21t-9-21l-81-81v-112q15-22 38-35t49-13q35 0 64.5 19.5T774-688l100 267q2 7 3.5 13.5T879-393v153q0 51-35 85.5T759-120H639q-50 0-84.5-34.5T520-240v-75q0-2 .5-5t.5-5l14-122-55-56-56 56 15 122q0 2 .5 5t.5 5v75q0 51-35 85.5T320-120H200Z',
+    sunny: 'M480-760q-17 0-28.5-11.5T440-800v-80q0-17 11.5-28.5T480-920q17 0 28.5 11.5T520-880v80q0 17-11.5 28.5T480-760Zm198 82q-11-11-11-27.5t11-28.5l56-57q12-12 28.5-12t28.5 12q11 11 11 28t-11 28l-57 57q-11 11-28 11t-28-11Zm122 238q-17 0-28.5-11.5T760-480q0-17 11.5-28.5T800-520h80q17 0 28.5 11.5T920-480q0 17-11.5 28.5T880-440h-80ZM480-40q-17 0-28.5-11.5T440-80v-80q0-17 11.5-28.5T480-200q17 0 28.5 11.5T520-160v80q0 17-11.5 28.5T480-40ZM226-678l-57-56q-12-12-12-29t12-28q11-11 28-11t28 11l57 57q11 11 11 28t-11 28q-12 11-28 11t-28-11Zm508 509-56-57q-11-12-11-28.5t11-27.5q11-11 27.5-11t28.5 11l57 56q12 11 11.5 28T791-169q-12 12-29 12t-28-12ZM80-440q-17 0-28.5-11.5T40-480q0-17 11.5-28.5T80-520h80q17 0 28.5 11.5T200-480q0 17-11.5 28.5T160-440H80Zm89 271q-11-11-11-28t11-28l57-57q11-11 27.5-11t28.5 11q12 12 12 28.5T282-225l-56 56q-12 12-29 12t-28-12Zm311-71q-100 0-170-70t-70-170q0-100 70-170t170-70q100 0 170 70t70 170q0 100-70 170t-170 70Z',
+    clear_night: 'M524-40q-84 0-157.5-32t-128-86.5Q184-213 152-286.5T120-444q0-146 93-257.5T450-840q-18 99 11 193.5T561-481q71 71 165.5 100T920-370q-26 144-138 237T524-40Z',
+    partly_cloudy_day: 'm734-169-56-57q-11-12-11-28.5t11-27.5q11-11 27.5-11t28.5 11l57 56q12 12 12 28.5T791-169q-12 12-28.5 12T734-169Zm-494 9q-66 0-113-47T80-320q0-66 47-113t113-47q48 0 88.5 26t58.5 71l10 23h24q42 0 70.5 29t28.5 71q0 42-29 71t-71 29H240Zm359-112q-4-63-45.5-109T449-438q-31-54-83.5-85.5T250-560q26-73 89-116.5T480-720q100 0 170 70t70 170q0 65-32 120.5T599-272Zm201-168q-17 0-28.5-11.5T760-480q0-17 11.5-28.5T800-520h80q17 0 28.5 11.5T920-480q0 17-11.5 28.5T880-440h-80ZM226-678l-57-57q-11-11-11-28t11-28q12-12 28.5-12t28.5 12l56 57q11 12 11 28.5T282-678q-11 11-28 11t-28-11Zm452 0q-11-11-11-27.5t11-28.5l56-57q12-12 28.5-12t28.5 12q11 11 11 28t-11 28l-57 57q-11 11-28 11t-28-11Zm-198-82q-17 0-28.5-11.5T440-800v-80q0-17 11.5-28.5T480-920q17 0 28.5 11.5T520-880v80q0 17-11.5 28.5T480-760Z',
+    partly_cloudy_night: 'M240-400q48 0 88 26t59 71l10 23h25q42 0 70 29.5t28 70.5q0 42-29 71t-71 29H240q-66 0-113-47T80-240q0-67 47-113.5T240-400Zm321-81q60 60 138.5 90.5T863-366q11-1 19.5 3t14.5 12q6 8 8 17t-1 19q-35 121-140.5 197T533-40q32-26 49.5-62.5T600-180q0-68-42.5-117.5T449-357q-32-57-87.5-90T240-480q-32 0-62.5 8T120-448q2-131 76.5-232T394-822q10-3 19.5-1t17.5 8q8 6 12.5 14.5T447-781q-5 86 24 162.5T561-481Z',
+    cloud: 'M260-160q-91 0-155.5-63T40-377q0-78 47-139t123-78q25-92 100-149t170-57q117 0 198.5 81.5T760-520q69 8 114.5 59.5T920-340q0 75-52.5 127.5T740-160H260Z',
+    rainy: 'M558-84q-15 8-30.5 2.5T504-102l-60-120q-8-15-2.5-30.5T462-276q15-8 30.5-2.5T516-258l60 120q8 15 2.5 30.5T558-84Zm240 0q-15 8-30.5 2.5T744-102l-60-120q-8-15-2.5-30.5T702-276q15-8 30.5-2.5T756-258l60 120q8 15 2.5 30.5T798-84Zm-480 0q-15 8-30.5 2.5T264-102l-60-120q-8-15-2.5-30.5T222-276q15-8 30.5-2.5T276-258l60 120q8 15 2.5 30.5T318-84Zm-18-236q-91 0-155.5-64.5T80-540q0-83 55-145t136-73q32-57 87.5-89.5T480-880q90 0 156.5 57.5T717-679q69 6 116 57t47 122q0 75-52.5 127.5T700-320H300Z',
+    weather_snowy: 'M260-200q-21 0-35.5-14.5T210-250q0-21 14.5-35.5T260-300q21 0 35.5 14.5T310-250q0 21-14.5 35.5T260-200ZM380-80q-21 0-35.5-14.5T330-130q0-21 14.5-35.5T380-180q21 0 35.5 14.5T430-130q0 21-14.5 35.5T380-80Zm120-120q-21 0-35.5-14.5T450-250q0-21 14.5-35.5T500-300q21 0 35.5 14.5T550-250q0 21-14.5 35.5T500-200Zm240 0q-21 0-35.5-14.5T690-250q0-21 14.5-35.5T740-300q21 0 35.5 14.5T790-250q0 21-14.5 35.5T740-200ZM620-80q-21 0-35.5-14.5T570-130q0-21 14.5-35.5T620-180q21 0 35.5 14.5T670-130q0 21-14.5 35.5T620-80ZM300-360q-91 0-155.5-64.5T80-580q0-83 55-145t136-73q32-57 87.5-89.5T480-920q90 0 156.5 57.5T717-719q69 6 116 57t47 122q0 75-52.5 127.5T700-360H300Z',
+    thunderstorm: 'm520-66 36-41-34-17q-17-9-21-28t9-34l70-80q5-7 13.5-10.5T610-280q26 0 36.5 23t-6.5 43l-36 41 34 17q17 9 21 28t-9 34l-70 80q-5 7-13.5 10.5T550 0q-26 0-36.5-23t6.5-43Zm-240 0 36-41-34-17q-17-9-21-28t9-34l70-80q5-7 13.5-10.5T370-280q26 0 36.5 23t-6.5 43l-36 41 34 17q17 9 21 28t-9 34l-70 80q-5 7-13.5 10.5T310 0q-26 0-36.5-23t6.5-43Zm20-254q-91 0-155.5-64.5T80-540q0-83 55-145t136-73q32-57 87.5-89.5T480-880q90 0 156.5 57.5T717-679q69 6 116 57t47 122q0 75-52.5 127.5T700-320H300Z',
+    foggy: 'M720-200q-17 0-28.5-11.5T680-240q0-17 11.5-28.5T720-280q17 0 28.5 11.5T760-240q0 17-11.5 28.5T720-200ZM280-80q-17 0-28.5-11.5T240-120q0-17 11.5-28.5T280-160q17 0 28.5 11.5T320-120q0 17-11.5 28.5T280-80Zm-40-120q-17 0-28.5-11.5T200-240q0-17 11.5-28.5T240-280h360q17 0 28.5 11.5T640-240q0 17-11.5 28.5T600-200H240ZM400-80q-17 0-28.5-11.5T360-120q0-17 11.5-28.5T400-160h280q17 0 28.5 11.5T720-120q0 17-11.5 28.5T680-80H400ZM300-320q-91 0-155.5-64.5T80-540q0-83 55-145t136-73q32-57 87.5-89.5T480-880q90 0 156.5 57.5T717-679q69 6 116 57t47 122q0 75-52.5 127.5T700-320H300Z',
+    humidity_percentage: 'M480-80q-137 0-228.5-94T160-408q0-62 28-124t70-119q42-57 91-107t91-87q8-8 18.5-11.5T480-860q11 0 21.5 3.5T520-845q42 37 91 87t91 107q42 57 70 119t28 124q0 140-91.5 234T480-80Zm100-160q25 0 42.5-17.5T640-300q0-25-17.5-42.5T580-360q-25 0-42.5 17.5T520-300q0 25 17.5 42.5T580-240Zm-230-30q12 12 28 12t28-12l204-204q12-12 12-28t-12-28q-12-12-28.5-12T553-530L350-327q-12 12-12 28.5t12 28.5Zm30-170q25 0 42.5-17.5T440-500q0-25-17.5-42.5T380-560q-25 0-42.5 17.5T320-500q0 25 17.5 42.5T380-440Z',
+    speed: 'M418-340q25 25 63 23.5t55-27.5l169-253q9-14-2.5-25.5T677-625L424-456q-26 18-28.5 54.5T418-340ZM204-160q-22 0-40.5-9.5T134-198q-26-47-40-97.5T80-400q0-83 31.5-156T197-683q54-54 127-85.5T480-800q82 0 154 31t126 84.5q54 53.5 86 125T879-406q1 55-12.5 107.5T825-198q-11 19-29.5 28.5T755-160H204Z',
+    landscape: 'm88-304 160-213q6-8 14.5-12t17.5-4q9 0 17.5 4t14.5 12l136 181q6 8 14 12t18 4q25 0 36-22.5t-4-42.5l-84-111q-8-11-8-24t8-24l100-133q6-8 14.5-12t17.5-4q9 0 17.5 4t14.5 12l280 373q15 20 4 42t-36 22H120q-25 0-36-22t4-42Z',
+    umbrella: 'm520-368 78-238-36 9-42-31v260Zm-80 0v-260l-42 32-37-10 79 238Zm40 288q-12 0-22.5-6.5T442-107L263-649q-8-23 8-39.5t39-11.5l70 17 60-46v-95q0-40 29-68t71-28q42 0 71 28t29 68q0 17-11.5 28.5T600-784q-17 0-28.5-11.5T560-824q0-8-6-13.5t-14-5.5q-8 0-14 5.5t-6 13.5v95l60 46 70-17q23-5 39 11.5t8 39.5L518-108q-5 14-15.5 21T480-80Z',
+    notifications: 'M200-200q-17 0-28.5-11.5T160-240q0-17 11.5-28.5T200-280h40v-280q0-83 50-147.5T420-792v-28q0-25 17.5-42.5T480-880q25 0 42.5 17.5T540-820v28q80 20 130 84.5T720-560v280h40q17 0 28.5 11.5T800-240q0 17-11.5 28.5T760-200H200ZM480-80q-33 0-56.5-23.5T400-160h160q0 33-23.5 56.5T480-80Z',
+    device_thermostat: 'M480-80q-83 0-141.5-58.5T280-280q0-48 21-89.5t59-70.5v-320q0-50 35-85t85-35q50 0 85 35t35 85v320q38 29 59 70.5t21 89.5q0 83-58.5 141.5T480-80Zm-40-440h80v-40h-40v-40h40v-80h-40v-40h40v-40q0-17-11.5-28.5T480-800q-17 0-28.5 11.5T440-760v240Z'
+  };
+  const msIcon = (n) => `<svg width="26" height="26" viewBox="0 -960 960 960"><path d="${MS[n]}" fill="currentColor"/></svg>`;
   // ── Icons: same geometry as WfIcons.mc (center 0,0, ink box W x H at M; viewBox = ink box) ──
   const sw = 'stroke="currentColor" fill="none"';
   let uid = 0;   // unique ids for per-icon clipPaths
   const ICONS = {
     battery:  () => `<svg width="28" height="14" viewBox="-14 -7 28 14"><rect x="-13" y="-6" width="22" height="12" ${sw} stroke-width="2"/><rect x="11" y="-3" width="3" height="6" fill="currentColor"/><rect x="-11" y="-4" width="15" height="8" fill="currentColor"/></svg>`,
-    heart:    () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><g fill="currentColor"><circle cx="-6" cy="-6" r="7"/><circle cx="6" cy="-6" r="7"/><polygon points="-13,-3 13,-3 0,13"/></g></svg>`,
-    steps:    () => `<svg width="24" height="24" viewBox="-12 -12 24 24"><g fill="currentColor"><circle cx="-8" cy="-2" r="4"/><rect x="-11" y="-2" width="8" height="6"/><circle cx="-6" cy="8" r="3"/><rect x="-9" y="6" width="6" height="4"/><circle cx="8" cy="-8" r="4"/><rect x="3" y="-8" width="8" height="6"/><circle cx="6" cy="2" r="3"/><rect x="3" y="0" width="6" height="4"/></g></svg>`,
-    floors:   () => `<svg width="24" height="26" viewBox="-13 -13 24 26"><g fill="currentColor"><rect x="-13" y="5" width="8" height="7"/><rect x="-5" y="-1" width="8" height="13"/><rect x="3" y="-7" width="8" height="19"/></g><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="-12" y1="-4" x2="7" y2="-13"/><line x1="7" y1="-13" x2="1" y2="-12"/><line x1="7" y1="-13" x2="5" y2="-7"/></g></svg>`,
-    cal:      () => `<svg width="20" height="26" viewBox="-10 -13 20 26"><polygon points="0,-13 2,-10 5,-5 3,-2 1,-1 4,2 8,5 9,8 5,11 0,12 -5,11 -9,8 -8,5 -5,1 -4,-5" ${sw} stroke-width="2" stroke-linejoin="round"/></svg>`,
-    weight:   () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><rect x="-11.5" y="-11.5" width="23" height="23" rx="2" ${sw} stroke-width="3"/><circle cx="0" cy="-3" r="5" ${sw} stroke-width="3"/><line x1="0" y1="-3" x2="0" y2="-6" stroke="currentColor" stroke-width="2"/><circle cx="0" cy="-3" r="1" fill="currentColor"/></svg>`,
-    weather:  () => `<svg width="34" height="30" viewBox="-17 -15 34 30"><circle cx="0" cy="0" r="9" fill="currentColor"/><g stroke="currentColor" stroke-width="2"><line x1="0" y1="-15" x2="0" y2="-11"/><line x1="0" y1="15" x2="0" y2="11"/><line x1="-17" y1="0" x2="-13" y2="0"/><line x1="17" y1="0" x2="13" y2="0"/><line x1="-12" y1="-12" x2="-9" y2="-9"/><line x1="12" y1="-12" x2="9" y2="-9"/><line x1="-12" y1="12" x2="-9" y2="9"/><line x1="12" y1="12" x2="9" y2="9"/></g></svg>`,
-    // 湿度: しずくは輪郭だけ (中は塗らない)。抜きを背景色で塗ると写真の上で背景色の穴に見えるため。
-    humidity: () => `<svg width="20" height="26" viewBox="-10 -13 20 26"><path d="M 0 -12 L 6.93 0 A 8 8 0 1 1 -6.93 0 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><line x1="-3.5" y1="8" x2="3.5" y2="0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="-3.5" cy="1" r="1.7" fill="currentColor"/><circle cx="3.5" cy="7" r="1.7" fill="currentColor"/></svg>`,
+    heart: () => msIcon('favorite'),
+    steps: () => msIcon('steps'),
+    floors: () => msIcon('stairs'),
+    cal: () => msIcon('local_fire_department'),
+    weight: () => msIcon('monitor_weight'),
+    weather: () => msIcon('sunny'),
+    humidity: () => msIcon('humidity_percentage'),
     wind:     () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><polygon points="${arrow(0,0,225)}" fill="currentColor"/></svg>`,
-    pressure: () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="3"/><g stroke="currentColor" stroke-width="3"><line x1="0" y1="-10" x2="0" y2="-7"/><line x1="0" y1="0" x2="5" y2="-5"/></g><circle cx="0" cy="0" r="2" fill="currentColor"/></svg>`,
-    altitude: () => `<svg width="30" height="24" viewBox="-15 -13 30 24"><polygon points="-15,11 -6,-13 1,2 7,-8 15,11" fill="currentColor"/></svg>`,
-    // Body Battery: 電池の輪郭 + 稲妻。中身の量は数値で読めるので、背景色で抜く塗りはやめた。
-    bodybat:  () => `<svg width="16" height="26" viewBox="-8 -13 16 26"><rect x="-7" y="-10" width="14" height="22" rx="3" ${sw} stroke-width="2"/><rect x="-3" y="-13" width="6" height="3" fill="currentColor"/><polygon points="2.5,-7 -3.5,1.5 0,1.5 -2.5,8.5 3.5,0 0,0" fill="currentColor"/></svg>`,
-    stress:   () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="2"/><polygon points="4,-10 -5,1 0,1 -4,10 5,-1 0,-1" fill="currentColor"/></svg>`,
-    breath:   () => { const pts = []; for (let i = 0; i <= 13; i++) { const x = -13 + 2 * i; pts.push(`${x},${(-10 * Math.sin(2 * Math.PI * (x + 13) / 26)).toFixed(2)}`); }
-                      return `<svg width="26" height="26" viewBox="-13 -13 26 26"><polyline points="${pts.join(' ')}" ${sw} stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></svg>`; },
+    pressure: () => msIcon('speed'),
+    altitude: () => msIcon('landscape'),
+    bodybat: () => msIcon('battery_android_bolt'),
+    stress: () => msIcon('bolt'),
+    breath: () => msIcon('pulmonology'),
     hilo:     () => `<svg width="16" height="26" viewBox="-8 -13 16 26"><polygon points="0,-11 8,-2 -8,-2" fill="currentColor"/><polygon points="-8,2 8,2 0,11" fill="currentColor"/></svg>`,
-    // 傘: 下端は骨の間がたわむので 3 つの弧 (直線だとドームに見える)、柄の先は J 字のフック。
-    umbrella: () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><path d="M-13,-1 A13,12 0 0 1 13,-1 Q8.7,2.4 4.3,-1 Q0,2.4 -4.3,-1 Q-8.7,2.4 -13,-1 Z" fill="currentColor"/><path d="M0,-1 L0,8 A3.5,3.5 0 0 1 -7,8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+    umbrella: () => msIcon('umbrella'),
     moon:     () => { const r = 12, ph = moonPhaseDeg(), rad = ph * Math.PI / 180, k = Math.cos(rad), rx = (Math.abs(k) * r).toFixed(2);
                       if (ph < 12 || ph > 348) return `<svg width="26" height="26" viewBox="-13 -13 26 26"><circle cx="0" cy="0" r="11" ${sw} stroke-width="2"/></svg>`;
                       const sweep = k > 0 ? 0 : 1;   // crescent bulges out, gibbous bulges in
                       const path = `M 0,${-r} A ${r},${r} 0 0 1 0,${r} A ${rx},${r} 0 0 ${sweep} 0,${-r} Z`;
                       const flip = ph > 180 ? ' transform="scale(-1,1)"' : '';   // waning: lit on the left
                       return `<svg width="26" height="26" viewBox="-13 -13 26 26"><path d="${path}" fill="currentColor"${flip}/></svg>`; },
-    bell:     () => `<svg width="26" height="26" viewBox="-13 -13 26 26"><g ${sw} stroke-width="2" stroke-linejoin="round"><rect x="-13" y="-11" width="26" height="18" rx="5"/><path d="M-7,7 L-10,13 L-2,7"/></g><g fill="currentColor"><circle cx="-6" cy="-2" r="2"/><circle cx="0" cy="-2" r="2"/><circle cx="6" cy="-2" r="2"/></g></svg>`,
+    bell: () => msIcon('notifications'),
     stock:    () => `$`,
   };
   function arrow(cx, cy, bearing) {
@@ -3741,7 +3769,7 @@
     }
     function signIn() {
       const v = d2.value.trim();
-      if (!ok(v)) { setStatus('psignerr', 'That ID does not look right. It is like a1b2-3456 — check the watch face.', 'err'); d2.focus(); return; }
+      if (!ok(v)) { setStatus('psignerr', 'That ID does not look right. It is like a1b2-3456 — check The Face on your watch.', 'err'); d2.focus(); return; }
       setStatus('psignerr', '');
       $('devid').value = v; $('devid').dispatchEvent(new Event('change', { bubbles: true }));
       showSigned();

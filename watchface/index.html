@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 14:27</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 14:40</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -523,10 +523,6 @@
       <div class="ctl" title="Unit for the Pressure part.">Pressure <span class="cb units" id="pressunit"></span></div>
       <div class="ctl" title="Unit for the Altitude part.">Distance <span class="cb units" id="distunit"></span></div>
       <div class="ctl" title="Clock format. Device = follow the watch's own setting.">Hours <span class="cb units" id="hourfmt"></span></div>
-      <div class="ctl" title="Where a heart rate meter starts and ends. Leave both empty and the watch uses your resting heart rate and your maximum heart rate. Garmin Connect shows both numbers.">Heart rate
-        <input type="number" id="hrlo" min="30" max="200" step="1" placeholder="rest" style="width:64px">
-        <input type="number" id="hrhi" min="60" max="250" step="1" placeholder="high" style="width:64px"></div>
-      <div class="ctl" title="Color the heart rate meter by how high it is: blue below resting, green between, red above the high value.">HR color <span class="cb units" id="hrcol"></span></div>
       <div class="ctl" title="What a long press on a weather part opens. In face = the dial redraws as a detail screen (now / hourly / daily). Garmin = the watch's own weather screen (scrolls freely, no time limit, Garmin's own look).">Weather detail <span class="cb units" id="wxdetail"></span></div></div>
     <div class="group"><span class="lbl">Markets</span><div class="parts" id="parts-mkt"></div><span class="muted">Drop one on the dial, then type its ticker in Selected part. The % parts show the change instead of the price.</span></div>
     <div class="group"><span class="lbl">USA Sports</span><div class="parts" id="parts-bb"></div></div>
@@ -2199,20 +2195,18 @@
                  return (g.m0 || g.m1) ? b.concat([g.m0, g.m1]) : b; })()
     : e)); };
   // 心拍メーターの両端と色分け。st.hr = [安静時, 高い時, 色分け]。0 = 実機まかせ。
-  function renderHr() {
-    const lo = $('hrlo'), hi = $('hrhi'), cb = $('hrcol');
-    if (lo && document.activeElement !== lo) lo.value = hrLo() || '';
-    if (hi && document.activeElement !== hi) hi.value = hrHi() || '';
-    if (cb) cb.querySelectorAll('button').forEach((b) => b.classList.toggle('on', (+b.dataset.v === 1) === !!hrCol()));
+  // 心拍メーターの両端と色分け (編集欄の Meter の隣で - / + で動かす)。0 = 実機まかせ。
+  function setHr(i, v) { st.hr = [hrLo(), hrHi(), hrCol()]; st.hr[i] = v; commit(); }
+  function renderHr() {}
+  // 心拍メーターの両端 (面に 1 つ) と色分け。Meter の隣に出し、- / + で 2 ずつ動かす。Auto = 実機まかせ。
+  function hrRows() {
+    const step = (k, lb, val, ttl) => `<div class="field" title="${ttl}"><span>${lb}</span><span class="cb units hrstep" data-hr="${k}"><button type="button" data-d="-1">&minus;</button><b>${val ? val : 'Auto'}</b><button type="button" data-d="1">+</button></span></div>`;
+    return step('lo', 'Rest', hrLo(), 'The heart rate where the meter is empty. Garmin Connect calls it your resting average. Auto = the watch uses your resting heart rate.')
+         + step('hi', 'High', hrHi(), 'The heart rate where the meter is full. Garmin Connect shows it as your average high. Auto = the watch uses your maximum heart rate.')
+         + `<div class="field" title="Color the meter by how high the heart rate is: blue below Rest, green between, red above High."><span>HR color</span><span class="cb units" id="fhrcol">${
+             [[0, 'Part color'], [1, 'By heart rate']].map(([v, lb]) => `<button type="button" data-v="${v}" class="${hrCol() === v ? 'on' : ''}">${lb}</button>`).join('')
+           }</span></div>`;
   }
-  (() => {
-    const set = (i, v) => { st.hr = [hrLo(), hrHi(), hrCol()]; st.hr[i] = v; commit(); renderHr(); };
-    const lo = $('hrlo'), hi = $('hrhi'), cb = $('hrcol');
-    if (cb) cb.innerHTML = [[0, 'Part color'], [1, 'By heart rate']].map(([v, lb]) => `<button type="button" data-v="${v}">${lb}</button>`).join('');
-    if (lo) lo.addEventListener('change', () => set(0, Math.max(0, Math.min(200, parseInt(lo.value, 10) || 0))));
-    if (hi) hi.addEventListener('change', () => set(1, Math.max(0, Math.min(250, parseInt(hi.value, 10) || 0))));
-    if (cb) cb.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => set(2, +b.dataset.v)));
-  })();
   const layoutObj = () => { const el0 = elOut();
     // as = [形の種別 (Composer が読み戻す用), キャップ半径, 時針, 分針]。実機は 2 番目以降だけ見る。
     const as0 = ANA_SHAPES.length ? ANA_SHAPES.map((x) => [x.style, x.spec[0], x.spec[1], x.spec[2]]) : undefined;
@@ -2460,6 +2454,7 @@
           ((circFill(e) >= 0 && circFill(e) < PC_BASE ? [circFill(e)] : []).concat(shownColors(circFill(e)).reverse())
             .map((i) => `<button class="sw ${circFill(e) === i ? 'on' : ''}" data-fill="${i}" title="${colOf(i).toUpperCase()}" style="background:${colOf(i)}"></button>`).join(''))
         }</span></div>
+        ${circMet(e) === 10 ? hrRows() : ''}
         <div class="field" title="Make the ring a meter"><span>Meter</span><select id="fcmet">${
           METERS.map(([id, nm]) => `<option value="${id}" ${circMet(e) === id ? 'selected' : ''}>${nm}</option>`).join('')
         }</select><span class="cb units" id="fcdir"><button type="button" data-v="1" class="${circDir(e) > 0 ? 'on' : ''}">&#8635;</button><button type="button" data-v="-1" class="${circDir(e) < 0 ? 'on' : ''}">&#8634;</button></span></div>
@@ -2537,6 +2532,7 @@
             METERS.map(([id, nm]) => `<option value="${id}" ${(st.mt || [])[i] === id ? 'selected' : ''}>${nm}</option>`).join('')
           }</select><input type="color" class="pick mtc" data-i="${i}" value="${colOf((st.mc || [])[i] >= 0 ? st.mc[i] : arcEl[5])}" title="Color of the arc itself — right-click to follow the Rim part again"><input type="color" class="pick mtk" data-i="${i}" value="${colOf((st.mk || [])[i] >= 0 ? st.mk[i] : arcEl[5])}" title="Color of the track (the empty part of the arc) — right-click for the automatic faint shade"></label>`; }).join('')
         }</span></div>` : ''}
+        ${arcEl && (st.mt || []).includes(10) ? hrRows() : ''}
       </div>
       <div class="muted hint">${COLOR_NOTE ? `<span class="status err">${COLOR_NOTE}</span> ` : ''}${none ? '' : multi ? `${all.length} parts selected — Anchor, Size, Icon size, Color and Icon apply to all of them.` : ''}</div>`;
     // 色の入力欄を触っている間は右の欄を作り直さない (作り直すとパネルごと消える)。
@@ -2604,6 +2600,12 @@
     const fp = $('fpick');
     if (fp) fp.addEventListener('change', (ev) => { const i = pickColor(ev.target, ev.target.value); each((x) => { x[5] = i; }); });
     bindMeters(); bindAlign(); bindPickers();
+    box.querySelectorAll('.hrstep button').forEach((b) => b.addEventListener('click', () => {
+      const which = b.closest('.hrstep').dataset.hr, up = +b.dataset.d > 0;
+      if (which === 'lo') { let v = hrLo(); v = v ? v + (up ? 2 : -2) : (up ? 60 : 0); setHr(0, (v < 30 || v > 200) ? 0 : v); }
+      else { let v = hrHi(); v = v ? v + (up ? 2 : -2) : (up ? 185 : 0); setHr(1, (v < 60 || v > 250) ? 0 : v); }
+    }));
+    box.querySelectorAll('#fhrcol button').forEach((b) => b.addEventListener('click', () => setHr(2, +b.dataset.v)));
     box.querySelectorAll('#fanamode button, #fanastyle button, #fanaticks button').forEach((b) => b.addEventListener('click', () => {
       const key = b.closest('.cb').id === 'fanamode' ? 9 : b.closest('.cb').id === 'fanastyle' ? 10 : 11;
       each((x) => { while (x.length < 13) x.push(0); x[key] = +b.dataset.v; });

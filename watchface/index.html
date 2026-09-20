@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 08:17</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 08:21</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1950,7 +1950,7 @@
       const dv = dev(), g = lineGeom(e, JOINS, i);
       const art = lineArt(def.line, g.len * dv.w / 1000, linePen(s) * k, g.m0 * dv.w / 1000, g.m1 * dv.w / 1000);
       div.dataset.lx = g.x; div.dataset.ly = g.y;   // 位置も伸ばしたあとの値で置く
-      div.classList.add('linepart');
+      div.classList.add('linepart', 'rawline');     // rawline = 種別 70-73 の線そのもの (角の R を入れる位置の目印)
       div.style.width = art.w + 'px'; div.style.height = art.h + 'px';
       div.dataset.lw = art.w; div.dataset.lh = art.h;   // 端を合わせるので、箱は整数に丸めず小数のまま置く
       div.innerHTML = art.svg + '<span class="anchor"></span>';
@@ -2210,10 +2210,14 @@
   }
   // 角の R を実機と同じ向き・同じ丸い端で描く (プレビュー)。線の上に重ねる = 実機も最後に描く。
   // 角の R は「線を全部描いた直後」に置く = 線より上・針より下 (実機 b0920r と同じ順)。
+  // 角の R は「**最後の線 (70-73) の直後**」に描く (実機と同じ位置、2026-09-21 実機セッションと突き合わせ)。
+  //   一番下だと後の線が R を覆って丸みが消え、一番上だと針の上に乗る。円・四角形・アナログは数えない
+  //   = それらを線より後ろ (手前) に置けば、角の R ごと覆える。
   function insertJoints(box, html) {
     if (!html) return;
     const parts = [...box.querySelectorAll(':scope > .el')];
-    const lastLine = parts.filter((p) => p.classList.contains('linepart')).pop();
+    const lastLine = parts.filter((p) => p.classList.contains('rawline')).pop();
+    if (!lastLine) return;                        // 線が 1 本も無い面では R を描かない (実機と同じ)
     const next = lastLine ? lastLine.nextElementSibling : null;
     if (next) next.insertAdjacentHTML('beforebegin', html); else box.insertAdjacentHTML('beforeend', html);
   }

@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 06:43</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 07:47</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -923,7 +923,12 @@
   const circMet = (e) => { const v = Number(e[11]); return METERS.some((m) => m[0] === v) ? v : 0; };
   const circDir = (e) => (Number(e[12]) === -1 ? -1 : 1);
   // 直径は実機の実 px で偶数 (= 半径が整数) に着地する値を送る。線幅は線と同じ奇数化。
-  const circPen = (sz) => linePen(sz);
+  // 太さ 3 = 縁なし (輪 / 枠を描かない)。中の色を塗っていれば、べた塗りの形になる (2026-09-21)。
+  const NO_EDGE = 3;
+  const noEdge = (e) => Number(e[4]) >= NO_EDGE;
+  const circPen = (sz) => (sz >= NO_EDGE ? 0 : linePen(sz));
+  const rectFill = (e) => { const v = Number(e[10]); return (Number.isInteger(v) && v >= 0) ? v : -1; };
+  const rectGrow = (e) => { while (e.length < 11) e.push(e.length === 8 ? RECT_DEF.w : e.length === 9 ? RECT_DEF.h : -1); };
   // 円の形: 14 番目 = 弧の角度 (360 全周 / 180 半円 / 90 4 分の 1)、15 番目 = 始まる角 (12 時 = 0、時計回り)。
   // 無い面は全周・0 度 = 今までどおり。
   const CIRC_SPANS = [360, 180, 90];
@@ -951,6 +956,8 @@
     let o = '';
     // 塗りは全周の時だけ (実機は扇型を塗れない)
     if (col && sp === 360) o += `<circle cx="${c}" cy="${c}" r="${(R + pen / 2).toFixed(1)}" fill="${col}"/>`;
+    // 縁なし + 塗りなし = 何も描かれない。編集で掴めなくなるので、見えない当たり判定だけ置く
+    else if (!col && pen <= 0) o += `<circle cx="${c}" cy="${c}" r="${R.toFixed(1)}" fill="transparent"/>`;
     o += arcPath(f0, f0 + sp, met ? trackOp : 1);
     const ratio = met ? meterRatio(met) : 0;
     if (ratio > 0.02) {
@@ -1122,7 +1129,16 @@
     return [[71, R(x), R(y - h / 2), 0, s, c, ff, -1, w], [71, R(x), R(y + h / 2), 0, s, c, ff, -1, w],
             [70, R(x - w / 2), R(y), 0, s, c, ff, -1, vlen], [70, R(x + w / 2), R(y), 0, s, c, ff, -1, vlen]];
   }
-  const expandRects = (list) => (list || []).flatMap((e) => (isRect(e[0]) ? rectLines(e) : [e]));
+  // 実機へ渡す形。塗りがあれば「塗りつぶしの四角形 (76)」を先に置き、枠があれば今までどおり 4 本の線にほどく。
+  //   76 = [76, x, y, 0, 0, 色, f(bit0 = 角を丸めない), -1, 幅‰, 高さ‰ (どちらも盤面の幅基準), 角の R‰]
+  const rectOut = (e) => {
+    const out = [];
+    if (rectFill(e) >= 0) out.push([76, clamp(e[1]), clamp(e[2]), 0, 0, rectFill(e), (e[6] & F_SHARP) | F_RECTLINE, -1,
+                                    rectW(e), Math.round(rectH(e) * dev().h / dev().w), Math.round(rectRadius(e))]);
+    if (!noEdge(e)) out.push(...rectLines(e));
+    return out;
+  };
+  const expandRects = (list) => (list || []).flatMap((e) => (isRect(e[0]) ? rectOut(e) : [e]));
   // 角の半径 (幅の千分率)。lineJoins の直角の場合と同じ式 = 実機に届く線 + R と同じ形になる。
   function rectRadius(e) {
     if (e[6] & F_SHARP) return 0;
@@ -1918,13 +1934,14 @@
       return div;
     }
     if (def.rect) {          // 四角形: 当たり判定は枠の線の上だけ (中の部品を隠さない)
-      const dv = dev(), pen = linePen(s) * k;
+      const dv = dev(), pen = noEdge(e) ? 0 : linePen(s) * k;
       const W = rectW(e) * dv.w / 1000, H = rectH(e) * dv.h / 1000, r = rectRadius(e) * dv.w / 1000;
       const bw = W + pen, bh = H + pen;
+      const fillCol = rectFill(e) >= 0 ? colOf(rectFill(e)) : (pen <= 0 ? 'transparent' : 'none');
       div.classList.add('linepart');
       div.style.width = bw + 'px'; div.style.height = bh + 'px';
       div.dataset.lw = bw; div.dataset.lh = bh;
-      div.innerHTML = `<svg width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" style="display:block;overflow:visible"><rect x="${(pen / 2).toFixed(1)}" y="${(pen / 2).toFixed(1)}" width="${W.toFixed(1)}" height="${H.toFixed(1)}" rx="${r.toFixed(1)}" ry="${r.toFixed(1)}" fill="none" stroke="currentColor" stroke-width="${pen.toFixed(1)}" stroke-linejoin="miter"/></svg><span class="anchor"></span><span class="rhandle" title="Drag to change the size and the shape"></span>`;
+      div.innerHTML = `<svg width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" style="display:block;overflow:visible"><rect x="${(pen / 2).toFixed(1)}" y="${(pen / 2).toFixed(1)}" width="${W.toFixed(1)}" height="${H.toFixed(1)}" rx="${r.toFixed(1)}" ry="${r.toFixed(1)}" fill="${fillCol}" stroke="${pen > 0 ? 'currentColor' : 'none'}" stroke-width="${pen.toFixed(1)}" stroke-linejoin="miter"/></svg><span class="anchor"></span><span class="rhandle" title="Drag to change the size and the shape"></span>`;
       div.addEventListener('pointerdown', (ev) => startMove(ev, i));
       div.querySelector('.rhandle').addEventListener('pointerdown', (ev) => startRectResize(ev, i));
       return div;
@@ -2283,7 +2300,7 @@
     ib: (typeof IMG !== 'undefined' && IMG.show && !IMG.cur && IMG.fill) ? parseInt(String(IMG.fill).slice(1), 16) : undefined,
     lj: (() => { const j = lineJoins(expandRects(st.el)).arcs; return j.length ? j : undefined; })(),
     // 四角形の元の形 (実機は読まない。コレクションから開き直した時に四角形へ戻すため)
-    rq: (() => { const q = st.el.filter((e) => isRect(e[0])).map((e) => [e[1], e[2], rectW(e), rectH(e), e[4], e[5], e[6] & F_SHARP]); return q.length ? q : undefined; })(),
+    rq: (() => { const q = st.el.filter((e) => isRect(e[0])).map((e) => [e[1], e[2], rectW(e), rectH(e), e[4], e[5], e[6] & F_SHARP, rectFill(e)]); return q.length ? q : undefined; })(),
     bb: (st.bb || []).some((b) => b && b.tm) ? (st.bb || []).slice(0, BB_MAX).map((b) => (b && b.tm ? b : null)) : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   // ── 騨置き場 ─────────────────────────────────────────────
@@ -2507,7 +2524,7 @@
         <div class="brk"></div>
         ${allCirc ? `
         ${stepRow('Diameter', 8, all.every((x) => circDia(x) === circDia(e)) ? circDia(e) : null, 'Bigger / smaller by one grid step')}
-        ${seg('Thickness', ['Thin', 'Medium', 'Thick'], same(4) ? e[4] : -9, 4)}
+        ${seg('Thickness', ['Thin', 'Medium', 'Thick', 'None'], same(4) ? e[4] : -9, 4)}
         <div class="field" title="A whole ring, half of one, or a quarter"><span>Shape</span><span class="cb units" id="fcspan">${
           [[360, 'Full'], [180, 'Half'], [90, 'Quarter']].map(([v, lb]) =>
             `<button type="button" data-v="${v}" class="${all.every((x) => circSpan(x) === v) ? 'on' : ''}">${lb}</button>`).join('')
@@ -2527,7 +2544,13 @@
         ${allRect ? `
         ${stepRow('Width', 8, all.every((x) => rectW(x) === rectW(e)) ? rectW(e) : null, 'How wide the rectangle is, in grid steps')}
         ${stepRow('Height', 9, all.every((x) => rectH(x) === rectH(e)) ? rectH(e) : null, 'How tall the rectangle is, in grid steps')}
-        ${seg('Thickness', ['Thin', 'Medium', 'Thick'], same(4) ? e[4] : -9, 4)}
+        ${seg('Thickness', ['Thin', 'Medium', 'Thick', 'None'], same(4) ? e[4] : -9, 4)}
+        <div class="field" title="Fill the inside with a color. With Thickness = None this makes a solid shape."><span>Fill</span><span class="swatches simple">${
+          `<input type="color" class="pick" id="ffillpick" value="${rectFill(e) >= 0 ? colOf(rectFill(e)) : hex(st.bg)}" title="Pick any color for the fill">` +
+          `<button class="sw ${rectFill(e) < 0 ? 'on' : ''}" data-fill="-1" title="No fill" style="background:transparent;border-style:dashed"></button>` +
+          ((rectFill(e) >= 0 && rectFill(e) < PC_BASE ? [rectFill(e)] : []).concat(shownColors(rectFill(e)).reverse())
+            .map((i) => `<button class="sw ${rectFill(e) === i ? 'on' : ''}" data-fill="${i}" title="${colOf(i).toUpperCase()}" style="background:${colOf(i)}"></button>`).join(''))
+        }</span></div>
         <div class="field" title="R = round corners, the same curve as where two lines meet. Sharp = square corners."><span>Join</span><span class="cb units" id="fjoint">${
           [[0, 'R'], [1, 'Sharp']].map(([v, lb]) =>
             `<button type="button" data-v="${v}" class="${all.every((x) => ((x[6] & F_SHARP) ? 1 : 0) === v) ? 'on' : ''}">${lb}</button>`).join('')
@@ -2771,9 +2794,12 @@
       if (isLine(x[0]) || isCircle(x[0]) || TYPES[x[0]].dial) return;
       while (x.length < 8) x.push(-1); x[8] = +b.dataset.v;
     })));
-    box.querySelectorAll('[data-fill]').forEach((b) => b.addEventListener('click', () => each((x) => { if (isCircle(x[0])) x[10] = +b.dataset.fill; })));
+    box.querySelectorAll('[data-fill]').forEach((b) => b.addEventListener('click', () => each((x) => {
+      if (isCircle(x[0])) x[10] = +b.dataset.fill; else if (isRect(x[0])) { rectGrow(x); x[10] = +b.dataset.fill; }
+    })));
     const ffp = $('ffillpick');
-    if (ffp) ffp.addEventListener('change', (ev) => { const i = pickColor(ev.target, ev.target.value); if (i < 0) return renderInspector(); each((x) => { if (isCircle(x[0])) x[10] = i; }); });
+    if (ffp) ffp.addEventListener('change', (ev) => { const i = pickColor(ev.target, ev.target.value); if (i < 0) return renderInspector();
+      each((x) => { if (isCircle(x[0])) x[10] = i; else if (isRect(x[0])) { rectGrow(x); x[10] = i; } }); });
     const fcm = $('fcmet');
     if (fcm) fcm.addEventListener('change', (ev) => each((x) => { if (isCircle(x[0])) x[11] = Number(ev.target.value); }));
     document.querySelectorAll('#fcdir button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isCircle(x[0])) x[12] = +b.dataset.v; })));
@@ -3189,13 +3215,15 @@
     }
     migrateDate(el);
     // 四角形: 実機用にほどいた線 (f bit4) は捨て、rq の元の形から組み直す
-    for (let q = el.length - 1; q >= 0; q--) if (isLine(el[q][0]) && (el[q][6] & F_RECTLINE)) el.splice(q, 1);
+    for (let q = el.length - 1; q >= 0; q--) if ((isLine(el[q][0]) || isRect(el[q][0])) && (el[q][6] & F_RECTLINE)) el.splice(q, 1);
     (Array.isArray(j.rq) ? j.rq : []).slice(0, 20).forEach((r) => {
       if (!Array.isArray(r) || r.length < 7) return;
       const [x, y, w, h, sz, c, f] = r.map(Number);
+      const fl = Number(r[7]);
       if (![x, y, w, h, sz, c, f].every(Number.isFinite)) return;
-      el.push([76, clamp(x), clamp(y), 0, Math.max(0, Math.min(2, sz)), Math.max(0, c), f & F_SHARP, -1,
-               Math.max(RECT_MIN, Math.min(1000, w)), Math.max(RECT_MIN, Math.min(1000, h))]);
+      el.push([76, clamp(x), clamp(y), 0, Math.max(0, Math.min(NO_EDGE, sz)), Math.max(0, c), f & F_SHARP, -1,
+               Math.max(RECT_MIN, Math.min(1000, w)), Math.max(RECT_MIN, Math.min(1000, h)),
+               (Number.isInteger(fl) && fl >= 0) ? fl : -1]);
     });
     const hr = Array.isArray(j.hr) ? [Number(j.hr[0]) || 0, Number(j.hr[1]) || 0, Number(j.hr[2]) === 1 ? 1 : 0] : [];
     const palA = (v, n) => (Array.isArray(v) && v.length === n && v.every((x) => Number.isInteger(x) && x >= 0 && x <= PC_BASE + PC_MAX) ? v.slice() : []);

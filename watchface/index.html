@@ -369,7 +369,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 08:01</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 09:07</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1427,7 +1427,10 @@
     function hands(t, k) {
       // B = 軸より後ろに出る長さ。小さなアナログ部品 (k.b = 直径の割合) では針と同じだけ縮める。
       // 縮めないと、尻尾だけが残って「軸がずれた 2 本の線」に見える (2026-09-20 修正)。
-      const L = (v) => v * k.l, W = (v) => v * k.w, B = (v) => v * (k.b == null ? 1 : k.b);
+      // k.wmin = 太さの下限 (454 基準)。小さなアナログ部品では実機で 1.2px を切ると針が消えるため、
+      // 実機側と同じ下限をここでも入れる (2026-09-20 実機報告: 細い分針が出なかった)。
+      const L = (v) => v * k.l, B = (v) => v * (k.b == null ? 1 : k.b);
+      const W = (v) => { const x = v * k.w; return (k.wmin && x < k.wmin) ? k.wmin : x; };
       if (t === 50) return [r1(W(9)), [0].concat(barPts(L(118), W(15), B(20))), [0].concat(barPts(L(178), W(11), B(20)))];
       if (t === 51) return [r1(W(8)), [0].concat(needlePts(L(120), W(17), B(14))), [0].concat(needlePts(L(180), W(12), B(14)))];
       if (t === 52) return [r1(W(7)), [0].concat(kitePts(L(122), W(30), B(26))), [0].concat(kitePts(L(182), W(22), B(26)))];
@@ -1811,7 +1814,7 @@
     }
     if (def.analog) {        // アナログ時計 (部品)。箱 = 直径、当たり判定は描いた線の上だけ
       const dv = dev(), dia = anaDia(e), S = dia * dv.w / 1000;
-      const kk = DIAL_SCALE[Math.min(Math.max(s, 0), 3)], kd = { l: kk.l * dia / 1000, w: kk.w * dia / 1000, b: dia / 1000 };
+      const kk = DIAL_SCALE[Math.min(Math.max(s, 0), 3)], kd = { l: kk.l * dia / 1000, w: kk.w * dia / 1000, b: dia / 1000, wmin: 1.2 * 454 / dv.w };
       const art = DIAL.analogArt(anaStyle(e), kd, dia, anaMode(e), anaTicks(e), anaAngles(e));
       div.classList.add('linepart');
       div.style.width = S + 'px'; div.style.height = S + 'px';
@@ -2141,7 +2144,7 @@
     const key = `${style}|${dia}|${sz}`;
     const hit = ANA_SHAPES.findIndex((x) => x.key === key);
     if (hit >= 0) return hit;
-    const kk = DIAL_SCALE[sz], h = DIAL.hands(style, { l: kk.l * dia / 1000, w: kk.w * dia / 1000, b: dia / 1000 });
+    const kk = DIAL_SCALE[sz], h = DIAL.hands(style, { l: kk.l * dia / 1000, w: kk.w * dia / 1000, b: dia / 1000, wmin: 1.2 * 454 / dev().w });
     ANA_SHAPES.push({ key, style, spec: h });
     return ANA_SHAPES.length - 1;
   }

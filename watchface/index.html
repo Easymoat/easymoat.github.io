@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 14:56</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 16:31</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -847,7 +847,7 @@
   const elCount = (list) => (list || []).filter((e) => !isLine(e[0]) && !isRect(e[0])).length;   // 上限の対象 = 線と四角形以外
   // f のビット: 0 アイコン / 1 値を出さない / 2 株は変化率 · 3 上げ下げ (野球は状態) で色 / 4 株は名前。
   // **サーバの上限と必ず揃えること** (ここが狭いと絵札が描けず真っ黒になる、2026-09-14)。
-  const F_MAX = 63;   // bit5 (32) = 日付の曜日をアイコン扱いにする (サーバと揃えること)
+  const F_MAX = 127;   // bit5 (32) = 日付の曜日、bit6 (64) = 値のレベルで色分け (サーバと揃えること)
   const EL_HEAVY = 32;   // これを超えると実機の描き直しが目に見えて遅くなる (部品 1 つ ≒ 4.8ms)
   // 線 (70-73)。太さは 454 の盤面での px、長さは幅の千分率 (x/y と同じ物差し)。
   const LINE_W = [3, 5, 7], LINE_LEN_DEF = 200, LINE_LEN_MIN = 20;   // 奇数 = 実機で端の丸めがぴったり合う
@@ -894,7 +894,7 @@
   //   心拍: 72 点の折れ線、縦は窓の中の最小〜最大、上下 2px の余白、線幅 2
   //   ストレス: 36 本の棒、ピッチ = 幅/36、棒の幅 = ピッチ×0.7、高さ = 値/100
   //   歩数: 7 本の棒、ピッチ = 幅/7、棒の幅 = ピッチ×0.6、高さ = 値/7 日の最大
-  function graphArt(kind, w, h, k) {
+  function graphArt(kind, w, h, k, level) {   // level = 棒をストレスのレベルの色で塗る (2026-09-20)
     let o = '';
     if (kind === 'hr') {
       const d = HR_SAMPLE, lo = Math.min(...d), hi = Math.max(...d), pad = 2 * k, pen = Math.max(1, 2 * k);
@@ -903,7 +903,7 @@
     } else {
       const d = kind === 'stress' ? STRESS_SAMPLE : STEPS_SAMPLE, top = kind === 'stress' ? 100 : Math.max(...d);
       const pitch = w / d.length, bw = Math.max(1, Math.round(pitch * (kind === 'stress' ? 0.7 : 0.6)));
-      o = d.map((v, i) => { const bh = Math.max(1, v / top * h); return `<rect x="${(i * pitch + (pitch - bw) / 2).toFixed(1)}" y="${(h - bh).toFixed(1)}" width="${bw}" height="${bh.toFixed(1)}" fill="currentColor"/>`; }).join('');
+      o = d.map((v, i) => { const bh = Math.max(1, v / top * h); const col = (level && kind === 'stress') ? ` fill="${colOf(scCols()[stressBand(v)])}"` : ''; return `<rect x="${(i * pitch + (pitch - bw) / 2).toFixed(1)}" y="${(h - bh).toFixed(1)}" width="${bw}"${col} height="${bh.toFixed(1)}" fill="currentColor"/>`; }).join('');
     }
     return `<svg width="${w.toFixed(1)}" height="${h.toFixed(1)}" style="display:block;overflow:visible">${o}</svg>`;
   }
@@ -1073,6 +1073,19 @@
   const F_SHARP = 1;                              // 線: 角を丸めない (0 = R を入れる = 既定)
   const lineSharp = (e) => (e[6] & F_SHARP) !== 0;
   const F_DOW = 32;                               // 日付: 曜日を別の枠で描く (無い面は昔の「Fri Sep 4」のまま)
+  const F_LEVEL = 64;                             // ストレス (16) / 心拍 (10) / ストレスのグラフ (42): 値のレベルで色分け (2026-09-20)
+  // ストレスの色 (休息 / 低い / 中 / 高) と境目。境目は Garmin の区分で固定、色は面ごとに選べる。
+  const SC_DEF = [7, 4, 3, 2], SC_EDGE = [25, 50, 75];
+  const HC_DEF = [7, 5, 2];                       // 心拍の色 (低い / 間 / 高い)
+  const scCols = () => { const v = st.sc; return (Array.isArray(v) && v.length === 4 && v.every((x) => Number.isInteger(x) && x >= 0)) ? v : SC_DEF.slice(); };
+  const hcCols = () => { const v = st.hc; return (Array.isArray(v) && v.length === 3 && v.every((x) => Number.isInteger(x) && x >= 0)) ? v : HC_DEF.slice(); };
+  const stressBand = (v) => (v <= SC_EDGE[0] ? 0 : v <= SC_EDGE[1] ? 1 : v <= SC_EDGE[2] ? 2 : 3);
+  const levelCol = (t, f) => {   // 見本の値でのレベルの色 (ストレス 32 / 心拍 72)
+    if (!(f & F_LEVEL)) return null;
+    if (t === 16 || t === 42) return colOf(scCols()[stressBand(32)]);
+    if (t === 10) { const lo = hrLo() || 60, hi = hrHi() || 185; const c = hcCols(); return colOf(HR_NOW <= lo ? c[0] : HR_NOW >= hi ? c[2] : c[1]); }
+    return null;
+  };
   const isSplitDate = (e) => e[0] === 2 && (e[6] & F_DOW) !== 0;
   // 昔の面の日付は「Fri Sep 4」の 1 つの文字列。読み込んだ時に「曜日 + 日付」へ揃える
   // (両方出す形なので見た目は変わらないし、以降は個別に扱える)。
@@ -1259,7 +1272,7 @@
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
-  let st = { dev: 'fr965', hr: [], grid: 50, showGrid: true, gridBright: false, selBright: true, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], stk: ['', ''], stn: ['', ''], uc: 0, bb: [null, null, null, null], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
+  let st = { dev: 'fr965', hr: [], sc: [], hc: [], grid: 50, showGrid: true, gridBright: false, selBright: true, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], stk: ['', ''], stn: ['', ''], uc: 0, bb: [null, null, null, null], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
   // Selection: `sel` is the primary (last clicked) element, `selSet` every selected index.
   // Shift / Cmd / Ctrl + click adds or removes one; the Selected panel, dragging, arrows and
   // Delete act on all of them.
@@ -1834,9 +1847,11 @@
     div.className = 'el' + (isSel(i) ? ' sel' : '');
     div.dataset.i = i;
     // 株の部品で「上げ下げで色を変える」を選んでいる間は、分かっていればその向きの色で描く。
-    div.style.color = (isStock(t) && (f & 8)) ? (stkInfo(t) ? (stkInfo(t).u < 0 ? downCol() : stkInfo(t).u > 0 ? upCol() : colOf(c)) : upCol())
-                    : (isBall(t) && (f & 8)) ? gameColor(t, colOf(c))      // 実データの状態の色 (取れるまでは表の青)
-                    : colOf(c);
+    // 色: 値のレベル (ストレス / 心拍) → 株の上げ下げ → 試合の状態 → 部品の色、の順に決める
+    div.style.color = levelCol(t, f)
+                    || ((isStock(t) && (f & 8)) ? (stkInfo(t) ? (stkInfo(t).u < 0 ? downCol() : stkInfo(t).u > 0 ? upCol() : colOf(c)) : upCol())
+                      : (isBall(t) && (f & 8)) ? gameColor(t, colOf(c))      // 実データの状態の色 (取れるまでは表の青)
+                      : colOf(c));
     if (def.dial && ARCSET[t] && (st.mt || []).includes(10) && hrCol()) div.style.color = hrBandCol();   // 縁のメーターも心拍で色分け
     if (def.dial) {   // hands / rim: one drawing over the whole dial, color from the element
       // 画面全体を覆うので、当たり判定は「描かれた線の上」だけにする。板のまま置くと
@@ -1875,7 +1890,7 @@
       div.classList.add('graphpart');
       div.style.width = W + 'px'; div.style.height = H + 'px';
       div.dataset.lw = W; div.dataset.lh = H;
-      div.innerHTML = graphArt(def.graph, W, H, dv.w / 454) + '<span class="anchor"></span>';
+      div.innerHTML = graphArt(def.graph, W, H, dv.w / 454, !!(f & F_LEVEL)) + '<span class="anchor"></span>';
       div.addEventListener('pointerdown', (ev) => startMove(ev, i));
       return div;
     }
@@ -2211,7 +2226,9 @@
     // as = [形の種別 (Composer が読み戻す用), キャップ半径, 時針, 分針]。実機は 2 番目以降だけ見る。
     const as0 = ANA_SHAPES.length ? ANA_SHAPES.map((x) => [x.style, x.spec[0], x.spec[1], x.spec[2]]) : undefined;
     const hrOut = (hrLo() || hrHi() || hrCol()) ? [hrLo(), hrHi(), hrCol()] : undefined;   // 既定 (全部 0) の時は送らない
-    const o = Object.assign({ bg: st.bg, el: el0, as: as0, hr: hrOut, pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined, mc: (st.mc || []).some((c) => c >= 0) ? st.mc : undefined,
+    const scOut = st.sc && String(st.sc) !== String(SC_DEF) ? scCols() : undefined;   // 既定の色なら送らない (実機が既定を持つ)
+    const hcOut = st.hc && String(st.hc) !== String(HC_DEF) ? hcCols() : undefined;
+    const o = Object.assign({ bg: st.bg, el: el0, as: as0, hr: hrOut, sc: scOut, hc: hcOut, pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined, mc: (st.mc || []).some((c) => c >= 0) ? st.mc : undefined,
     mk: (st.mk || []).some((c) => c >= 0) ? st.mk : undefined, mv: (st.mv || []).some((v) => v === 0) ? st.mv : undefined,
     st: (st.stk || []).some((v) => v) ? (st.stk || ['', '']).slice(0, 2).map(stkClean) : undefined,
     sn: (st.stn || []).some((v) => v) ? (st.stn || ['', '']).slice(0, 2).map(nameClean) : undefined,
@@ -2500,6 +2517,14 @@
           [[1, 'On'], [0, 'Off']].map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => anaTicks(x) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>
 ` : ''}
+        ${!none && all.every((x) => [10, 16, 42].includes(x[0])) ? `
+        <div class="field" title="Color the value by how high it is. Stress: rest / low / medium / high. Heart rate: below Rest, between, above High."><span>Level color</span><span class="cb units" id="flevel">${
+          [[0, 'Off'], [F_LEVEL, 'On']].map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & F_LEVEL) === v) ? 'on' : ''}">${lb}</button>`).join('')
+        }</span></div>
+        ${(e[6] & F_LEVEL) ? `<div class="field" title="${e[0] === 10 ? 'Colors for below Rest, between, above High' : 'Colors for rest, low, medium and high stress'}"><span>Colors</span><span class="swatches simple" id="flevcol">${
+          (e[0] === 10 ? hcCols() : scCols()).map((ci, n) => `<input type="color" class="pick" data-n="${n}" value="${colOf(ci)}" title="${['rest', 'low', 'medium', 'high'][n]}">`).join('')
+        }</span></div>` : ''}
+        ${e[0] === 10 && (e[6] & F_LEVEL) ? hrRows() : ''}` : ''}
         ${!none && all.every((x) => RIM_POS.includes(x[0])) ? `<div class="field" title="Inner leaves room for the Meter arcs; Edge sits close to the bezel."><span>Position</span><span class="cb units" id="frimpos">${
           [[1, 'Inner'], [0, 'Edge']].map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => rimInner(x) === !!v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>` : ''}
@@ -2600,6 +2625,12 @@
     const fp = $('fpick');
     if (fp) fp.addEventListener('change', (ev) => { const i = pickColor(ev.target, ev.target.value); each((x) => { x[5] = i; }); });
     bindMeters(); bindAlign(); bindPickers();
+    box.querySelectorAll('#flevel button').forEach((b) => b.addEventListener('click', () => each((x) => { x[6] = (x[6] & ~F_LEVEL) | (+b.dataset.v); })));
+    box.querySelectorAll('#flevcol input').forEach((pk) => pk.addEventListener('change', () => {
+      const n = +pk.dataset.n, i2 = pickColor(pk, pk.value);
+      if (e[0] === 10) { const v = hcCols().slice(); v[n] = i2; st.hc = v; } else { const v = scCols().slice(); v[n] = i2; st.sc = v; }
+      commit();
+    }));
     box.querySelectorAll('.hrstep button').forEach((b) => b.addEventListener('click', () => {
       const which = b.closest('.hrstep').dataset.hr, up = +b.dataset.d > 0;
       if (which === 'lo') { let v = hrLo(); v = v ? v + (up ? 2 : -2) : (up ? 60 : 0); setHr(0, (v < 30 || v > 200) ? 0 : v); }
@@ -2724,7 +2755,7 @@
   // Back to draft で 10 番以降の色が既定の色に化けていた (2026-09-17 修正)。
   const draftKeys = () => ({ bg: st.bg, el: st.el, pc: (st.pc || DEF_PC).slice(),
     tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b,
-    wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0, hr: (st.hr || []).slice(),
+    wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0, hr: (st.hr || []).slice(), sc: (st.sc || []).slice(), hc: (st.hc || []).slice(),
     mt: (st.mt || []).slice(), mc: (st.mc || []).slice(), mk: (st.mk || []).slice(), mv: (st.mv || []).slice(),
     st: (st.stk || ['', '']).slice(0, 2), sn: (st.stn || ['', '']).slice(0, 2),
     uc: st.uc === 1 ? 1 : 0, bb: (st.bb || []).slice(0, BB_MAX),
@@ -3060,8 +3091,10 @@
                Math.max(RECT_MIN, Math.min(1000, w)), Math.max(RECT_MIN, Math.min(1000, h))]);
     });
     const hr = Array.isArray(j.hr) ? [Number(j.hr[0]) || 0, Number(j.hr[1]) || 0, Number(j.hr[2]) === 1 ? 1 : 0] : [];
+    const palA = (v, n) => (Array.isArray(v) && v.length === n && v.every((x) => Number.isInteger(x) && x >= 0 && x <= PC_BASE + PC_MAX) ? v.slice() : []);
+    const sc = palA(j.sc, 4), hc = palA(j.hc, 3);
     const bg = Number.isInteger(j.bg) && j.bg >= 0 && j.bg <= 0xFFFFFF ? j.bg : 0;
-    return { bg, el, hr, tx: intArr3(j.tx, 10, 200, DEF_TX) || DEF_TX.slice(), tm: intArr3(j.tm, 10, 200, DEF_TM) || DEF_TM.slice(),
+    return { bg, el, hr, sc, hc, tx: intArr3(j.tx, 10, 200, DEF_TX) || DEF_TX.slice(), tm: intArr3(j.tm, 10, 200, DEF_TM) || DEF_TM.slice(),
              ic: intArr3(j.ic, 6, 120, DEF_IC) || DEF_IC.slice(),
              io: (Number.isInteger(j.io) && j.io >= -20 && j.io <= 20) ? j.io : DEF_IO, b: (Number(j.b) === 1 || Number(j.b) === 2) ? Number(j.b) : 0,
              wu: (Number.isInteger(j.wu) && j.wu >= 0 && j.wu <= 3) ? j.wu : 0,
@@ -3126,7 +3159,7 @@
       try { inner.insertAdjacentHTML('beforeend', jointArt(arcs, d, d.w / 454)); } finally { st = hold; }
     }
   }
-  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, BB_MAX); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); st.hr = (c.hr || []).slice(); clearSel(); pushBgHist(st.bg); renderHr(); }
+  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, BB_MAX); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); st.hr = (c.hr || []).slice(); st.sc = (c.sc || []).slice(); st.hc = (c.hc || []).slice(); clearSel(); pushBgHist(st.bg); renderHr(); }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
   // ウォッチが最後に来た時刻は 2 か所から来る: 従来経路 (/layouts) と実機が今使う経路 (/watch)。
   // 実機はもう従来経路を見に来ないので、そちらの値は何日も古いまま。新しい方だけを使う

@@ -372,7 +372,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 14:10</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 14:13</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2452,11 +2452,12 @@
             `<button type="button" data-v="${v}" class="${all.every((x) => circSpan(x) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>
         ${stepRow('Turn', 14, circSpan(e) === 360 ? null : (all.every((x) => circFrom(x) === circFrom(e)) ? circFrom(e) + '°' : null), "Turn the arc by 45° — 12 o'clock is 0, going clockwise. Only for Half and Quarter.")}
-        <div class="field" title="${circSpan(e) === 360 ? 'Fill the inside with a color' : 'Only a whole ring can be filled'}"><span>Fill</span><span class="swatches${circSpan(e) === 360 ? '' : ' off'}">${
+        <div class="field" title="${circSpan(e) === 360 ? 'Fill the inside with a color' : 'Only a whole ring can be filled'}"><span>Fill</span><span class="swatches simple${circSpan(e) === 360 ? '' : ' off'}">${
+          `<input type="color" class="pick" id="ffillpick" value="${circFill(e) >= 0 ? colOf(circFill(e)) : hex(st.bg)}" title="Pick any color for the fill">` +
           `<button class="sw ${circFill(e) < 0 ? 'on' : ''}" data-fill="-1" title="No fill" style="background:transparent;border-style:dashed"></button>` +
-          PALETTE.slice(0, PC_BASE).map((c, i) => `<button class="sw ${circFill(e) === i ? 'on' : ''}" data-fill="${i}" title="${PALETTE_NAMES[i]}" style="background:${c}"></button>`).join('') +
-          shownColors(circFill(e)).map((i) => `<button class="sw ${circFill(e) === i ? 'on' : ''}" data-fill="${i}" style="background:${colOf(i)}"></button>`).join('')
-        }<input type="color" class="pick" id="ffillpick" value="${circFill(e) >= 0 ? colOf(circFill(e)) : hex(st.bg)}" title="Pick any color for the fill"></span></div>
+          ((circFill(e) >= 0 && circFill(e) < PC_BASE ? [circFill(e)] : []).concat(shownColors(circFill(e)).reverse())
+            .map((i) => `<button class="sw ${circFill(e) === i ? 'on' : ''}" data-fill="${i}" title="${colOf(i).toUpperCase()}" style="background:${colOf(i)}"></button>`).join(''))
+        }</span></div>
         <div class="field" title="Make the ring a meter"><span>Meter</span><select id="fcmet">${
           METERS.map(([id, nm]) => `<option value="${id}" ${circMet(e) === id ? 'selected' : ''}>${nm}</option>`).join('')
         }</select><span class="cb units" id="fcdir"><button type="button" data-v="1" class="${circDir(e) > 0 ? 'on' : ''}">&#8635;</button><button type="button" data-v="-1" class="${circDir(e) < 0 ? 'on' : ''}">&#8634;</button></span></div>

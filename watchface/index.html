@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 16:31</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 16:58</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2344,7 +2344,7 @@
     const before = (st.pc || []).length;
     const i = useColor(str, PICK_SES.idx);
     if (i >= PC_BASE && (st.pc || []).length > before) PICK_SES.idx = i;
-    return i;
+    return i;   // -1 = 入らなかった (呼ぶ側は色を変えない)
   }
   let COLOR_NOTE = '';   // 控えがいっぱいで他の部品の色まで変わった時だけ出す一言
   // 選んだ色の index を返す。基本色 (0-9) か控えに同じ色があればその index、無ければ控えに足す。
@@ -2362,10 +2362,10 @@
     // こうしないとパネルを動かすたびに控えが 1 色ずつ埋まり、上限を超えて他の部品の色まで動く。
     if (Number.isInteger(reuse) && reuse >= PC_BASE && reuse - PC_BASE < pc.length) { pc[reuse - PC_BASE] = rgb; st.pc = pc; return reuse; }
     if (pc.length >= PC_MAX) pc = gcColors(pc);
-    if (pc.length >= PC_MAX) {            // すべて使用中 (部品 24 個中 22 個が別々の色): 一番古いものを譲る
-      const drop = 0;
-      COLOR_NOTE = 'No room left for another color — the oldest one was replaced.';
-      pc[drop] = rgb; st.pc = pc; return PC_BASE + drop;
+    if (pc.length >= PC_MAX) {            // すべて使用中: 古い枠を奪うと**別の部品の色が変わる**ので断る
+      // (2026-09-20: 帯を 2 本置いて 2 本目の色を変えると 1 本目が変わる、という報告の原因)
+      COLOR_NOTE = `This dial already uses ${PC_MAX} different colors — the watch cannot take more. Reuse one of the colors above, or change another part's color first.`;
+      return -1;
     }
     pc.push(rgb); st.pc = pc;
     return PC_BASE + pc.length - 1;
@@ -2571,7 +2571,7 @@
       }));
       const pick = (cls, key) => document.querySelectorAll('.mts .' + cls).forEach((pk) => {
         pk.addEventListener('change', () => {
-          const i = Number(pk.dataset.i); st[key] = (st[key] || [-1, -1, -1, -1]).slice(); st[key][i] = pickColor(pk, pk.value); commit();
+          const i = Number(pk.dataset.i); st[key] = (st[key] || [-1, -1, -1, -1]).slice(); const ci = pickColor(pk, pk.value); if (ci >= 0) st[key][i] = ci; commit();
         });
         pk.addEventListener('contextmenu', (ev) => {   // 右クリックで自動 (部品と同じ色 / 薄い下地) に戻す
           ev.preventDefault();
@@ -2623,11 +2623,11 @@
     box.querySelectorAll('.seg').forEach((sg) => sg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => each((x) => { const k = +sg.dataset.key; while (x.length < 8) x.push(-1); x[k] = +b.dataset.v; }))));
     box.querySelectorAll('.sw[data-c]').forEach((b) => b.addEventListener('click', () => each((x) => { x[5] = +b.dataset.c; })));
     const fp = $('fpick');
-    if (fp) fp.addEventListener('change', (ev) => { const i = pickColor(ev.target, ev.target.value); each((x) => { x[5] = i; }); });
+    if (fp) fp.addEventListener('change', (ev) => { const i = pickColor(ev.target, ev.target.value); if (i >= 0) each((x) => { x[5] = i; }); else renderInspector(); });
     bindMeters(); bindAlign(); bindPickers();
     box.querySelectorAll('#flevel button').forEach((b) => b.addEventListener('click', () => each((x) => { x[6] = (x[6] & ~F_LEVEL) | (+b.dataset.v); })));
     box.querySelectorAll('#flevcol input').forEach((pk) => pk.addEventListener('change', () => {
-      const n = +pk.dataset.n, i2 = pickColor(pk, pk.value);
+      const n = +pk.dataset.n, i2 = pickColor(pk, pk.value); if (i2 < 0) return renderInspector();
       if (e[0] === 10) { const v = hcCols().slice(); v[n] = i2; st.hc = v; } else { const v = scCols().slice(); v[n] = i2; st.sc = v; }
       commit();
     }));
@@ -2685,7 +2685,7 @@
     })));
     box.querySelectorAll('[data-fill]').forEach((b) => b.addEventListener('click', () => each((x) => { if (isCircle(x[0])) x[10] = +b.dataset.fill; })));
     const ffp = $('ffillpick');
-    if (ffp) ffp.addEventListener('change', (ev) => { const i = pickColor(ev.target, ev.target.value); each((x) => { if (isCircle(x[0])) x[10] = i; }); });
+    if (ffp) ffp.addEventListener('change', (ev) => { const i = pickColor(ev.target, ev.target.value); if (i < 0) return renderInspector(); each((x) => { if (isCircle(x[0])) x[10] = i; }); });
     const fcm = $('fcmet');
     if (fcm) fcm.addEventListener('change', (ev) => each((x) => { if (isCircle(x[0])) x[11] = Number(ev.target.value); }));
     document.querySelectorAll('#fcdir button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isCircle(x[0])) x[12] = +b.dataset.v; })));

@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 14:40</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 14:56</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2454,10 +2454,10 @@
           ((circFill(e) >= 0 && circFill(e) < PC_BASE ? [circFill(e)] : []).concat(shownColors(circFill(e)).reverse())
             .map((i) => `<button class="sw ${circFill(e) === i ? 'on' : ''}" data-fill="${i}" title="${colOf(i).toUpperCase()}" style="background:${colOf(i)}"></button>`).join(''))
         }</span></div>
-        ${circMet(e) === 10 ? hrRows() : ''}
         <div class="field" title="Make the ring a meter"><span>Meter</span><select id="fcmet">${
           METERS.map(([id, nm]) => `<option value="${id}" ${circMet(e) === id ? 'selected' : ''}>${nm}</option>`).join('')
         }</select><span class="cb units" id="fcdir"><button type="button" data-v="1" class="${circDir(e) > 0 ? 'on' : ''}">&#8635;</button><button type="button" data-v="-1" class="${circDir(e) < 0 ? 'on' : ''}">&#8634;</button></span></div>
+        ${circMet(e) === 10 ? hrRows() : ''}
         ` : ''}
         ${allRect ? `
         ${stepRow('Width', 8, all.every((x) => rectW(x) === rectW(e)) ? rectW(e) : null, 'How wide the rectangle is, in grid steps')}

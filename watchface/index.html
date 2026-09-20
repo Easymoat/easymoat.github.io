@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 00:47</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 02:03</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1781,7 +1781,7 @@
   }
   function renderUpCol() {
     $('upcol').innerHTML = [['Green', 0], ['Red', 1]].map(([nm, v]) =>
-      `<button type="button" data-v="${v}" class="${(st.uc || 0) === v ? 'on' : ''}" style="color:${v === 0 ? C_GREEN : C_RED}">${nm}</button>`).join('');
+      `<button type="button" data-v="${v}" class="${(st.uc || 0) === v ? 'on' : ''}">${nm}</button>`).join('');
     $('upcol').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { st.uc = Number(b.dataset.v); commit(); }));
   }
   renderUpCol();
@@ -2464,6 +2464,7 @@
     const sameLen = all.every((x) => lineLen(x) === lineLen(e));
     // 基本の 3 行 (位置と大きさ / 表示 / 色と並べ) はどの部品でも同じ場所に出す。使えない物は薄く押せなくするだけ。
     const shapeOnly = !none && all.every((x) => isLine(x[0]) || isCircle(x[0]) || isRect(x[0]) || isGraph(x[0]) || (TYPES[x[0]] && TYPES[x[0]].dial));
+    const allRim = !none && all.every((x) => TYPES[x[0]] && TYPES[x[0]].grp === 'rim');   // 縁は大きさを使う (2026-09-21)
     const allAna = !none && all.every((x) => isAnalog(x[0]));   // アナログ時計: 大きさ (針の太さ) は使うが、そろえ方とアイコンは使わない
     box.innerHTML = `
       <div style="font-weight:600;margin-bottom:8px">${none ? '<span class="muted" style="font-weight:400">No part selected — click one on the dial (Shift+click for several)</span>' : multi ? `${all.length} elements <span class="kbd">changes apply to all</span>` : `${def.name} <span class="kbd">type ${e[0]}</span>`}</div>
@@ -2471,7 +2472,8 @@
         ${`<div class="field"><span>X</span><input type="number" id="fx" min="0" max="1000" step="${st.grid}" value="${none || multi ? '' : e[1]}" ${multi ? 'disabled title="Several parts selected: drag or use the arrow keys to move them together"' : ''}></div>`}
         ${`<div class="field"><span>Y</span><input type="number" id="fy" min="0" max="1000" step="${st.grid}" value="${none || multi ? '' : e[2]}" ${multi ? 'disabled' : ''}></div>`}
         ${seg('Anchor', ['Center', 'Left', 'Right'], same(3) ? e[3] : -1, 3, 0, allCirc || allRect || allAna)}
-        ${allGraph ? seg('Size', ['Small', 'Large'], same(4) ? e[4] : -9, 4) : seg('Size', SIZES, shapeOnly ? -9 : (same(4) ? e[4] : -9), 4, 0, shapeOnly)}
+        ${allGraph ? seg('Size', ['Small', 'Large'], same(4) ? e[4] : -9, 4)
+          : seg('Size', SIZES, (shapeOnly && !allRim) ? -9 : (same(4) ? e[4] : -9), 4, 0, shapeOnly && !allRim)}
         ${seg('Icon size', ['Auto'].concat(SIZES), anyIcon && !shapeOnly && !allAna ? (sameIs ? isOf(e) : -9) : -9, 7, -1, shapeOnly || allAna)}
         <div class="brk"></div>
         <div class="field${shapeOnly || allAna ? ' off' : ''}" title="${anyIcon ? 'What this part draws' : 'This part has no icon'}"><span>Show</span><span class="cb units" id="fshow">${

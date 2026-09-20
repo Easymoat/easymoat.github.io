@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 00:44</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 00:47</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2235,6 +2235,8 @@
     : isCircle(e[0])
     ? (() => { const b = [e[0], e[1], e[2], 0, e[4], e[5], e[6], -1, circDiaOut(circDia(e)), circPen(e[4]), circFill(e), circMet(e), circDir(e)];
                  return (circSpan(e) !== 360 || circFrom(e)) ? b.concat([circSpan(e), circFrom(e)]) : b; })()
+    : isGraph(e[0])
+    ? (e.length > 9 ? [e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7], graphW(e), graphH(e)] : e)
     : isLine(e[0])
     ? (() => { const g = lineGeom(e, joins, i); const b = [e[0], g.x, g.y, e[3], e[4], e[5], e[6], -1, g.len, linePen(e[4])];
                  return (g.m0 || g.m1) ? b.concat([g.m0, g.m1]) : b; })()
@@ -2868,8 +2870,8 @@
     const hy = Math.max(g.min.h, Math.min(1000, snapGrid(p.y) - RESIZE.top));   // 盤面の高さの千分率
     const h = Math.max(g.min.h, Math.min(1000, Math.round(hy * g.unit)));       // 部品が使う単位に直す
     if (isGraph(e[0])) graphGrow(e); else while (e.length < 10) e.push(e.length === 8 ? RECT_DEF.w : RECT_DEF.h);
-    if (w === e[8] && h === e[9]) return;
-    e[8] = w; e[9] = h;
+    if (Math.round(w) === e[8] && Math.round(h) === e[9]) return;
+    e[8] = Math.round(w); e[9] = Math.round(h);
     e[1] = clamp(e[3] === 1 ? RESIZE.left : e[3] === 2 ? RESIZE.left + w : RESIZE.left + w / 2);
     e[2] = clamp(RESIZE.top + (h / g.unit) / 2);
     render();

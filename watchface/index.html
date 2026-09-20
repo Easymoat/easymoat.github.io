@@ -121,7 +121,7 @@
   /* 選んだ部品の点線。Grid と同じく Dim / Bright を選べる (2026-09-20) */
   #stage { --selcol: #8A6A1E; }
   #stage.selbright { --selcol: var(--accent); }
-  .el.sel { outline: 1.5px dashed var(--selcol); outline-offset: 2px; }
+  .el.sel { outline: 1.5px dashed var(--selcol); outline-offset: 2px; z-index: 4; }   /* 掴みと点線を他の部品の上に */
   .el .anchor { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); border: 1px solid #000; display: none; }
   .el.sel .anchor { display: block; }
   .el.ghost { opacity: .85; pointer-events: none; }
@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 02:03</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 02:39</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -514,7 +514,7 @@
     <div class="group"><span class="lbl">Background</span><div class="ctl"><input type="color" id="bgpick" title="Pick any background color (sent to the watch as bg)" value="#000000"><span class="swatches" id="bgsw" title="Recently used colors"></span></div></div>
     <div class="group" title="Text height in px on a 454 dial: S / M / L. Sent to the watch with the layout."><span class="lbl">Text size (px)</span><div class="ctl"><span class="pxs" id="tx"></span></div></div>
     <div class="group" title="Clock height in px on a 454 dial: S / M / L."><span class="lbl">Time size (px)</span><div class="ctl"><span class="pxs" id="tm"></span></div></div>
-    <div class="group" title="Icon height in px on a 454 dial: S / M / L. Independent of the text size — use it to balance the look on devices whose text is fixed to S/M/L."><span class="lbl">Icon size (px)</span><div class="ctl"><span class="pxs" id="ic"></span><span class="stp" title="Move every icon up or down against the numbers (px on a 454 dial, + is down)."><span class="sml">&#8597;</span><button class="step" type="button" id="iodn">&minus;</button><input type="number" id="io" min="-20" max="20"><button class="step" type="button" id="ioup">+</button></span></div></div>
+    <div class="group" title="Icon height in px on a 454 dial: S / M / L. Independent of the text size — use it to balance the look on devices whose text is fixed to S/M/L."><span class="lbl">Icon size (px)</span><div class="ctl"><span class="pxs" id="ic"></span><span class="stp" title="Move every icon up or down against the numbers (px on a 454 dial, + is down)."><span class="sml">&#8597;</span><button class="step" type="button" id="iodn">&minus;</button><input type="number" id="io" min="-20" max="20"><button class="step" type="button" id="ioup">+</button></span><span class="stp" title="Space between the icon and the value (px on a 454 dial). Applies to every part, including the forecast strip."><span class="sml">&#8596;</span><button class="step" type="button" id="igdn">&minus;</button><input type="number" id="ig" min="0" max="24"><button class="step" type="button" id="igup">+</button></span></div></div>
     <div class="group" title="Faux bold: the watch has no bold Roboto, so the text is drawn again with a small offset. Bold 2 is heavier."><span class="lbl">Style</span><div class="ctl">Bold <span class="cb units" id="bold"></span></div>
       <div class="ctl" title="Which color means a rising price. Green up is the US habit, red up the Japanese one.">Up is <span class="cb units" id="upcol"></span></div>
       <div class="ctl" title="Unit for the Wind part. The same choice as MarketWatch and PulseLink; m/s is their default too.">Wind <span class="cb units" id="windunit"></span></div>
@@ -1152,6 +1152,9 @@
     return { w: bw, h: bh, svg: `<svg width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" style="display:block;overflow:visible">${l('transparent', Math.max(lw, 14))}${l('currentColor', lw)}${caps}</svg>` };
   }
   const DEF_TX = [26, 36, 48, 60], DEF_TM = [52, 68, 84, 100], DEF_IC = [19, 26, 35, 44], DEF_IO = 0, ICON_ART = 26, FONT_EM = 1.17, GAP = 6;
+  // アイコンと値の間隔 (454 盤面の px)。面ごとに変えられる (ig)。既定は昔からの 6 = 見た目は変わらない。
+  const DEF_IG = GAP, IG_MAX = 24;
+  const gapPx = () => (Number.isInteger(st.ig) && st.ig >= 0 && st.ig <= IG_MAX ? st.ig : DEF_IG);
   // The watch draws body text (not the clock) 1.2× the value here (WfLayout.TEXT_BOOST): on the
   // 33 mm screen thin digits read smaller than the icons, so the editor keeps the comfortable
   // desktop look while the device compensates. The actual-size preview applies the same boost.
@@ -1291,7 +1294,7 @@
   // こうすると呼び出し側は何も変えなくていい (ドラッグも 1 回で 1 段)。
   const UNDO_MAX = 60;
   let UNDO = [], REDO = [], UNDO_SNAP = null, UNDO_BUSY = false;
-  const UNDO_KEYS = ['bg', 'el', 'park', 'pc', 'tx', 'tm', 'ic', 'io', 'b', 'mt', 'mc', 'mk', 'mv', 'stk', 'stn', 'bb', 'uc'];
+  const UNDO_KEYS = ['bg', 'el', 'park', 'pc', 'tx', 'tm', 'ic', 'io', 'ig', 'b', 'mt', 'mc', 'mk', 'mv', 'stk', 'stn', 'bb', 'uc'];
   const undoSnap = () => JSON.stringify(UNDO_KEYS.map((k) => st[k]));
   function undoPush() {
     const cur = undoSnap();
@@ -1347,6 +1350,7 @@
   if (!Array.isArray(st.mv)) st.mv = [1, 1, 1, 1];       // 弧ごとの表示 / 非表示
   if (!Array.isArray(st.pc)) st.pc = DEF_PC.slice();
   if (!Number.isInteger(st.io) || st.io < -20 || st.io > 20) st.io = DEF_IO;
+  if (!Number.isInteger(st.ig) || st.ig < 0 || st.ig > IG_MAX) st.ig = DEF_IG;
   // 3 or 4 integers in range → 4 (a 3-entry table gets the XL default appended); anything else → null
   function intArr3(v, lo, hi, def) { lo = lo || 10; hi = hi || 200; def = def || DEF_TX;
     if (!Array.isArray(v) || (v.length !== 3 && v.length !== 4) || !v.every((n) => Number.isInteger(n) && n >= lo && n <= hi)) return null;
@@ -1403,8 +1407,18 @@
   // 見本の割合。実機が自動で埋める時の目安として 60 / 185 (fr965 の既定) を使う。
   // 心拍で色分けした時の色: 安静時以下 / 間 / 高い時以上。色はユーザーが選べる (hc、既定は青 7 / 緑 5 / 赤 2)
   const hrBandCol = () => { const lo = hrLo() || 60, hi = hrHi() || 185, c = hcCols(); return colOf(HR_NOW <= lo ? c[0] : HR_NOW >= hi ? c[2] : c[1]); };
-  // 下端以下でも「低い」と分かるよう、弧は最低 3% 描く (2026-09-20 実機と合わせる)。
-  const hrRatio = () => { const lo = hrLo() || 60, hi = hrHi() || 185; if (hi <= lo) return 0; return Math.max(0.03, Math.min(1, (HR_NOW - lo) / (hi - lo))); };
+  // メーターの長さは色の帯に合わせて 3.5 : 3.5 : 3 に割る (2026-09-21 ユーザー指示):
+  //   安静時より下 = 0〜35 % / 安静時〜高い時 = 35〜70 % / 高い時より上 = 70〜100 %。
+  //   下は 30 bpm まで (それ以下は測れない)、上は「高い時 + 30」を上限にする。
+  //   こうすると普段の心拍でも弧が長く伸びて見やすい。下端以下でも最低 3% は描く。
+  const HR_BAND = [0.35, 0.70], HR_EDGE = 30;
+  const hrFrac = (v, lo, hi) => {
+    const floor = Math.max(30, lo - HR_EDGE), top = hi + HR_EDGE;
+    if (v <= lo) return (v - floor) / Math.max(1, lo - floor) * HR_BAND[0];
+    if (v <= hi) return HR_BAND[0] + (v - lo) / Math.max(1, hi - lo) * (HR_BAND[1] - HR_BAND[0]);
+    return HR_BAND[1] + (v - hi) / Math.max(1, top - hi) * (1 - HR_BAND[1]);
+  };
+  const hrRatio = () => { const lo = hrLo() || 60, hi = hrHi() || 185; if (hi <= lo) return 0; return Math.max(0.03, Math.min(1, hrFrac(HR_NOW, lo, hi))); };
   // 弧の並び。deg = 中心角 (12 時が 0、時計回り)、half = 半角、dir = 伸びる向き、lbl = Meters の見出し
   const ARCSET = {
     64: { deg: [0, 90, 180, 270], half: 12, dir: [1, -1, -1, 1], lbl: ['0', '3', '6', '9'] },
@@ -1769,7 +1783,7 @@
   }
   function renderSizes() {
     document.querySelectorAll('.pxs input').forEach((inp) => { inp.value = st[inp.dataset.key][+inp.dataset.i]; });
-    renderBold(); renderUpCol(); $('io').value = st.io; renderWindUnit();
+    renderBold(); renderUpCol(); $('io').value = st.io; $('ig').value = gapPx(); renderWindUnit();
     // Devices without a vector font ignore the px you type and use three fixed system fonts.
     const vec = isVector(), p = prof();
     ['tx', 'tm'].forEach((key) => { $(key).style.opacity = vec ? '1' : '0.45'; });
@@ -1809,6 +1823,10 @@
   $('io').addEventListener('change', (ev) => setIo(+ev.target.value));
   $('iodn').addEventListener('click', () => setIo(st.io - 1));
   $('ioup').addEventListener('click', () => setIo(st.io + 1));
+  const setIg = (v) => { v = Math.round(v); if (v >= 0 && v <= IG_MAX) { st.ig = v; commit(); } else { $('ig').value = gapPx(); } };
+  $('ig').addEventListener('change', (ev) => setIg(+ev.target.value));
+  $('igdn').addEventListener('click', () => setIg(gapPx() - 1));
+  $('igup').addEventListener('click', () => setIg(gapPx() + 1));
 
   // ── Render ─────────────────────────────────────────────────────────────────
   function render() {
@@ -1940,7 +1958,7 @@
     }
     const si = (Number.isInteger(is) && is >= 0 && is <= SIZE_MAX) ? is : s;   // per-part icon size, else the text step (WfLayout.drawEl)
     const ki = (st.ic[Math.min(si, st.ic.length - 1)] / ICON_ART) * k, iody = st.io * k;
-    div.style.gap = (GAP * ki) + 'px';
+    div.style.gap = (gapPx() * ki) + 'px';
     // 日付は bit5 が立っている面だけ「曜日 = アイコン / 日付 = 値」に分ける (昔の面は 1 つの文字列のまま)。
     const splitDate = isSplitDate(e);
     const cityCode = cityOf(e) ? ((TZ_CITIES.find((cc) => cc[0] === cityOf(e)) || [])[1] || '') : '';
@@ -1957,7 +1975,7 @@
       const met = stripMet(e), lay = arrOf(e);                 // 0 アイコン左 / 1 右 / 2 上
       const iName = met === 1 ? 'umbrella' : met === 2 ? 'wind' : 'weather';   // 指標そのもののアイコン
       const iArt = 34;                                         // 枠はどの指標でも 34 幅 (絵は中央ぞろえ)
-      const gp = GAP * ki, iw = showIco ? iArt * ki : 0;
+      const gp = gapPx() * ki, iw = showIco ? iArt * ki : 0;
       const vw = Math.max(textW(px, '-12\u00B0'), textW(px, '100')) + bo;
       const degW = textW(px, '\u00B0');   // 度の記号の幅 (数字の右端をそろえるために除く)
       const colW = (lay === 2) ? Math.max(iw, vw) : iw + (iw ? gp : 0) + vw;
@@ -1994,7 +2012,7 @@
       let ic2 = icon;
       if (lay === 2) {
         div.style.flexDirection = 'column';
-        div.style.gap = Math.max(0, GAP * ki - inkTop(px)).toFixed(1) + 'px';
+        div.style.gap = Math.max(0, gapPx() * ki - inkTop(px)).toFixed(1) + 'px';
         // 絵の箱は原寸のままで中身だけ縮んでいるので、縦積みでは箱も実寸に合わせる
         const hm = /height="([\d.]+)"/.exec(icon);
         if (hm) ic2 = icon.replace('class="ico" style="', `class="ico" style="height:${(Number(hm[1]) * ki).toFixed(1)}px;`);
@@ -2260,7 +2278,7 @@
     const hrOut = (hrLo() || hrHi() || hrCol()) ? [hrLo(), hrHi(), hrCol()] : undefined;   // 既定 (全部 0) の時は送らない
     const scOut = st.sc && String(st.sc) !== String(SC_DEF) ? scCols() : undefined;   // 既定の色なら送らない (実機が既定を持つ)
     const hcOut = st.hc && String(st.hc) !== String(HC_DEF) ? hcCols() : undefined;
-    const o = Object.assign({ bg: st.bg, el: el0, as: as0, hr: hrOut, sc: scOut, hc: hcOut, pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined, mc: (st.mc || []).some((c) => c >= 0) ? st.mc : undefined,
+    const o = Object.assign({ bg: st.bg, el: el0, as: as0, hr: hrOut, sc: scOut, hc: hcOut, pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, ig: gapPx() !== DEF_IG ? gapPx() : undefined, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined, mc: (st.mc || []).some((c) => c >= 0) ? st.mc : undefined,
     mk: (st.mk || []).some((c) => c >= 0) ? st.mk : undefined, mv: (st.mv || []).some((v) => v === 0) ? st.mv : undefined,
     st: (st.stk || []).some((v) => v) ? (st.stk || ['', '']).slice(0, 2).map(stkClean) : undefined,
     sn: (st.stn || []).some((v) => v) ? (st.stn || ['', '']).slice(0, 2).map(nameClean) : undefined,
@@ -2803,7 +2821,7 @@
   // ★ 面の項目は sanitize() が読む名前で全部入れること。控えの色 (pc) を入れ忘れていたため、
   // Back to draft で 10 番以降の色が既定の色に化けていた (2026-09-17 修正)。
   const draftKeys = () => ({ bg: st.bg, el: st.el, pc: (st.pc || DEF_PC).slice(),
-    tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b,
+    tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, ig: gapPx(), b: st.b,
     wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0, hr: (st.hr || []).slice(), sc: (st.sc || []).slice(), hc: (st.hc || []).slice(),
     mt: (st.mt || []).slice(), mc: (st.mc || []).slice(), mk: (st.mk || []).slice(), mv: (st.mv || []).slice(),
     st: (st.stk || ['', '']).slice(0, 2), sn: (st.stn || ['', '']).slice(0, 2),
@@ -3074,7 +3092,7 @@
     try {
       const j = JSON.parse($('json').value);
       const clean = sanitize(j); if (!clean) throw new Error('bad');
-      st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; st.ic = clean.ic; st.io = clean.io; st.b = clean.b; clearSel(); commit(); setStatus('jsonstatus', `Applied ${clean.el.length} elements.`, 'ok');
+      st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; st.ic = clean.ic; st.io = clean.io; st.ig = clean.ig; st.b = clean.b; clearSel(); commit(); setStatus('jsonstatus', `Applied ${clean.el.length} elements.`, 'ok');
     } catch (e) { setStatus('jsonstatus', 'Not a valid layout. Expect {"bg":n,"el":[[t,x,y,a,s,c,f],…]} with 0..1000 coordinates.', 'err'); }
   });
   $('preset-lobby').addEventListener('click', () => {
@@ -3159,7 +3177,8 @@
     const bg = Number.isInteger(j.bg) && j.bg >= 0 && j.bg <= 0xFFFFFF ? j.bg : 0;
     return { bg, el, hr, sc, hc, tx: intArr3(j.tx, 10, 200, DEF_TX) || DEF_TX.slice(), tm: intArr3(j.tm, 10, 200, DEF_TM) || DEF_TM.slice(),
              ic: intArr3(j.ic, 6, 120, DEF_IC) || DEF_IC.slice(),
-             io: (Number.isInteger(j.io) && j.io >= -20 && j.io <= 20) ? j.io : DEF_IO, b: (Number(j.b) === 1 || Number(j.b) === 2) ? Number(j.b) : 0,
+             io: (Number.isInteger(j.io) && j.io >= -20 && j.io <= 20) ? j.io : DEF_IO,
+             ig: (Number.isInteger(j.ig) && j.ig >= 0 && j.ig <= IG_MAX) ? j.ig : DEF_IG, b: (Number(j.b) === 1 || Number(j.b) === 2) ? Number(j.b) : 0,
              wu: (Number.isInteger(j.wu) && j.wu >= 0 && j.wu <= 3) ? j.wu : 0,
              tu: (Number.isInteger(j.tu) && j.tu >= 0 && j.tu <= 1) ? j.tu : 0,
              pu: (Number.isInteger(j.pu) && j.pu >= 0 && j.pu <= 2) ? j.pu : 0,
@@ -3222,7 +3241,7 @@
       try { insertJoints(inner, jointArt(arcs, d, d.w / 454)); } finally { st = hold; }
     }
   }
-  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, BB_MAX); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); st.hr = (c.hr || []).slice(); st.sc = (c.sc || []).slice(); st.hc = (c.hc || []).slice(); clearSel(); pushBgHist(st.bg); renderHr(); }
+  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, BB_MAX); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.ig = (Number.isInteger(c.ig) && c.ig >= 0 && c.ig <= IG_MAX) ? c.ig : DEF_IG; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); st.hr = (c.hr || []).slice(); st.sc = (c.sc || []).slice(); st.hc = (c.hc || []).slice(); clearSel(); pushBgHist(st.bg); renderHr(); }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
   // ウォッチが最後に来た時刻は 2 か所から来る: 従来経路 (/layouts) と実機が今使う経路 (/watch)。
   // 実機はもう従来経路を見に来ないので、そちらの値は何日も古いまま。新しい方だけを使う

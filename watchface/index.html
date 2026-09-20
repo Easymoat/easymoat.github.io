@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 14:26</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 14:27</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1386,7 +1386,8 @@
   // 見本の割合。実機が自動で埋める時の目安として 60 / 185 (fr965 の既定) を使う。
   // 心拍で色分けした時の色 (実機と同じ固定色): 安静時以下 = 青 7 / 間 = 緑 5 / 高い時以上 = 赤 2
   const hrBandCol = () => { const lo = hrLo() || 60, hi = hrHi() || 185; return HR_NOW <= lo ? PALETTE[7] : HR_NOW >= hi ? PALETTE[2] : PALETTE[5]; };
-  const hrRatio = () => { const lo = hrLo() || 60, hi = hrHi() || 185; return hi > lo ? Math.max(0, Math.min(1, (HR_NOW - lo) / (hi - lo))) : 0; };
+  // 下端以下でも「低い」と分かるよう、弧は最低 3% 描く (2026-09-20 実機と合わせる)。
+  const hrRatio = () => { const lo = hrLo() || 60, hi = hrHi() || 185; if (hi <= lo) return 0; return Math.max(0.03, Math.min(1, (HR_NOW - lo) / (hi - lo))); };
   // 弧の並び。deg = 中心角 (12 時が 0、時計回り)、half = 半角、dir = 伸びる向き、lbl = Meters の見出し
   const ARCSET = {
     64: { deg: [0, 90, 180, 270], half: 12, dir: [1, -1, -1, 1], lbl: ['0', '3', '6', '9'] },

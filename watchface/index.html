@@ -369,7 +369,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 11:28</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 11:41</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -850,6 +850,9 @@
   const isLine = (t) => !!(TYPES[t] && TYPES[t].line != null);
   const isCircle = (t) => !!(TYPES[t] && TYPES[t].circle);
   const isAnalog = (t) => !!(TYPES[t] && TYPES[t].analog);
+  const isHands = (t) => !!(TYPES[t] && TYPES[t].dial && TYPES[t].grp === 'hands');
+  // 全面アナログ (Hands) の針の長さ。9 番目に % で持つ (既定 100)。縁を Inner にした時などに詰められる。
+  const handLen = (e) => { const v = Number(e[8]); return (Number.isFinite(v) && v >= 40 && v <= 120) ? Math.round(v) : 100; };
   // アナログ部品の中身 (9 番目以降)。既定は盤の 1/3 の大きさ・時+分・Needles・12 本の目盛り・ウォッチの時刻。
   const ANA_DEF = { dia: 320, mode: 0, style: 51, ticks: 1, city: 0 };
   const ANA_STYLES = [[51, 'Needles'], [50, 'Bars'], [52, 'Kite'], [53, 'Outline'], [56, 'Classic'], [57, 'Outline round']];
@@ -1592,8 +1595,9 @@
     return { R, hands, rim, svgFor, analogArt };
   })();
   // One dial part as an <svg> that fills the dial; color comes from the element (currentColor).
-  function dialArt(t, s, w, h, col, edge) {
-    const k = DIAL_SCALE[Math.min(Math.max(s, 0), 3)];
+  function dialArt(t, s, w, h, col, edge, lenPct) {
+    const k0 = DIAL_SCALE[Math.min(Math.max(s, 0), 3)];
+    const k = (lenPct && lenPct !== 100) ? { l: k0.l * lenPct / 100, w: k0.w } : k0;
     const inner = DIAL.svgFor(t, k, st.mt, st.mc, col, st.mk, st.mv, edge);
     if (!inner) return '';
     return `<svg width="${w}" height="${h}" viewBox="0 0 454 454" fill="currentColor" style="display:block">${inner}</svg>`;
@@ -1820,7 +1824,7 @@
       const dv = dev();
       div.classList.add('dialpart');
       div.style.width = dv.w + 'px'; div.style.height = dv.h + 'px';
-      div.innerHTML = dialArt(t, s, dv.w, dv.h, colOf(c), !!(f & F_EDGE)) + '<span class="anchor"></span>';
+      div.innerHTML = dialArt(t, s, dv.w, dv.h, colOf(c), !!(f & F_EDGE), isHands(t) ? handLen(e) : 100) + '<span class="anchor"></span>';
       div.addEventListener('pointerdown', (ev) => startMove(ev, i));
       return div;
     }
@@ -2007,7 +2011,7 @@
     const out = {};
     for (const e of st.el) {
       const k = DIAL_SCALE[Math.min(Math.max(e[4], 0), 3)];
-      const h = DIAL.hands(e[0], k);
+      const h = DIAL.hands(e[0], isHands(e[0]) && handLen(e) !== 100 ? { l: k.l * handLen(e) / 100, w: k.w } : k);
       // 針の中心は動かせる (2026-09-20 ユーザー指示)。盤の真ん中以外に置いた時だけ hp = [x‰, y‰] を送る。
       if (h && !out.hd) { out.hd = h; if (e[1] !== 500 || e[2] !== 500) out.hp = [e[1], e[2]]; continue; }
       const r = DIAL.rim(e[0], k, st.mt, st.mc, st.mk, st.mv, !!(e[6] & F_EDGE));
@@ -2439,6 +2443,8 @@
             `<button type="button" data-v="${v}" class="${all.every((x) => (lineSharp(x) ? 1 : 0) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>
         ` : ''}
+        ${!none && all.every((x) => isHands(x[0])) ? `
+        ${stepRow('Length', 8, all.every((x) => handLen(x) === handLen(e)) ? handLen(e) + '%' : null, 'How far the hands reach. Shorten them when the rim sits further in (Batons, Inner).')}` : ''}
         ${allAna ? `
         ${stepRow('Diameter', 8, all.every((x) => anaDia(x) === anaDia(e)) ? anaDia(e) : null, 'How wide the clock is, in grid steps')}
         <div class="field" title="What the hands show"><span>Shows</span><span class="cb units" id="fanamode">${
@@ -2567,7 +2573,8 @@
     box.querySelectorAll('.step').forEach((sp) => sp.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
       const k = Number(sp.dataset.step), d = Number(b.dataset.d) * st.grid;
       each((x) => {
-        if (isAnalog(x[0]) && k === 8) { while (x.length < 13) x.push(0); x[8] = Math.max(60, Math.min(1000, anaDia(x) + d)); }
+        if (isHands(x[0]) && k === 8) { while (x.length < 9) x.push(-1); x[8] = Math.max(40, Math.min(120, handLen(x) + (d > 0 ? 5 : -5))); }
+        else if (isAnalog(x[0]) && k === 8) { while (x.length < 13) x.push(0); x[8] = Math.max(60, Math.min(1000, anaDia(x) + d)); }
         else if (isRect(x[0]) && (k === 8 || k === 9)) {
           while (x.length < 10) x.push(x.length === 8 ? RECT_DEF.w : RECT_DEF.h);
           x[k] = Math.max(RECT_MIN, Math.min(1000, (k === 8 ? rectW(x) : rectH(x)) + d));
@@ -2961,6 +2968,7 @@
       if (isLine(n[0])) { const L = Number(e[8]); n.push(Number.isFinite(L) && L >= LINE_LEN_MIN && L <= 1000 ? Math.round(L) : LINE_LEN_DEF); }   // 線は 9 番目の長さを落とさない
       else if (isRect(n[0])) { n.push(rectW(e), rectH(e)); }   // 四角形は 9・10 番目に幅と高さ
       else if (hasCity(n[0]) && TZ_CITIES.some((c) => c[0] === Number(e[9]))) { n.push((Number(e[8]) === 1 || Number(e[8]) === 2) ? Number(e[8]) : 0, Number(e[9])); }   // 世界時計の都市
+      else if (isHands(n[0])) { const v = Number(e[8]); n.push((Number.isFinite(v) && v >= 40 && v <= 120) ? Math.round(v) : 100); }   // 針の長さ %
       else if (isAnalog(n[0])) {                                  // アナログは 9..13 番目 (11 番目は as の番号 → 形に戻す)
         const dia = Number(e[8]), mode = Number(e[9]), idx = Number(e[10]), ticks = Number(e[11]), city = Number(e[12]);
         const st0 = (Array.isArray(j.as) && j.as[idx] && Number.isInteger(Number(j.as[idx][0]))) ? Number(j.as[idx][0]) : ANA_DEF.style;

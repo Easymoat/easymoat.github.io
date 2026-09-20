@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 06:42</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 06:43</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2647,7 +2647,9 @@
       const d = document.querySelector(`#stage .el[data-i="${i}"]`), sg = $('stage');
       if (!d || !sg) return 0;
       const r = d.getBoundingClientRect(), sr = sg.getBoundingClientRect();
-      return sr.width ? r.width / sr.width * 1000 : 0;     // 画面を隠している間は 0 = 中央寄せとして扱う
+      // 箱の余白 (padding 2px + margin -2px) は描く時と同じだけ引く = 実際に描かれる幅
+      const pad = (d.classList.contains('linepart') || d.classList.contains('dialpart') || d.classList.contains('graphpart')) ? 0 : 4;
+      return sr.width ? Math.max(0, r.width - pad) / sr.width * 1000 : 0;   // 画面を隠している間は 0 = 中央寄せとして扱う
     };
     const ctrOf = (i, k) => { const x = st.el[i]; if (k === 2) return x[2];
       const w = boxW(i); return x[3] === 1 ? x[1] + w / 2 : x[3] === 2 ? x[1] - w / 2 : x[1]; };

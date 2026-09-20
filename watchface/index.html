@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 18:14</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 19:05</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2128,8 +2128,9 @@
             let r = FILLET_K * wmin, d = r / tan2;
             const room = 0.35 * Math.min(lineLen(a.e), lineLen(b.e));      // 短い線を食いつぶさない
             if (d > room) { d = room; r = d * tan2; }
-            // 幅も色も同じ 2 本だけ丸める (違う時は今までどおりの留め継ぎ)。
-            const same = a.e[4] === b.e[4] && a.e[5] === b.e[5] && !lineSharp(a.e) && !lineSharp(b.e);
+            // 太さが同じで、どちらも Sharp でなければ丸める。色が違う時は弧を半分ずつ、それぞれの線の色で描く
+            // (2026-09-20 ユーザー指示。以前は色が違うと R を付けなかった)。
+            const same = a.e[4] === b.e[4] && !lineSharp(a.e) && !lineSharp(b.e);
             let fil = null;
             if (same && r > wmin * 0.6) {
               const sin2 = Math.sin(th / 2), bx2 = ax + bx, by2 = ay + by, bl = Math.hypot(bx2, by2);
@@ -2138,8 +2139,9 @@
                 const ang = (qx2, qy2) => (Math.atan2(qx2 - cx, cy - qy2) * 180 / Math.PI + 360) % 360;   // 12 時 = 0、時計回り
                 const a0 = ang(px + ax * d, py + ay * d), a1 = ang(px + bx * d, py + by * d);
                 const sweep = ((a1 - a0) + 360) % 360;
-                const arc = sweep <= 180 ? [a0, a0 + sweep] : [a1, a1 + (360 - sweep)];
-                fil = { d, r, cx, cy, a0: arc[0], a1: arc[1], pen: Math.min(linePen(a.e[4]), linePen(b.e[4])), col: a.e[5],
+                // arc[2] = 始まり側の線の色、arc[3] = 終わり側の線の色
+                const arc = sweep <= 180 ? [a0, a0 + sweep, a.e[5], b.e[5]] : [a1, a1 + (360 - sweep), b.e[5], a.e[5]];
+                fil = { d, r, cx, cy, a0: arc[0], a1: arc[1], pen: Math.min(linePen(a.e[4]), linePen(b.e[4])), col: arc[2], col2: arc[3],
                         key: [Math.min(a.i, b.i), Math.max(a.i, b.i), Math.round(px), Math.round(py)].join(':') };
               }
             }
@@ -2157,8 +2159,13 @@
       const f = best[k].f;
       if (f && !seen[f.key]) {
         seen[f.key] = 1;
-        arcs.push([Math.round(f.cx * 10) / 10, Math.round(f.cy * 10) / 10, Math.round(f.r * 10) / 10,
-                   Math.round(f.a0 * 10) / 10, Math.round(f.a1 * 10) / 10, f.pen, f.col]);
+        const r1d = (v) => Math.round(v * 10) / 10;
+        if (f.col === f.col2) arcs.push([r1d(f.cx), r1d(f.cy), r1d(f.r), r1d(f.a0), r1d(f.a1), f.pen, f.col]);
+        else {   // 色が違う 2 本: 弧を真ん中で分け、それぞれの線の色で描く
+          const mid = (f.a0 + f.a1) / 2;
+          arcs.push([r1d(f.cx), r1d(f.cy), r1d(f.r), r1d(f.a0), r1d(mid), f.pen, f.col]);
+          arcs.push([r1d(f.cx), r1d(f.cy), r1d(f.r), r1d(mid), r1d(f.a1), f.pen, f.col2]);
+        }
       }
     }
     out.arcs = arcs;

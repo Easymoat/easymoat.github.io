@@ -372,7 +372,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 14:13</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 14:19</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2491,17 +2491,18 @@
         <div class="field" title="What the hands show"><span>Shows</span><span class="cb units" id="fanamode">${
           ANA_MODES.map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => anaMode(x) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>
+        <div class="field" title="Show another city's time on this clock. Summer time is followed automatically."><span>Time zone</span><select id="fanatz">${
+          [`<option value="0" ${all.every((x) => anaCity(x) === 0) ? 'selected' : ''}>This watch's time</option>`].concat(
+            TZ_CITIES.map((c) => [c, tzOffsetNow(c[3])]).sort((a, b) => a[1] - b[1]).map(([c, off]) =>
+              `<option value="${c[0]}" ${all.every((x) => anaCity(x) === c[0]) ? 'selected' : ''}>${c[2]} (UTC${fmtOff(off)})</option>`)).join('')
+        }</select></div>
         <div class="field" title="The shape of the hands"><span>Hands</span><span class="cb units" id="fanastyle">${
           ANA_STYLES.map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => anaStyle(x) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>
         <div class="field" title="12 small marks around the clock"><span>Marks</span><span class="cb units" id="fanaticks">${
           [[1, 'On'], [0, 'Off']].map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => anaTicks(x) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>
-        <div class="field" title="Show another city's time on this clock. Summer time is followed automatically."><span>Time zone</span><select id="fanatz">${
-          [`<option value="0" ${all.every((x) => anaCity(x) === 0) ? 'selected' : ''}>This watch's time</option>`].concat(
-            TZ_CITIES.map((c) => [c, tzOffsetNow(c[3])]).sort((a, b) => a[1] - b[1]).map(([c, off]) =>
-              `<option value="${c[0]}" ${all.every((x) => anaCity(x) === c[0]) ? 'selected' : ''}>${c[2]} (UTC${fmtOff(off)})</option>`)).join('')
-        }</select></div>` : ''}
+` : ''}
         ${!none && all.every((x) => RIM_POS.includes(x[0])) ? `<div class="field" title="Inner leaves room for the Meter arcs; Edge sits close to the bezel."><span>Position</span><span class="cb units" id="frimpos">${
           [[1, 'Inner'], [0, 'Edge']].map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => rimInner(x) === !!v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>` : ''}

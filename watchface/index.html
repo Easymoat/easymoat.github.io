@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 08:21</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 08:30</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3223,17 +3223,29 @@
       el.push(n);
     }
     migrateDate(el);
-    // 四角形: 実機用にほどいた線 (f bit4) は捨て、rq の元の形から組み直す
-    for (let q = el.length - 1; q >= 0; q--) if ((isLine(el[q][0]) || isRect(el[q][0])) && (el[q][6] & F_RECTLINE)) el.splice(q, 1);
-    (Array.isArray(j.rq) ? j.rq : []).slice(0, 20).forEach((r) => {
-      if (!Array.isArray(r) || r.length < 7) return;
-      const [x, y, w, h, sz, c, f] = r.map(Number);
-      const fl = Number(r[7]);
-      if (![x, y, w, h, sz, c, f].every(Number.isFinite)) return;
-      el.push([76, clamp(x), clamp(y), 0, Math.max(0, Math.min(NO_EDGE, sz)), Math.max(0, c), f & F_SHARP, -1,
-               Math.max(RECT_MIN, Math.min(1000, w)), Math.max(RECT_MIN, Math.min(1000, h)),
-               (Number.isInteger(fl) && fl >= 0) ? fl : -1]);
-    });
+    // 四角形: 実機用にほどいた行 (f bit4) を、rq の元の形に**置いてあった場所のまま**戻す。
+    //   末尾に足すと、Back で下に置いた四角形が読み直した時だけ一番上に来ていた (2026-09-21 の報告)。
+    const rqIn = (Array.isArray(j.rq) ? j.rq : []).slice(0, 20)
+      .map((r) => (Array.isArray(r) && r.length >= 7 && r.slice(0, 7).map(Number).every(Number.isFinite) ? r.map(Number) : null));
+    const rqUsed = rqIn.map(() => false);
+    const mkRect = (r) => { const [x, y, w, h, sz, c, f] = r, fl = Number(r[7]);
+      return [76, clamp(x), clamp(y), 0, Math.max(0, Math.min(NO_EDGE, sz)), Math.max(0, c), f & F_SHARP, -1,
+              Math.max(RECT_MIN, Math.min(1000, w)), Math.max(RECT_MIN, Math.min(1000, h)),
+              (Number.isInteger(fl) && fl >= 0) ? fl : -1]; };
+    const isRectRow = (x) => (isLine(x[0]) || isRect(x[0])) && (x[6] & F_RECTLINE);
+    for (let q = 0; q < el.length;) {
+      if (!isRectRow(el[q])) { q++; continue; }
+      let n = 0; while (q + n < el.length && isRectRow(el[q + n])) n++;
+      const grp = el.slice(q, q + n);
+      // 組の中心: 塗りの行があればその x,y。無ければ横線の x と縦線の y (どちらも中心の値)
+      const fillRow = grp.find((x) => isRect(x[0])), hLine = grp.find((x) => x[0] === 71), vLine = grp.find((x) => x[0] === 70);
+      const cx = fillRow ? fillRow[1] : (hLine ? hLine[1] : (vLine ? vLine[1] : null));
+      const cy = fillRow ? fillRow[2] : (vLine ? vLine[2] : (hLine ? hLine[2] : null));
+      let k = rqIn.findIndex((r, m) => r && !rqUsed[m] && cx != null && Math.abs(r[0] - cx) <= 1 && Math.abs(r[1] - cy) <= 1);
+      if (k < 0) k = rqIn.findIndex((r, m) => r && !rqUsed[m]);   // 見つからなければ残っている順に
+      if (k >= 0) { rqUsed[k] = true; el.splice(q, n, mkRect(rqIn[k])); q++; } else { el.splice(q, n); }
+    }
+    rqIn.forEach((r, m) => { if (r && !rqUsed[m]) el.push(mkRect(r)); });   // 何も描かない四角形 (縁なし・塗りなし)
     const hr = Array.isArray(j.hr) ? [Number(j.hr[0]) || 0, Number(j.hr[1]) || 0, Number(j.hr[2]) === 1 ? 1 : 0] : [];
     const palA = (v, n) => (Array.isArray(v) && v.length === n && v.every((x) => Number.isInteger(x) && x >= 0 && x <= PC_BASE + PC_MAX) ? v.slice() : []);
     const sc = palA(j.sc, 4), hc = palA(j.hc, 3);

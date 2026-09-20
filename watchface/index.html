@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 17:32</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 17:48</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1964,7 +1964,8 @@
       const ox = lay === 1 ? 'right' : lay === 2 ? 'center' : 'left';
       const icoOf = (c) => (showIco ? `<span class="ico" style="width:${iw.toFixed(1)}px;height:${icoH.toFixed(1)}px;justify-content:${jx};align-items:center;transform-origin:${ox} center;transform:translateY(${iody}px) scale(${ki});">${art(c)}</span>` : '');
       for (let c = 0; c < def.strip; c++) {
-        const v = `<span class="val" style="display:inline-block;width:${vw.toFixed(1)}px;text-align:${lay === 2 ? 'center' : lay === 1 ? 'right' : 'left'};position:relative;top:${inkShift(px).toFixed(2)}px">${vals[c]}</span>`;
+        // 絵を消した時は並びに関わらず右寄せ (中央だと "24°" と "3" で中心がずれ、帯を重ねた時に数字の列がそろわない。2026-09-20 実機と同じ)
+        const v = `<span class="val" style="display:inline-block;width:${vw.toFixed(1)}px;text-align:${!showIco ? 'right' : lay === 2 ? 'center' : lay === 1 ? 'right' : 'left'};position:relative;top:${inkShift(px).toFixed(2)}px">${vals[c]}</span>`;
         const ico = icoOf(c);
         cells.push(`<span class="scell" style="width:${colW.toFixed(1)}px;gap:${(lay === 2 ? Math.max(0, gp - inkTop(px)) : gp).toFixed(1)}px;${lay === 2 ? 'flex-direction:column;' : ''}${c < def.strip - 1 ? `margin-right:${gp.toFixed(1)}px` : ''}">${lay === 1 ? v + ico : ico + v}</span>`);
       }

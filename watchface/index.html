@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 23:07</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 23:39</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1395,8 +1395,8 @@
   const hrHi = () => { const v = Number((st.hr || [])[1]); return (Number.isFinite(v) && v >= 60 && v <= 250) ? Math.round(v) : 0; };
   const hrCol = () => (Number((st.hr || [])[2]) === 1 ? 1 : 0);
   // 見本の割合。実機が自動で埋める時の目安として 60 / 185 (fr965 の既定) を使う。
-  // 心拍で色分けした時の色 (実機と同じ固定色): 安静時以下 = 青 7 / 間 = 緑 5 / 高い時以上 = 赤 2
-  const hrBandCol = () => { const lo = hrLo() || 60, hi = hrHi() || 185; return HR_NOW <= lo ? PALETTE[7] : HR_NOW >= hi ? PALETTE[2] : PALETTE[5]; };
+  // 心拍で色分けした時の色: 安静時以下 / 間 / 高い時以上。色はユーザーが選べる (hc、既定は青 7 / 緑 5 / 赤 2)
+  const hrBandCol = () => { const lo = hrLo() || 60, hi = hrHi() || 185, c = hcCols(); return colOf(HR_NOW <= lo ? c[0] : HR_NOW >= hi ? c[2] : c[1]); };
   // 下端以下でも「低い」と分かるよう、弧は最低 3% 描く (2026-09-20 実機と合わせる)。
   const hrRatio = () => { const lo = hrLo() || 60, hi = hrHi() || 185; if (hi <= lo) return 0; return Math.max(0.03, Math.min(1, (HR_NOW - lo) / (hi - lo))); };
   // 弧の並び。deg = 中心角 (12 時が 0、時計回り)、half = 半角、dir = 伸びる向き、lbl = Meters の見出し
@@ -2400,7 +2400,7 @@
     // 1 つでも数え損ねると、その色だけ捨てられて別の色に化ける (2026-09-15 の塗りの不具合)。
     const note = (c) => { const k = c - PC_BASE; if (k >= 0 && k < pc.length) keep.add(k); };
     st.el.forEach((x) => { note(x[5]); if (isCircle(x[0])) note(circFill(x)); });
-    [].concat(st.mc || [], st.mk || []).forEach(note);
+    [].concat(st.mc || [], st.mk || [], st.sc || [], st.hc || []).forEach(note);
     for (let i = Math.max(0, pc.length - PC_N); i < pc.length; i++) keep.add(i);   // 表示中の 5 つは残す
     if (keep.size >= pc.length) return pc;
     const next = [], map = {};

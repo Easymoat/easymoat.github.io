@@ -369,7 +369,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 13:56</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 13:57</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1380,6 +1380,8 @@
   const hrHi = () => { const v = Number((st.hr || [])[1]); return (Number.isFinite(v) && v >= 60 && v <= 250) ? Math.round(v) : 0; };
   const hrCol = () => (Number((st.hr || [])[2]) === 1 ? 1 : 0);
   // 見本の割合。実機が自動で埋める時の目安として 60 / 185 (fr965 の既定) を使う。
+  // 心拍で色分けした時の色 (実機と同じ固定色): 安静時以下 = 青 7 / 間 = 緑 5 / 高い時以上 = 赤 2
+  const hrBandCol = () => { const lo = hrLo() || 60, hi = hrHi() || 185; return HR_NOW <= lo ? PALETTE[7] : HR_NOW >= hi ? PALETTE[2] : PALETTE[5]; };
   const hrRatio = () => { const lo = hrLo() || 60, hi = hrHi() || 185; return hi > lo ? Math.max(0, Math.min(1, (HR_NOW - lo) / (hi - lo))) : 0; };
   // 弧の並び。deg = 中心角 (12 時が 0、時計回り)、half = 半角、dir = 伸びる向き、lbl = Meters の見出し
   const ARCSET = {
@@ -1833,6 +1835,7 @@
     div.style.color = (isStock(t) && (f & 8)) ? (stkInfo(t) ? (stkInfo(t).u < 0 ? downCol() : stkInfo(t).u > 0 ? upCol() : colOf(c)) : upCol())
                     : (isBall(t) && (f & 8)) ? gameColor(t, colOf(c))      // 実データの状態の色 (取れるまでは表の青)
                     : colOf(c);
+    if (def.dial && ARCSET[t] && (st.mt || []).includes(10) && hrCol()) div.style.color = hrBandCol();   // 縁のメーターも心拍で色分け
     if (def.dial) {   // hands / rim: one drawing over the whole dial, color from the element
       // 画面全体を覆うので、当たり判定は「描かれた線の上」だけにする。板のまま置くと
       // 下の部品が選べず、写真のドラッグも拾えなくなる (2026-09-12 の不具合)。
@@ -1854,6 +1857,7 @@
       div.addEventListener('pointerdown', (ev) => startMove(ev, i));
       return div;
     }
+    if (def.circle && circMet(e) === 10 && hrCol()) div.style.color = hrBandCol();   // 心拍で色分け (見本は 72)
     if (def.circle) {        // 円: メーターにもなる。当たり判定は輪の上だけ
       const dv = dev(), pen = circPen(s) * k;
       const art = circleArt(circDia(e) * dv.w / 1000, pen, circFill(e) >= 0 ? colOf(circFill(e)) : '', 0.45, circMet(e), circDir(e), circSpan(e), circFrom(e));

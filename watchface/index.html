@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 08:30</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 08:58</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1121,6 +1121,14 @@
   const F_EDGE = 16;       // 縁 (60-63, 69): 既定と反対の位置 (Inner / Edge) に置く印 (2026-09-19)。線の F_RECTLINE とは種別が違うので重ならない
   const RIM_POS = [60, 61, 62, 63, 69];
   const rimInner = (e) => (e[0] === 69) !== !!(e[6] & F_EDGE);
+  // 縁の「内側への寄せ」は 0 (縁ぎりぎり) 〜 60 の目盛り。9 番目に持つ。
+  // 無い面は昔の 2 択 (Edge = 0 / Inner = 18) から読む = 見た目が変わらない (2026-09-21)。
+  const RIM_INSET = { def: 18, max: 60 };
+  const rimInset = (e) => { const v = Number(e[9]);
+    return (Number.isFinite(v) && v >= 0 && v <= RIM_INSET.max) ? Math.round(v) : (rimInner(e) ? RIM_INSET.def : 0); };
+  // 数字の縁 (62) の出し方: 0 = 12 3 6 9 / 1 = 1〜12 全部 / 2 = ローマ数字。8 番目に持つ。
+  const rimNum = (e) => { const v = Number(e[8]); return (v === 1 || v === 2) ? v : 0; };
+  const rimGrow = (e) => { const ins = rimInset(e), nm = rimNum(e); while (e.length < 10) e.push(e.length === 8 ? nm : ins); };
   function rectLines(e) {
     const [, x, y, , s, c, f] = e, w = rectW(e), h = rectH(e), d = dev();
     const vlen = Math.round(h * d.h / d.w);              // 線の長さは幅の千分率
@@ -1531,18 +1539,18 @@
     // 縁の仕様 (複数可)
     // alt = 部品の el[6] の F_EDGE。位置は Inner (Meter の弧と重ならない) と Edge (縁ぎりぎり) の 2 つ (2026-09-19)。
     // 既定は Batons だけ Inner、他は Edge (既存の面の見た目を変えないため)。alt はその逆側を選ぶ印。
-    function rim(t, k, mt, mc, mk, mv, alt) {
+    function rim(t, k, mt, mc, mk, mv, inset, numMode) {
       const L = (v) => v * k.l, W = (v) => v * k.w;
-      const inner = (t === 69) ? !alt : !!alt, d = inner ? L(18) : 0;
+      const d = L(Number.isFinite(inset) ? inset : 0);   // 縁ぎりぎり (0) 〜 内側 (大きいほど内)
       if (t === 60) return [[0, 60, 5, r1(2 + d), r1(L(10)), odd(W(3)), r1(L(22)), odd(W(6))]];
       if (t === 61) return [[1, 12, 3, r1(3 + d), r1(W(4)), r1(W(7))]];
-      if (t === 62) return [[4, r1(R - L(22) - d), r1(W(38))]];
+      if (t === 62) return [[4, r1(R - L(22) - d), r1(W(38)), numMode || 0]];
       // Batons: 高級腕時計の文字盤。外周に「鉄道目盛り (chemin de fer)」=
       // 細い 2 本の円を 60 本の細線で橋渡し、内側に細長い植字バトン。角は丸めない (実機と同じ)。
       if (t === 69) {
         // 太いバトンだけ (2026-09-18 ユーザー指示: 二重線と細い目盛りを外す)。位置は以前のまま。
         // 位置は 2 つ (2026-09-19): Inner = Meter の弧と重ならない位置 (従来)、Edge = 縁ぎりぎり。
-        const ins = r1(L(inner ? 21 : 3));
+        const ins = r1(L(3) + d);
         return [[0, 12, 0, ins, r1(L(40)), odd(W(7)), r1(L(40)), odd(W(7)), 0],
                 [0, 1, 1, ins, r1(L(40)), odd(W(13)), r1(L(40)), odd(W(13)), 0]];
       }
@@ -1630,9 +1638,13 @@
             const from = cdeg - half * dir, to = from + 2 * half * ratio * dir;
             o += (dir > 0) ? arc(from, to, 1) : arc(to, from, 1);
           }
-        } else if (e[0] === 4) {                            // 数字 12 / 3 / 6 / 9
-          const [, rr, hgt] = e;
-          [[12, 0], [3, 90], [6, 180], [9, 270]].forEach(([num, a]) => {
+        } else if (e[0] === 4) {                            // 数字: 12 3 6 9 / 1〜12 / ローマ数字
+          const [, rr, hgt, mode] = e;
+          const ROMAN = ['XII', 'I', 'II', 'III', 'IIII', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'];
+          const list = mode === 1 ? Array.from({ length: 12 }, (_, i) => [i === 0 ? 12 : i, i * 30])
+                     : mode === 2 ? ROMAN.map((v, i) => [v, i * 30])
+                     : [[12, 0], [3, 90], [6, 180], [9, 270]];
+          list.forEach(([num, a]) => {
             const rad = (a - 90) * Math.PI / 180;
             o += `<text x="${r1(R + rr * Math.cos(rad))}" y="${r1(R + rr * Math.sin(rad))}" text-anchor="middle" dominant-baseline="central" font-family="var(--watch)" font-weight="600" font-size="${hgt}" fill="currentColor">${num}</text>`;
           });
@@ -1641,11 +1653,11 @@
       return o;
     }
     let elCol = '';                                   // 部品の色 (下地の混色に使う)
-    function svgFor(t, k, mt, mc, col, mk, mv, edge) {
+    function svgFor(t, k, mt, mc, col, mk, mv, inset, numMode) {
       elCol = col || '';
       const h = hands(t, k);
       if (h) return handSvg(h[1], T.h) + handSvg(h[2], T.m) + (h[0] > 0 ? `<circle cx="${R}" cy="${R}" r="${h[0]}"/>` : '');
-      return rimSvg(rim(t, k, mt, mc, mk, mv, edge));
+      return rimSvg(rim(t, k, mt, mc, mk, mv, inset, numMode));
     }
     // アナログ部品 (2026-09-20)。dia = 直径‰。針は 454 の座標のまま dia に比例して縮め、
     // viewBox でその円のぶんだけ切り出す = 実機も同じ点列を中心 (x,y) で回すだけで同じ絵になる。
@@ -1664,10 +1676,10 @@
     return { R, hands, rim, svgFor, analogArt };
   })();
   // One dial part as an <svg> that fills the dial; color comes from the element (currentColor).
-  function dialArt(t, s, w, h, col, edge, lenPct, rimIn) {
+  function dialArt(t, s, w, h, col, inset, lenPct, rimIn, numMode) {
     const k0 = DIAL_SCALE[Math.min(Math.max(s, 0), 3)];
     const k = (lenPct && lenPct !== 100) || rimIn != null ? { l: k0.l * ((lenPct || 100) / 100), w: k0.w, rim: rimIn } : k0;
-    const inner = DIAL.svgFor(t, k, st.mt, st.mc, col, st.mk, st.mv, edge);
+    const inner = DIAL.svgFor(t, k, st.mt, st.mc, col, st.mk, st.mv, inset, numMode);
     if (!inner) return '';
     return `<svg width="${w}" height="${h}" viewBox="0 0 454 454" fill="currentColor" style="display:block">${inner}</svg>`;
   }
@@ -1734,7 +1746,7 @@
     p.className = 'part'; p.dataset.t = t;
     if (d.dial) {
       p.className = 'part tgl'; p.title = 'Click to put it on the dial, click again to take it off';
-      p.innerHTML = `<span class="ico" style="color:#1D222B">${dialArt(+t, 1, 26, 26, '#1D222B')}</span><span class="nm">${d.name.replace(/^(Hands|Rim):\s*/, '')}</span>`;
+      p.innerHTML = `<span class="ico" style="color:#1D222B">${dialArt(+t, 1, 26, 26, '#1D222B', +t === 69 ? 18 : 0)}</span><span class="nm">${d.name.replace(/^(Hands|Rim):\s*/, '')}</span>`;
       p.addEventListener('click', () => toggleDialPart(+t));
     }
     else if (d.graph) p.innerHTML = `<span class="ico" style="color:#1D222B">${graphArt(d.graph, 30, 16, 0.5)}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
@@ -1897,7 +1909,7 @@
       const dv = dev();
       div.classList.add('dialpart');
       div.style.width = dv.w + 'px'; div.style.height = dv.h + 'px';
-      div.innerHTML = dialArt(t, s, dv.w, dv.h, colOf(c), !!(f & F_EDGE), isHands(t) ? handLen(e) : 100, isRimMarks(t) ? markInset(e) : null) + '<span class="anchor"></span>';
+      div.innerHTML = dialArt(t, s, dv.w, dv.h, colOf(c), rimInset(e), isHands(t) ? handLen(e) : 100, isRimMarks(t) ? markInset(e) : null, rimNum(e)) + '<span class="anchor"></span>';
       div.addEventListener('pointerdown', (ev) => startMove(ev, i));
       return div;
     }
@@ -2096,15 +2108,15 @@
       const h = DIAL.hands(e[0], isHands(e[0]) ? { l: k.l * handLen(e) / 100, w: k.w, rim: isRimMarks(e[0]) ? markInset(e) : null } : k);
       // 針の中心は動かせる (2026-09-20 ユーザー指示)。盤の真ん中以外に置いた時だけ hp = [x‰, y‰] を送る。
       if (h && !out.hd) { out.hd = h; if (e[1] !== 500 || e[2] !== 500) out.hp = [e[1], e[2]]; continue; }
-      const r = DIAL.rim(e[0], k, st.mt, st.mc, st.mk, st.mv, !!(e[6] & F_EDGE));
+      const r = DIAL.rim(e[0], k, st.mt, st.mc, st.mk, st.mv, rimInset(e), rimNum(e));
       // 縁は 2 つまで重ねられるので、原型ごとにその部品の色を添える (実機は rc[i] で塗り分ける)。
       if (r) { out.rm = (out.rm || []).concat(r); out.rc = (out.rc || []).concat(r.map(() => e[5])); }
     }
     return out;
   }
-  // 描く順 = 配列の順 (実機も同じ)。縁 (Rim) だけは必ず先頭に寄せて、弧を他の部品の下に敷く。
-  const elOrder = (list) => (list || []).map((e, i) => [e, i])
-    .sort((a, b) => (TYPES[a[0][0]] && TYPES[a[0][0]].grp === 'rim' ? 0 : 1) - (TYPES[b[0][0]] && TYPES[b[0][0]].grp === 'rim' ? 0 : 1));
+  // 描く順 = 配列の順 (実機も同じ)。縁 (Rim) も並べたとおりの位置で描く (2026-09-21 ユーザー指示)。
+  //   実機は「最初の縁の行に来たところで rm を全部描く」ので、縁を 2 つ置いた面では前のほうの位置にまとまって出る。
+  const elOrder = (list) => (list || []).map((e, i) => [e, i]);
   // ── 線どうしの接点 ────────────────────────────────────────────────────────
   // 端が重なっている線は、角がきれいに埋まるぶんだけ互いに伸ばす (留め継ぎ)。
   // 伸ばす量 = (太さ/2) / tan(なす角/2)。直角なら太さの半分、45° の折れなら 0.2 倍。
@@ -2605,8 +2617,9 @@
           (e[0] === 10 ? hcCols() : scCols()).map((ci, n) => `<input type="color" class="pick" data-n="${n}" value="${colOf(ci)}" title="${['rest', 'low', 'medium', 'high'][n]}">`).join('')
         }</span></div>` : ''}
         ${e[0] === 10 && (e[6] & F_LEVEL) ? hrRows() : ''}` : ''}
-        ${!none && all.every((x) => RIM_POS.includes(x[0])) ? `<div class="field" title="Inner leaves room for the Meter arcs; Edge sits close to the bezel."><span>Position</span><span class="cb units" id="frimpos">${
-          [[1, 'Inner'], [0, 'Edge']].map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => rimInner(x) === !!v) ? 'on' : ''}">${lb}</button>`).join('')
+        ${!none && all.every((x) => RIM_POS.includes(x[0])) ? `<div class="field" title="Slide the rim in from the bezel. 0 sits right at the edge; further in leaves room for the Meter arcs."><span>Position</span><input type="range" id="frimpos" min="0" max="${RIM_INSET.max}" step="1" value="${rimInset(e)}" style="width:150px"><span class="muted" id="frimposv">${rimInset(e) === 0 ? 'Edge' : rimInset(e)}</span></div>` : ''}
+        ${!none && all.every((x) => x[0] === 62) ? `<div class="field" title="Which numbers the rim shows"><span>Numbers</span><span class="cb units" id="frimnum">${
+          [[0, '12 3 6 9'], [1, 'All 12'], [2, 'Roman']].map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => rimNum(x) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>` : ''}
         ${allCityClock ? `<div class="field" title="Show the time in another city. Summer time is followed automatically."><span>Time zone</span><select id="ftz">${
           [`<option value="0" ${all.every((x) => cityOf(x) === 0) ? 'selected' : ''}>This watch's time</option>`].concat(
@@ -2719,10 +2732,6 @@
     if (dupBtn && all.every((x) => TYPES[x[0]] && TYPES[x[0]].dial)) {   // 縁・針は同じものを 2 つ置いても意味がない
       dupBtn.disabled = true; dupBtn.title = 'Rim and hands are drawn over the whole dial — a copy would land exactly on top.';
     }
-    // 縁 (Rim) は文字盤の一番下に固定 (弧が他の部品を隠さないように)。実機も同じ順なので、押せないようにする。
-    if (all.some((x) => TYPES[x[0]] && TYPES[x[0]].grp === 'rim')) {
-      ['tofront', 'toback'].forEach((id) => { const b = $(id); if (b) { b.disabled = true; b.title = 'Rim is always drawn under the other parts — on the watch too.'; } });
-    }
     $('tofront').addEventListener('click', () => moveZ(true));
     $('toback').addEventListener('click', () => moveZ(false));
     lockInspHeight();
@@ -2755,10 +2764,21 @@
     }));
     const fatz = $('fanatz');
     if (fatz) fatz.addEventListener('change', () => each((x) => { while (x.length < 13) x.push(0); x[12] = Number(fatz.value) || 0; }));
-    box.querySelectorAll('#frimpos button').forEach((b) => b.addEventListener('click', () => each((x) => {
-      const inner = +b.dataset.v === 1, alt = (x[0] === 69) ? !inner : inner;
-      x[6] = alt ? (x[6] | F_EDGE) : (x[6] & ~F_EDGE);
-    })));
+    const rimBar = $('frimpos');
+    if (rimBar) {
+      // バーを動かしている間は編集欄を作り直さない (作り直すとつまみが手から離れる)。
+      // 離した時に 1 回だけ確定する = Undo が刻まれるのも 1 回。
+      rimBar.addEventListener('focus', () => { PICK_OPEN++; });
+      rimBar.addEventListener('blur', () => { PICK_OPEN = Math.max(0, PICK_OPEN - 1); setTimeout(renderInspector, 0); });
+      const put = (done) => { const v = +rimBar.value, lb = $('frimposv');
+        all.forEach((x) => { if (RIM_POS.includes(x[0])) { rimGrow(x); x[9] = v; x[6] &= ~F_EDGE; } });
+        if (lb) lb.textContent = v === 0 ? 'Edge' : String(v);
+        if (done) commit(); else render();
+      };
+      rimBar.addEventListener('input', () => put(false));
+      rimBar.addEventListener('change', () => put(true));
+    }
+    box.querySelectorAll('#frimnum button').forEach((b) => b.addEventListener('click', () => each((x) => { rimGrow(x); x[8] = +b.dataset.v; })));
     box.querySelectorAll('.step').forEach((sp) => sp.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
       const k = Number(sp.dataset.step), d = Number(b.dataset.d) * st.grid;
       each((x) => {

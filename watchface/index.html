@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 03:03</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 03:17</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2384,20 +2384,13 @@
     if (k >= 0 && k < pc.length && out.indexOf(cur) < 0) out.unshift(cur);
     return out;
   }
-  // カラーパネルを開けば change は何度も飛んでくるので、その間は控えの 1 枠を使い回す。
-  let PICK_SES = { el: null, idx: -1 };
-  function pickColor(el, str) {
-    if (PICK_SES.el !== el) PICK_SES = { el, idx: -1 };
-    const before = (st.pc || []).length;
-    const i = useColor(str, PICK_SES.idx);
-    if (i >= PC_BASE && (st.pc || []).length > before) PICK_SES.idx = i;
-    return i;   // -1 = 入らなかった (呼ぶ側は色を変えない)
-  }
+  // 色を選ぶ入口はここだけ。-1 = 入らなかった (呼ぶ側は色を変えない)。
+  function pickColor(el, str) { return useColor(str); }
   let COLOR_NOTE = '';   // 控えがいっぱいで他の部品の色まで変わった時だけ出す一言
   // 選んだ色の index を返す。基本色 (0-9) か控えに同じ色があればその index、無ければ控えに足す。
   // 足すだけなので、既に置いた部品の色は変わらない。上限に達したら、どの部品も使っていない色を
   // 古いほうから捨てて詰め直す (捨てた色を使っている部品はいないので見た目は変わらない)。
-  function useColor(str, reuse) {
+  function useColor(str) {
     const rgb = parseInt(String(str).replace('#', ''), 16);
     if (!Number.isInteger(rgb)) return 0;
     const base = PALETTE.slice(0, PC_BASE).findIndex((c) => parseInt(c.slice(1), 16) === rgb);
@@ -2405,10 +2398,11 @@
     let pc = (st.pc || DEF_PC).slice();
     const at = pc.indexOf(rgb);
     if (at >= 0) return PC_BASE + at;
-    // 同じカラーパネルを操っている間は、その操作で足した枠を上書きする。
-    // こうしないとパネルを動かすたびに控えが 1 色ずつ埋まり、上限を超えて他の部品の色まで動く。
-    if (Number.isInteger(reuse) && reuse >= PC_BASE && reuse - PC_BASE < pc.length) { pc[reuse - PC_BASE] = rgb; st.pc = pc; return reuse; }
+    // ★ 既にある枠は**絶対に書き換えない**。書き換えると、その枠を使っている別の部品の色まで変わる
+    //   (2026-09-21 の報告「線の色を決めたあと次の色を決めると前の線が変わる」の原因)。
+    //   カラーパネルを動かしている間に増える枠は、下の掃除がすぐ回収する (どの部品も使っていないため)。
     if (pc.length >= PC_MAX) pc = gcColors(pc);
+    if (pc.length >= PC_MAX) pc = gcColors(pc, true);   // それでも一杯なら、見本に出しているだけの枠も捨てる
     if (pc.length >= PC_MAX) {            // すべて使用中: 古い枠を奪うと**別の部品の色が変わる**ので断る
       // (2026-09-20: 帯を 2 本置いて 2 本目の色を変えると 1 本目が変わる、という報告の原因)
       COLOR_NOTE = `This dial already uses ${PC_MAX} different colors — the watch cannot take more. Reuse one of the colors above, or change another part's color first.`;
@@ -2418,21 +2412,26 @@
     return PC_BASE + pc.length - 1;
   }
   // 使われていない控えを捨てて詰め直す。部品の色 index は付け替えるので見た目は変わらない。
-  function gcColors(pc) {
+  function gcColors(pc, strict) {
     const keep = new Set();
-    // 色の index を持っているのは部品の色 (x[5])、円の塗り (x[10])、弧の色 (mc) と下地 (mk)。
-    // 1 つでも数え損ねると、その色だけ捨てられて別の色に化ける (2026-09-15 の塗りの不具合)。
+    // 色の index を持っているのは部品の色 (x[5])、円の塗り (x[10])、弧の色 (mc) と下地 (mk)、
+    // レベル別の色 (sc / hc)、それに置き場の部品。**数え損ねと付け替え忘れはどちらも色化けになる**
+    // (数えるだけで付け替えないと、詰め直した後に別の色を指す。2026-09-21)。
     const note = (c) => { const k = c - PC_BASE; if (k >= 0 && k < pc.length) keep.add(k); };
-    st.el.forEach((x) => { note(x[5]); if (isCircle(x[0])) note(circFill(x)); });
+    const parts = st.el.concat(st.park || []);
+    parts.forEach((x) => { note(x[5]); if (isCircle(x[0])) note(circFill(x)); });
     [].concat(st.mc || [], st.mk || [], st.sc || [], st.hc || []).forEach(note);
-    for (let i = Math.max(0, pc.length - PC_N); i < pc.length; i++) keep.add(i);   // 表示中の 5 つは残す
+    if (!strict) for (let i = Math.max(0, pc.length - PC_N); i < pc.length; i++) keep.add(i);   // 見本に出している 5 つは残す
     if (keep.size >= pc.length) return pc;
     const next = [], map = {};
     pc.forEach((c, i) => { if (keep.has(i)) { map[PC_BASE + i] = PC_BASE + next.length; next.push(c); } });
-    st.el.forEach((x) => { if (map[x[5]] != null) x[5] = map[x[5]];
+    const fix = (c) => (map[c] != null ? map[c] : c);
+    parts.forEach((x) => { if (map[x[5]] != null) x[5] = map[x[5]];
                            if (isCircle(x[0]) && map[x[10]] != null) x[10] = map[x[10]]; });
-    if (st.mc) st.mc = st.mc.map((c) => (map[c] != null ? map[c] : c));
-    if (st.mk) st.mk = st.mk.map((c) => (map[c] != null ? map[c] : c));
+    if (st.mc) st.mc = st.mc.map(fix);
+    if (st.mk) st.mk = st.mk.map(fix);
+    if (st.sc && st.sc.length) st.sc = st.sc.map(fix);
+    if (st.hc && st.hc.length) st.hc = st.hc.map(fix);
     return next;
   }
   // 選ぶ部品で行数が変わっても枠が縮まないように、これまでで一番高い形に合わせておく。
@@ -2620,7 +2619,7 @@
     // 色の入力欄を触っている間は右の欄を作り直さない (作り直すとパネルごと消える)。
     const bindPickers = () => box.querySelectorAll('input[type="color"]').forEach((pk) => {
       pk.addEventListener('focus', () => { PICK_OPEN++; });
-      pk.addEventListener('blur', () => { PICK_OPEN = Math.max(0, PICK_OPEN - 1); PICK_SES = { el: null, idx: -1 }; setTimeout(renderInspector, 0); });
+      pk.addEventListener('blur', () => { PICK_OPEN = Math.max(0, PICK_OPEN - 1); setTimeout(renderInspector, 0); });
     });
     const bindMeters = () => {
       document.querySelectorAll('.mts select').forEach((sel) => sel.addEventListener('change', () => {

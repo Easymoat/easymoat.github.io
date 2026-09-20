@@ -91,10 +91,11 @@
   .dialbar.top { margin: 0 0 -6px; }        /* 文字盤の上の帯 (戻す / やり直す / リセット + 下書き) */
   .dialbar.top .grp { width: 100%; }
   .dialsec { width: 100%; max-width: 1040px; justify-content: flex-start; border-top: 1px solid var(--line); padding-top: 22px; }
-  .dialsec .ctl { flex-wrap: nowrap; white-space: nowrap; }
+  /* 幅が足りなくなったら下の行へ逃がす (どの幅でも。以前は 760px 以下でだけ折り返していた) */
+  .dialsec .ctl { flex-wrap: wrap; }
+  .dialsec .ctl > .sub { white-space: nowrap; }
   footer.credits { padding: 14px 16px 22px; text-align: center; font-size: 11px; color: var(--ink-3); }
   .fillctl { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  @media (max-width: 760px) { .dialsec .ctl { flex-wrap: wrap; } }
   .dialbar.top select { height: 28px; }
   .dialbar.top .sub { display: flex; align-items: center; gap: 10px; }   /* Grid は見出しごと折り返す */
   .vsep { width: 1px; align-self: stretch; min-height: 20px; background: var(--line-2); margin: 0 4px; }
@@ -372,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 14:19</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 14:26</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>

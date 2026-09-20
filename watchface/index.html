@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 19:07</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 23:07</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -466,11 +466,10 @@
       </div>
     </div>
     <div class="shelfbox box">
-      <div class="tier"><span class="num">4</span><span class="name">Collection</span><span class="what">Save the dial, then send it to the watch from here</span></div>
+      <div class="tier"><span class="num">4</span><span class="name">Collection</span><span class="what">Save the edited dial to the collection area, then upload it to your Garmin Watch.</span></div>
       <div class="grp">
-        <div class="ctl"><span class="muted only-wide">Everything on the watch comes from here: save the dial above, then use <b>To watch</b> on it. The watch shows one dial — sending another replaces it, within 5 minutes.</span><span class="muted only-phone">Pick a dial below and press <b>To watch</b>. Your watch shows one dial — sending another replaces it, within 5 minutes.</span></div>
         <div class="status" id="syncstatus"></div>
-        <div class="row" id="shelfsaverow" style="align-items:center;gap:10px"><input type="text" id="shelfname" placeholder="Name (optional)" style="width:180px"><button class="btn primary" id="shelfsave">Save to collection</button><span class="muted" id="shelfcount"></span><span class="status warn" id="shelfnopic" hidden>No picture in the dial — it will be saved without one</span></div>
+        <div class="row" id="shelfsaverow" style="align-items:center;gap:10px"><input type="text" id="shelfname" placeholder="Name (optional)" style="width:180px"><button class="btn primary" id="shelfsave">Save to collection</button><span class="muted" id="shelfcount"></span></div>
         <div class="status" id="shelfstatus"></div>
       </div>
       <div class="shelf" id="shelf"></div>
@@ -3494,8 +3493,7 @@
         body: JSON.stringify({ device_id: id, slot: 1, from_shelf: n, activate: true, only: true }) });
       const j = await r.json(); if (r.status === 402) { loadAccess(); throw new Error(payMsg(j)); }
       if (!r.ok || !j.ok) throw new Error(j.error || r.status);
-      const nopic = !it.kind || it.kind === 'none';
-      setStatus('syncstatus', `Your watch now shows "${name}"${nopic ? ' — this item has no picture, so the watch shows the dial only' : ''}. It arrives within 5 minutes.`, nopic ? 'warn' : 'ok');
+      setStatus('syncstatus', `Your watch now shows "${name}". It arrives within 5 minutes.`, 'ok');
       WSLOTS.active = 1; WSLOTS.faces = { '1': { v: j.v, shelf: n, kind: it.kind || 'none' } }; markShelfOnWatch();
       loadWatchSlots(); loadWatchState();
     } catch (e) { setStatus('syncstatus', 'Send failed: ' + e.message, 'err'); }
@@ -3931,9 +3929,8 @@
   $('imgbg').addEventListener('change', () => followAutoBg(true));
   // 絵が入っていない状態は保存前から見えていないといけない (無音で kind:none になるのを防ぐ)。
   function renderFillOn() { const b = $('imgfillon'); if (!b) return; const on = !!(IMG.fill && !IMG.cur); b.classList.toggle('on', on); b.textContent = on ? 'ON' : 'OFF'; }
-  function renderNoPic() { const el = $('shelfnopic'); if (el) el.hidden = !!(IMG.show && hasSource() && IMG.masked); }
   function renderShowToggle() {
-    renderNoPic(); renderFillOn();
+    renderFillOn();
   }
   // slots
   // ── Photo shelf: originals kept as they are (≤1024 px JPEG), up to 10 per Device ID ──

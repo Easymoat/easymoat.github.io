@@ -291,7 +291,7 @@
   .swatches .pick { margin-left: 6px; }
   .pxs { display: inline-flex; gap: 18px; }
   .stp { display: inline-flex; align-items: center; gap: 6px; }
-  .stp .sml { font: 600 11px var(--mono); color: var(--ink-3); width: 14px; text-align: center; margin-right: 2px; }
+  .stp .sml { font: 600 11px var(--mono); color: var(--ink-3); width: 30px; text-align: center; margin-right: 2px; }
   .pxs input, .stp input { width: 42px; height: 28px; padding: 0 2px; font: 13px var(--mono); text-align: center; -moz-appearance: textfield;
                background: var(--panel-2); border: 2px solid var(--line-2); border-radius: 5px; color: var(--ink); }
   .pxs input::-webkit-outer-spin-button, .pxs input::-webkit-inner-spin-button, .stp input::-webkit-outer-spin-button, .stp input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 02:39</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 02:53</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -514,7 +514,7 @@
     <div class="group"><span class="lbl">Background</span><div class="ctl"><input type="color" id="bgpick" title="Pick any background color (sent to the watch as bg)" value="#000000"><span class="swatches" id="bgsw" title="Recently used colors"></span></div></div>
     <div class="group" title="Text height in px on a 454 dial: S / M / L. Sent to the watch with the layout."><span class="lbl">Text size (px)</span><div class="ctl"><span class="pxs" id="tx"></span></div></div>
     <div class="group" title="Clock height in px on a 454 dial: S / M / L."><span class="lbl">Time size (px)</span><div class="ctl"><span class="pxs" id="tm"></span></div></div>
-    <div class="group" title="Icon height in px on a 454 dial: S / M / L. Independent of the text size — use it to balance the look on devices whose text is fixed to S/M/L."><span class="lbl">Icon size (px)</span><div class="ctl"><span class="pxs" id="ic"></span><span class="stp" title="Move every icon up or down against the numbers (px on a 454 dial, + is down)."><span class="sml">&#8597;</span><button class="step" type="button" id="iodn">&minus;</button><input type="number" id="io" min="-20" max="20"><button class="step" type="button" id="ioup">+</button></span><span class="stp" title="Space between the icon and the value (px on a 454 dial). Applies to every part, including the forecast strip."><span class="sml">&#8596;</span><button class="step" type="button" id="igdn">&minus;</button><input type="number" id="ig" min="0" max="24"><button class="step" type="button" id="igup">+</button></span></div></div>
+    <div class="group" title="Icon height in px on a 454 dial: S / M / L. Independent of the text size — use it to balance the look on devices whose text is fixed to S/M/L."><span class="lbl">Icon size (px)</span><div class="ctl"><span class="pxs" id="ic"></span><span class="stp" title="Move every icon up or down against the numbers (px on a 454 dial, + is down)."><span class="sml" title="Move every icon up or down against the numbers">Up&#8597;</span><button class="step" type="button" id="iodn">&minus;</button><input type="number" id="io" min="-20" max="20"><button class="step" type="button" id="ioup">+</button></span><span class="stp" title="Space between the icon and the value (px on a 454 dial). Applies to every part, including the forecast strip."><span class="sml" title="Space between the icon and the value">Gap</span><button class="step" type="button" id="igdn">&minus;</button><input type="number" id="ig" min="0" max="24"><button class="step" type="button" id="igup">+</button></span></div></div>
     <div class="group" title="Faux bold: the watch has no bold Roboto, so the text is drawn again with a small offset. Bold 2 is heavier."><span class="lbl">Style</span><div class="ctl">Bold <span class="cb units" id="bold"></span></div>
       <div class="ctl" title="Which color means a rising price. Green up is the US habit, red up the Japanese one.">Up is <span class="cb units" id="upcol"></span></div>
       <div class="ctl" title="Unit for the Wind part. The same choice as MarketWatch and PulseLink; m/s is their default too.">Wind <span class="cb units" id="windunit"></span></div>

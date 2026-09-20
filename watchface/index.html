@@ -369,7 +369,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 10:26</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 11:28</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -865,9 +865,9 @@
   function anaK(e) {
     const dia = anaDia(e), sz = Math.min(Math.max(e[4], 0), 3), kk = DIAL_SCALE[sz];
     let l = kk.l;
-    if (anaTicks(e)) {                       // 目盛りの内端 = 半径の 0.84。針は 0.78 までに収める
-      const long = ANA_LONG[anaStyle(e)] || 180;
-      l = Math.min(l, 0.78 * 227 / long);
+    if (anaTicks(e)) {                       // 目盛りの内端 = 半径の 0.84。針は 0.70 までに収める
+      const long = ANA_LONG[anaStyle(e)] || 180;   // (2026-09-20 実機を見て 0.78 → 0.70。余白 6〜7px)
+      l = Math.min(l, 0.70 * 227 / long);
     }
     return { l: l * dia / 1000, w: kk.w * dia / 1000, b: dia / 1000, wmin: 2.0 * 454 / dev().w };
   }

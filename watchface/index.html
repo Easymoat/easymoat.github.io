@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 23:39</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 00:44</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -885,6 +885,12 @@
   // グラフの箱 [幅, 高さ] (どちらも盤面の幅の千分率、実機と同じ値)。0 = 小、1 = 大
   const GRAPH_BOX = [[260, 100], [440, 160]];
   const graphBox = (e) => GRAPH_BOX[e[4] === 1 ? 1 : 0];
+  // 9・10 番目に幅と高さ (どちらも盤面の幅の千分率) があればそれを使う。無ければ Small / Large の表のまま
+  // = 保存済みの面は今までどおり描ける (2026-09-21)。
+  const GRAPH_MIN = { w: 120, h: 40 };
+  const graphW = (e) => { const v = Number(e[8]); return (Number.isFinite(v) && v >= GRAPH_MIN.w) ? Math.min(1000, Math.round(v)) : graphBox(e)[0]; };
+  const graphH = (e) => { const v = Number(e[9]); return (Number.isFinite(v) && v >= GRAPH_MIN.h) ? Math.min(1000, Math.round(v)) : graphBox(e)[1]; };
+  const graphGrow = (e) => { const b = graphBox(e); while (e.length < 10) e.push(e.length === 8 ? b[0] : b[1]); };
   // 見本のデータ。心拍 = 5 分ごと 72 点 (6 時間)、ストレス = 10 分ごと 36 本、歩数 = 7 日 (右端が今日)
   const HR_SAMPLE = Array.from({ length: 72 }, (_, i) => Math.round(64 + 6 * Math.sin(i / 6) + (i > 38 && i < 52 ? 38 * Math.sin((i - 38) / 13 * Math.PI) : 0)));
   const STRESS_SAMPLE = Array.from({ length: 36 }, (_, i) => Math.max(5, Math.round(24 + 14 * Math.sin(i / 4) + (i > 20 && i < 28 ? 30 : 0))));
@@ -1888,12 +1894,13 @@
       return div;
     }
     if (def.graph) {         // グラフ: 箱ごと掴める
-      const dv = dev(), [gw, gh] = graphBox(e), W = gw * dv.w / 1000, H = gh * dv.w / 1000;
+      const dv = dev(), W = graphW(e) * dv.w / 1000, H = graphH(e) * dv.w / 1000;
       div.classList.add('graphpart');
       div.style.width = W + 'px'; div.style.height = H + 'px';
       div.dataset.lw = W; div.dataset.lh = H;
-      div.innerHTML = graphArt(def.graph, W, H, dv.w / 454, !!(f & F_LEVEL)) + '<span class="anchor"></span>';
+      div.innerHTML = graphArt(def.graph, W, H, dv.w / 454, !!(f & F_LEVEL)) + '<span class="anchor"></span><span class="rhandle" title="Drag to change the size and the shape"></span>';
       div.addEventListener('pointerdown', (ev) => startMove(ev, i));
+      div.querySelector('.rhandle').addEventListener('pointerdown', (ev) => startRectResize(ev, i));
       return div;
     }
     if (def.rect) {          // 四角形: 当たり判定は枠の線の上だけ (中の部品を隠さない)
@@ -2508,6 +2515,10 @@
             `<button type="button" data-v="${v}" class="${all.every((x) => ((x[6] & F_SHARP) ? 1 : 0) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>
         ` : ''}
+        ${allGraph ? `
+        ${stepRow('Width', 8, all.every((x) => graphW(x) === graphW(e)) ? graphW(e) : null, 'How wide the graph is, in grid steps. Drag the corner handle to change both at once.')}
+        ${stepRow('Height', 9, all.every((x) => graphH(x) === graphH(e)) ? graphH(e) : null, 'How tall the graph is, in grid steps')}
+        ` : ''}
         ${allLine ? `
         <div class="field" title="Which way the line runs"><span>Direction</span><span class="cb units" id="fdir">${
           [[70, '&#9474;'], [71, '&#9472;'], [72, '&#9586;'], [73, '&#9585;']].map(([tt, lb]) =>
@@ -2646,7 +2657,10 @@
     const fx = $('fx'), fy = $('fy');
     if (fx) fx.addEventListener('change', (ev) => { e[1] = clamp(+ev.target.value); commit(); });
     if (fy) fy.addEventListener('change', (ev) => { e[2] = clamp(+ev.target.value); commit(); });
-    box.querySelectorAll('.seg').forEach((sg) => sg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => each((x) => { const k = +sg.dataset.key; while (x.length < 8) x.push(-1); x[k] = +b.dataset.v; }))));
+    box.querySelectorAll('.seg').forEach((sg) => sg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => each((x) => {
+      const k = +sg.dataset.key; while (x.length < 8) x.push(-1); x[k] = +b.dataset.v;
+      if (k === 4 && isGraph(x[0])) { graphGrow(x); const g = graphBox(x); x[8] = g[0]; x[9] = g[1]; }   // Small / Large はその寸法に戻す
+    }))));
     box.querySelectorAll('.sw[data-c]').forEach((b) => b.addEventListener('click', () => each((x) => { x[5] = +b.dataset.c; })));
     const fp = $('fpick');
     if (fp) fp.addEventListener('change', (ev) => { const i = pickColor(ev.target, ev.target.value); if (i >= 0) each((x) => { x[5] = i; }); else renderInspector(); });
@@ -2679,6 +2693,10 @@
         if (isHands(x[0]) && k === 8) { while (x.length < 9) x.push(-1); x[8] = Math.max(40, Math.min(120, handLen(x) + (d > 0 ? 5 : -5))); }
         else if (isRimMarks(x[0]) && k === 9) { while (x.length < 10) x.push(100); x[8] = handLen(x); x[9] = Math.max(0, Math.min(160, markInset(x) + (d > 0 ? 4 : -4))); }
         else if (isAnalog(x[0]) && k === 8) { while (x.length < 13) x.push(0); x[8] = Math.max(60, Math.min(1000, anaDia(x) + d)); }
+        else if (isGraph(x[0]) && (k === 8 || k === 9)) {
+          graphGrow(x);
+          x[k] = Math.max(k === 8 ? GRAPH_MIN.w : GRAPH_MIN.h, Math.min(1000, (k === 8 ? graphW(x) : graphH(x)) + d));
+        }
         else if (isRect(x[0]) && (k === 8 || k === 9)) {
           while (x.length < 10) x.push(x.length === 8 ? RECT_DEF.w : RECT_DEF.h);
           x[k] = Math.max(RECT_MIN, Math.min(1000, (k === 8 ? rectW(x) : rectH(x)) + d));
@@ -2830,20 +2848,30 @@
   let drag = null;
   function stagePoint(ev) { const r = stage.getBoundingClientRect(); return { x: (ev.clientX - r.left) * 1000 / r.width, y: (ev.clientY - r.top) * 1000 / r.height, inside: ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom }; }
   let RESIZE = null;
+  // 四角形とグラフは右下の掴みで寸法を変えられる。掴んだ角と向かい合う角を止めたまま伸ばす。
+  //   幅はどちらも盤面の幅の千分率。高さは四角形 = 盤面の高さ、グラフ = 盤面の幅 (実機と同じ決め方)。
+  const boxLeftOf = (e, w) => (e[3] === 1 ? e[1] : e[3] === 2 ? e[1] - w : e[1] - w / 2);
+  const resizeGeom = (e) => (isGraph(e[0])
+    ? { w: graphW(e), h: graphH(e) * dev().w / dev().h, unit: dev().h / dev().w, min: GRAPH_MIN }
+    : { w: rectW(e), h: rectH(e), unit: 1, min: { w: RECT_MIN, h: RECT_MIN } });
   function startRectResize(ev, i) {
     ev.preventDefault(); ev.stopPropagation();
-    const e = st.el[i]; if (!e || !isRect(e[0])) return;
-    RESIZE = { i, left: e[1] - rectW(e) / 2, top: e[2] - rectH(e) / 2, id: ev.pointerId };
+    const e = st.el[i]; if (!e || !(isRect(e[0]) || isGraph(e[0]))) return;
+    const g = resizeGeom(e);
+    RESIZE = { i, left: boxLeftOf(e, g.w), top: e[2] - g.h / 2, id: ev.pointerId };
   }
   window.addEventListener('pointermove', (ev) => {
     if (!RESIZE || ev.pointerId !== RESIZE.id) return;
     const e = st.el[RESIZE.i]; if (!e) { RESIZE = null; return; }
-    const p = stagePoint(ev);
-    const w = Math.max(RECT_MIN, Math.min(1000, snapGrid(p.x) - RESIZE.left));
-    const h = Math.max(RECT_MIN, Math.min(1000, snapGrid(p.y) - RESIZE.top));
-    while (e.length < 10) e.push(e.length === 8 ? RECT_DEF.w : RECT_DEF.h);
+    const p = stagePoint(ev), g = resizeGeom(e);
+    const w = Math.max(g.min.w, Math.min(1000, snapGrid(p.x) - RESIZE.left));
+    const hy = Math.max(g.min.h, Math.min(1000, snapGrid(p.y) - RESIZE.top));   // 盤面の高さの千分率
+    const h = Math.max(g.min.h, Math.min(1000, Math.round(hy * g.unit)));       // 部品が使う単位に直す
+    if (isGraph(e[0])) graphGrow(e); else while (e.length < 10) e.push(e.length === 8 ? RECT_DEF.w : RECT_DEF.h);
     if (w === e[8] && h === e[9]) return;
-    e[8] = w; e[9] = h; e[1] = clamp(RESIZE.left + w / 2); e[2] = clamp(RESIZE.top + h / 2);
+    e[8] = w; e[9] = h;
+    e[1] = clamp(e[3] === 1 ? RESIZE.left : e[3] === 2 ? RESIZE.left + w : RESIZE.left + w / 2);
+    e[2] = clamp(RESIZE.top + (h / g.unit) / 2);
     render();
   });
   const endResize = (ev) => { if (!RESIZE || ev.pointerId !== RESIZE.id) return; RESIZE = null; commit(); };
@@ -3083,6 +3111,7 @@
       if (n[1] < 0 || n[1] > 1000 || n[2] < 0 || n[2] > 1000 || n[3] < 0 || n[3] > 2 || n[4] < 0 || n[4] > SIZE_MAX || n[5] < 0 || n[5] > PC_BASE + PC_MAX || n[6] < 0 || n[6] > F_MAX || n[7] < -1 || n[7] > SIZE_MAX) return null;
       if (isLine(n[0])) { const L = Number(e[8]); n.push(Number.isFinite(L) && L >= LINE_LEN_MIN && L <= 1000 ? Math.round(L) : LINE_LEN_DEF); }   // 線は 9 番目の長さを落とさない
       else if (isRect(n[0])) { n.push(rectW(e), rectH(e)); }   // 四角形は 9・10 番目に幅と高さ
+      else if (isGraph(n[0])) { n.push(graphW(e), graphH(e)); }   // グラフも 9・10 番目に幅と高さ
       else if (hasCity(n[0]) && TZ_CITIES.some((c) => c[0] === Number(e[9]))) { n.push((Number(e[8]) === 1 || Number(e[8]) === 2) ? Number(e[8]) : 0, Number(e[9])); }   // 世界時計の都市
       else if (isHands(n[0])) {   // 9 番目 = 針の長さ %、Rim marks は 10 番目 = 縁からの引っ込み
         const v = Number(e[8]); n.push((Number.isFinite(v) && v >= 40 && v <= 120) ? Math.round(v) : 100);

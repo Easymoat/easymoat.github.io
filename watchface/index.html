@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 07:47</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 07:48</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3179,7 +3179,7 @@
       if (!TYPES[n[0]] || n.some((v) => !Number.isInteger(v))) return null;
       if (n[1] < 0 || n[1] > 1000 || n[2] < 0 || n[2] > 1000 || n[3] < 0 || n[3] > 2 || n[4] < 0 || n[4] > SIZE_MAX || n[5] < 0 || n[5] > PC_BASE + PC_MAX || n[6] < 0 || n[6] > F_MAX || n[7] < -1 || n[7] > SIZE_MAX) return null;
       if (isLine(n[0])) { const L = Number(e[8]); n.push(Number.isFinite(L) && L >= LINE_LEN_MIN && L <= 1000 ? Math.round(L) : LINE_LEN_DEF); }   // 線は 9 番目の長さを落とさない
-      else if (isRect(n[0])) { n.push(rectW(e), rectH(e)); }   // 四角形は 9・10 番目に幅と高さ
+      else if (isRect(n[0])) { n.push(rectW(e), rectH(e), rectFill(e)); }   // 四角形は 9・10 番目に幅と高さ、11 番目に中の色
       else if (isGraph(n[0])) { n.push(graphW(e), graphH(e)); }   // グラフも 9・10 番目に幅と高さ
       else if (hasCity(n[0]) && TZ_CITIES.some((c) => c[0] === Number(e[9]))) { n.push((Number(e[8]) === 1 || Number(e[8]) === 2) ? Number(e[8]) : 0, Number(e[9])); }   // 世界時計の都市
       else if (isHands(n[0])) {   // 9 番目 = 針の長さ %、Rim marks は 10 番目 = 縁からの引っ込み

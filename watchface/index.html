@@ -369,7 +369,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 09:07</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 10:26</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -859,6 +859,18 @@
   const anaStyle = (e) => (ANA_STYLES.some(([v]) => v === Number(e[10])) ? Number(e[10]) : ANA_DEF.style);
   const anaTicks = (e) => (Number(e[11]) === 1 ? 1 : 0);
   const anaCity = (e) => { const v = Number(e[12]); return TZ_CITIES.some((c) => c[0] === v) ? v : 0; };
+  // 針の一番長い先 (454 基準、k.l = 1 の時)。目盛りを出す時はこの先が目盛りの内側に触れないよう縮める。
+  const ANA_LONG = { 50: 178, 51: 180, 52: 182, 53: 180, 56: 227 * 0.86, 57: 180 };
+  // アナログ部品の縮尺。l = 長さ / w = 太さ / b = 軸より後ろ / wmin = 太さの下限 (実機と同じ 2.0px)。
+  function anaK(e) {
+    const dia = anaDia(e), sz = Math.min(Math.max(e[4], 0), 3), kk = DIAL_SCALE[sz];
+    let l = kk.l;
+    if (anaTicks(e)) {                       // 目盛りの内端 = 半径の 0.84。針は 0.78 までに収める
+      const long = ANA_LONG[anaStyle(e)] || 180;
+      l = Math.min(l, 0.78 * 227 / long);
+    }
+    return { l: l * dia / 1000, w: kk.w * dia / 1000, b: dia / 1000, wmin: 2.0 * 454 / dev().w };
+  }
   const isRect = (t) => !!(TYPES[t] && TYPES[t].rect);
   const isGraph = (t) => !!(TYPES[t] && TYPES[t].graph);
   // グラフの箱 [幅, 高さ] (どちらも盤面の幅の千分率、実機と同じ値)。0 = 小、1 = 大
@@ -1814,7 +1826,7 @@
     }
     if (def.analog) {        // アナログ時計 (部品)。箱 = 直径、当たり判定は描いた線の上だけ
       const dv = dev(), dia = anaDia(e), S = dia * dv.w / 1000;
-      const kk = DIAL_SCALE[Math.min(Math.max(s, 0), 3)], kd = { l: kk.l * dia / 1000, w: kk.w * dia / 1000, b: dia / 1000, wmin: 1.2 * 454 / dv.w };
+      const kd = anaK(e);
       const art = DIAL.analogArt(anaStyle(e), kd, dia, anaMode(e), anaTicks(e), anaAngles(e));
       div.classList.add('linepart');
       div.style.width = S + 'px'; div.style.height = S + 'px';
@@ -2141,10 +2153,10 @@
   let ANA_SHAPES = [];
   function anaShapeIdx(e) {
     const style = anaStyle(e), dia = anaDia(e), sz = Math.min(Math.max(e[4], 0), 3);
-    const key = `${style}|${dia}|${sz}`;
+    const key = `${style}|${dia}|${sz}|${anaTicks(e)}`;   // 目盛りの有無で長さが変わる
     const hit = ANA_SHAPES.findIndex((x) => x.key === key);
     if (hit >= 0) return hit;
-    const kk = DIAL_SCALE[sz], h = DIAL.hands(style, { l: kk.l * dia / 1000, w: kk.w * dia / 1000, b: dia / 1000, wmin: 1.2 * 454 / dev().w });
+    const h = DIAL.hands(style, anaK(e));
     ANA_SHAPES.push({ key, style, spec: h });
     return ANA_SHAPES.length - 1;
   }

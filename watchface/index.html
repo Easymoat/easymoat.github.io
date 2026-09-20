@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 17:57</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-20 18:14</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1059,16 +1059,19 @@
   // 見出し = 記号 or 名前 (f bit4)、値 = 価格 or 変化率 (f bit2)。下見が取れていれば本物を出す。
   const TEXT_ICON = { stock: '$', dow: 'Fri' };   // 絵ではなく文字をアイコン枠に置く部品
   const isStrip = (t) => !!(TYPES[t] && TYPES[t].strip);
+  // 帯のコマの数 (10 番目、3-5。無ければ 3 = 従来どおり)。2026-09-20 に Now+3 / Now+4 を追加。
+  const stripCells = (e) => { const v = Number(e[9]); return (v === 4 || v === 5) ? v : 3; };
   // 予報の帯が出す値。f の bit2-3 (部品 29 だけの意味)。
   const STRIP_MET = [[0, 'Temp'], [4, 'Rain %'], [8, 'Wind']];
   const stripMet = (e) => ((e[6] >> 2) & 3);
   // 帯の見本。気温は単位に合わせ、風は選んだ単位の見本を散らす。
   function stripSample(e) {
-    const m = stripMet(e);
-    if (m === 1) return ['20', '40', '70'];   // 傘の絵があるので % は付けない (幅が 1 文字ぶん縮む)
-    if (m === 2) { const w = Number((WIND_UNITS[st.wu || 0] || ['', '3'])[1]) || 3; return [String(w), String(Math.round(w * 1.5)), String(w * 2)]; }
+    const m = stripMet(e), n5 = stripCells(e);
+    if (m === 1) return ['20', '40', '70', '60', '30'].slice(0, n5);   // 傘の絵があるので % は付けない (幅が 1 文字ぶん縮む)
+    if (m === 2) { const w = Number((WIND_UNITS[st.wu || 0] || ['', '3'])[1]) || 3; return [w, Math.round(w * 1.5), w * 2, Math.round(w * 1.7), w].slice(0, n5).map(String); }
     const t0 = (TYPES[20] && TYPES[20].sample) || '23°', n = parseInt(t0, 10);
-    return Number.isFinite(n) ? [n + 1, n, n - 1].map((v) => v + '°') : ['29°', '28°', '27°'];
+    const base = Number.isFinite(n) ? [n + 1, n, n - 1, n - 1, n - 2] : [29, 28, 27, 27, 26];
+    return base.slice(0, n5).map((v) => v + '°');
   }
   const F_SHARP = 1;                              // 線: 角を丸めない (0 = R を入れる = 既定)
   const lineSharp = (e) => (e[6] & F_SHARP) !== 0;
@@ -1953,7 +1956,7 @@
       const degW = textW(px, '\u00B0');   // 度の記号の幅 (数字の右端をそろえるために除く)
       const colW = (lay === 2) ? Math.max(iw, vw) : iw + (iw ? gp : 0) + vw;
       // 風はコマごとに向きが変わる (予報の 1 時間ごとの風向)。見本は南西から西寄りへ振れる風。
-      const WIND_DEG = [200, 245, 290];
+      const WIND_DEG = [200, 245, 290, 315, 340];
       const art = (c) => (met === 2
         ? `<svg width="26" height="26" viewBox="-13 -13 26 26"><polygon points="${arrow(0, 0, WIND_DEG[c] || 225)}" fill="currentColor"/></svg>`
         : ICONS[iName]());
@@ -1964,14 +1967,15 @@
       const jx = lay === 1 ? 'flex-end' : lay === 2 ? 'center' : 'flex-start';
       const ox = lay === 1 ? 'right' : lay === 2 ? 'center' : 'left';
       const icoOf = (c) => (showIco ? `<span class="ico" style="width:${iw.toFixed(1)}px;height:${icoH.toFixed(1)}px;justify-content:${jx};align-items:center;transform-origin:${ox} center;transform:translateY(${iody}px) scale(${ki});">${art(c)}</span>` : '');
-      for (let c = 0; c < def.strip; c++) {
+      const nCells = stripCells(e);
+      for (let c = 0; c < nCells; c++) {
         // 絵を消した時は並びに関わらず右寄せ。そろえるのは**度の記号を除いた数字の右端**で、気温の「°」だけ右へはみ出す
         // (中央だと "24°" と "3" で中心がずれ、帯を重ねた時に数字の列がそろわない。2026-09-20 実機 b0920p と同じ)
         const txt = vals[c], deg = !showIco && /°$/.test(txt);
         const body = deg ? `${txt.slice(0, -1)}<span style="margin-right:${(-degW).toFixed(1)}px">°</span>` : txt;
         const v = `<span class="val" style="display:inline-block;width:${vw.toFixed(1)}px;box-sizing:border-box;${!showIco ? `padding-right:${degW.toFixed(1)}px;` : ''}text-align:${!showIco ? 'right' : lay === 2 ? 'center' : lay === 1 ? 'right' : 'left'};position:relative;top:${inkShift(px).toFixed(2)}px">${body}</span>`;
         const ico = icoOf(c);
-        cells.push(`<span class="scell" style="width:${colW.toFixed(1)}px;gap:${(lay === 2 ? Math.max(0, gp - inkTop(px)) : gp).toFixed(1)}px;${lay === 2 ? 'flex-direction:column;' : ''}${c < def.strip - 1 ? `margin-right:${gp.toFixed(1)}px` : ''}">${lay === 1 ? v + ico : ico + v}</span>`);
+        cells.push(`<span class="scell" style="width:${colW.toFixed(1)}px;gap:${(lay === 2 ? Math.max(0, gp - inkTop(px)) : gp).toFixed(1)}px;${lay === 2 ? 'flex-direction:column;' : ''}${c < nCells - 1 ? `margin-right:${gp.toFixed(1)}px` : ''}">${lay === 1 ? v + ico : ico + v}</span>`);
       }
       div.style.gap = '0px';
       div.innerHTML = cells.join('') + '<span class="anchor"></span>';
@@ -2546,6 +2550,9 @@
           ['<option value="">— pick a team —</option>'].concat(leagueTeams(bbLg(bbSlot(e[0]))).map(([id, nm]) => `<option value="${id}" ${String(bbTm(bbSlot(e[0]))) === String(id) ? 'selected' : ''}>${nm}</option>`)).join('')
         }</select></div>
         <div class="field" title="Green while the game is on, orange when it is over — instead of the color below"><span>State</span><span class="cb units" id="fbbc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep color</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By state</button></span></div>` : ''}
+        ${allStrip ? `<div class="field" title="How many hours the strip shows: now and the next 2, 3 or 4 hours. Five columns with icons are wider than the dial."><span>Columns</span><span class="cb units" id="fstripn">${
+          [3, 4, 5].map((v) => `<button type="button" data-v="${v}" class="${all.every((x) => stripCells(x) === v) ? 'on' : ''}">${v === 3 ? 'Now 1h 2h' : v === 4 ? '+3h' : '+4h'}</button>`).join('')
+        }</span></div>` : ''}
         ${allStrip ? `<div class="field" title="What the three columns show. Each one draws its own icon: the hour's weather, an umbrella, or wind."><span>Shows</span><span class="cb units" id="fstrip">${
           STRIP_MET.map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 12) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>` : ''}
@@ -2682,6 +2689,7 @@
     });
     document.querySelectorAll('#fstkv button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStock(x[0])) x[6] = (x[6] & ~4) | (+b.dataset.v); })));
     document.querySelectorAll('#fstrip button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStrip(x[0])) x[6] = (x[6] & ~12) | (+b.dataset.v); })));
+    document.querySelectorAll('#fstripn button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStrip(x[0])) { while (x.length < 10) x.push(0); x[9] = +b.dataset.v; } })));
     document.querySelectorAll('#fstkc button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStock(x[0])) x[6] = (x[6] & ~8) | (+b.dataset.v); })));
     document.querySelectorAll('#fstkn button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStock(x[0])) x[6] = (x[6] & ~16) | (+b.dataset.v); })));
     document.querySelectorAll('#farr button').forEach((b) => b.addEventListener('click', () => each((x) => {
@@ -3082,6 +3090,9 @@
                METERS.some((mm) => mm[0] === met) ? met : 0, dir === -1 ? -1 : 1,
                CIRC_SPANS.indexOf(Number(e[13])) >= 0 ? Number(e[13]) : 360,          // 弧の角度
                (Number.isInteger(Number(e[14])) && Number(e[14]) > 0 && Number(e[14]) < 360 && Number(e[14]) % 45 === 0) ? Number(e[14]) : 0);   // 始まる角 (45 度刻み)
+      } else if (isStrip(n[0])) {   // 帯: 9 番目 = アイコンの並び、10 番目 = コマの数
+        const ar = Number(e[8]), cn = Number(e[9]);
+        n.push((ar === 1 || ar === 2) ? ar : 0, (cn === 4 || cn === 5) ? cn : 3);
       } else if (Number(e[8]) === 1 || Number(e[8]) === 2) { n.push(Number(e[8])); }   // アイコンの並び
       el.push(n);
     }

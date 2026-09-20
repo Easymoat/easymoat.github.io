@@ -121,7 +121,7 @@
   /* 選んだ部品の点線。Grid と同じく Dim / Bright を選べる (2026-09-20) */
   #stage { --selcol: #8A6A1E; }
   #stage.selbright { --selcol: var(--accent); }
-  .el.sel { outline: 1.5px dashed var(--selcol); outline-offset: 2px; z-index: 4; }   /* 掴みと点線を他の部品の上に */
+  .el.sel { outline: 1.5px dashed var(--selcol); outline-offset: 2px; }
   .el .anchor { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); border: 1px solid #000; display: none; }
   .el.sel .anchor { display: block; }
   .el.ghost { opacity: .85; pointer-events: none; }
@@ -134,7 +134,7 @@
   .el.linepart svg { flex: 0 0 auto; }
   .el.graphpart { padding: 0; margin: 0; }
   /* 四角形の右下のつまみ。選んでいる時だけ出る。つまみだけは掴めるようにする (箱は素通し) */
-  .el .rhandle { display: none; position: absolute; right: -7px; bottom: -7px; width: 14px; height: 14px; box-sizing: border-box;
+  .el .rhandle { display: none; position: absolute; right: -7px; bottom: -7px; width: 14px; height: 14px; box-sizing: border-box; z-index: 5;
                  background: var(--accent); border: 2px solid #05070A; border-radius: 3px; cursor: nwse-resize; pointer-events: auto; touch-action: none; }
   .el.sel .rhandle { display: block; }
   #stage .el.linepart svg line, #stage .el.linepart svg circle, #stage .el.linepart svg path, #stage .el.linepart svg rect { pointer-events: auto; cursor: move; }
@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 08:09</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 08:17</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2714,6 +2714,10 @@
     }
     if (dupBtn && all.every((x) => TYPES[x[0]] && TYPES[x[0]].dial)) {   // 縁・針は同じものを 2 つ置いても意味がない
       dupBtn.disabled = true; dupBtn.title = 'Rim and hands are drawn over the whole dial — a copy would land exactly on top.';
+    }
+    // 縁 (Rim) は文字盤の一番下に固定 (弧が他の部品を隠さないように)。実機も同じ順なので、押せないようにする。
+    if (all.some((x) => TYPES[x[0]] && TYPES[x[0]].grp === 'rim')) {
+      ['tofront', 'toback'].forEach((id) => { const b = $(id); if (b) { b.disabled = true; b.title = 'Rim is always drawn under the other parts — on the watch too.'; } });
     }
     $('tofront').addEventListener('click', () => moveZ(true));
     $('toback').addEventListener('click', () => moveZ(false));

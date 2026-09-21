@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 08:58</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 09:00</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3231,6 +3231,10 @@
                METERS.some((mm) => mm[0] === met) ? met : 0, dir === -1 ? -1 : 1,
                CIRC_SPANS.indexOf(Number(e[13])) >= 0 ? Number(e[13]) : 360,          // 弧の角度
                (Number.isInteger(Number(e[14])) && Number(e[14]) > 0 && Number(e[14]) < 360 && Number(e[14]) % 45 === 0) ? Number(e[14]) : 0);   // 始まる角 (45 度刻み)
+      } else if (n[0] >= 60 && n[0] <= 69) {   // 縁: 9 番目 = 数字の出し方、10 番目 = 内側への寄せ
+        const nm = Number(e[8]), ins = Number(e[9]);
+        n.push((nm === 1 || nm === 2) ? nm : 0,
+               (Number.isFinite(ins) && ins >= 0 && ins <= RIM_INSET.max) ? Math.round(ins) : (((n[0] === 69) !== !!(e[6] & F_EDGE)) ? RIM_INSET.def : 0));   // 昔の 2 択から
       } else if (isStrip(n[0])) {   // 帯: 9 番目 = アイコンの並び、10 番目 = コマの数
         const ar = Number(e[8]), cn = Number(e[9]);
         n.push((ar === 1 || ar === 2) ? ar : 0, (cn === 4 || cn === 5) ? cn : 3);

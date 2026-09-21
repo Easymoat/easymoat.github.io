@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 14:25</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 14:38</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3646,7 +3646,7 @@
     try { const r = await fetch($('api').value + '/shelf?device_id=' + encodeURIComponent(id)); if (!r.ok) throw new Error(r.status); const j = await r.json();
       SHELF.items = j.items || []; SHELF.max = j.max || 30;
       SHELF.next = Number(j.next) || (SHELF.items.reduce((m, it) => Math.max(m, it.n), 0) + 1); } catch (e) { return; }
-    shelfName();
+    shelfName(); loadAuthor(); loadLinks();
     wrap.innerHTML = '';
     $('shelfcount').textContent = `${SHELF.items.length} of ${SHELF.max} saved`;
     if (!SHELF.items.length) { wrap.innerHTML = '<span class="muted">Nothing saved yet — Save to collection keeps the dial above here.</span>'; return; }
@@ -3786,6 +3786,14 @@
       window.prompt('Send this link to anyone — they can add this dial to their collection:', link);
     } catch (e) { setStatus('shelfstatus', 'Could not make a link: ' + e.message, 'err'); }
   }
+  document.addEventListener('DOMContentLoaded', () => {
+    const b0 = $('authorsave');
+    if (b0) b0.addEventListener('click', async () => {
+      const v = await saveAuthor($('authorname').value);
+      setStatus('authorstatus', v ? `Saved — links show "${v}".` : 'Name cleared.', 'ok');
+      loadLinks();
+    });
+  });
   // 受け取る側: ?s=code で開いた時に中身を見せ、自分の Collection に入れられるようにする。
   async function openSharedLink(code) {
     const box = $('sharebox'), body = $('sharebody'); if (!box) return;

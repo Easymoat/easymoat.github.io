@@ -377,7 +377,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 18:11</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 18:47</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2650,6 +2650,7 @@
     // 基本の 3 行 (位置と大きさ / 表示 / 色と並べ) はどの部品でも同じ場所に出す。使えない物は薄く押せなくするだけ。
     const shapeOnly = !none && all.every((x) => isLine(x[0]) || isCircle(x[0]) || isRect(x[0]) || isGraph(x[0]) || (TYPES[x[0]] && TYPES[x[0]].dial));
     // 縁と針は大きさ (S/M/L/XL) で目盛り・針の長さと太さが変わる。数値は Composer が畳んで rm / hd で送るので実機の変更は要らない
+    const shapeSel = !none && all.every((x) => isLine(x[0]) || isCircle(x[0]) || isRect(x[0]));   // 反転が使えるのは図形だけ
     const allRim = !none && all.every((x) => TYPES[x[0]] && TYPES[x[0]].dial);   // 縁 2026-09-21 / 針 2026-09-21
     const allAna = !none && all.every((x) => isAnalog(x[0]));   // アナログ時計: 大きさ (針の太さ) は使うが、そろえ方とアイコンは使わない
     box.innerHTML = `
@@ -2676,7 +2677,7 @@
           (same(5) && e[5] >= 0 && e[5] < PC_BASE ? [e[5]] : []).concat(shownColors(e[5]).reverse()).map((i) => `<button class="sw ${same(5) && i === e[5] ? 'on' : ''}" data-c="${i}" title="${colOf(i).toUpperCase()}" style="background:${colOf(i)}"></button>`).join('')
         }</span></div>
         <div class="field" title="Line the selected parts up on the one you clicked last (the highlighted row in the list). Rim and hands cannot move, so picking one of them lines everything up on the middle of the dial."><span>Align</span><span class="cb units" id="falign"><button type="button" data-v="x" ${multi ? '' : 'disabled'}>Same X &#8597;</button><button type="button" data-v="y" ${multi ? '' : 'disabled'}>Same Y &#8596;</button></span></div>
-        <div class="field"><button class="btn" id="tofront" title="Draw this part over the others (last in the list)">Front</button><button class="btn" id="toback" title="Draw this part under the others (first in the list)">Back</button><button class="btn" id="dup">Duplicate</button><button class="btn danger" id="del">Remove</button></div>
+        <div class="field"><button class="btn" id="tofront" title="Draw this part over the others (last in the list)">Front</button><button class="btn" id="toback" title="Draw this part under the others (first in the list)">Back</button><button class="btn" id="dup">Duplicate</button><button class="btn" id="flipx" title="Mirror the selected shapes left to right. Diagonals swap direction; arcs mirror. Several shapes swap sides around their middle." ${shapeSel ? '' : 'disabled'}>Flip &#8596;</button><button class="btn" id="flipy" title="Mirror the selected shapes top to bottom" ${shapeSel ? '' : 'disabled'}>Flip &#8597;</button><button class="btn danger" id="del">Remove</button></div>
         <div class="brk"></div>
         ${!none && all.some((x) => isImgText(x)) ? `<div class="field"><span>Picture</span><span class="muted" style="max-width:430px">This text is not plain ASCII, so it goes to the watch as a picture: it looks exactly like this, but it needs a watch that can show pictures (6 older models cannot), and a change takes a few minutes to appear. ${tiTrouble() ? '<b>' + tiTrouble() + '</b>' : ''}</span></div>` : ''}
         ${!none && all.every((x) => isText(x[0])) ? `<div class="field" title="What this part says, up to 20 characters. Plain letters, digits and symbols are drawn by the watch itself; anything else (Japanese, for example) is sent as a small picture — see the note above."><span>Text</span><input type="text" id="ftext" maxlength="${TT_LEN}" placeholder="TEXT" style="width:170px" value="${ttOf(e).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')}"></div>` : ''}
@@ -2873,6 +2874,28 @@
     if (dupBtn && all.every((x) => TYPES[x[0]] && TYPES[x[0]].dial)) {   // 縁・針は同じものを 2 つ置いても意味がない
       dupBtn.disabled = true; dupBtn.title = 'Rim and hands are drawn over the whole dial — a copy would land exactly on top.';
     }
+    // 左右 / 上下の反転 (2026-09-21)。1 つだけなら自分の中心で反転、複数なら選んだ範囲の中心で入れ替える。
+    //   斜めの線は向きが入れ替わり、弧は始まる角が鏡になる。四角形と縦横の線は位置だけ動く。
+    const flip = (horiz) => {
+      const idxs = selIdx(); if (!idxs.length) return;
+      const k = horiz ? 1 : 2;
+      const vals = idxs.map((i) => st.el[i][k]);
+      const mid = (Math.min(...vals) + Math.max(...vals));   // x' = (min + max) − x
+      idxs.forEach((i) => {
+        const e = st.el[i];
+        e[k] = clamp(mid - e[k]);
+        if (e[0] === 72) e[0] = 73; else if (e[0] === 73) e[0] = 72;         // 斜めの線は向きが入れ替わる
+        if (isCircle(e[0]) && circSpan(e) !== 360) {                          // 弧は鏡に映した角度へ
+          circGrow(e);
+          const sp = circSpan(e), base = horiz ? 360 : 180;
+          e[14] = ((base - (circFrom(e) + sp)) % 360 + 360) % 360;
+          e[12] = circDir(e) > 0 ? -1 : 1;                                    // 回る向きも鏡になる
+        }
+      });
+      commit();
+    };
+    const flipXB = $('flipx'); if (flipXB) flipXB.addEventListener('click', () => flip(true));
+    const flipYB = $('flipy'); if (flipYB) flipYB.addEventListener('click', () => flip(false));
     $('tofront').addEventListener('click', () => moveZ(true));
     $('toback').addEventListener('click', () => moveZ(false));
     lockInspHeight();

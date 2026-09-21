@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 14:38</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 14:42</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -477,6 +477,11 @@
         <div class="status" id="shelfstatus"></div>
       </div>
       <div class="shelf" id="shelf"></div>
+      <details class="box" id="linksbox" style="margin-top:14px" hidden>
+        <summary class="lbl" style="cursor:pointer">Links you shared (<span id="linkcount">0</span>)</summary>
+        <div class="ctl" style="flex-wrap:wrap;gap:10px;margin-top:8px"><span class="muted">Shared as</span><input type="text" id="authorname" placeholder="Your name" maxlength="20" style="width:150px"><button class="btn" id="authorsave" title="Shown to whoever opens your links">Save</button><span class="status" id="authorstatus"></span></div>
+        <div id="links"></div>
+      </details>
     </div>
     <div class="shelfbox box" id="watchbox">
       <div class="tier"><span class="num">5</span><span class="name">Watch</span><span class="what">Two settings you make once: which watch receives your dials, and where its weather comes from</span></div>
@@ -3771,18 +3776,79 @@
     } catch (e) { setStatus('passstatus', 'Key not accepted: ' + e.message, 'err'); }
   });
   // ── リンクで送る (2026-09-21) ────────────────────────────────────────────
+  let AUTHOR = '';
+  async function loadAuthor() {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return;
+    try { const r = await fetch($('api').value + '/author?device_id=' + encodeURIComponent(id)); const j = await r.json(); AUTHOR = j.name || ''; } catch (e) { AUTHOR = ''; }
+    if ($('authorname')) $('authorname').value = AUTHOR;
+  }
+  async function saveAuthor(name) {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return '';
+    try { const r = await fetch($('api').value + '/author', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ device_id: id, name }) });
+      const j = await r.json(); AUTHOR = j.name || ''; } catch (e) {}
+    if ($('authorname')) $('authorname').value = AUTHOR;
+    return AUTHOR;
+  }
+  // 自分が出したリンクの一覧。何回もらわれたかが見え、取り消せる。
+  async function loadLinks() {
+    const box = $('linksbox'), wrap = $('links'); if (!box || !wrap) return;
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { box.hidden = true; return; }
+    let j = null;
+    try { const r = await fetch($('api').value + '/share?device_id=' + encodeURIComponent(id)); j = await r.json(); } catch (e) { box.hidden = true; return; }
+    const items = (j && j.items) || [];
+    box.hidden = false; $('linkcount').textContent = String(items.length);
+    if (!items.length) { wrap.innerHTML = '<span class="muted">No links yet — use Share… on an item above.</span>'; return; }
+    wrap.innerHTML = '';
+    for (const it of items) {
+      const link = location.origin + location.pathname + '?s=' + it.code;
+      const row = document.createElement('div'); row.className = 'ctl'; row.style.cssText = 'flex-wrap:wrap;gap:10px;padding:6px 0;border-top:1px solid var(--line)';
+      row.innerHTML = `<b style="min-width:140px">${(it.name || 'Untitled').replace(/</g, '&lt;')}</b>
+        <span class="muted">${fmtTime(it.ts * 1000)} · added ${it.adds} time${it.adds === 1 ? '' : 's'}${it.dev ? ' · made for ' + String(it.dev).replace(/</g, '&lt;') : ''}</span>
+        <button class="btn" data-a="copy">Copy link</button><button class="btn danger" data-a="rm">Remove</button>`;
+      row.querySelector('[data-a="copy"]').addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(link); setStatus('shelfstatus', 'Link copied: ' + link, 'ok'); }
+        catch (e) { window.prompt('Copy this link:', link); }
+      });
+      row.querySelector('[data-a="rm"]').addEventListener('click', async () => {
+        if (!window.confirm('Remove this link? People who already added the dial keep their copy.')) return;
+        try { await fetch($('api').value + '/share', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ device_id: id, remove: true, code: it.code }) }); } catch (e) {}
+        loadLinks();
+      });
+      wrap.appendChild(row);
+    }
+  }
+  // 送り主の機種と自分の機種で、見え方がどう変わるかを一言で伝える。
+  //   文字の出し方 (px 指定か、機種の 3 段か) が違う時がいちばん崩れる。画面の形と縦横比も見る。
+  function devNote(srcKey) {
+    const a = DEVPROF[srcKey], b = DEVPROF[st.dev];
+    if (!a || !b) return 'Everything scales to your watch, but check the spacing after you add it.';
+    const out = [];
+    if (a[2] === 1 && b[2] !== 1) out.push('your watch has three fixed text sizes instead of exact ones, so the text comes out larger or smaller than it looks here');
+    else if (a[2] !== 1 && b[2] === 1) out.push('your watch sets text exactly, so it may look smaller than the author saw');
+    if (Math.abs(a[0] / a[1] - b[0] / b[1]) > 0.02) out.push('the screen is a different shape, so the up-and-down spacing changes');
+    const dr = (DEVICES[st.dev] || {}).round, sr = (DEVICES[srcKey] || {}).round;
+    if (dr !== sr) out.push(dr ? 'your screen is round, so parts near the corners can fall off the edge' : 'your screen is square, so there is more room in the corners');
+    return out.length ? out.join('; ') + '. Check it after you add it.' : 'Everything scales to your watch — it should look the same.';
+  }
   // 送る側: Collection の品からリンクを作る。相手の Device ID は要らない。
   async function shareShelfItem(n, name) {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID first.', 'err');
+    if (!AUTHOR) {   // 初めて共有する時に 1 回だけ名前を聞く (相手に出るのはこの名前だけ)
+      const v = window.prompt('Your name, shown to whoever opens the link (you can change it later):', '');
+      if (v === null) return;
+      await saveAuthor(v);
+    }
     setStatus('shelfstatus', 'Making a link…');
     try {
-      const r = await fetch($('api').value + '/share', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ device_id: id, n }) });
+      const r = await fetch($('api').value + '/share', { method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ device_id: id, n, by: AUTHOR, dev: (DEVICES[st.dev] || {}).name || '', devk: st.dev }) });
       const j = await r.json();
       if (r.status === 402) { loadAccess(); throw new Error(payMsg(j)); }
       if (!r.ok || !j.ok) throw new Error(j.error === 'share_full' ? `you already have ${j.max} links — remove one first` : (j.error || r.status));
       const link = location.origin + location.pathname + '?s=' + j.code;
       try { await navigator.clipboard.writeText(link); } catch (e) {}
       setStatus('shelfstatus', `Link copied: ${link} — anyone with it can add "${name || 'item ' + n}" to their own collection.`, 'ok');
+      loadLinks();
       window.prompt('Send this link to anyone — they can add this dial to their collection:', link);
     } catch (e) { setStatus('shelfstatus', 'Could not make a link: ' + e.message, 'err'); }
   }
@@ -3802,8 +3868,11 @@
     try { const r = await fetch($('api').value + '/share-item?code=' + encodeURIComponent(code)); j = await r.json(); if (!r.ok) throw new Error(j.error || r.status); }
     catch (e) { body.innerHTML = `<span class="status err">This link is not available any more.</span>`; return; }
     const lay = faceLayout(j.layout);
+    const mine = (DEVICES[st.dev] || {}).name || '';
+    const other = j.dev && mine && j.dev !== mine;
     body.innerHTML = `<div class="item" style="max-width:260px"><div class="mini"></div><span class="cap"><b>${(j.name || 'A dial').replace(/</g, '&lt;')}</b></span>
-        <span class="cap">${j.kind === 'none' ? 'no image' : 'with a picture'} · added ${j.adds} time${j.adds === 1 ? '' : 's'}</span></div>
+        <span class="cap">${j.by ? 'from ' + String(j.by).replace(/</g, '&lt;') + ' · ' : ''}${j.kind === 'none' ? 'no image' : 'with a picture'} · added ${j.adds} time${j.adds === 1 ? '' : 's'}</span></div>
+      ${j.dev ? `<div class="ctl"><span class="muted">Made for ${String(j.dev).replace(/</g, '&lt;')}${other ? ' — ' + devNote(j.devk) : ''}</span></div>` : ''}
       <div class="ctl" style="flex-wrap:wrap;gap:10px"><span class="muted">Your Device ID</span><input type="text" id="shareid" placeholder="XXXX-XXXX" style="width:140px" value="${devId()}">
         <button class="btn primary" id="shareadd">Add to my collection</button><span class="status" id="sharestatus"></span></div>
       <div class="ctl"><span class="muted">It goes to your collection only — your watch keeps showing what it shows now until you send this one to it.</span></div>`;

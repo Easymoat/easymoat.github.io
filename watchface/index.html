@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 11:20</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 12:42</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1439,28 +1439,34 @@
   const TI_REF = 466, TI_STEPS = 32;   // 実寸の基準と、濃さの段数 (実機は 32 色まで)
   const isImgText = (e) => isText(e[0]) && !isAscii(ttOf(e));
   const imgTexts = () => st.el.filter((e) => isImgText(e) && ttOf(e));
-  const tiFace = (px, bold) => `${bold ? 600 : 400} ${px}px ${(getComputedStyle(document.body).getPropertyValue('--watch').trim() || 'sans-serif')}`;
+  // 文字の絵も、他の文字の部品とまったく同じ規則で焼く: 行高 px に対して font-size = px / 1.17、
+  // 太字は「もう一度ずらして重ねる」疑似ボールド (実機のベクター文字と同じ、2026-09-21)。
+  const tiFace = (px) => `400 ${(px / FONT_EM).toFixed(2)}px ${(getComputedStyle(document.body).getPropertyValue('--watch').trim() || 'sans-serif')}`;
+  const tiLv = () => (st.b === 2 ? 2 : st.b === 1 ? 1 : 0);
   const TI_BOX = new Map();
   // 絵の大きさ (466 の実寸)。毎回の描き直しで呼ぶので、測るだけ・結果は憶える。
-  function textBox(txt, px, bold) {
-    const key = `${px}|${bold ? 1 : 0}|${txt}`;
+  function textBox(txt, px, lv) {
+    const key = `${px}|${lv}|${txt}`;
     if (TI_BOX.has(key)) return TI_BOX.get(key);
     const g = document.createElement('canvas').getContext('2d');
-    g.font = tiFace(px, bold);
-    const box = { w: Math.max(2, Math.ceil(g.measureText(txt).width) + 4), h: Math.max(2, Math.ceil(px * 1.35)) };
+    g.font = tiFace(px);
+    const bo = lv ? boldOff(px, lv) : 0;
+    const box = { w: Math.max(2, Math.ceil(g.measureText(txt).width) + 4 + bo), h: Math.max(2, Math.ceil(px * 1.35)) };
     TI_BOX.set(key, box); return box;
   }
   const tiPx = (e) => Math.round(effPx(e[0], e[4]) * TI_REF / 454);
-  const tiBoxOf = (e) => textBox(ttOf(e), tiPx(e), (st.b || 0) > 0);
+  const tiBoxOf = (e) => textBox(ttOf(e), tiPx(e), tiLv());
   // 覆い (cov) は**字の色で塗った絵**、反転 (inv) は灰色。実機は 反転を掛け算 → 覆いを加算 するだけで
   //   背景 × (1 − 覆い) + 色 × 覆い になる (2026-09-21: 取ってきた絵に tintColor が効かないため、色は焼き込む)。
-  function textImage(txt, px, bold, col) {
-    const { w, h } = textBox(txt, px, bold);
+  function textImage(txt, px, lv, col) {
+    const { w, h } = textBox(txt, px, lv);
     const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
     const g = cv.getContext('2d');
     g.fillStyle = '#000'; g.fillRect(0, 0, w, h);
-    g.font = tiFace(px, bold); g.textBaseline = 'middle'; g.textAlign = 'left'; g.fillStyle = '#fff';
-    g.fillText(txt, 2, Math.round(h / 2));
+    g.font = tiFace(px); g.textBaseline = 'middle'; g.textAlign = 'left'; g.fillStyle = '#fff';
+    const y0 = Math.round(h / 2), bo = lv ? boldOff(px, lv) : 0;
+    g.fillText(txt, 2, y0);
+    if (lv) { g.fillText(txt, 2 + bo, y0); if (lv === 2) g.fillText(txt, 2 + Math.floor(bo / 2), y0); }
     // まず「どれだけ字が乗っているか」を 32 段に丸める。覆いも反転もこの 1 つから作る = 端がぴったり合う。
     const im = g.getImageData(0, 0, w, h), d = im.data, q = 255 / (TI_STEPS - 1);
     const m = new Uint8Array(w * h);
@@ -1487,7 +1493,7 @@
     for (const e of imgTexts().slice(0, tiLimit())) {
       const px = Math.round(effPx(e[0], e[4]) * TI_REF / 454);
       // 色は絵に焼き込む。パレットは送らない (32 色以内の indexed PNG なので実機が困らない)
-      out.push(textImage(ttOf(e), px, (st.b || 0) > 0, colOf(e[5])));
+      out.push(textImage(ttOf(e), px, tiLv(), colOf(e[5])));
     }
     return out;
   }
@@ -1499,7 +1505,7 @@
     if (list.length > lim) return `Only ${lim} picture text${lim > 1 ? 's' : ''} fit on a dial with ${lim === 1 ? 'a photo' : 'this much detail'} — the watch cannot hold more. Shorten the dial to ${lim}.`;
     for (const e of list) {
       const px = Math.round(effPx(e[0], e[4]) * TI_REF / 454);
-      const im = textBox(ttOf(e), px, (st.b || 0) > 0);
+      const im = textBox(ttOf(e), px, tiLv());
       if (im.w * im.h > TI_PIXELS) return `"${ttOf(e)}" is too big as a picture (${im.w}x${im.h}). Use a smaller size, or fewer characters.`;
     }
     return '';
@@ -1740,7 +1746,9 @@
                      : [[12, 0], [3, 90], [6, 180], [9, 270]];
           list.forEach(([num, a]) => {
             const rad = (a - 90) * Math.PI / 180;
-            o += `<text x="${r1(R + rr * Math.cos(rad))}" y="${r1(R + rr * Math.sin(rad))}" text-anchor="middle" dominant-baseline="central" font-family="var(--watch)" font-weight="600" font-size="${hgt}" fill="currentColor">${num}</text>`;
+            // 実機は getVectorFont({:size => hgt}) = **行高** が hgt。Web の font-size は hgt / 1.17 で一致する。
+            // 太字にもしない (実機はそのまま描く)。2026-09-21: ここだけ 600 と等倍だったため太く大きく見えていた。
+            o += `<text x="${r1(R + rr * Math.cos(rad))}" y="${r1(R + rr * Math.sin(rad))}" text-anchor="middle" dominant-baseline="central" font-family="var(--watch)" font-size="${r1(hgt / FONT_EM)}" fill="currentColor">${num}</text>`;
           });
         }
       }

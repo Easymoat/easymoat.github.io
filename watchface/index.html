@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 10:44</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 10:46</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3306,7 +3306,7 @@
     try {
       const j = JSON.parse($('json').value);
       const clean = sanitize(j); if (!clean) throw new Error('bad');
-      st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; st.ic = clean.ic; st.io = clean.io; st.b = clean.b; clearSel(); commit(); setStatus('jsonstatus', `Applied ${clean.el.length} elements.`, 'ok');
+      st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; st.ic = clean.ic; st.io = clean.io; st.b = clean.b; st.tt = (clean.tt || []).slice(); clearSel(); commit(); setStatus('jsonstatus', `Applied ${clean.el.length} elements.`, 'ok');
     } catch (e) { setStatus('jsonstatus', 'Not a valid layout. Expect {"bg":n,"el":[[t,x,y,a,s,c,f],…]} with 0..1000 coordinates.', 'err'); }
   });
   $('preset-lobby').addEventListener('click', () => {

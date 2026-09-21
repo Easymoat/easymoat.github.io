@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 09:00</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 09:29</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -421,7 +421,7 @@
     </div>
     <div class="dialbar top dialsec">
       <div class="grp"><div class="tier"><span class="num">2</span><span class="name">Dial</span><span class="what">Move the parts and the picture here</span></div>
-        <div class="ctl"><button class="btn" id="undo" disabled title="Undo the last change to the dial (⌘Z / Ctrl+Z). Parts, colors, sizes and the background — not the image.">Undo</button><button class="btn" id="redo" disabled title="Put back what Undo took away (⇧⌘Z / Ctrl+Y)">Redo</button><button class="btn danger" id="reset" title="Empty the dial: every part, the background and the text / icon sizes go back to the start. Units and the grid stay. Undo puts it back.">Clear dial</button><span class="vsep"></span><button class="btn" id="imgparts" title="Hide the parts on the dial while you frame the picture. Only this view — nothing is saved.">Hide parts</button><button class="btn" id="imghide" title="Hide the picture on the dial. Only this view — nothing is saved.">Hide image</button><span class="vsep"></span><span class="sub"><span class="muted">Grid</span><select id="grid" title="Also the step for the - / + buttons. Pick a fine grid to place thin double lines close together."><option value="5">200 × 200 (5)</option><option value="10">100 × 100 (10)</option><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label><span class="cb units" id="gridcol" title="Grid color. Bright is easier to see on a black or dark dial."></span></span><span class="sub"><span class="muted">Background</span><input type="color" id="bgpick" title="Pick any background color (sent to the watch as bg)" value="#000000"><span class="swatches" id="bgsw" title="Recently used colors"></span></span><span class="sub"><span class="muted">Selected</span><span class="cb units" id="selcol" title="Color of the dashed frame around the part you picked. Bright is easier to see on a dark dial; Dim keeps it out of the way while you judge the design."></span></span></div>
+        <div class="ctl"><button class="btn" id="undo" disabled title="Undo the last change to the dial (⌘Z / Ctrl+Z). Parts, colors, sizes and the background — not the image.">Undo</button><button class="btn" id="redo" disabled title="Put back what Undo took away (⇧⌘Z / Ctrl+Y)">Redo</button><button class="btn danger" id="reset" title="Empty the dial: every part, the background and the text / icon sizes go back to the start. Units and the grid stay. Undo puts it back.">Clear dial</button><span class="vsep"></span><button class="btn" id="imgparts" title="Hide the parts on the dial while you frame the picture. Only this view — nothing is saved.">Hide parts</button><button class="btn" id="imghide" title="Hide the picture on the dial. Only this view — nothing is saved.">Hide image</button><span class="vsep"></span><span class="sub"><span class="muted">Grid</span><select id="grid" title="Also the step for the - / + buttons. Pick a fine grid to place thin double lines close together."><option value="5">200 × 200 (5)</option><option value="10">100 × 100 (10)</option><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label><span class="cb units" id="gridcol" title="Grid color. Bright is easier to see on a black or dark dial."></span></span><span class="sub"><span class="muted">Background</span><input type="color" id="bgpick" title="Pick any background color (sent to the watch as bg)" value="#000000"><span class="swatches" id="bgsw" title="Recently used colors"></span></span><span class="sub"><span class="muted">Selected</span><span class="cb units" id="selcol" title="Color of the dashed frame around the part you picked. Bright is easier to see on a dark dial; Dim keeps it out of the way while you judge the design."></span></span><span class="sub" id="shelfsaverow" style="align-items:center;gap:10px"><input type="text" id="shelfname" placeholder="Name (optional)" style="width:150px"><button class="btn primary" id="shelfsave">Save to collection</button><span class="muted" id="shelfcount"></span></span></div>
         <div class="status" id="facestatus"></div>
       </div>
     </div>
@@ -469,7 +469,6 @@
       <div class="tier"><span class="num">4</span><span class="name">Collection</span><span class="what">Save the edited dial to the collection area, then upload it to your Garmin Watch.</span></div>
       <div class="grp">
         <div class="status" id="syncstatus"></div>
-        <div class="row" id="shelfsaverow" style="align-items:center;gap:10px"><input type="text" id="shelfname" placeholder="Name (optional)" style="width:180px"><button class="btn primary" id="shelfsave">Save to collection</button><span class="muted" id="shelfcount"></span></div>
         <div class="status" id="shelfstatus"></div>
       </div>
       <div class="shelf" id="shelf"></div>
@@ -2102,16 +2101,19 @@
   }
   // 実機へ渡す針と縁の形。S/M/L はここで数値に畳む (実機は解釈しない)。色と重なり順は el の行のまま。
   function dialFields() {
-    const out = {};
+    const out = {}; let rimN = 0;
     for (const e of st.el) {
       const k = DIAL_SCALE[Math.min(Math.max(e[4], 0), 3)];
       const h = DIAL.hands(e[0], isHands(e[0]) ? { l: k.l * handLen(e) / 100, w: k.w, rim: isRimMarks(e[0]) ? markInset(e) : null } : k);
       // 針の中心は動かせる (2026-09-20 ユーザー指示)。盤の真ん中以外に置いた時だけ hp = [x‰, y‰] を送る。
       if (h && !out.hd) { out.hd = h; if (e[1] !== 500 || e[2] !== 500) out.hp = [e[1], e[2]]; continue; }
       const r = DIAL.rim(e[0], k, st.mt, st.mc, st.mk, st.mv, rimInset(e), rimNum(e));
-      // 縁は 2 つまで重ねられるので、原型ごとにその部品の色を添える (実機は rc[i] で塗り分ける)。
-      if (r) { out.rm = (out.rm || []).concat(r); out.rc = (out.rc || []).concat(r.map(() => e[5])); }
+      // 縁は 2 つまで重ねられるので、原型ごとにその部品の色 (rc) と「何番目の縁の行のものか」(ro) を添える。
+      // ro があると、実機は i 番目の縁の行でその番号の原型だけを描く = 縁ごとに前後を変えられる (2026-09-21)。
+      if (r) { out.rm = (out.rm || []).concat(r); out.rc = (out.rc || []).concat(r.map(() => e[5]));
+               out.ro = (out.ro || []).concat(r.map(() => rimN)); rimN++; }
     }
+    if (out.ro && out.ro.every((v) => v === 0)) delete out.ro;   // 縁が 1 つの面は今までどおり送らない
     return out;
   }
   // 描く順 = 配列の順 (実機も同じ)。縁 (Rim) も並べたとおりの位置で描く (2026-09-21 ユーザー指示)。

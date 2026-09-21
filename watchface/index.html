@@ -371,7 +371,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 15:20</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 15:33</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -448,7 +448,7 @@
           <div class="ctl" id="imgsizerow">Size <span class="muted" id="imgsizewho"></span> <input id="imgsize" type="range" min="30" max="100" step="1" value="100"><span class="muted" id="imgsizev">100%</span></div>
           <div class="ctl">Zoom <input id="imgzoom" type="range" min="1" max="3" step="0.01" value="1"></div>
           <div class="ctl" title="Only the cut-out changes — the stored photo is never touched.">Brightness <input id="imgbr" type="range" min="20" max="180" step="1" value="100"><span class="muted" id="imgbrv">100%</span> Saturation <input id="imgsa" type="range" min="0" max="200" step="1" value="100"><span class="muted" id="imgsav">100%</span><button class="btn" id="imgtone" title="Brightness and saturation back to 100 %">Reset tone</button></div>
-          <div class="ctl" id="imgdragrow" title="What dragging the empty part of the dial does. Dragging a part always moves that part.">Dragging the dial moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Picture</button><button type="button" data-m="frame">Frame</button></span></div>
+          <div class="ctl" id="imgdragrow" title="What dragging the empty part of the dial does. Dragging a part always moves that part.">Dragging the dial moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Picture</button><button type="button" data-m="frame">Frame</button></span><span class="vsep"></span><span class="muted">Nudge</span><span class="cb units" id="imgnudge" title="Move it one step at a time. Hold Shift for a bigger step. The arrow keys do the same while the picture area is in view."><button type="button" data-d="left">&#8592;</button><button type="button" data-d="up">&#8593;</button><button type="button" data-d="down">&#8595;</button><button type="button" data-d="right">&#8594;</button></span></div>
           <div class="ctl"><button class="btn" id="imgreset" title="Put the frame back to the middle at 100 % (the picture stays)">Reset frame</button><button class="btn danger" id="imgclear" title="Take the picture (or the color) out of this editor and start over. Nothing is deleted from the server or from the collection.">Reset image</button></div>
           <details class="box camdet" id="camgrp"><summary class="lbl" style="cursor:pointer">PulseLink camera</summary>
             <div class="ctl"><button class="btn toggle" id="camon">Camera: OFF</button><span class="muted">PL ID</span><input type="text" id="plid" placeholder="XXXX-XXXX" style="width:110px"><span class="status" id="camnote" style="flex:1 1 auto"></span></div>
@@ -4213,6 +4213,17 @@
     } else { IMG.panX += dx; IMG.panY += dy; }                                                               // 枠の中の絵
     redrawImg();
   });
+  // ドラッグと同じ動きを 1 歩ずつ。Frame を選んでいれば枠、そうでなければ枠の中の絵が動く。
+  function nudgeImg(dx, dy) {
+    if (!hasSource()) return false;
+    if (IMG.drag === 'frame' && CAN_SIZE.indexOf(IMG.shape) >= 0) {
+      const cl = (v) => Math.max(0, Math.min(320, v));
+      if (IMG.sel !== 2) { IMG.cx = cl(IMG.cx + dx); IMG.cy = cl(IMG.cy + dy); }
+      if (IMG.shape2 && IMG.sel !== 1) { IMG.cx2 = cl(cxOf(2) + dx); IMG.cy2 = cl(cyOf(2) + dy); }
+    } else { IMG.panX += dx; IMG.panY += dy; }
+    redrawImg();
+    return true;
+  }
   const imgDragEnd = () => { if (!IMGDRAG) return; const moved = IMGDRAG.moved; IMGDRAG = null; if (!moved) { clearSel(); render(); } };
   window.addEventListener('pointerup', imgDragEnd); window.addEventListener('pointercancel', imgDragEnd);
   $('imgzoom').addEventListener('input', (e) => { IMG.zoom = parseFloat(e.target.value) || 1; redrawImg(); });
@@ -4268,6 +4279,11 @@
   }
   $('rotl').addEventListener('click', () => rotateFrame(-45));
   $('rotr').addEventListener('click', () => rotateFrame(45));
+  document.querySelectorAll('#imgnudge button').forEach((b) => b.addEventListener('click', (ev) => {
+    const step = ev.shiftKey ? 8 : 1;
+    const d = b.dataset.d;
+    nudgeImg(d === 'left' ? -step : d === 'right' ? step : 0, d === 'up' ? -step : d === 'down' ? step : 0);
+  }));
   document.querySelectorAll('#imgdrag button').forEach((b) => b.addEventListener('click', () => {
     IMG.drag = b.dataset.m; document.querySelectorAll('#imgdrag button').forEach((x) => x.classList.toggle('on', x === b)); }));
   ['imgbr', 'imgsa'].forEach((id) => $(id).addEventListener('input', (ev) => {

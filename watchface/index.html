@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 12:42</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 14:02</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2666,7 +2666,7 @@
         <div class="field"><button class="btn" id="tofront" title="Draw this part over the others (last in the list)">Front</button><button class="btn" id="toback" title="Draw this part under the others (first in the list)">Back</button><button class="btn" id="dup">Duplicate</button><button class="btn danger" id="del">Remove</button></div>
         <div class="brk"></div>
         ${!none && all.some((x) => isImgText(x)) ? `<div class="field"><span>Picture</span><span class="muted" style="max-width:430px">This text is not plain ASCII, so it goes to the watch as a picture: it looks exactly like this, but it needs a watch that can show pictures (6 older models cannot), and a change takes a few minutes to appear. ${tiTrouble() ? '<b>' + tiTrouble() + '</b>' : ''}</span></div>` : ''}
-        ${!none && all.every((x) => isText(x[0])) ? `<div class="field" title="What this part says. The watch's font has plain letters, digits and symbols only — anything else is dropped."><span>Text</span><input type="text" id="ftext" maxlength="${TT_LEN}" placeholder="TEXT" style="width:170px" value="${ttOf(e).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')}"></div>` : ''}
+        ${!none && all.every((x) => isText(x[0])) ? `<div class="field" title="What this part says, up to 20 characters. Plain letters, digits and symbols are drawn by the watch itself; anything else (Japanese, for example) is sent as a small picture — see the note above."><span>Text</span><input type="text" id="ftext" maxlength="${TT_LEN}" placeholder="TEXT" style="width:170px" value="${ttOf(e).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')}"></div>` : ''}
         ${allCirc ? `
         ${stepRow('Diameter', 8, all.every((x) => circDia(x) === circDia(e)) ? circDia(e) : null, 'Bigger / smaller by one grid step')}
         ${seg('Thickness', ['Thin', 'Medium', 'Thick', 'None'], same(4) ? e[4] : -9, 4)}

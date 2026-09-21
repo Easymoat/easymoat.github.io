@@ -3656,7 +3656,8 @@
     for (const it of SHELF.items) {
       const d = document.createElement('div'); d.className = 'item'; d.dataset.n = it.n;
       d.innerHTML = `<div class="mini"></div><span class="cap"><b>${(it.name || `Item ${it.n}`).replace(/</g, '&lt;')}</b></span><span class="cap">${it.kind === 'photo' ? 'photo' : it.kind === 'fill' ? 'color shape' : it.kind === 'camera' ? 'camera' : 'no image'} · ${fmtTime(it.ts * 1000)}</span>
-        <div class="row"><button class="btn" data-a="load" title="Put this item back into the editors above">Edit</button><button class="btn primary" data-a="send" title="Make this the dial your watch shows">To watch</button><button class="btn" data-a="share" title="Make a link you can send to anyone — they can add this dial to their own collection">Share…</button><button class="btn danger" data-a="del" title="Delete this item from the collection">Delete</button></div>
+        <div class="row"><button class="btn" data-a="load" title="Put this item back into the editors above">Edit</button><button class="btn primary" data-a="send" title="Make this the dial your watch shows">To watch</button></div>
+        <div class="row"><button class="btn" data-a="share" title="Make a link you can send to anyone — they can add this dial to their own collection">Share…</button><button class="btn danger" data-a="del" title="Delete this item from the collection">Delete</button></div>
         <span class="cap onw"></span>`;
       d.querySelector('[data-a="load"]').addEventListener('click', () => loadShelfItem(it.n));
       d.querySelector('[data-a="send"]').addEventListener('click', () => sendShelfItem(it.n));

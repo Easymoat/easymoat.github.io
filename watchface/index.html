@@ -377,7 +377,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 19:21</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 21:27</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -495,6 +495,8 @@
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
           <div class="ctl" id="passrow"><span>Pass</span><span id="passnote" class="muted">…</span></div>
           <div class="ctl" id="passkeyrow" hidden><span>Pass key</span><input type="text" id="passkey" placeholder="XXXXX-XXXXX-XXXXX-XXXXX" maxlength="30" spellcheck="false" autocomplete="off" style="width:240px"><button class="btn" id="passuse">Use key</button><span class="status" id="passstatus"></span></div>
+          <div class="ctl" id="passkeynote" hidden><span></span><span class="muted" style="max-width:640px">Your Pass key — needed only to share dials (make or add links). Saving and To watch work without it. Check the email from the purchase. Can't find it? <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a></span></div>
+          <div class="ctl" id="passinrow" hidden><span>Signed in</span><span class="muted" id="passinnote"></span><button class="btn" id="passout" title="Forget the key on this browser. Saving and To watch keep working.">Sign out</button></div>
           <div class="status" id="watchseen" title="Your watch asks the server for a new dial about every 5 minutes. This line says when it last asked, and whether it already has the dial you sent."></div>
       </div>
       <div class="grp" id="locbox">
@@ -3795,30 +3797,44 @@
       const r = await fetch($('api').value + '/access?device_id=' + encodeURIComponent(id), { headers: authHeaders() });
       const j = await r.json(); PASS.st = j; PASS.url = j.buy_url || null;
       const p = j.pass, now = Date.now(), days = (t) => Math.max(0, Math.ceil((t - now) / 86400000));
+      // 文言は LP / マニュアルと同じ言い回しでそろえる (マーケ担当と合意、2026-09-21):
+      //   "1-Year Pass" / "$9.99, one payment, no subscription" / "365 days are added to what is left"
+      //   / "saving and To watch are off" / "keeps showing the last dial"
       let html, cls = '';
       if (j.exempt) html = 'Not needed for this ID.';
       else if (p && p.active) {
         const left = days(Date.parse(p.expires_at));
-        html = `Valid until ${ymd(p.expires_at)}` + (left <= 14 ? ` — ${left} day${left === 1 ? '' : 's'} left.${buyLink('Renew')} (the new year is added to what is left)` : '');
+        html = `Pass valid until ${ymd(p.expires_at)}.` + (left <= 14 ? ` — ${left} day${left === 1 ? '' : 's'} left. Renew now and 365 days are added to what is left.${buyLink('Renew')}` : '');
         cls = left <= 14 ? 'warn' : 'ok';
-      } else if (p) { html = `Expired on ${ymd(p.expires_at)} — you can still look, but saving and To watch are off.${buyLink('Renew')}`; cls = 'err'; }
+      } else if (p) { html = `Pass expired on ${ymd(p.expires_at)} — you can still look, but saving and To watch are off. Your watch keeps showing the last dial.${buyLink('Renew')}`; cls = 'err'; }
       else if (j.enforced && j.trial_ends) {
         const left = days(j.trial_ends * 1000);
-        html = left > 0 ? `Trial: ${left} day${left === 1 ? '' : 's'} left.${buyLink('Get the Pass')}` : `Trial ended — saving and To watch are off.${buyLink('Get the Pass')}`;
+        html = left > 0
+          ? `Trial: ${left} day${left === 1 ? '' : 's'} left. After that, saving and To watch need the 1-Year Pass ($9.99, one payment, no subscription).${buyLink('Get the Pass')}`
+          : `Trial ended. You can still look at your dials, but saving and To watch are off until you get the Pass. Your watch keeps showing the last dial you sent.${buyLink('Get the Pass')}`;
         cls = left > 0 ? (left <= 3 ? 'warn' : '') : 'err';
-      } else if (j.enforced) html = `Free for 14 days from your first save.${buyLink('Get the Pass')}`;
-      else html = 'Not needed yet — everything is free for now.' + buyLink('Get the Pass');
+      } else if (j.enforced) html = `Free for 14 days from your first save, then the 1-Year Pass ($9.99, one payment, no subscription).${buyLink('Get the Pass')}`;
+      else html = 'Everything is free for now. When the Pass goes on sale, you get 14 free days from your first save.' + buyLink('Get the Pass');
       note.innerHTML = html; note.className = cls ? 'status ' + cls : 'muted';
-      keyrow.hidden = !!j.exempt || !(p && p.active) || !!tokenFor(id);   // キーは買った人だけ (共有機能のログイン)
+      const signedIn = !!tokenFor(id);
+      keyrow.hidden = !!j.exempt || !(p && p.active) || signedIn;   // キーは買った人だけ (共有機能のログイン)
+      $('passkeynote').hidden = keyrow.hidden;
+      $('passinrow').hidden = !signedIn;
+      if (signedIn) $('passinnote').textContent = `${id} — you can make and add share links on this browser.`;
     } catch (e) { note.textContent = ''; }
   }
+  $('passout').addEventListener('click', () => {
+    try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+    setStatus('passstatus', 'Signed out on this browser. Saving and To watch keep working.', 'ok');
+    loadAccess();
+  });
   $('passuse').addEventListener('click', async () => {
     const id = devId(), key = $('passkey').value.trim();
     if (!key) return setStatus('passstatus', 'Paste the key from your email.', 'err');
     try {
       const r = await fetch($('api').value + '/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ license_key: key, device_id: id }) });
       const j = await r.json();
-      if (!r.ok) throw new Error(j.error === 'invalid_key' ? 'that key is not for this Device ID'
+      if (!r.ok) throw new Error(j.error === 'invalid_key' ? 'that key is not for this Device ID — use the same Device ID at checkout as in Face Composer (settings → Watch Face → Customize → Device ID). Keys from MarketWatch, BaseballWatch or PulseLink do not work here'
         : j.error === 'pass_not_found' ? 'no Pass for this Device ID yet — a new purchase can take a minute'
         : j.error === 'pass_expired' ? `this Pass expired on ${ymd(j.expires_at)}` : (j.error || r.status));
       try { localStorage.setItem(TOKEN_KEY, JSON.stringify({ id, token: j.token, exp: j.expires_at })); } catch (e) {}

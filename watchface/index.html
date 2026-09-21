@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 09:29</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 09:47</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2100,6 +2100,16 @@
     return [Math.max(0, Math.min(1000, cx)), Math.max(0, Math.min(1000, cy)), Math.max(100, Math.min(400, Math.round(IMG.zoom * 100)))];
   }
   // 実機へ渡す針と縁の形。S/M/L はここで数値に畳む (実機は解釈しない)。色と重なり順は el の行のまま。
+  // 縁の絵だけ描き直す (バーを動かしている間に使う)。箱の大きさは変わらないので中の svg を入れ替えるだけ。
+  function redrawRims() {
+    const dv = dev();
+    st.el.forEach((e, i) => {
+      if (!(TYPES[e[0]] && TYPES[e[0]].grp === 'rim')) return;
+      const d = stage.querySelector(`.el[data-i="${i}"]`); if (!d) return;
+      const svg = d.querySelector('svg'); if (!svg) return;
+      svg.outerHTML = dialArt(e[0], e[4], dv.w, dv.h, colOf(e[5]), rimInset(e), 100, null, rimNum(e));
+    });
+  }
   function dialFields() {
     const out = {}; let rimN = 0;
     for (const e of st.el) {
@@ -2772,10 +2782,15 @@
       // 離した時に 1 回だけ確定する = Undo が刻まれるのも 1 回。
       rimBar.addEventListener('focus', () => { PICK_OPEN++; });
       rimBar.addEventListener('blur', () => { PICK_OPEN = Math.max(0, PICK_OPEN - 1); setTimeout(renderInspector, 0); });
+      // 動かしている間は**縁の絵だけ**を描き直す。盤面ごと作り直すと Safari が追いつかない
+      //   (Chrome は平気だった。2026-09-21 の報告)。1 フレームに 1 回にまとめる。
+      let raf = 0;
       const put = (done) => { const v = +rimBar.value, lb = $('frimposv');
         all.forEach((x) => { if (RIM_POS.includes(x[0])) { rimGrow(x); x[9] = v; x[6] &= ~F_EDGE; } });
         if (lb) lb.textContent = v === 0 ? 'Edge' : String(v);
-        if (done) commit(); else render();
+        if (done) { if (raf) { cancelAnimationFrame(raf); raf = 0; } commit(); return; }
+        if (raf) return;
+        raf = requestAnimationFrame(() => { raf = 0; redrawRims(); });
       };
       rimBar.addEventListener('input', () => put(false));
       rimBar.addEventListener('change', () => put(true));
@@ -3188,6 +3203,7 @@
     st.el = []; st.bg = 0; st.pc = DEF_PC.slice();
     st.tx = DEF_TX.slice(); st.tm = DEF_TM.slice(); st.ic = DEF_IC.slice(); st.io = DEF_IO; st.b = 0;
     st.mt = [0, 0, 0, 0]; st.mc = [-1, -1, -1, -1]; st.mk = [-1, -1, -1, -1]; st.mv = [1, 1, 1, 1];
+    EDIT_N = null; EDIT_ITEM_NAME = ''; shelfName();
     st.stk = ['', '']; st.stn = ['', '']; st.bb = []; st.uc = 0;
     clearSel(); commit(); renderSizes(); renderBold(); renderUpCol();
     setStatus('jsonstatus', 'Dial reset — Undo puts it back.', 'ok');
@@ -3470,6 +3486,13 @@
 
   // ── Collection: finished dials (layout + framed picture + recipe), explicit Save, up to 20 ──
   const SHELF = { items: [] };
+  // いま編集しているのが Collection のどの品か。null = 新規 (次の番号で保存する)。
+  let EDIT_N = null, EDIT_ITEM_NAME = '';
+  function shelfName() {
+    const box = $('shelfname'); if (!box) return;
+    box.value = EDIT_N != null ? (EDIT_ITEM_NAME || 'item ' + EDIT_N) : 'item ' + (SHELF.next || 1);
+    box.title = EDIT_N != null ? `Editing item ${EDIT_N} from the collection` : 'The next item number';
+  }
   function itemMini(el, it, layout) {
     el.style.backgroundImage = it.url ? `url("${absUrl(it.url)}")` : '';
     el.style.backgroundColor = hex(layout ? layout.bg : 0);
@@ -3480,7 +3503,9 @@
     const wrap = $('shelf'); const id = devId();
     if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { wrap.innerHTML = '<span class="muted">Enter the Device ID to see your collection.</span>'; return; }
     try { const r = await fetch($('api').value + '/shelf?device_id=' + encodeURIComponent(id)); if (!r.ok) throw new Error(r.status); const j = await r.json();
-      SHELF.items = j.items || []; SHELF.max = j.max || 30; } catch (e) { return; }
+      SHELF.items = j.items || []; SHELF.max = j.max || 30;
+      SHELF.next = Number(j.next) || (SHELF.items.reduce((m, it) => Math.max(m, it.n), 0) + 1); } catch (e) { return; }
+    shelfName();
     wrap.innerHTML = '';
     $('shelfcount').textContent = `${SHELF.items.length} of ${SHELF.max} saved`;
     if (!SHELF.items.length) { wrap.innerHTML = '<span class="muted">Nothing saved yet — Save to collection keeps the dial above here.</span>'; return; }
@@ -3530,6 +3555,11 @@
     if (!hasImg && CAM.on && !IMG.cur) return setStatus('shelfstatus', 'No camera frame in the editor yet — this would be saved without a picture. Press Camera again once a frame appears.', 'err');
     if (hasImg && !IMG.reduced) renderQuality();
     const body = { device_id: id, layout: layoutObj(), kind: hasImg ? (IMG.src === 'camera' ? 'camera' : IMG.cur ? 'photo' : 'fill') : 'none', recipe: currentRecipe(), name: $('shelfname').value.trim() };
+    // Collection から持ってきた品を編集していた時は、上書きか新しい品かをここで決める
+    if (EDIT_N != null && SHELF.items.some((it) => it.n === EDIT_N)) {
+      const over = window.confirm(`Save over "${EDIT_ITEM_NAME || 'item ' + EDIT_N}" in the collection?\n\nOK — replace it (it keeps its number).\nCancel — save as a new item.`);
+      if (over) { body.replace = true; body.n = EDIT_N; }
+    }
     if (hasImg) { body.image = (IMG.reduced || imgCv).toDataURL('image/png'); body.palette = (IMG.reducedPal && IMG.reducedPal.length >= 2) ? IMG.reducedPal : computeOptimalPalette(IMG.colors); }
     setStatus('shelfstatus', 'Saving…');
     try { const r = await fetch($('api').value + '/shelf', { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) });
@@ -3540,7 +3570,9 @@
         : (j.error || r.status));
       const parked = (st.park || []).length ? ` — ${st.park.length} parked ${st.park.length === 1 ? 'part is' : 'parts are'} not in it` : '';
       const note = (hasImg ? '' : (hasSource() ? ' (saved without the picture — Show is off)' : ' (no picture)')) + parked;
-      setStatus('shelfstatus', `Saved as ${body.name || 'item ' + j.n}${note} — use "To watch…" on it to put it on the watch.`, hasImg ? 'ok' : 'warn'); $('shelfname').value = ''; loadShelf(); }
+      EDIT_N = j.n; EDIT_ITEM_NAME = body.name || '';   // 保存したらその品を編集中あつかい
+      setStatus('shelfstatus', `${j.replaced ? 'Saved over' : 'Saved as'} ${body.name || 'item ' + j.n}${note}${j.replaced ? ' — the watch keeps the copy it already has until you send this one.' : ' — use "To watch…" on it to put it on the watch.'}`, hasImg ? 'ok' : 'warn');
+      loadShelf(); }
     catch (e) { setStatus('shelfstatus', 'Save failed: ' + e.message, 'err'); }
   });
   // ── Face Composer Pass (2026-09-19): 1 年の買い切り。状態は /access、キーは /auth (トークンは共有機能用) ──
@@ -3597,6 +3629,8 @@
   async function loadShelfItem(n) {
     const full = await fetchShelfItem(n); if (!full) return setStatus('shelfstatus', 'Could not load that item.', 'err');
     const c = faceLayout(full.layout); if (!c) return setStatus('shelfstatus', 'That item has no usable layout.', 'err');
+    EDIT_N = n; EDIT_ITEM_NAME = full.name || '';   // この品を編集中 (保存の時に上書きか新規かを聞く)
+    shelfName();
     setEditing('draft'); loadIntoEditor(c); commit();
     const rc = full.recipe || {};
     if (full.kind === 'none') { applyImgDraft({ none: true, show: rc.show !== false }); }

@@ -378,7 +378,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 23:37</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 23:42</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3803,6 +3803,7 @@
       //   / "saving and To watch are off" / "keeps showing the last dial"
       let html, cls = '';
       if (j.exempt) html = 'Not needed for this ID.';
+      else if (p && p.active && !p.expires_at) { html = 'Pass valid (no end date).'; cls = 'ok'; }
       else if (p && p.active) {
         const left = days(Date.parse(p.expires_at));
         html = `Pass valid until ${ymd(p.expires_at)}.` + (left <= 14 ? ` — ${left} day${left === 1 ? '' : 's'} left. Renew now and 365 days are added to what is left.${buyLink('Renew')}` : '');
@@ -3838,7 +3839,9 @@
       if (!r.ok) throw new Error(j.error === 'invalid_key' ? 'that key is not for this Device ID — use the same Device ID at checkout as in Face Composer (settings → Watch Face → Customize → Device ID). Keys from MarketWatch, BaseballWatch or PulseLink do not work here'
         : j.error === 'pass_not_found' ? 'no Pass for this Device ID yet — a new purchase can take a minute'
         : j.error === 'pass_expired' ? (j.expires_at ? `this Pass expired on ${ymd(j.expires_at)}` : 'there is no current Pass for this Device ID') : (j.error || r.status));
-      try { localStorage.setItem(TOKEN_KEY, JSON.stringify({ id, token: j.token, exp: j.expires_at })); } catch (e) {}
+      // /auth の expires_at はトークン (JWT 30 日) の期限。念のため無い時は 30 日後にする。
+      const tokExp = j.expires_at || new Date(Date.now() + 30 * 86400000).toISOString();
+      try { localStorage.setItem(TOKEN_KEY, JSON.stringify({ id, token: j.token, exp: tokExp })); } catch (e) {}
       $('passkey').value = ''; setStatus('passstatus', 'Key accepted.', 'ok'); loadAccess();
     } catch (e) { setStatus('passstatus', 'Key not accepted: ' + e.message, 'err'); }
   });

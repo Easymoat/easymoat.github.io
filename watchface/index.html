@@ -378,7 +378,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-22 01:35</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-22 01:50</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1999,7 +1999,7 @@
     JOINS = lineJoins(st.el);
     elOrder(st.el).forEach(([e, i]) => { if (!hiddenInPreview(e[0])) stage.appendChild(makeEl(e, i, k)); });
     positionAll();
-    if (!hiddenInPreview(70)) insertJoints(stage, jointArt(JOINS.arcs, d, k));   // 線の角の R
+    if (!hiddenInPreview(70)) insertJoints(stage, '', JOINS.arcs, d, k);   // 線の角の R (角ごとに、後から描く線の直後)
     $('empty').hidden = st.el.length > 0;
     renderBgHist();
     $('bgpick').value = hex(st.bg).toLowerCase();
@@ -2322,6 +2322,7 @@
                 // arc[2] = 始まり側の線の色、arc[3] = 終わり側の線の色
                 const arc = sweep <= 180 ? [a0, a0 + sweep, a.e[5], b.e[5]] : [a1, a1 + (360 - sweep), b.e[5], a.e[5]];
                 fil = { d, r, cx, cy, a0: arc[0], a1: arc[1], pen: Math.min(linePen(a.e[4]), linePen(b.e[4])), col: arc[2], col2: arc[3],
+                        after: Math.max(a.i, b.i),   // 角は「後から描く方の線」の直後に描く (手前の部品の上に出ないように)
                         key: [Math.min(a.i, b.i), Math.max(a.i, b.i), Math.round(px), Math.round(py)].join(':') };
               }
             }
@@ -2340,11 +2341,12 @@
       if (f && !seen[f.key]) {
         seen[f.key] = 1;
         const r1d = (v) => Math.round(v * 10) / 10;
-        if (f.col === f.col2) arcs.push([r1d(f.cx), r1d(f.cy), r1d(f.r), r1d(f.a0), r1d(f.a1), f.pen, f.col]);
+        // 8 番目 = 並びの何番目の直後に描くか (後から描く方の線)。実機も同じ位置で描く。
+        if (f.col === f.col2) arcs.push([r1d(f.cx), r1d(f.cy), r1d(f.r), r1d(f.a0), r1d(f.a1), f.pen, f.col, f.after]);
         else {   // 色が違う 2 本: 弧を真ん中で分け、それぞれの線の色で描く
           const mid = (f.a0 + f.a1) / 2;
-          arcs.push([r1d(f.cx), r1d(f.cy), r1d(f.r), r1d(f.a0), r1d(mid), f.pen, f.col]);
-          arcs.push([r1d(f.cx), r1d(f.cy), r1d(f.r), r1d(mid), r1d(f.a1), f.pen, f.col2]);
+          arcs.push([r1d(f.cx), r1d(f.cy), r1d(f.r), r1d(f.a0), r1d(mid), f.pen, f.col, f.after]);
+          arcs.push([r1d(f.cx), r1d(f.cy), r1d(f.r), r1d(mid), r1d(f.a1), f.pen, f.col2, f.after]);
         }
       }
     }
@@ -2356,11 +2358,25 @@
   // 角の R は「**最後の線 (70-73) の直後**」に描く (実機と同じ位置、2026-09-21 実機セッションと突き合わせ)。
   //   一番下だと後の線が R を覆って丸みが消え、一番上だと針の上に乗る。円・四角形・アナログは数えない
   //   = それらを線より後ろ (手前) に置けば、角の R ごと覆える。
-  function insertJoints(box, html) {
-    if (!html) return;
+  // 角の R は、その角を作る 2 本のうち**後から描く方の線の直後**に描く (arc の 8 番目、2026-09-21)。
+  //   以前は全部「最後の線の直後」だったので、後ろに置いた線の角が手前の部品の上に出ていた。
+  //   arcs を渡された時は角ごとに置き、html だけの時は従来どおり最後の線の直後に置く。
+  function insertJoints(box, html, arcs, d, k) {
     const parts = [...box.querySelectorAll(':scope > .el')];
     const lastLine = parts.filter((p) => p.classList.contains('rawline')).pop();
     if (!lastLine) return;                        // 線が 1 本も無い面では R を描かない (実機と同じ)
+    if (arcs && arcs.length) {
+      const groups = new Map();
+      arcs.forEach((a) => { const key = Number.isInteger(a[7]) ? a[7] : -1; if (!groups.has(key)) groups.set(key, []); groups.get(key).push(a); });
+      for (const [after, list] of groups) {
+        const art = jointArt(list, d, k); if (!art) continue;
+        const host = after >= 0 ? box.querySelector(`:scope > .el[data-i="${after}"]`) : lastLine;
+        const at = host || lastLine;
+        at.insertAdjacentHTML('afterend', art);
+      }
+      return;
+    }
+    if (!html) return;
     const next = lastLine ? lastLine.nextElementSibling : null;
     if (next) next.insertAdjacentHTML('beforebegin', html); else box.insertAdjacentHTML('beforeend', html);
   }
@@ -2456,7 +2472,12 @@
     uc: st.uc === 1 ? 1 : undefined,
     // 絵が単色の塗りなら、その色を渡す (実機はメーターの下地をこの色と混ぜる。写真の時は渡さない = 黒)
     ib: (typeof IMG !== 'undefined' && IMG.show && !IMG.cur && IMG.fill) ? parseInt(String(IMG.fill).slice(1), 16) : undefined,
-    lj: (() => { const j = lineJoins(expandRects(st.el)).arcs; return j.length ? j : undefined; })(),
+    lj: (() => {
+      const X = expandRects(st.el), j = lineJoins(X).arcs; if (!j.length) return undefined;
+      const TI = tiIndex(), map = []; let n = 0;
+      X.forEach((e, k) => { map[k] = (isImgText(e) && TI.get(e) == null) ? -1 : n++; });   // elOut と同じ落とし方
+      return j.map((a) => { const at = map[a[7]]; return at >= 0 ? a.slice(0, 7).concat([at]) : a.slice(0, 7); });
+    })(),
     // 四角形の元の形 (実機は読まない。コレクションから開き直した時に四角形へ戻すため)
     rq: (() => { const q = st.el.filter((e) => isRect(e[0])).map((e) => [e[1], e[2], rectW(e), rectH(e), e[4], e[5], e[6] & F_SHARP, rectFill(e)]); return q.length ? q : undefined; })(),
     bb: (st.bb || []).some((b) => b && b.tm) ? (st.bb || []).slice(0, BB_MAX).map((b) => (b && b.tm ? b : null)) : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
@@ -3147,7 +3168,7 @@
       div.innerHTML = art.svg + '<span class="anchor"></span>';
     });
     const old = stage.querySelector('svg.joints'); if (old) old.remove();
-    if (!hiddenInPreview(70)) insertJoints(stage, jointArt(JOINS.arcs, d, k));
+    if (!hiddenInPreview(70)) insertJoints(stage, '', JOINS.arcs, d, k);
   }
 
   // ── Dragging ───────────────────────────────────────────────────────────────
@@ -3553,7 +3574,7 @@
     });
     if (arcs.length) {
       const hold = st; st = Object.assign({}, keep, lay);      // 弧の色はその面の控えで引く
-      try { insertJoints(inner, jointArt(arcs, d, d.w / 454)); } finally { st = hold; }
+      try { insertJoints(inner, '', arcs, d, d.w / 454); } finally { st = hold; }
     }
   }
   function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, BB_MAX); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); st.hr = (c.hr || []).slice(); st.sc = (c.sc || []).slice(); st.hc = (c.hc || []).slice(); st.tt = (c.tt || []).slice(); clearSel(); pushBgHist(st.bg); renderHr(); }

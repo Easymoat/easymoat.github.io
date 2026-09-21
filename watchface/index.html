@@ -377,7 +377,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 18:47</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 19:10</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2884,6 +2884,12 @@
       idxs.forEach((i) => {
         const e = st.el[i];
         e[k] = clamp(mid - e[k]);
+        // 線を端で置いている時は、その端も鏡に映る。始点 (1) は 70 なら上端、71/72/73 なら左端。
+        //   左右の反転では 71/72/73 の始点と終点が入れ替わり、上下の反転では 70 だけが入れ替わる。
+        if (e[3] === 1 || e[3] === 2) {
+          const sw = horiz ? (e[0] === 71 || e[0] === 72 || e[0] === 73) : (e[0] === 70);
+          if (sw) e[3] = e[3] === 1 ? 2 : 1;
+        }
         if (e[0] === 72) e[0] = 73; else if (e[0] === 73) e[0] = 72;         // 斜めの線は向きが入れ替わる
         if (isCircle(e[0]) && circSpan(e) !== 360) {                          // 弧は鏡に映した角度へ
           circGrow(e);

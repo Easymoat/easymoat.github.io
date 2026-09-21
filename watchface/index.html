@@ -377,7 +377,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 16:40</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 18:11</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3661,7 +3661,7 @@
     if (!SHELF.items.length) { wrap.innerHTML = '<span class="muted">Nothing saved yet — Save to collection keeps the dial above here.</span>'; return; }
     for (const it of SHELF.items) {
       const d = document.createElement('div'); d.className = 'item'; d.dataset.n = it.n;
-      d.innerHTML = `<div class="mini"></div><span class="cap"><b>${(it.name || `Item ${it.n}`).replace(/</g, '&lt;')}</b></span><span class="cap">${it.kind === 'photo' ? 'photo' : it.kind === 'fill' ? 'color shape' : it.kind === 'camera' ? 'camera' : 'no image'} · ${fmtTime(it.ts * 1000)}</span>${it.from_by ? `<span class="cap">from ${String(it.from_by).replace(/</g, '&lt;')}${it.from_dev ? ' · made for ' + String(it.from_dev).replace(/</g, '&lt;') : ''}</span>` : ''}
+      d.innerHTML = `<div class="mini"></div><span class="cap"><b>${(it.name || `Item ${it.n}`).replace(/</g, '&lt;')}</b></span><span class="cap">${it.kind === 'photo' ? 'photo' : it.kind === 'fill' ? 'color shape' : it.kind === 'camera' ? 'camera' : 'no image'} · ${fmtTime(it.ts * 1000)}</span>${it.from_by ? `<span class="cap">from ${String(it.from_by).replace(/</g, '&lt;')}${it.from_orig && it.from_orig !== it.from_by ? ' · originally by ' + String(it.from_orig).replace(/</g, '&lt;') : ''}${it.from_dev ? ' · made for ' + String(it.from_dev).replace(/</g, '&lt;') : ''}</span>` : ''}
         <div class="row"><button class="btn" data-a="load" title="Put this item back into the editors above">Edit</button><button class="btn primary" data-a="send" title="Make this the dial your watch shows">To watch</button></div>
         <div class="row"><button class="btn" data-a="share" title="Make a link you can send to anyone — they can add this dial to their own collection">Share…</button><button class="btn danger" data-a="del" title="Delete this item from the collection">Delete</button></div>
         <span class="cap onw"></span>`;
@@ -3809,7 +3809,7 @@
       const link = location.origin + location.pathname + '?s=' + it.code;
       const row = document.createElement('div'); row.className = 'ctl'; row.style.cssText = 'flex-wrap:wrap;gap:10px;padding:6px 0;border-top:1px solid var(--line)';
       row.innerHTML = `<b style="min-width:140px">${(it.name || 'Untitled').replace(/</g, '&lt;')}</b>
-        <span class="muted">${fmtTime(it.ts * 1000)} · opened ${it.opens || 0} · added ${it.adds} time${it.adds === 1 ? '' : 's'}${it.dev ? ' · made for ' + String(it.dev).replace(/</g, '&lt;') : ''}</span>
+        <span class="muted">${fmtTime(it.ts * 1000)} · opened ${it.opens || 0} · added ${it.adds} time${it.adds === 1 ? '' : 's'}${it.orig && it.orig !== it.by ? ' · originally by ' + String(it.orig).replace(/</g, '&lt;') : ''}${it.dev ? ' · made for ' + String(it.dev).replace(/</g, '&lt;') : ''}</span>
         <button class="btn" data-a="copy">Copy link</button><button class="btn danger" data-a="rm">Remove</button>`;
       row.querySelector('[data-a="copy"]').addEventListener('click', async () => {
         try { await navigator.clipboard.writeText(link); setStatus('shelfstatus', 'Link copied: ' + link, 'ok'); }
@@ -3838,6 +3838,11 @@
   }
   // 送る側: Collection の品からリンクを作る。相手の Device ID は要らない。
   async function shareShelfItem(n, name) {
+    const src = (SHELF.items || []).find((x) => x.n === n);
+    if (src && src.from_by) {
+      const who = src.from_orig || src.from_by;
+      if (!window.confirm(`This dial came from ${who}. Sharing it on is fine — your link will say it is from you, and "originally by ${who}" stays with it. Make a link?`)) return;
+    }
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID first.', 'err');
     if (!AUTHOR) {   // 名前は必須 (相手に出るのはこの名前だけ)。入力欄へ案内する
       const box = $('linksbox'); if (box) { box.open = true; box.scrollIntoView({ block: 'center' }); }
@@ -3884,7 +3889,7 @@
     const other = j.dev && mine && j.dev !== mine;
     body.innerHTML = `<div class="item" style="max-width:260px"><div class="mini"></div><span class="cap"><b>${(j.name || 'Untitled').replace(/</g, '&lt;')}</b></span>
         </div>
-      <div class="ctl"><span class="muted">${j.by ? 'from ' + String(j.by).replace(/</g, '&lt;') + ' · ' : ''}${j.kind === 'none' ? 'no image' : 'with a picture'} · added ${j.adds} time${j.adds === 1 ? '' : 's'}</span></div>
+      <div class="ctl"><span class="muted">${j.by ? 'from ' + String(j.by).replace(/</g, '&lt;') + (j.orig && j.orig !== j.by ? ' · originally by ' + String(j.orig).replace(/</g, '&lt;') : '') + ' · ' : ''}${j.kind === 'none' ? 'no image' : 'with a picture'} · added ${j.adds} time${j.adds === 1 ? '' : 's'}</span></div>
       ${j.dev ? `<div class="ctl"><span class="muted">Made for ${String(j.dev).replace(/</g, '&lt;')}${other ? ' — ' + devNote(j.devk) : ''}</span></div>` : ''}
       <div class="ctl" style="flex-wrap:wrap;gap:10px"><span class="muted">Your Device ID</span><input type="text" id="shareid" placeholder="XXXX-XXXX" style="width:140px" value="${devId()}">
         <button class="btn primary" id="shareadd">Add to my collection</button><span class="status" id="sharestatus"></span></div>

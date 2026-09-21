@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 10:46</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 11:20</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1433,7 +1433,9 @@
   //   背景 × (1 − 覆い) + 色 × 覆い で重ねるので、写真の上でも輪郭がなめらかに抜ける。
   //   一番大きい機種 (466) の実寸で作る = どの機種でも縮小されるだけで、輪郭が保てる。
   // 上限は実機の graphics pool (絵の画素が載る場所)。写真を使う面では写真が大半を占めるので 1 組だけ。
-  const TI_MAX = 2, TI_MAX_PHOTO = 1, TI_PIXELS = 30000;   // 1 枚あたりの画素の上限 (例 400x75)
+  // 写真ありでも 2 組を試している段階 (2026-09-21: 実機で「写真 + 1 組」が通ったため)。
+  // 実機が持ちこたえられない報告が来たら TI_MAX_PHOTO を 1 に戻す。
+  const TI_MAX = 2, TI_MAX_PHOTO = 2, TI_PIXELS = 30000;   // 1 枚あたりの画素の上限 (例 400x75)
   const TI_REF = 466, TI_STEPS = 32;   // 実寸の基準と、濃さの段数 (実機は 32 色まで)
   const isImgText = (e) => isText(e[0]) && !isAscii(ttOf(e));
   const imgTexts = () => st.el.filter((e) => isImgText(e) && ttOf(e));

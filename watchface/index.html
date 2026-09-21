@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 14:10</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 14:25</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -412,6 +412,10 @@
   </aside>
 
   <section class="stagewrap">
+    <div class="box" id="sharebox" hidden style="margin-bottom:14px">
+      <div class="tier"><span class="name">A dial was shared with you</span><span class="what">Add it to your collection, then send it to your watch when you like it</span></div>
+      <div id="sharebody"></div>
+    </div>
     <div class="tier"><span class="num">1</span><span class="name">Layout</span><span class="what">Build the dial: parts, sizes, colors</span></div>
     <div class="stagebar">
       <div class="devrow">
@@ -3649,11 +3653,12 @@
     for (const it of SHELF.items) {
       const d = document.createElement('div'); d.className = 'item'; d.dataset.n = it.n;
       d.innerHTML = `<div class="mini"></div><span class="cap"><b>${(it.name || `Item ${it.n}`).replace(/</g, '&lt;')}</b></span><span class="cap">${it.kind === 'photo' ? 'photo' : it.kind === 'fill' ? 'color shape' : it.kind === 'camera' ? 'camera' : 'no image'} · ${fmtTime(it.ts * 1000)}</span>
-        <div class="row"><button class="btn" data-a="load" title="Put this item back into the editors above">Edit</button><button class="btn primary" data-a="send" title="Make this the dial your watch shows">To watch</button></div>
+        <div class="row"><button class="btn" data-a="load" title="Put this item back into the editors above">Edit</button><button class="btn primary" data-a="send" title="Make this the dial your watch shows">To watch</button><button class="btn" data-a="share" title="Make a link you can send to anyone — they can add this dial to their own collection">Share…</button></div>
         <span class="cap onw"></span><span class="cap del" data-a="del" title="Delete this item from the collection">Delete</span>`;
       d.querySelector('[data-a="load"]').addEventListener('click', () => loadShelfItem(it.n));
       d.querySelector('[data-a="send"]').addEventListener('click', () => sendShelfItem(it.n));
       d.querySelector('[data-a="del"]').addEventListener('click', () => removeShelfItem(it.n, it.name));
+      d.querySelector('[data-a="share"]').addEventListener('click', () => shareShelfItem(it.n, it.name));
       wrap.appendChild(d);
       fetchShelfItem(it.n).then((full) => { if (full) itemMini(d.querySelector('.mini'), it, faceLayout(full.layout)); }).catch(() => {});
     }
@@ -3765,6 +3770,50 @@
       $('passkey').value = ''; setStatus('passstatus', 'Key accepted.', 'ok'); loadAccess();
     } catch (e) { setStatus('passstatus', 'Key not accepted: ' + e.message, 'err'); }
   });
+  // ── リンクで送る (2026-09-21) ────────────────────────────────────────────
+  // 送る側: Collection の品からリンクを作る。相手の Device ID は要らない。
+  async function shareShelfItem(n, name) {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID first.', 'err');
+    setStatus('shelfstatus', 'Making a link…');
+    try {
+      const r = await fetch($('api').value + '/share', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ device_id: id, n }) });
+      const j = await r.json();
+      if (r.status === 402) { loadAccess(); throw new Error(payMsg(j)); }
+      if (!r.ok || !j.ok) throw new Error(j.error === 'share_full' ? `you already have ${j.max} links — remove one first` : (j.error || r.status));
+      const link = location.origin + location.pathname + '?s=' + j.code;
+      try { await navigator.clipboard.writeText(link); } catch (e) {}
+      setStatus('shelfstatus', `Link copied: ${link} — anyone with it can add "${name || 'item ' + n}" to their own collection.`, 'ok');
+      window.prompt('Send this link to anyone — they can add this dial to their collection:', link);
+    } catch (e) { setStatus('shelfstatus', 'Could not make a link: ' + e.message, 'err'); }
+  }
+  // 受け取る側: ?s=code で開いた時に中身を見せ、自分の Collection に入れられるようにする。
+  async function openSharedLink(code) {
+    const box = $('sharebox'), body = $('sharebody'); if (!box) return;
+    box.hidden = false; body.innerHTML = '<span class="muted">Opening the dial…</span>';
+    let j = null;
+    try { const r = await fetch($('api').value + '/share-item?code=' + encodeURIComponent(code)); j = await r.json(); if (!r.ok) throw new Error(j.error || r.status); }
+    catch (e) { body.innerHTML = `<span class="status err">This link is not available any more.</span>`; return; }
+    const lay = faceLayout(j.layout);
+    body.innerHTML = `<div class="item" style="max-width:260px"><div class="mini"></div><span class="cap"><b>${(j.name || 'A dial').replace(/</g, '&lt;')}</b></span>
+        <span class="cap">${j.kind === 'none' ? 'no image' : 'with a picture'} · added ${j.adds} time${j.adds === 1 ? '' : 's'}</span></div>
+      <div class="ctl" style="flex-wrap:wrap;gap:10px"><span class="muted">Your Device ID</span><input type="text" id="shareid" placeholder="XXXX-XXXX" style="width:140px" value="${devId()}">
+        <button class="btn primary" id="shareadd">Add to my collection</button><span class="status" id="sharestatus"></span></div>
+      <div class="ctl"><span class="muted">It goes to your collection only — your watch keeps showing what it shows now until you send this one to it.</span></div>`;
+    if (lay) itemMini(body.querySelector('.mini'), { kind: j.kind, url: j.url }, lay);
+    $('shareadd').addEventListener('click', async () => {
+      const id = ($('shareid').value || '').trim();
+      if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('sharestatus', 'Enter your Device ID (XXXX-XXXX).', 'err');
+      setStatus('sharestatus', 'Adding…');
+      try {
+        const r = await fetch($('api').value + '/share-add', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ code, device_id: id }) });
+        const k = await r.json();
+        if (r.status === 402) throw new Error(payMsg(k));
+        if (!r.ok || !k.ok) throw new Error(k.error === 'shelf_full' ? `your collection is full (${k.max}) — delete one first` : (k.error || r.status));
+        setStatus('sharestatus', `Added as item ${k.n}. Open it below with Edit, or send it To watch.`, 'ok');
+        $('devid').value = id; $('devid').dispatchEvent(new Event('change'));
+      } catch (e) { setStatus('sharestatus', 'Could not add it: ' + e.message, 'err'); }
+    });
+  }
   async function loadShelfItem(n) {
     const full = await fetchShelfItem(n); if (!full) return setStatus('shelfstatus', 'Could not load that item.', 'err');
     const c = faceLayout(full.layout); if (!c) return setStatus('shelfstatus', 'That item has no usable layout.', 'err');
@@ -4495,6 +4544,8 @@
       $('tofulled').textContent = document.body.classList.contains('full') ? 'Collection' : 'Editor';
     });
   })();
+  // ?s=xxxx-xxxx で開かれたら、共有された文字盤を上に出す (2026-09-21)
+  (() => { const m = /[?&]s=([a-z0-9]{4}-[a-z0-9]{4})/i.exec(location.search); if (m) openSharedLink(m[1].toLowerCase()); })();
   if (FIRST_RUN && LOBBY) { const c = faceLayout(JSON.parse(JSON.stringify(LOBBY))); if (c) loadIntoEditor(c); }   // 初めての人は同梱の文字盤から
   renderHr();
   UNDO_SNAP = undoSnap();   // 起動時の姿を基準にする (最初の 1 回も戻せるように)

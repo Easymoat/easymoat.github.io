@@ -377,7 +377,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 21:27</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 23:04</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3788,7 +3788,7 @@
   function payMsg(j) {
     PASS.url = (j && j.buy_url) || PASS.url;
     return (j && j.error === 'pass_expired') ? 'your Pass has expired — renew it to keep saving and sending'
-      : 'your 14-day trial has ended — get the Pass to keep saving and sending';
+      : 'your 7-day trial has ended — get the Pass to keep saving and sending';
   }
   async function loadAccess() {
     const id = devId(), note = $('passnote'), keyrow = $('passkeyrow');
@@ -3813,8 +3813,8 @@
           ? `Trial: ${left} day${left === 1 ? '' : 's'} left. After that, saving and To watch need the 1-Year Pass ($9.99, one payment, no subscription).${buyLink('Get the Pass')}`
           : `Trial ended. You can still look at your dials, but saving and To watch are off until you get the Pass. Your watch keeps showing the last dial you sent.${buyLink('Get the Pass')}`;
         cls = left > 0 ? (left <= 3 ? 'warn' : '') : 'err';
-      } else if (j.enforced) html = `Free for 14 days from your first save, then the 1-Year Pass ($9.99, one payment, no subscription).${buyLink('Get the Pass')}`;
-      else html = 'Everything is free for now. When the Pass goes on sale, you get 14 free days from your first save.' + buyLink('Get the Pass');
+      } else if (j.enforced) html = `Free for 7 days from your first save, then the 1-Year Pass ($9.99, one payment, no subscription).${buyLink('Get the Pass')}`;
+      else html = 'Everything is free for now. When the Pass goes on sale, you get 7 free days from your first save.' + buyLink('Get the Pass');
       note.innerHTML = html; note.className = cls ? 'status ' + cls : 'muted';
       const signedIn = !!tokenFor(id);
       keyrow.hidden = !!j.exempt || !(p && p.active) || signedIn;   // キーは買った人だけ (共有機能のログイン)

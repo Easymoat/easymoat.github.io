@@ -378,7 +378,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-22 01:50</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-22 02:03</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2140,9 +2140,11 @@
         // (中央だと "24°" と "3" で中心がずれ、帯を重ねた時に数字の列がそろわない。2026-09-20 実機 b0920p と同じ)
         const txt = vals[c], deg = !showIco && /°$/.test(txt);
         const body = deg ? `${txt.slice(0, -1)}<span style="margin-right:${(-degW).toFixed(1)}px">°</span>` : txt;
-        const v = `<span class="val" style="display:inline-block;width:${vw.toFixed(1)}px;box-sizing:border-box;${!showIco ? `padding-right:${degW.toFixed(1)}px;` : ''}text-align:${!showIco ? 'right' : lay === 2 ? 'center' : lay === 1 ? 'right' : 'left'};position:relative;top:${inkShift(px).toFixed(2)}px">${body}</span>`;
+        // 縦積みは一般の部品と同じ: 実機は隙間なしで積むので、Gap は既定 (6) からの差だけ動かす
+        const vG = lay === 2 ? (gapOf(e) - DEF_IG) * ki : 0;
+        const v = `<span class="val" style="display:inline-block;width:${vw.toFixed(1)}px;box-sizing:border-box;${vG ? `margin-top:${vG.toFixed(1)}px;` : ''}${!showIco ? `padding-right:${degW.toFixed(1)}px;` : ''}text-align:${!showIco ? 'right' : lay === 2 ? 'center' : lay === 1 ? 'right' : 'left'};position:relative;top:${inkShift(px).toFixed(2)}px">${body}</span>`;
         const ico = icoOf(c);
-        cells.push(`<span class="scell" style="width:${colW.toFixed(1)}px;gap:${(lay === 2 ? Math.max(0, gp - inkTop(px)) : gp).toFixed(1)}px;${lay === 2 ? 'flex-direction:column;' : ''}${c < nCells - 1 ? `margin-right:${gp.toFixed(1)}px` : ''}">${lay === 1 ? v + ico : ico + v}</span>`);
+        cells.push(`<span class="scell" style="width:${colW.toFixed(1)}px;gap:${(lay === 2 ? 0 : gp).toFixed(1)}px;${lay === 2 ? 'flex-direction:column;' : ''}${c < nCells - 1 ? `margin-right:${gp.toFixed(1)}px` : ''}">${lay === 1 ? v + ico : ico + v}</span>`);
       }
       div.style.gap = '0px';
       div.innerHTML = cells.join('') + '<span class="anchor"></span>';
@@ -2151,11 +2153,15 @@
       const sample = isText(t) ? (ttOf(e) || def.sample) : isStock(t) ? stkValue(t, f) : isBall(t) ? ballSample(t) : (t === 2 && !splitDate) ? 'Fri Sep 4' : cityOf(e) ? citySample(t, cityOf(e)) : def.sample;
       const lay = arrOf(e);       // 0 アイコン左 / 1 アイコン右 / 2 アイコン上
       // 太字で右へ伸びた分 (bo) は値の幅に含める = 実機の「文字幅 + bo」。アイコン右 (arr 1) でもアイコンが bo だけ離れる。
-      const val = showVal ? `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px${bo ? `;padding-right:${bo}px` : ''}">${sample}</span>` : '';
+      // 縦積み (アイコン上) の時の間隔。実機は「アイコンの箱 → 文字の行」を**隙間なしで積む**ので、
+      //   Gap は既定 (6) からの差だけ離す / 詰める (負なら重なる側へ)。既定のままなら実機と同じ 0。
+      //   以前は Gap × 倍率 − 行間 を足していて、Gap を変えても実機と噛み合わなかった (2026-09-22)。
+      const vGap = lay === 2 ? (gapOf(e) - DEF_IG) * ki : 0;
+      const val = showVal ? `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px${bo ? `;padding-right:${bo}px` : ''}${vGap ? `;margin-top:${vGap.toFixed(1)}px` : ''}">${sample}</span>` : '';
       let ic2 = icon;
       if (lay === 2) {
         div.style.flexDirection = 'column';
-        div.style.gap = Math.max(0, gapOf(e) * ki - inkTop(px)).toFixed(1) + 'px';
+        div.style.gap = '0px';
         // 絵の箱は原寸のままで中身だけ縮んでいるので、縦積みでは箱も実寸に合わせる
         const hm = /height="([\d.]+)"/.exec(icon);
         if (hm) ic2 = icon.replace('class="ico" style="', `class="ico" style="height:${(Number(hm[1]) * ki).toFixed(1)}px;`);

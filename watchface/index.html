@@ -377,7 +377,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 19:10</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 19:12</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2879,8 +2879,20 @@
     const flip = (horiz) => {
       const idxs = selIdx(); if (!idxs.length) return;
       const k = horiz ? 1 : 2;
-      const vals = idxs.map((i) => st.el[i][k]);
-      const mid = (Math.min(...vals) + Math.max(...vals));   // x' = (min + max) − x
+      // 鏡の位置は「**描かれている範囲**の中心」。部品の x だけで決めると、長さの違う線が混ざった時に
+      // 形はそのままでも位置がずれる (2026-09-21 の報告)。画面の箱から測って、同じ場所に収まるようにする。
+      const sg = $('stage').getBoundingClientRect();
+      let lo = Infinity, hi = -Infinity;
+      idxs.forEach((i) => {
+        const d = stage.querySelector(`.el[data-i="${i}"]`), e = st.el[i];
+        if (d && sg.width && sg.height) {
+          const r = d.getBoundingClientRect();
+          const a0 = horiz ? (r.left - sg.left) / sg.width * 1000 : (r.top - sg.top) / sg.height * 1000;
+          const b0 = horiz ? (r.right - sg.left) / sg.width * 1000 : (r.bottom - sg.top) / sg.height * 1000;
+          lo = Math.min(lo, a0); hi = Math.max(hi, b0);
+        } else { lo = Math.min(lo, e[k]); hi = Math.max(hi, e[k]); }   // 画面を隠している時は部品の位置で
+      });
+      const mid = lo + hi;   // x' = (lo + hi) − x
       idxs.forEach((i) => {
         const e = st.el[i];
         e[k] = clamp(mid - e[k]);

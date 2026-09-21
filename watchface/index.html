@@ -377,7 +377,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 15:38</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 16:20</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3661,7 +3661,7 @@
     if (!SHELF.items.length) { wrap.innerHTML = '<span class="muted">Nothing saved yet — Save to collection keeps the dial above here.</span>'; return; }
     for (const it of SHELF.items) {
       const d = document.createElement('div'); d.className = 'item'; d.dataset.n = it.n;
-      d.innerHTML = `<div class="mini"></div><span class="cap"><b>${(it.name || `Item ${it.n}`).replace(/</g, '&lt;')}</b></span><span class="cap">${it.kind === 'photo' ? 'photo' : it.kind === 'fill' ? 'color shape' : it.kind === 'camera' ? 'camera' : 'no image'} · ${fmtTime(it.ts * 1000)}</span>
+      d.innerHTML = `<div class="mini"></div><span class="cap"><b>${(it.name || `Item ${it.n}`).replace(/</g, '&lt;')}</b></span><span class="cap">${it.kind === 'photo' ? 'photo' : it.kind === 'fill' ? 'color shape' : it.kind === 'camera' ? 'camera' : 'no image'} · ${fmtTime(it.ts * 1000)}</span>${it.from_by ? `<span class="cap">from ${String(it.from_by).replace(/</g, '&lt;')}${it.from_dev ? ' · made for ' + String(it.from_dev).replace(/</g, '&lt;') : ''}</span>` : ''}
         <div class="row"><button class="btn" data-a="load" title="Put this item back into the editors above">Edit</button><button class="btn primary" data-a="send" title="Make this the dial your watch shows">To watch</button></div>
         <div class="row"><button class="btn" data-a="share" title="Make a link you can send to anyone — they can add this dial to their own collection">Share…</button><button class="btn danger" data-a="del" title="Delete this item from the collection">Delete</button></div>
         <span class="cap onw"></span>`;
@@ -3838,11 +3838,10 @@
   // 送る側: Collection の品からリンクを作る。相手の Device ID は要らない。
   async function shareShelfItem(n, name) {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID first.', 'err');
-    if (!AUTHOR) {   // 初めて共有する時に 1 回だけ名前を聞く (相手に出るのはこの名前だけ)
-      let v = null;
-      try { v = window.prompt('Your name, shown to whoever opens the link (you can change it later):', ''); } catch (e) { v = ''; }
-      if (v === null) return;
-      await saveAuthor(v);
+    if (!AUTHOR) {   // 名前は必須 (相手に出るのはこの名前だけ)。入力欄へ案内する
+      const box = $('linksbox'); if (box) { box.open = true; box.scrollIntoView({ block: 'center' }); }
+      const nb = $('authorname'); if (nb) nb.focus();
+      return setStatus('shelfstatus', 'Put your name in "Shared as" below first — it is shown to whoever opens your link.', 'err');
     }
     setStatus('shelfstatus', 'Making a link…');
     try {
@@ -3850,10 +3849,11 @@
         body: JSON.stringify({ device_id: id, n, by: AUTHOR, dev: (DEVICES[st.dev] || {}).name || '', devk: st.dev }) });
       const j = await r.json();
       if (r.status === 402) { loadAccess(); throw new Error(payMsg(j)); }
-      if (!r.ok || !j.ok) throw new Error(j.error === 'share_full' ? `you already have ${j.max} links — remove one first` : (j.error || r.status));
+      if (!r.ok || !j.ok) throw new Error(j.error === 'share_full' ? `you already have ${j.max} links — remove one first`
+        : j.error === 'need_author' ? 'put your name in "Shared as" below first' : (j.error || r.status));
       const link = location.origin + location.pathname + '?s=' + j.code;
       try { await navigator.clipboard.writeText(link); } catch (e) {}
-      setStatus('shelfstatus', `Link copied: ${link} — anyone with it can add "${name || 'item ' + n}" to their own collection.`, 'ok');
+      setStatus('shelfstatus', `Link copied: ${link} — anyone with it can add "${name || 'Untitled'}" to their own collection.`, 'ok');
       loadLinks();
     } catch (e) { setStatus('shelfstatus', 'Could not make a link: ' + e.message, 'err'); }
   }
@@ -3869,18 +3869,21 @@
   async function openSharedLink(code) {
     const box = $('sharebox'), body = $('sharebody'); if (!box) return;
     box.hidden = false; body.innerHTML = '<span class="muted">Opening the dial…</span>';
+    const intro = `<div class="ctl"><span class="muted" style="max-width:640px">This is a watch face for a Garmin watch, made with Face Composer. To put it on your watch you need <b>The Face</b> from the Connect IQ Store; your Device ID is on the watch under <b>settings → Watch Face → Customize → Device ID</b>. <a href="https://easymoat.com/facecomposer/" target="_blank" rel="noopener">What is this?</a></span></div>`;
     let j = null;
     try { const r = await fetch($('api').value + '/share-item?code=' + encodeURIComponent(code)); j = await r.json(); if (!r.ok) throw new Error(j.error || r.status); }
     catch (e) { body.innerHTML = `<span class="status err">This link is not available any more.</span>`; return; }
     const lay = faceLayout(j.layout);
     const mine = (DEVICES[st.dev] || {}).name || '';
     const other = j.dev && mine && j.dev !== mine;
-    body.innerHTML = `<div class="item" style="max-width:260px"><div class="mini"></div><span class="cap"><b>${(j.name || 'A dial').replace(/</g, '&lt;')}</b></span>
-        <span class="cap">${j.by ? 'from ' + String(j.by).replace(/</g, '&lt;') + ' · ' : ''}${j.kind === 'none' ? 'no image' : 'with a picture'} · added ${j.adds} time${j.adds === 1 ? '' : 's'}</span></div>
+    body.innerHTML = `<div class="item" style="max-width:260px"><div class="mini"></div><span class="cap"><b>${(j.name || 'Untitled').replace(/</g, '&lt;')}</b></span>
+        </div>
+      <div class="ctl"><span class="muted">${j.by ? 'from ' + String(j.by).replace(/</g, '&lt;') + ' · ' : ''}${j.kind === 'none' ? 'no image' : 'with a picture'} · added ${j.adds} time${j.adds === 1 ? '' : 's'}</span></div>
       ${j.dev ? `<div class="ctl"><span class="muted">Made for ${String(j.dev).replace(/</g, '&lt;')}${other ? ' — ' + devNote(j.devk) : ''}</span></div>` : ''}
       <div class="ctl" style="flex-wrap:wrap;gap:10px"><span class="muted">Your Device ID</span><input type="text" id="shareid" placeholder="XXXX-XXXX" style="width:140px" value="${devId()}">
         <button class="btn primary" id="shareadd">Add to my collection</button><span class="status" id="sharestatus"></span></div>
       <div class="ctl"><span class="muted">It goes to your collection only — your watch keeps showing what it shows now until you send this one to it.</span></div>`;
+    body.insertAdjacentHTML('afterbegin', intro);
     if (lay) itemMini(body.querySelector('.mini'), { kind: j.kind, url: j.url }, lay);
     $('shareadd').addEventListener('click', async () => {
       const id = ($('shareid').value || '').trim();
@@ -3890,7 +3893,8 @@
         const r = await fetch($('api').value + '/share-add', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ code, device_id: id }) });
         const k = await r.json();
         if (r.status === 402) throw new Error(payMsg(k));
-        if (!r.ok || !k.ok) throw new Error(k.error === 'shelf_full' ? `your collection is full (${k.max}) — delete one first` : (k.error || r.status));
+        if (!r.ok || !k.ok) throw new Error(k.error === 'shelf_full' ? `your collection is full (${k.max}) — delete one first`
+          : k.error === 'already_added' ? 'you already have this dial in your collection' : (k.error || r.status));
         setStatus('sharestatus', `Added as item ${k.n}. Open it below with Edit, or send it To watch.`, 'ok');
         $('devid').value = id; $('devid').dispatchEvent(new Event('change'));
       } catch (e) { setStatus('sharestatus', 'Could not add it: ' + e.message, 'err'); }

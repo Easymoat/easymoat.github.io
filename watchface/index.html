@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 09:47</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 09:57</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -403,6 +403,7 @@
     <div class="group"><span class="lbl">Parts</span><span class="muted">Drag onto the dial, or click to drop at center.</span></div>
     <div class="group"><span class="lbl">Clock</span><div class="parts" id="parts-clock"></div></div>
     <div class="group"><span class="lbl">Lines</span><div class="parts" id="parts-line"></div></div>
+    <div class="group"><span class="lbl">Text</span><div class="parts" id="parts-text"></div></div>
     <div class="group"><span class="lbl">Body</span><div class="parts" id="parts-body"></div></div>
     <div class="group"><span class="lbl">Graphs</span><div class="parts" id="parts-graph"></div></div>
     <div class="group"><span class="lbl">Weather</span><div class="parts" id="parts-wx"></div></div>
@@ -641,6 +642,7 @@
     // アナログ時計 (2026-09-20 Phase A)。部品として好きな位置・大きさで置ける。
     // 行: [44, x, y, a, s, c, f, -1, 直径‰, mode, 針の形, 目盛り, 都市]  (送る時は「針の形」を as の番号に置き換える)
     44: { name: 'Analog',      grp: 'clock', analog: true },
+    45: { name: 'Text',        grp: 'text',  sample: 'TEXT',   icon: null,        iw: 0, text: true },   // 自分で書いた文字 (2026-09-21)
     // 50-54 / 60-64 = whole-dial parts: they sit at the centre, cover the dial and are not moved.
     50: { name: 'Hands: Bars',        grp: 'hands', dial: true },
     51: { name: 'Hands: Needles',     grp: 'hands', dial: true },
@@ -879,6 +881,17 @@
     return { l: l * dia / 1000, w: kk.w * dia / 1000, b: dia / 1000, wmin: 2.0 * 454 / dev().w };
   }
   const isRect = (t) => !!(TYPES[t] && TYPES[t].rect);
+  // 自分で書いた文字。el の 9 番目が tt の何番目かを指す。実機のフォントは ASCII だけなので、
+  // 入れられるのは半角の英数字と記号に限る (日本語は ? になる)。
+  const isText = (t) => !!(TYPES[t] && TYPES[t].text);
+  const TT_MAX = 8, TT_LEN = 20;
+  const ttClean = (v) => String(v == null ? '' : v).replace(/[^\x20-\x7E]/g, '').slice(0, TT_LEN);
+  const ttIdx = (e) => { const v = Number(e[8]); return (Number.isInteger(v) && v >= 0 && v < TT_MAX) ? v : 0; };
+  const ttOf = (e) => ttClean((st.tt || [])[ttIdx(e)] || '');
+  const ttFree = () => { const used = new Set(st.el.filter((x) => isText(x[0])).map(ttIdx));
+    for (let i = 0; i < TT_MAX; i++) if (!used.has(i)) return i; return 0; };
+  const ttSet = (e, v) => { const t = (st.tt || []).slice(); while (t.length < TT_MAX) t.push('');
+    t[ttIdx(e)] = ttClean(v); st.tt = t; };
   const isGraph = (t) => !!(TYPES[t] && TYPES[t].graph);
   // グラフの箱 [幅, 高さ] (どちらも盤面の幅の千分率、実機と同じ値)。0 = 小、1 = 大
   const GRAPH_BOX = [[260, 100], [440, 160]];
@@ -1318,7 +1331,7 @@
   // こうすると呼び出し側は何も変えなくていい (ドラッグも 1 回で 1 段)。
   const UNDO_MAX = 60;
   let UNDO = [], REDO = [], UNDO_SNAP = null, UNDO_BUSY = false;
-  const UNDO_KEYS = ['bg', 'el', 'park', 'pc', 'tx', 'tm', 'ic', 'io', 'b', 'mt', 'mc', 'mk', 'mv', 'stk', 'stn', 'bb', 'uc'];
+  const UNDO_KEYS = ['bg', 'el', 'park', 'pc', 'tt', 'tx', 'tm', 'ic', 'io', 'b', 'mt', 'mc', 'mk', 'mv', 'stk', 'stn', 'bb', 'uc'];
   const undoSnap = () => JSON.stringify(UNDO_KEYS.map((k) => st[k]));
   function undoPush() {
     const cur = undoSnap();
@@ -2029,7 +2042,7 @@
       div.innerHTML = cells.join('') + '<span class="anchor"></span>';
     } else {
       const showVal = !(f & 2);   // f の bit 1 = 値を出さない (アイコンだけ)
-      const sample = isStock(t) ? stkValue(t, f) : isBall(t) ? ballSample(t) : (t === 2 && !splitDate) ? 'Fri Sep 4' : cityOf(e) ? citySample(t, cityOf(e)) : def.sample;
+      const sample = isText(t) ? (ttOf(e) || def.sample) : isStock(t) ? stkValue(t, f) : isBall(t) ? ballSample(t) : (t === 2 && !splitDate) ? 'Fri Sep 4' : cityOf(e) ? citySample(t, cityOf(e)) : def.sample;
       const lay = arrOf(e);       // 0 アイコン左 / 1 アイコン右 / 2 アイコン上
       // 太字で右へ伸びた分 (bo) は値の幅に含める = 実機の「文字幅 + bo」。アイコン右 (arr 1) でもアイコンが bo だけ離れる。
       const val = showVal ? `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px${bo ? `;padding-right:${bo}px` : ''}">${sample}</span>` : '';
@@ -2321,6 +2334,10 @@
     const hcOut = st.hc && String(st.hc) !== String(HC_DEF) ? hcCols() : undefined;
     const o = Object.assign({ bg: st.bg, el: el0, as: as0, hr: hrOut, sc: scOut, hc: hcOut, pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined, mc: (st.mc || []).some((c) => c >= 0) ? st.mc : undefined,
     mk: (st.mk || []).some((c) => c >= 0) ? st.mk : undefined, mv: (st.mv || []).some((v) => v === 0) ? st.mv : undefined,
+    tt: (() => { const n = st.el.filter((x) => isText(x[0])).length; if (!n) return undefined;
+      const out = []; for (let i = 0; i < TT_MAX; i++) out.push(ttClean((st.tt || [])[i] || ''));
+      while (out.length && out[out.length - 1] === '') out.pop();     // 後ろの空きは送らない
+      return out.length ? out : undefined; })(),
     st: (st.stk || []).some((v) => v) ? (st.stk || ['', '']).slice(0, 2).map(stkClean) : undefined,
     sn: (st.stn || []).some((v) => v) ? (st.stn || ['', '']).slice(0, 2).map(nameClean) : undefined,
     uc: st.uc === 1 ? 1 : undefined,
@@ -2551,6 +2568,7 @@
         <div class="field" title="Line the selected parts up on the one you clicked last (the highlighted row in the list). Rim and hands cannot move, so picking one of them lines everything up on the middle of the dial."><span>Align</span><span class="cb units" id="falign"><button type="button" data-v="x" ${multi ? '' : 'disabled'}>Same X &#8597;</button><button type="button" data-v="y" ${multi ? '' : 'disabled'}>Same Y &#8596;</button></span></div>
         <div class="field"><button class="btn" id="tofront" title="Draw this part over the others (last in the list)">Front</button><button class="btn" id="toback" title="Draw this part under the others (first in the list)">Back</button><button class="btn" id="dup">Duplicate</button><button class="btn danger" id="del">Remove</button></div>
         <div class="brk"></div>
+        ${!none && all.every((x) => isText(x[0])) ? `<div class="field" title="What this part says. The watch's font has plain letters, digits and symbols only — anything else is dropped."><span>Text</span><input type="text" id="ftext" maxlength="${TT_LEN}" placeholder="TEXT" style="width:170px" value="${ttOf(e).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')}"></div>` : ''}
         ${allCirc ? `
         ${stepRow('Diameter', 8, all.every((x) => circDia(x) === circDia(e)) ? circDia(e) : null, 'Bigger / smaller by one grid step')}
         ${seg('Thickness', ['Thin', 'Medium', 'Thick', 'None'], same(4) ? e[4] : -9, 4)}
@@ -2776,6 +2794,20 @@
     }));
     const fatz = $('fanatz');
     if (fatz) fatz.addEventListener('change', () => each((x) => { while (x.length < 13) x.push(0); x[12] = Number(fatz.value) || 0; }));
+    const txtBox = $('ftext');
+    if (txtBox) {
+      let raf = 0;
+      txtBox.addEventListener('focus', () => { PICK_OPEN++; });
+      txtBox.addEventListener('blur', () => { PICK_OPEN = Math.max(0, PICK_OPEN - 1); setTimeout(renderInspector, 0); });
+      txtBox.addEventListener('input', () => {
+        const at = txtBox.selectionStart, v = ttClean(txtBox.value);
+        if (v !== txtBox.value) { txtBox.value = v; try { txtBox.setSelectionRange(Math.max(0, at - 1), Math.max(0, at - 1)); } catch (err) {} }
+        all.forEach((x) => { if (isText(x[0])) ttSet(x, v); });
+        if (raf) return;
+        raf = requestAnimationFrame(() => { raf = 0; render(); });   // 打っている間は盤面だけ追従
+      });
+      txtBox.addEventListener('change', () => { if (raf) { cancelAnimationFrame(raf); raf = 0; } commit(); });
+    }
     const rimBar = $('frimpos');
     if (rimBar) {
       // バーを動かしている間は編集欄を作り直さない (作り直すとつまみが手から離れる)。
@@ -2918,7 +2950,7 @@
     wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0, hr: (st.hr || []).slice(), sc: (st.sc || []).slice(), hc: (st.hc || []).slice(),
     mt: (st.mt || []).slice(), mc: (st.mc || []).slice(), mk: (st.mk || []).slice(), mv: (st.mv || []).slice(),
     st: (st.stk || ['', '']).slice(0, 2), sn: (st.stn || ['', '']).slice(0, 2),
-    uc: st.uc === 1 ? 1 : 0, bb: (st.bb || []).slice(0, BB_MAX),
+    uc: st.uc === 1 ? 1 : 0, bb: (st.bb || []).slice(0, BB_MAX), tt: (st.tt || []).slice(),
     park: (st.park || []).map((e) => e.slice()),
     img: imgDraftState(), savedAt: Date.now() });
   function saveDraft() {
@@ -3045,6 +3077,7 @@
             : isRect(t) ? [t, 500, 500, 0, 1, 0, 0, -1, RECT_DEF.w, RECT_DEF.h]
             : isCircle(t) ? [t, 500, 500, 0, 1, 0, 0, -1, CIRC_DEF.dia, 0, CIRC_DEF.fill, CIRC_DEF.met, CIRC_DEF.dir]
             : isLine(t) ? [t, 500, 500, 0, 1, 0, 0, -1, LINE_LEN_DEF]
+            : isText(t) ? [t, 500, 500, 0, 1, 0, 0, -1, ttFree()]
             : isGraph(t) ? [t, 500, 500, 0, 0, 0, 0, -1]
             : [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, (d.icon ? 1 : 0) | (pct ? 4 : 0) | (t === 2 ? F_DOW : 0), -1];
     st.el.push(e); setSel(st.el.length - 1, false);
@@ -3204,7 +3237,7 @@
     st.tx = DEF_TX.slice(); st.tm = DEF_TM.slice(); st.ic = DEF_IC.slice(); st.io = DEF_IO; st.b = 0;
     st.mt = [0, 0, 0, 0]; st.mc = [-1, -1, -1, -1]; st.mk = [-1, -1, -1, -1]; st.mv = [1, 1, 1, 1];
     EDIT_N = null; EDIT_ITEM_NAME = ''; shelfName();
-    st.stk = ['', '']; st.stn = ['', '']; st.bb = []; st.uc = 0;
+    st.stk = ['', '']; st.stn = ['', '']; st.bb = []; st.uc = 0; st.tt = [];
     clearSel(); commit(); renderSizes(); renderBold(); renderUpCol();
     setStatus('jsonstatus', 'Dial reset — Undo puts it back.', 'ok');
   });
@@ -3249,6 +3282,8 @@
                METERS.some((mm) => mm[0] === met) ? met : 0, dir === -1 ? -1 : 1,
                CIRC_SPANS.indexOf(Number(e[13])) >= 0 ? Number(e[13]) : 360,          // 弧の角度
                (Number.isInteger(Number(e[14])) && Number(e[14]) > 0 && Number(e[14]) < 360 && Number(e[14]) % 45 === 0) ? Number(e[14]) : 0);   // 始まる角 (45 度刻み)
+      } else if (isText(n[0])) {   // 文字: 9 番目 = tt の何番目か
+        const ix = Number(e[8]); n.push((Number.isInteger(ix) && ix >= 0 && ix < TT_MAX) ? ix : 0);
       } else if (n[0] >= 60 && n[0] <= 69) {   // 縁: 9 番目 = 数字の出し方、10 番目 = 内側への寄せ
         const nm = Number(e[8]), ins = Number(e[9]);
         n.push((nm === 1 || nm === 2) ? nm : 0,
@@ -3292,7 +3327,7 @@
     const palA = (v, n) => (Array.isArray(v) && v.length === n && v.every((x) => Number.isInteger(x) && x >= 0 && x <= PC_BASE + PC_MAX) ? v.slice() : []);
     const sc = palA(j.sc, 4), hc = palA(j.hc, 3);
     const bg = Number.isInteger(j.bg) && j.bg >= 0 && j.bg <= 0xFFFFFF ? j.bg : 0;
-    return { bg, el, hr, sc, hc, tx: intArr3(j.tx, 10, 200, DEF_TX) || DEF_TX.slice(), tm: intArr3(j.tm, 10, 200, DEF_TM) || DEF_TM.slice(),
+    return { bg, el, hr, sc, hc, tt: Array.isArray(j.tt) ? j.tt.slice(0, TT_MAX).map(ttClean) : [], tx: intArr3(j.tx, 10, 200, DEF_TX) || DEF_TX.slice(), tm: intArr3(j.tm, 10, 200, DEF_TM) || DEF_TM.slice(),
              ic: intArr3(j.ic, 6, 120, DEF_IC) || DEF_IC.slice(),
              io: (Number.isInteger(j.io) && j.io >= -20 && j.io <= 20) ? j.io : DEF_IO,
              b: (Number(j.b) === 1 || Number(j.b) === 2) ? Number(j.b) : 0,
@@ -3358,7 +3393,7 @@
       try { insertJoints(inner, jointArt(arcs, d, d.w / 454)); } finally { st = hold; }
     }
   }
-  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, BB_MAX); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); st.hr = (c.hr || []).slice(); st.sc = (c.sc || []).slice(); st.hc = (c.hc || []).slice(); clearSel(); pushBgHist(st.bg); renderHr(); }
+  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, BB_MAX); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); st.hr = (c.hr || []).slice(); st.sc = (c.sc || []).slice(); st.hc = (c.hc || []).slice(); st.tt = (c.tt || []).slice(); clearSel(); pushBgHist(st.bg); renderHr(); }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
   // ウォッチが最後に来た時刻は 2 か所から来る: 従来経路 (/layouts) と実機が今使う経路 (/watch)。
   // 実機はもう従来経路を見に来ないので、そちらの値は何日も古いまま。新しい方だけを使う

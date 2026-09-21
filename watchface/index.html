@@ -102,6 +102,7 @@
   .grp[hidden] { display: none; }   /* the .grp display rule would otherwise beat the default [hidden] */
   .grp > .lbl { font-size: 10px; }
   .ctl { display: flex; align-items: center; gap: 14px; min-height: 28px; color: var(--ink-2); font-size: 13px; flex-wrap: wrap; }
+  .ctl[hidden] { display: none; }   /* display:flex が hidden 属性に勝ってしまい、隠したはずの行が出ていた (2026-09-21) */
   .ctl label { display: flex; align-items: center; gap: 6px; }
   .stagebar select { height: 28px; }
   select, input[type=text], input[type=number] { background: var(--panel-2); border: 2px solid var(--line-2); border-radius: 5px; padding: 4px 8px; color: var(--ink); }
@@ -377,7 +378,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 23:04</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 23:37</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3836,7 +3837,7 @@
       const j = await r.json();
       if (!r.ok) throw new Error(j.error === 'invalid_key' ? 'that key is not for this Device ID — use the same Device ID at checkout as in Face Composer (settings → Watch Face → Customize → Device ID). Keys from MarketWatch, BaseballWatch or PulseLink do not work here'
         : j.error === 'pass_not_found' ? 'no Pass for this Device ID yet — a new purchase can take a minute'
-        : j.error === 'pass_expired' ? `this Pass expired on ${ymd(j.expires_at)}` : (j.error || r.status));
+        : j.error === 'pass_expired' ? (j.expires_at ? `this Pass expired on ${ymd(j.expires_at)}` : 'there is no current Pass for this Device ID') : (j.error || r.status));
       try { localStorage.setItem(TOKEN_KEY, JSON.stringify({ id, token: j.token, exp: j.expires_at })); } catch (e) {}
       $('passkey').value = ''; setStatus('passstatus', 'Key accepted.', 'ok'); loadAccess();
     } catch (e) { setStatus('passstatus', 'Key not accepted: ' + e.message, 'err'); }

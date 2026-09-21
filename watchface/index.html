@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 14:42</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 14:44</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3807,7 +3807,7 @@
         <button class="btn" data-a="copy">Copy link</button><button class="btn danger" data-a="rm">Remove</button>`;
       row.querySelector('[data-a="copy"]').addEventListener('click', async () => {
         try { await navigator.clipboard.writeText(link); setStatus('shelfstatus', 'Link copied: ' + link, 'ok'); }
-        catch (e) { window.prompt('Copy this link:', link); }
+        catch (e) { setStatus('shelfstatus', 'Copy this link: ' + link, 'ok'); }
       });
       row.querySelector('[data-a="rm"]').addEventListener('click', async () => {
         if (!window.confirm('Remove this link? People who already added the dial keep their copy.')) return;
@@ -3834,7 +3834,8 @@
   async function shareShelfItem(n, name) {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID first.', 'err');
     if (!AUTHOR) {   // 初めて共有する時に 1 回だけ名前を聞く (相手に出るのはこの名前だけ)
-      const v = window.prompt('Your name, shown to whoever opens the link (you can change it later):', '');
+      let v = null;
+      try { v = window.prompt('Your name, shown to whoever opens the link (you can change it later):', ''); } catch (e) { v = ''; }
       if (v === null) return;
       await saveAuthor(v);
     }
@@ -3849,7 +3850,6 @@
       try { await navigator.clipboard.writeText(link); } catch (e) {}
       setStatus('shelfstatus', `Link copied: ${link} — anyone with it can add "${name || 'item ' + n}" to their own collection.`, 'ok');
       loadLinks();
-      window.prompt('Send this link to anyone — they can add this dial to their collection:', link);
     } catch (e) { setStatus('shelfstatus', 'Could not make a link: ' + e.message, 'err'); }
   }
   document.addEventListener('DOMContentLoaded', () => {

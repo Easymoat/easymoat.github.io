@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 14:02</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 14:10</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -4395,7 +4395,11 @@
     const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
     return j;
   }
-  $('devid').addEventListener('change', () => { loadAccess(); IMG.k = 0; clearImgPreview(); loadPhotos(); loadShelf(); loadWatchSlots(); loadWatchState(); loadLoc(); refreshLocIfAllowed(); });
+  $('devid').addEventListener('change', () => {
+    // ID を入れ替えたら「編集中の品」は別の人の Collection の番号になる = 上書きの相手が変わってしまう。
+    // 新規あつかいに戻す (2026-09-21)。盤面の中身はそのまま残す (作りかけを失わないため)。
+    EDIT_N = null; EDIT_ITEM_NAME = ''; SENT_TO = null;
+    loadAccess(); IMG.k = 0; clearImgPreview(); loadPhotos(); loadShelf(); loadWatchSlots(); loadWatchState(); loadLoc(); refreshLocIfAllowed(); });
   $('imgparts').addEventListener('click', () => { stage.classList.toggle('noparts'); $('imgparts').textContent = stage.classList.contains('noparts') ? 'Show parts' : 'Hide parts'; });
   $('imghide').addEventListener('click', () => { stage.classList.toggle('noimg'); $('imghide').textContent = stage.classList.contains('noimg') ? 'Show image' : 'Hide image'; });
 

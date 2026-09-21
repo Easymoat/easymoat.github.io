@@ -378,7 +378,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 23:42</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-22 01:35</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3940,7 +3940,7 @@
   async function openSharedLink(code) {
     const box = $('sharebox'), body = $('sharebody'); if (!box) return;
     box.hidden = false; body.innerHTML = '<span class="muted">Opening the dial…</span>';
-    const intro = `<div class="ctl"><span class="muted" style="max-width:640px">This is a watch face for a Garmin watch, made with Face Composer. To put it on your watch you need <b>The Face</b> from the Connect IQ Store; your Device ID is on the watch under <b>settings → Watch Face → Customize → Device ID</b>. <a href="https://easymoat.com/facecomposer/" target="_blank" rel="noopener">What is this?</a></span></div>`;
+    const intro = `<div class="ctl"><span class="muted" style="max-width:640px">This is a watch face for a Garmin watch, made with Face Composer. To put it on your watch you need <a href="https://apps.garmin.com/apps/159fba24-20fa-4034-bcf2-3c7d4eba210c" target="_blank" rel="noopener"><b>The Face</b> from the Connect IQ Store</a>; your Device ID is on the watch under <b>settings → Watch Face → Customize → Device ID</b>. <a href="https://easymoat.com/facecomposer/" target="_blank" rel="noopener">What is this?</a></span></div>`;
     let j = null;
     // 自分が作ったリンクを自分で開いた時は数えない (送った相手が開いたかを見るための数なので)
     const self = (SHARE_MINE || []).indexOf(code) >= 0 ? '&self=1' : '';

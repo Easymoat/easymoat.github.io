@@ -172,8 +172,6 @@
   .shelfbox { width: 100%; max-width: 1040px; gap: 14px; }
   .shelf { display: flex; flex-wrap: wrap; gap: 18px 22px; }
   .cap.onw { color: var(--accent); }
-  .cap.del { cursor: pointer; }
-  .cap.del:hover { color: var(--danger); }
   .item { width: 250px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
   .item .mini { position: relative; width: 240px; height: 240px; border-radius: 50%; overflow: hidden; background: #000 center/cover no-repeat; border: 2px solid var(--line-2); }
   .item.onwatch .mini { border-color: var(--accent); }
@@ -373,7 +371,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 14:44</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 15:12</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3659,7 +3657,7 @@
       const d = document.createElement('div'); d.className = 'item'; d.dataset.n = it.n;
       d.innerHTML = `<div class="mini"></div><span class="cap"><b>${(it.name || `Item ${it.n}`).replace(/</g, '&lt;')}</b></span><span class="cap">${it.kind === 'photo' ? 'photo' : it.kind === 'fill' ? 'color shape' : it.kind === 'camera' ? 'camera' : 'no image'} · ${fmtTime(it.ts * 1000)}</span>
         <div class="row"><button class="btn" data-a="load" title="Put this item back into the editors above">Edit</button><button class="btn primary" data-a="send" title="Make this the dial your watch shows">To watch</button><button class="btn" data-a="share" title="Make a link you can send to anyone — they can add this dial to their own collection">Share…</button></div>
-        <span class="cap onw"></span><span class="cap del" data-a="del" title="Delete this item from the collection">Delete</span>`;
+        <span class="cap onw"></span><button class="btn danger" data-a="del" title="Delete this item from the collection">Delete</button>`;
       d.querySelector('[data-a="load"]').addEventListener('click', () => loadShelfItem(it.n));
       d.querySelector('[data-a="send"]').addEventListener('click', () => sendShelfItem(it.n));
       d.querySelector('[data-a="del"]').addEventListener('click', () => removeShelfItem(it.n, it.name));

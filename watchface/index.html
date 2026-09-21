@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 09:57</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 10:30</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -643,6 +643,7 @@
     // 行: [44, x, y, a, s, c, f, -1, 直径‰, mode, 針の形, 目盛り, 都市]  (送る時は「針の形」を as の番号に置き換える)
     44: { name: 'Analog',      grp: 'clock', analog: true },
     45: { name: 'Text',        grp: 'text',  sample: 'TEXT',   icon: null,        iw: 0, text: true },   // 自分で書いた文字 (2026-09-21)
+    46: { name: 'Text (picture)', grp: 'text', sample: 'TEXT',  icon: null,        iw: 0, text: true, hidden: true },   // 実機へ送る形。読み込む時に 45 へ戻す
     // 50-54 / 60-64 = whole-dial parts: they sit at the centre, cover the dial and are not moved.
     50: { name: 'Hands: Bars',        grp: 'hands', dial: true },
     51: { name: 'Hands: Needles',     grp: 'hands', dial: true },
@@ -885,7 +886,10 @@
   // 入れられるのは半角の英数字と記号に限る (日本語は ? になる)。
   const isText = (t) => !!(TYPES[t] && TYPES[t].text);
   const TT_MAX = 8, TT_LEN = 20;
-  const ttClean = (v) => String(v == null ? '' : v).replace(/[^\x20-\x7E]/g, '').slice(0, TT_LEN);
+  // 打てる字に制限は無い。英数字だけならベクターフォントで即時に出て、
+  // 日本語などが混ざった文字は「絵にして送る」方式に自動で切り替わる (2026-09-21 ユーザー決定)。
+  const ttClean = (v) => String(v == null ? '' : v).replace(/[\x00-\x1F\x7F]/g, '').slice(0, TT_LEN);
+  const isAscii = (v) => /^[\x20-\x7E]*$/.test(String(v || ''));
   const ttIdx = (e) => { const v = Number(e[8]); return (Number.isInteger(v) && v >= 0 && v < TT_MAX) ? v : 0; };
   const ttOf = (e) => ttClean((st.tt || [])[ttIdx(e)] || '');
   const ttFree = () => { const used = new Set(st.el.filter((x) => isText(x[0])).map(ttIdx));
@@ -1421,6 +1425,76 @@
     }
     const f = Math.min(s, 2);   // fixed system fonts come in three steps: XL draws as L
     return isClock(t) ? p[6 + f] : p[3 + f];
+  }
+
+  // ── 画像の文字 (2026-09-21) ─────────────────────────────────────────────
+  // 実機のフォントには日本語が無いので、打った文字を**絵にして**送る。
+  //   覆い (cov) = 字が白・周りが黒 / 反転 (inv) = その反転。実機は
+  //   背景 × (1 − 覆い) + 色 × 覆い で重ねるので、写真の上でも輪郭がなめらかに抜ける。
+  //   一番大きい機種 (466) の実寸で作る = どの機種でも縮小されるだけで、輪郭が保てる。
+  // 上限は実機の graphics pool (絵の画素が載る場所)。写真を使う面では写真が大半を占めるので 1 組だけ。
+  const TI_MAX = 2, TI_MAX_PHOTO = 1, TI_PIXELS = 30000;   // 1 枚あたりの画素の上限 (例 400x75)
+  const TI_REF = 466, TI_STEPS = 32;   // 実寸の基準と、グレーの段数 (実機は 32 色まで)
+  const TI_PAL = Array.from({ length: TI_STEPS }, (_, i) => { const v = Math.round(i * 255 / (TI_STEPS - 1)); return (v << 16) | (v << 8) | v; });
+  const isImgText = (e) => isText(e[0]) && !isAscii(ttOf(e));
+  const imgTexts = () => st.el.filter((e) => isImgText(e) && ttOf(e));
+  const tiFace = (px, bold) => `${bold ? 600 : 400} ${px}px ${(getComputedStyle(document.body).getPropertyValue('--watch').trim() || 'sans-serif')}`;
+  const TI_BOX = new Map();
+  // 絵の大きさ (466 の実寸)。毎回の描き直しで呼ぶので、測るだけ・結果は憶える。
+  function textBox(txt, px, bold) {
+    const key = `${px}|${bold ? 1 : 0}|${txt}`;
+    if (TI_BOX.has(key)) return TI_BOX.get(key);
+    const g = document.createElement('canvas').getContext('2d');
+    g.font = tiFace(px, bold);
+    const box = { w: Math.max(2, Math.ceil(g.measureText(txt).width) + 4), h: Math.max(2, Math.ceil(px * 1.35)) };
+    TI_BOX.set(key, box); return box;
+  }
+  const tiPx = (e) => Math.round(effPx(e[0], e[4]) * TI_REF / 454);
+  const tiBoxOf = (e) => textBox(ttOf(e), tiPx(e), (st.b || 0) > 0);
+  function textImage(txt, px, bold) {
+    const face = (p) => tiFace(p, bold);
+    const { w, h } = textBox(txt, px, bold);
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    const g = cv.getContext('2d');
+    g.fillStyle = '#000'; g.fillRect(0, 0, w, h);
+    g.font = face(px); g.textBaseline = 'middle'; g.textAlign = 'left'; g.fillStyle = '#fff';
+    g.fillText(txt, 2, Math.round(h / 2));
+    const im = g.getImageData(0, 0, w, h), d = im.data, q = 255 / (TI_STEPS - 1);
+    for (let i = 0; i < d.length; i += 4) {
+      const v = Math.round(Math.round((d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) / q) * q);
+      d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255;
+    }
+    g.putImageData(im, 0, 0);
+    const cov = cv.toDataURL('image/png');
+    for (let i = 0; i < d.length; i += 4) { const v = 255 - d[i]; d[i] = d[i + 1] = d[i + 2] = v; }
+    g.putImageData(im, 0, 0);
+    const inv = cv.toDataURL('image/png');
+    return { w, h, cov, inv };
+  }
+  // 面に載せる「画像の文字」一式。el の並びで番号を振る (実機は el の番号で引く)。
+  const tiLimit = () => (IMG.show && hasSource() && IMG.masked ? TI_MAX_PHOTO : TI_MAX);
+  function textImagePayload() {
+    const out = [];
+    for (const e of imgTexts().slice(0, tiLimit())) {
+      const px = Math.round(effPx(e[0], e[4]) * TI_REF / 454);
+      const im = textImage(ttOf(e), px, (st.b || 0) > 0);
+      im.pal = TI_PAL.slice();          // 覆いと反転で**同じ**パレット (実機が足し算する前提)
+      out.push(im);
+    }
+    return out;
+  }
+  // 大きすぎる / 多すぎる時の注意書き。保存する前に気づけるように編集欄と保存の両方で使う。
+  function tiTrouble() {
+    const list = imgTexts();
+    if (!list.length) return '';
+    const lim = tiLimit();
+    if (list.length > lim) return `Only ${lim} picture text${lim > 1 ? 's' : ''} fit on a dial with ${lim === 1 ? 'a photo' : 'this much detail'} — the watch cannot hold more. Shorten the dial to ${lim}.`;
+    for (const e of list) {
+      const px = Math.round(effPx(e[0], e[4]) * TI_REF / 454);
+      const im = textBox(ttOf(e), px, (st.b || 0) > 0);
+      if (im.w * im.h > TI_PIXELS) return `"${ttOf(e)}" is too big as a picture (${im.w}x${im.h}). Use a smaller size, or fewer characters.`;
+    }
+    return '';
   }
 
   // ── 針と縁 ────────────────────────────────────────────────────────────
@@ -2302,7 +2376,14 @@
     ANA_SHAPES.push({ key, style, spec: h });
     return ANA_SHAPES.length - 1;
   }
-  const elOut = () => { ANA_SHAPES = []; const X = expandRects(st.el), joins = lineJoins(X); return elOrder(X).map(([e, i]) => (isAnalog(e[0])
+  // 画像の文字は el の並びで番号を振る (実機は ti[番号] を引く)。入りきらない分は送らない。
+  const tiIndex = () => { const m = new Map(); imgTexts().slice(0, tiLimit()).forEach((e, i) => m.set(e, i)); return m; };
+  const elOut = () => { ANA_SHAPES = []; const TI = tiIndex(); const X = expandRects(st.el), joins = lineJoins(X); return elOrder(X).map(([e, i]) => (isImgText(e)
+    ? (() => { const n = TI.get(e); if (n == null) return null;   // 入りきらない画像の文字は出さない
+                 const b = tiBoxOf(e);
+                 return [46, e[1], e[2], e[3], e[4], e[5], e[6], -1, n,
+                         Math.round(b.w * 1000 / TI_REF), Math.round(b.h * 1000 / TI_REF), ttIdx(e)]; })()
+    : isAnalog(e[0])
     ? [e[0], e[1], e[2], 0, e[4], e[5], e[6], -1, anaDia(e), anaMode(e), anaShapeIdx(e), anaTicks(e), anaCity(e)]
     : isCircle(e[0])
     ? (() => { const b = [e[0], e[1], e[2], 0, e[4], e[5], e[6], -1, circDiaOut(circDia(e)), circPen(e[4]), circFill(e), circMet(e), circDir(e)];
@@ -2312,7 +2393,7 @@
     : isLine(e[0])
     ? (() => { const g = lineGeom(e, joins, i); const b = [e[0], g.x, g.y, e[3], e[4], e[5], e[6], -1, g.len, linePen(e[4])];
                  return (g.m0 || g.m1) ? b.concat([g.m0, g.m1]) : b; })()
-    : e)); };
+    : e)).filter(Boolean); };
   // 心拍メーターの両端と色分け。st.hr = [安静時, 高い時, 色分け]。0 = 実機まかせ。
   // 心拍メーターの両端と色分け (編集欄の Meter の隣で - / + で動かす)。0 = 実機まかせ。
   function setHr(i, v) { st.hr = [hrLo(), hrHi(), hrCol()]; st.hr[i] = v; commit(); }
@@ -2568,6 +2649,7 @@
         <div class="field" title="Line the selected parts up on the one you clicked last (the highlighted row in the list). Rim and hands cannot move, so picking one of them lines everything up on the middle of the dial."><span>Align</span><span class="cb units" id="falign"><button type="button" data-v="x" ${multi ? '' : 'disabled'}>Same X &#8597;</button><button type="button" data-v="y" ${multi ? '' : 'disabled'}>Same Y &#8596;</button></span></div>
         <div class="field"><button class="btn" id="tofront" title="Draw this part over the others (last in the list)">Front</button><button class="btn" id="toback" title="Draw this part under the others (first in the list)">Back</button><button class="btn" id="dup">Duplicate</button><button class="btn danger" id="del">Remove</button></div>
         <div class="brk"></div>
+        ${!none && all.some((x) => isImgText(x)) ? `<div class="field"><span>Picture</span><span class="muted" style="max-width:430px">This text is not plain ASCII, so it goes to the watch as a picture: it looks exactly like this, but it needs a watch that can show pictures (6 older models cannot), and a change takes a few minutes to appear. ${tiTrouble() ? '<b>' + tiTrouble() + '</b>' : ''}</span></div>` : ''}
         ${!none && all.every((x) => isText(x[0])) ? `<div class="field" title="What this part says. The watch's font has plain letters, digits and symbols only — anything else is dropped."><span>Text</span><input type="text" id="ftext" maxlength="${TT_LEN}" placeholder="TEXT" style="width:170px" value="${ttOf(e).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')}"></div>` : ''}
         ${allCirc ? `
         ${stepRow('Diameter', 8, all.every((x) => circDia(x) === circDia(e)) ? circDia(e) : null, 'Bigger / smaller by one grid step')}
@@ -3282,6 +3364,10 @@
                METERS.some((mm) => mm[0] === met) ? met : 0, dir === -1 ? -1 : 1,
                CIRC_SPANS.indexOf(Number(e[13])) >= 0 ? Number(e[13]) : 360,          // 弧の角度
                (Number.isInteger(Number(e[14])) && Number(e[14]) > 0 && Number(e[14]) < 360 && Number(e[14]) % 45 === 0) ? Number(e[14]) : 0);   // 始まる角 (45 度刻み)
+      } else if (n[0] === 46) {   // 画像の文字 → 元の文字の部品に戻す (12 番目が tt の番号)
+        const tx = Number(e[11]);
+        el.push([45, n[1], n[2], n[3], n[4], n[5], n[6], -1, (Number.isInteger(tx) && tx >= 0 && tx < TT_MAX) ? tx : 0]);
+        continue;
       } else if (isText(n[0])) {   // 文字: 9 番目 = tt の何番目か
         const ix = Number(e[8]); n.push((Number.isInteger(ix) && ix >= 0 && ix < TT_MAX) ? ix : 0);
       } else if (n[0] >= 60 && n[0] <= 69) {   // 縁: 9 番目 = 数字の出し方、10 番目 = 内側への寄せ
@@ -3589,7 +3675,9 @@
     // 絵のない品はウォッチでも絵なしになる。意図しない「絵なし」で保存してしまうのを防ぐ。
     if (!hasImg && CAM.on && !IMG.cur) return setStatus('shelfstatus', 'No camera frame in the editor yet — this would be saved without a picture. Press Camera again once a frame appears.', 'err');
     if (hasImg && !IMG.reduced) renderQuality();
-    const body = { device_id: id, layout: layoutObj(), kind: hasImg ? (IMG.src === 'camera' ? 'camera' : IMG.cur ? 'photo' : 'fill') : 'none', recipe: currentRecipe(), name: $('shelfname').value.trim() };
+    const tiBad = tiTrouble(); if (tiBad) return setStatus('shelfstatus', tiBad, 'err');
+    const ti = textImagePayload();
+    const body = { device_id: id, layout: layoutObj(), ti: ti.length ? ti : undefined, kind: hasImg ? (IMG.src === 'camera' ? 'camera' : IMG.cur ? 'photo' : 'fill') : 'none', recipe: currentRecipe(), name: $('shelfname').value.trim() };
     // Collection から持ってきた品を編集していた時は、上書きか新しい品かをここで決める
     if (EDIT_N != null && SHELF.items.some((it) => it.n === EDIT_N)) {
       const over = window.confirm(`Save over "${EDIT_ITEM_NAME || 'item ' + EDIT_N}" in the collection?\n\nOK — replace it (it keeps its number).\nCancel — save as a new item.`);

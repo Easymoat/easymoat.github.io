@@ -377,7 +377,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 16:20</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 16:40</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3781,7 +3781,7 @@
     } catch (e) { setStatus('passstatus', 'Key not accepted: ' + e.message, 'err'); }
   });
   // ── リンクで送る (2026-09-21) ────────────────────────────────────────────
-  let AUTHOR = '';
+  let AUTHOR = '', SHARE_MINE = [];   // SHARE_MINE = 自分が作ったリンク (自分で開いた時は数に入れない)
   async function loadAuthor() {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return;
     try { const r = await fetch($('api').value + '/author?device_id=' + encodeURIComponent(id)); const j = await r.json(); AUTHOR = j.name || ''; } catch (e) { AUTHOR = ''; }
@@ -3801,6 +3801,7 @@
     let j = null;
     try { const r = await fetch($('api').value + '/share?device_id=' + encodeURIComponent(id)); j = await r.json(); } catch (e) { box.hidden = true; return; }
     const items = (j && j.items) || [];
+    SHARE_MINE = items.map((x) => x.code);
     box.hidden = false; $('linkcount').textContent = String(items.length);
     if (!items.length) { wrap.innerHTML = '<span class="muted">No links yet — use Share… on an item above.</span>'; return; }
     wrap.innerHTML = '';
@@ -3808,7 +3809,7 @@
       const link = location.origin + location.pathname + '?s=' + it.code;
       const row = document.createElement('div'); row.className = 'ctl'; row.style.cssText = 'flex-wrap:wrap;gap:10px;padding:6px 0;border-top:1px solid var(--line)';
       row.innerHTML = `<b style="min-width:140px">${(it.name || 'Untitled').replace(/</g, '&lt;')}</b>
-        <span class="muted">${fmtTime(it.ts * 1000)} · added ${it.adds} time${it.adds === 1 ? '' : 's'}${it.dev ? ' · made for ' + String(it.dev).replace(/</g, '&lt;') : ''}</span>
+        <span class="muted">${fmtTime(it.ts * 1000)} · opened ${it.opens || 0} · added ${it.adds} time${it.adds === 1 ? '' : 's'}${it.dev ? ' · made for ' + String(it.dev).replace(/</g, '&lt;') : ''}</span>
         <button class="btn" data-a="copy">Copy link</button><button class="btn danger" data-a="rm">Remove</button>`;
       row.querySelector('[data-a="copy"]').addEventListener('click', async () => {
         try { await navigator.clipboard.writeText(link); setStatus('shelfstatus', 'Link copied: ' + link, 'ok'); }
@@ -3871,8 +3872,13 @@
     box.hidden = false; body.innerHTML = '<span class="muted">Opening the dial…</span>';
     const intro = `<div class="ctl"><span class="muted" style="max-width:640px">This is a watch face for a Garmin watch, made with Face Composer. To put it on your watch you need <b>The Face</b> from the Connect IQ Store; your Device ID is on the watch under <b>settings → Watch Face → Customize → Device ID</b>. <a href="https://easymoat.com/facecomposer/" target="_blank" rel="noopener">What is this?</a></span></div>`;
     let j = null;
-    try { const r = await fetch($('api').value + '/share-item?code=' + encodeURIComponent(code)); j = await r.json(); if (!r.ok) throw new Error(j.error || r.status); }
-    catch (e) { body.innerHTML = `<span class="status err">This link is not available any more.</span>`; return; }
+    // 自分が作ったリンクを自分で開いた時は数えない (送った相手が開いたかを見るための数なので)
+    const self = (SHARE_MINE || []).indexOf(code) >= 0 ? '&self=1' : '';
+    try { const r = await fetch($('api').value + '/share-item?code=' + encodeURIComponent(code) + self); j = await r.json(); if (!r.ok) throw new Error(j.error || r.status); }
+    catch (e) {
+      body.innerHTML = `<span class="status err">This link does not work. Check that you copied all of it (it ends with eight letters like ab12-cd34), or ask the sender for a new one — links can be taken back.</span>`;
+      return;
+    }
     const lay = faceLayout(j.layout);
     const mine = (DEVICES[st.dev] || {}).name || '';
     const other = j.dev && mine && j.dev !== mine;
@@ -3894,8 +3900,9 @@
         const k = await r.json();
         if (r.status === 402) throw new Error(payMsg(k));
         if (!r.ok || !k.ok) throw new Error(k.error === 'shelf_full' ? `your collection is full (${k.max}) — delete one first`
-          : k.error === 'already_added' ? 'you already have this dial in your collection' : (k.error || r.status));
-        setStatus('sharestatus', `Added as item ${k.n}. Open it below with Edit, or send it To watch.`, 'ok');
+          : k.error === 'already_added' ? `you already have this dial — it is ${k.name ? '"' + k.name + '"' : 'item ' + k.n} in your collection. Delete that one first if you want a fresh copy.`
+          : (k.error || r.status));
+        setStatus('sharestatus', `Added to ${id} as item ${k.n}. Open it below with Edit, or send it To watch.`, 'ok');
         $('devid').value = id; $('devid').dispatchEvent(new Event('change'));
       } catch (e) { setStatus('sharestatus', 'Could not add it: ' + e.message, 'err'); }
     });

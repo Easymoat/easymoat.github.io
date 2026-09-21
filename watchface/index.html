@@ -373,7 +373,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 10:30</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-21 10:44</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1434,8 +1434,7 @@
   //   一番大きい機種 (466) の実寸で作る = どの機種でも縮小されるだけで、輪郭が保てる。
   // 上限は実機の graphics pool (絵の画素が載る場所)。写真を使う面では写真が大半を占めるので 1 組だけ。
   const TI_MAX = 2, TI_MAX_PHOTO = 1, TI_PIXELS = 30000;   // 1 枚あたりの画素の上限 (例 400x75)
-  const TI_REF = 466, TI_STEPS = 32;   // 実寸の基準と、グレーの段数 (実機は 32 色まで)
-  const TI_PAL = Array.from({ length: TI_STEPS }, (_, i) => { const v = Math.round(i * 255 / (TI_STEPS - 1)); return (v << 16) | (v << 8) | v; });
+  const TI_REF = 466, TI_STEPS = 32;   // 実寸の基準と、濃さの段数 (実機は 32 色まで)
   const isImgText = (e) => isText(e[0]) && !isAscii(ttOf(e));
   const imgTexts = () => st.el.filter((e) => isImgText(e) && ttOf(e));
   const tiFace = (px, bold) => `${bold ? 600 : 400} ${px}px ${(getComputedStyle(document.body).getPropertyValue('--watch').trim() || 'sans-serif')}`;
@@ -1451,22 +1450,30 @@
   }
   const tiPx = (e) => Math.round(effPx(e[0], e[4]) * TI_REF / 454);
   const tiBoxOf = (e) => textBox(ttOf(e), tiPx(e), (st.b || 0) > 0);
-  function textImage(txt, px, bold) {
-    const face = (p) => tiFace(p, bold);
+  // 覆い (cov) は**字の色で塗った絵**、反転 (inv) は灰色。実機は 反転を掛け算 → 覆いを加算 するだけで
+  //   背景 × (1 − 覆い) + 色 × 覆い になる (2026-09-21: 取ってきた絵に tintColor が効かないため、色は焼き込む)。
+  function textImage(txt, px, bold, col) {
     const { w, h } = textBox(txt, px, bold);
     const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
     const g = cv.getContext('2d');
     g.fillStyle = '#000'; g.fillRect(0, 0, w, h);
-    g.font = face(px); g.textBaseline = 'middle'; g.textAlign = 'left'; g.fillStyle = '#fff';
+    g.font = tiFace(px, bold); g.textBaseline = 'middle'; g.textAlign = 'left'; g.fillStyle = '#fff';
     g.fillText(txt, 2, Math.round(h / 2));
+    // まず「どれだけ字が乗っているか」を 32 段に丸める。覆いも反転もこの 1 つから作る = 端がぴったり合う。
     const im = g.getImageData(0, 0, w, h), d = im.data, q = 255 / (TI_STEPS - 1);
-    for (let i = 0; i < d.length; i += 4) {
-      const v = Math.round(Math.round((d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) / q) * q);
-      d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255;
+    const m = new Uint8Array(w * h);
+    for (let i = 0, k = 0; i < d.length; i += 4, k++) {
+      m[k] = Math.round(Math.round((d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) / q) * q);
+    }
+    const rgb = parseInt(String(col || '#FFFFFF').replace('#', ''), 16);
+    const cr = (rgb >> 16) & 255, cg = (rgb >> 8) & 255, cb = rgb & 255;
+    for (let i = 0, k = 0; i < d.length; i += 4, k++) {
+      const t = m[k] / 255;
+      d[i] = Math.round(cr * t); d[i + 1] = Math.round(cg * t); d[i + 2] = Math.round(cb * t); d[i + 3] = 255;
     }
     g.putImageData(im, 0, 0);
     const cov = cv.toDataURL('image/png');
-    for (let i = 0; i < d.length; i += 4) { const v = 255 - d[i]; d[i] = d[i + 1] = d[i + 2] = v; }
+    for (let i = 0, k = 0; i < d.length; i += 4, k++) { const v = 255 - m[k]; d[i] = d[i + 1] = d[i + 2] = v; }
     g.putImageData(im, 0, 0);
     const inv = cv.toDataURL('image/png');
     return { w, h, cov, inv };
@@ -1477,9 +1484,8 @@
     const out = [];
     for (const e of imgTexts().slice(0, tiLimit())) {
       const px = Math.round(effPx(e[0], e[4]) * TI_REF / 454);
-      const im = textImage(ttOf(e), px, (st.b || 0) > 0);
-      im.pal = TI_PAL.slice();          // 覆いと反転で**同じ**パレット (実機が足し算する前提)
-      out.push(im);
+      // 色は絵に焼き込む。パレットは送らない (32 色以内の indexed PNG なので実機が困らない)
+      out.push(textImage(ttOf(e), px, (st.b || 0) > 0, colOf(e[5])));
     }
     return out;
   }

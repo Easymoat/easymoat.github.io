@@ -378,7 +378,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-22 21:29</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-22 21:41</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1213,6 +1213,10 @@
   const DEF_IG = GAP, IG_MAX = 24;
   const gapOf = (e) => { const v = Number(e[10]); return (Number.isInteger(v) && v >= 0 && v <= IG_MAX) ? v : DEF_IG; };
   const gapGrow = (e) => { while (e.length < 11) e.push(e.length === 10 ? DEF_IG : 0); };
+  // 太字は部品ごとに 12 番目で持つ (2026-09-22)。-1 / 無し = 全体の Bold (Style) に従う = 保存済みの面は変わらない。
+  const boldOwn = (e) => { const v = Number(e[11]); return (v === 0 || v === 1 || v === 2) ? v : -1; };
+  const boldOf = (e) => { const v = boldOwn(e); return v >= 0 ? v : ((st.b === 1 || st.b === 2) ? st.b : 0); };
+  const boldGrow = (e) => { gapGrow(e); if (e.length < 12) e.push(-1); };
   // The watch draws body text (not the clock) 1.2× the value here (WfLayout.TEXT_BOOST): on the
   // 33 mm screen thin digits read smaller than the icons, so the editor keeps the comfortable
   // desktop look while the device compensates. The actual-size preview applies the same boost.
@@ -1472,7 +1476,7 @@
     TI_BOX.set(key, box); return box;
   }
   const tiPx = (e) => Math.round(effPx(e[0], e[4]) * TI_REF / 454);
-  const tiBoxOf = (e) => textBox(ttOf(e), tiPx(e), tiLv());
+  const tiBoxOf = (e) => textBox(ttOf(e), tiPx(e), boldOf(e));
   // 覆い (cov) は**字の色で塗った絵**、反転 (inv) は灰色。実機は 反転を掛け算 → 覆いを加算 するだけで
   //   背景 × (1 − 覆い) + 色 × 覆い になる (2026-09-21: 取ってきた絵に tintColor が効かないため、色は焼き込む)。
   function textImage(txt, px, lv, col) {
@@ -1510,7 +1514,7 @@
     for (const e of imgTexts().slice(0, tiLimit())) {
       const px = Math.round(effPx(e[0], e[4]) * TI_REF / 454);
       // 色は絵に焼き込む。パレットは送らない (32 色以内の indexed PNG なので実機が困らない)
-      out.push(textImage(ttOf(e), px, tiLv(), colOf(e[5])));
+      out.push(textImage(ttOf(e), px, boldOf(e), colOf(e[5])));
     }
     return out;
   }
@@ -1522,7 +1526,7 @@
     if (list.length > lim) return `Only ${lim} picture text${lim > 1 ? 's' : ''} fit on a dial with ${lim === 1 ? 'a photo' : 'this much detail'} — the watch cannot hold more. Shorten the dial to ${lim}.`;
     for (const e of list) {
       const px = Math.round(effPx(e[0], e[4]) * TI_REF / 454);
-      const im = textBox(ttOf(e), px, tiLv());
+      const im = textBox(ttOf(e), px, boldOf(e));
       if (im.w * im.h > TI_PIXELS) return `"${ttOf(e)}" is too big as a picture (${im.w}x${im.h}). Use a smaller size, or fewer characters.`;
     }
     return '';
@@ -2095,7 +2099,7 @@
     div.style.fontSize = (px / FONT_EM) + 'px';
     div.style.lineHeight = px + 'px';
     // ベクターフォントの無い機種 (固定の 3 段) は時計が太字を自動で切る (b0919j) ので、見本も太字にしない。
-    const lv = prof()[2] !== 1 ? 0 : st.b === 2 ? 2 : st.b === 1 ? 1 : 0, bo = lv ? boldOff(px, lv) : 0;
+    const lv = prof()[2] !== 1 ? 0 : boldOf(e), bo = lv ? boldOff(px, lv) : 0;   // 部品ごとの太字 (無ければ全体)
     if (bo) {
       div.style.textShadow = lv === 2 ? `${bo}px 0 0 currentColor, ${Math.floor(bo / 2)}px 0 0 currentColor` : `${bo}px 0 0 currentColor`;   // 中間のずらしは実機と同じ切り捨て
       if (def.strip) div.style.paddingRight = (2 + bo) + 'px';   // 帯はコマ幅に bo を含めている。それ以外は値の後ろに bo を空ける (下)
@@ -2442,8 +2446,9 @@
   const elOut = () => { ANA_SHAPES = []; const TI = tiIndex(); const X = expandRects(st.el), joins = lineJoins(X); return elOrder(X).map(([e, i]) => (isImgText(e)
     ? (() => { const n = TI.get(e); if (n == null) return null;   // 入りきらない画像の文字は出さない
                  const b = tiBoxOf(e);
-                 return [46, e[1], e[2], e[3], e[4], e[5], e[6], -1, n,
-                         Math.round(b.w * 1000 / TI_REF), Math.round(b.h * 1000 / TI_REF), ttIdx(e)]; })()
+                 const r46 = [46, e[1], e[2], e[3], e[4], e[5], e[6], -1, n,
+                         Math.round(b.w * 1000 / TI_REF), Math.round(b.h * 1000 / TI_REF), ttIdx(e)];
+                 return boldOwn(e) >= 0 ? r46.concat([boldOwn(e)]) : r46; })()
     : isAnalog(e[0])
     ? [e[0], e[1], e[2], 0, e[4], e[5], e[6], -1, anaDia(e), anaMode(e), anaShapeIdx(e), anaTicks(e), anaCity(e)]
     : isCircle(e[0])
@@ -2709,6 +2714,9 @@
             `<button type="button" data-v="${v}" class="${allText && all.every((x) => arrOf(x) === v) ? 'on' : ''}" ${allText ? '' : 'disabled'}>${nm}</button>`).join('')
         }</span></div>
         ${allText && !allAna ? stepRow('Gap', 10, all.every((x) => gapOf(x) === gapOf(e)) ? gapOf(e) : null, 'Space between the icon and the value (px on a 454 dial)') : ''}
+        ${allText && !allAna ? `<div class="field" title="Bold for this part. Style follows the Bold setting on the right for the whole dial."><span>Bold</span><span class="cb units" id="fbold">${
+          [[-1, 'Style'], [0, 'Off'], [1, 'Bold'], [2, 'Bold 2']].map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => boldOwn(x) === v) ? 'on' : ''}">${lb}</button>`).join('')
+        }</span></div>` : ''}
         <div class="brk"></div>
         <div class="field"><span>Color</span><span class="swatches simple"><input type="color" class="pick" id="fpick" value="${colOf(e[5])}" title="Pick any color — recent ones stay next to it">${
           (same(5) && e[5] >= 0 && e[5] < PC_BASE ? [e[5]] : []).concat(shownColors(e[5]).reverse()).map((i) => `<button class="sw ${same(5) && i === e[5] ? 'on' : ''}" data-c="${i}" title="${colOf(i).toUpperCase()}" style="background:${colOf(i)}"></button>`).join('')
@@ -2970,6 +2978,7 @@
     if (fp) fp.addEventListener('change', (ev) => { const i = pickColor(ev.target, ev.target.value); if (i >= 0) each((x) => { x[5] = i; }); else renderInspector(); });
     bindMeters(); bindAlign(); bindPickers();
     box.querySelectorAll('#flevel button').forEach((b) => b.addEventListener('click', () => each((x) => { x[6] = (x[6] & ~F_LEVEL) | (+b.dataset.v); })));
+    box.querySelectorAll('#fbold button').forEach((b) => b.addEventListener('click', () => each((x) => { boldGrow(x); x[11] = +b.dataset.v; })));
     box.querySelectorAll('#flevcol input').forEach((pk) => pk.addEventListener('change', () => {
       const n = +pk.dataset.n, i2 = pickColor(pk, pk.value); if (i2 < 0) return renderInspector();
       if (e[0] === 10) { const v = hcCols().slice(); v[n] = i2; st.hc = v; } else { const v = scCols().slice(); v[n] = i2; st.sc = v; }
@@ -3477,7 +3486,9 @@
                (Number.isInteger(Number(e[14])) && Number(e[14]) > 0 && Number(e[14]) < 360 && Number(e[14]) % 45 === 0) ? Number(e[14]) : 0);   // 始まる角 (45 度刻み)
       } else if (n[0] === 46) {   // 画像の文字 → 元の文字の部品に戻す (12 番目が tt の番号)
         const tx = Number(e[11]);
-        el.push([45, n[1], n[2], n[3], n[4], n[5], n[6], -1, (Number.isInteger(tx) && tx >= 0 && tx < TT_MAX) ? tx : 0]);
+        const r45 = [45, n[1], n[2], n[3], n[4], n[5], n[6], -1, (Number.isInteger(tx) && tx >= 0 && tx < TT_MAX) ? tx : 0];
+        const b46 = Number(e[12]);   // 画像の文字の太字 (13 番目)
+        el.push((b46 === 0 || b46 === 1 || b46 === 2) ? r45.concat([0, DEF_IG, b46]) : r45);
         continue;
       } else if (isText(n[0])) {   // 文字: 9 番目 = tt の何番目か
         const ix = Number(e[8]); n.push((Number.isInteger(ix) && ix >= 0 && ix < TT_MAX) ? ix : 0);
@@ -3493,6 +3504,8 @@
       if (!isLine(n[0]) && !isRect(n[0]) && !isGraph(n[0]) && !isCircle(n[0]) && !isAnalog(n[0]) && !TYPES[n[0]].dial) {
         const gv = Number(e[10]);
         if (Number.isInteger(gv) && gv >= 0 && gv <= IG_MAX && gv !== DEF_IG) { while (n.length < 10) n.push(0); n.push(gv); }
+        const bv = Number(e[11]);   // 12 番目 = 部品ごとの太字 (0-2)。無ければ全体に従う
+        if (bv === 0 || bv === 1 || bv === 2) { while (n.length < 10) n.push(0); if (n.length < 11) n.push(DEF_IG); n.push(bv); }
       }
       el.push(n);
     }

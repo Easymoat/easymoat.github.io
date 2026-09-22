@@ -378,7 +378,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-22 21:01</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-22 21:28</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2158,7 +2158,13 @@
       //   Gap は既定 (6) からの差だけ離す / 詰める (負なら重なる側へ)。既定のままなら実機と同じ 0。
       //   以前は Gap × 倍率 − 行間 を足していて、Gap を変えても実機と噛み合わなかった (2026-09-22)。
       const vGap = lay === 2 ? (gapOf(e) - DEF_IG) * ki : 0;
-      const val = showVal ? `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px${bo ? `;padding-right:${bo}px` : ''}${vGap ? `;margin-top:${vGap.toFixed(1)}px` : ''}">${sample}</span>` : '';
+      // 太字の時計の「:」は、点が横に伸びて楕円になる (疑似ボールドは横にずらして重ねるため)。
+      //   「:」だけ太字をかけずに、面積が同じ円になる大きさへ拡げて丸いまま太く見せる (2026-09-22 ユーザー指示)。
+      //   倍率 = √(1 + bo / 点の幅)、点の幅 = 行高 × 0.10 (Roboto の実測)。位置は太字の数字に合わせて bo/2 右へ。
+      const colonHtml = (bo && /:/.test(sample) && (t === 1 || t === 4))
+        ? `<span style="display:inline-block;text-shadow:none;transform:translateX(${(bo / 2).toFixed(1)}px) scale(${Math.sqrt(1 + bo / (0.10 * px)).toFixed(3)})">:</span>` : null;
+      const sampleHtml = colonHtml ? String(sample).split(':').join(colonHtml) : sample;
+      const val = showVal ? `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px${bo ? `;padding-right:${bo}px` : ''}${vGap ? `;margin-top:${vGap.toFixed(1)}px` : ''}">${sampleHtml}</span>` : '';
       let ic2 = icon;
       if (lay === 2) {
         div.style.flexDirection = 'column';

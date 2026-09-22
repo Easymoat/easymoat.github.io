@@ -378,7 +378,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-22 21:41</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-22 21:52</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2713,10 +2713,12 @@
           [['Icon left', 0], ['Icon right', 1], ['Icon above', 2]].map(([nm, v]) =>
             `<button type="button" data-v="${v}" class="${allText && all.every((x) => arrOf(x) === v) ? 'on' : ''}" ${allText ? '' : 'disabled'}>${nm}</button>`).join('')
         }</span></div>
-        ${allText && !allAna ? stepRow('Gap', 10, all.every((x) => gapOf(x) === gapOf(e)) ? gapOf(e) : null, 'Space between the icon and the value (px on a 454 dial)') : ''}
-        ${allText && !allAna ? `<div class="field" title="Bold for this part. Style follows the Bold setting on the right for the whole dial."><span>Bold</span><span class="cb units" id="fbold">${
-          [[-1, 'Style'], [0, 'Off'], [1, 'Bold'], [2, 'Bold 2']].map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => boldOwn(x) === v) ? 'on' : ''}">${lb}</button>`).join('')
-        }</span></div>` : ''}
+        ${/* Gap と Bold は常に出す (文字以外では薄く無効)。出したり消したりすると行数が変わり Dial が上下に動いた (2026-09-22) */''}
+        ${allText && !allAna ? stepRow('Gap', 10, all.every((x) => gapOf(x) === gapOf(e)) ? gapOf(e) : null, 'Space between the icon and the value (px on a 454 dial)')
+          : `<div class="field off"><span>Gap</span><span class="cb units step"><button type="button" disabled>&minus;</button><b>—</b><button type="button" disabled>+</button></span></div>`}
+        <div class="field${allText && !allAna ? '' : ' off'}" title="Bold for this part. Style follows the Bold setting on the right for the whole dial."><span>Bold</span><span class="cb units" id="fbold">${
+          [[-1, 'Style'], [0, 'Off'], [1, 'Bold'], [2, 'Bold 2']].map(([v, lb]) => `<button type="button" data-v="${v}" class="${allText && !allAna && all.every((x) => boldOwn(x) === v) ? 'on' : ''}" ${allText && !allAna ? '' : 'disabled'}>${lb}</button>`).join('')
+        }</span></div>
         <div class="brk"></div>
         <div class="field"><span>Color</span><span class="swatches simple"><input type="color" class="pick" id="fpick" value="${colOf(e[5])}" title="Pick any color — recent ones stay next to it">${
           (same(5) && e[5] >= 0 && e[5] < PC_BASE ? [e[5]] : []).concat(shownColors(e[5]).reverse()).map((i) => `<button class="sw ${same(5) && i === e[5] ? 'on' : ''}" data-c="${i}" title="${colOf(i).toUpperCase()}" style="background:${colOf(i)}"></button>`).join('')

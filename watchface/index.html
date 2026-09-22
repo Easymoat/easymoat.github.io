@@ -378,7 +378,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-22 22:32</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-22 23:09</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -464,7 +464,8 @@
         </div>
         <div class="opts">
           <div class="grp" title="The shape of the image frame on the dial."><span class="lbl">Shape <span class="lblnote">Shift+click to add a second shape</span></span><div class="ctl"><span class="cb" id="imgshape"></span></div>
-            <div class="ctl" id="shapeselrow" hidden title="Size and Rotate change the shape chosen here.">Adjust <span class="cb" id="shapesel"></span></div>
+            <div class="ctl" id="shapeselrow" hidden title="Size and Rotate change the shape chosen here.">Adjust <span class="cb" id="shapesel"></span>
+              <span class="muted" style="margin-left:10px">2nd shape</span> <span class="cb" id="shapeop" title="Add: the two shapes together. Cut: takes the second shape out of the first one — a ring, a window for the time, a crescent."></span></div>
             <div class="ctl">Rotate <span class="cb"><button type="button" id="rotl" title="Turn the frame 45° anticlockwise">&#8634; 45°</button><button type="button" id="rotr" title="Turn the frame 45° clockwise">&#8635; 45°</button></span><span class="muted" id="rotv">0°</span><span class="vsep"></span><span class="fillctl" title="No photo: the frame shape is filled with one color instead.">Fill color<input type="color" id="imgfill" value="#3a7bd5"><span class="swatches" id="fillsw" title="Recently used fill colors"></span><button class="btn toggle" id="imgfillon" title="ON: the frame is filled with this color instead of a photo">OFF</button></span></div>
 </div>
           <div class="grp"><span class="lbl">Photos</span><div class="photos" id="photos"></div><div class="muted" id="imgslotnote"></div>
@@ -3794,7 +3795,7 @@
   }
   // The recipe = how the picture was framed (which photo, shape, size, position, zoom, colors, Auto).
   function currentRecipe() {
-    return { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, shape2: IMG.shape2 || null, rot: IMG.rot, rot2: IMG.shape2 ? rotOf(2) : undefined, size: IMG.size, size2: IMG.shape2 ? sizeOf(2) : undefined, cx: IMG.cx, cy: IMG.cy, cx2: IMG.shape2 ? cxOf(2) : undefined, cy2: IMG.shape2 ? cyOf(2) : undefined, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom, colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, br: brOf(), sa: saOf(), plId: IMG.src === 'camera' ? plId() : undefined };
+    return { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, shape2: IMG.shape2 || null, cut: cutOn() ? 1 : undefined, rot: IMG.rot, rot2: IMG.shape2 ? rotOf(2) : undefined, size: IMG.size, size2: IMG.shape2 ? sizeOf(2) : undefined, cx: IMG.cx, cy: IMG.cy, cx2: IMG.shape2 ? cxOf(2) : undefined, cy2: IMG.shape2 ? cyOf(2) : undefined, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom, colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, br: brOf(), sa: saOf(), plId: IMG.src === 'camera' ? plId() : undefined };
   }
   $('shelfsave').addEventListener('click', async () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID (XXXX-XXXX) — on the watch: settings → Watch Face → Customize → Device ID.', 'err');
@@ -4115,7 +4116,7 @@
   const SHAPE_FIT = { heart: 86, spade: 96, club: 96 };   // heart: the lobes' shoulders are the farthest points (measured on the rendered mask)
   // A "picture" is either a photo (IMG.cur) or a flat color fill of the frame (IMG.fill, no photo).
   const hasSource = () => !!(IMG.cur || IMG.fill);
-  const IMG = { cur: null, src: null, k: 0, fill: null, dirty: false, fromSlot: 0, bgMode: 'dial', shape: 'square', shape2: null, rot: 0, rot2: null, size: 100, size2: null, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 32, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
+  const IMG = { cur: null, src: null, k: 0, fill: null, dirty: false, fromSlot: 0, bgMode: 'dial', shape: 'square', shape2: null, cut: false, rot: 0, rot2: null, size: 100, size2: null, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 32, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
   const imgApi = () => $('api').value.replace(/\/$/, '');
   const absUrl = (u) => (!u || /^https?:/.test(u)) ? u : new URL($('api').value).origin + u;   // server gives /api/wf/... paths
@@ -4159,10 +4160,12 @@
     return [cxOf(i) - side / 2, cyOf(i) - side / 2, side, side];
   }
   // The picture is one picture behind both shapes, so it is scaled to the box that covers both.
-  const unionSize = () => (IMG.shape2 ? Math.max(sizeOf(1), sizeOf(2)) : IMG.size);
+  // Cut (2 つ目で抜く) の時は見えるのは 1 つ目の中だけなので、絵は 1 つ目に合わせる (2026-09-22)。
+  const cutOn = () => !!(IMG.shape2 && IMG.cut);
+  const unionSize = () => (IMG.shape2 && !cutOn() ? Math.max(sizeOf(1), sizeOf(2)) : IMG.size);
   function unionBox() {
     const a = frameBox(1);
-    if (!IMG.shape2) return a;
+    if (!IMG.shape2 || cutOn()) return a;
     const b = frameBox(2);
     const x0 = Math.min(a[0], b[0]), y0 = Math.min(a[1], b[1]);
     const x1 = Math.max(a[0] + a[2], b[0] + b[2]), y1 = Math.max(a[1] + a[3], b[1] + b[3]);
@@ -4235,7 +4238,14 @@
     else { ctx.rect(bx, by, bw, bh); }
     ctx.restore();
   }
-  const frameShapes = () => IMG.shape2 ? [[IMG.shape, 1], [IMG.shape2, 2]] : [[IMG.shape, 1]];
+  const frameShapes = () => IMG.shape2 && !cutOn() ? [[IMG.shape, 1], [IMG.shape2, 2]] : [[IMG.shape, 1]];
+  // Cut: 1 つ目を描いた後、2 つ目の形の中を透明に抜く (穴には文字盤の背景色が見える)。縁は hardenEdge が形の縁と同じに扱う。
+  function cutSecond(ctx) {
+    if (!cutOn()) return;
+    ctx.save(); ctx.globalCompositeOperation = 'destination-out';
+    framePath(ctx, IMG.shape2, 2); ctx.fillStyle = '#000'; ctx.fill();
+    ctx.restore();
+  }
   // 明るさ (br) と彩度 (sa) は % で持つ。100 = 元のまま。canvas の filter は CSS と同じ式なので、
   // サーバがカメラの面を作り直す時も同じ順序 (明るさ → 彩度) で計算すれば同じ絵になる。
   const brOf = () => (Number.isFinite(IMG.br) ? Math.max(20, Math.min(180, IMG.br)) : 100);
@@ -4290,6 +4300,7 @@
     if (!IMG.cur) {   // color fill: the frame shape(s) in one color, no photo
       ctx.clearRect(0, 0, 320, 320);
       for (const [k, i] of frameShapes()) { ctx.save(); framePath(ctx, k, i); ctx.clip(); ctx.fillStyle = IMG.fill; ctx.fillRect(0, 0, 320, 320); ctx.restore(); }
+      cutSecond(ctx);
       hardenEdge(ctx);
       IMG.masked = imgCv.toDataURL('image/png'); applyStageImage(); IMG.reduced = null; paintQuality(); renderShowToggle(); IMG.dirty = true; $('imgbgrow').hidden = false; scheduleMeasure(); return;
     }
@@ -4298,7 +4309,7 @@
     // The picture may move as long as it still covers the visible part of the frame. For the half
     // shapes that part is only half of the box, so the picture can slide across the hidden half.
     let vx = bx, vy = by, vw = bw, vh = bh;
-    if (IMG.shape === 'half' && !IMG.shape2) {
+    if (IMG.shape === 'half' && (!IMG.shape2 || cutOn())) {
       const r = ((IMG.rot % 360) + 360) % 360;   // only a lone half hides a fixed side of the box
       if (r === 0) vh = bh / 2; else if (r === 180) { vy = by + bh / 2; vh = bh / 2; }
       else if (r === 270) vw = bw / 2; else if (r === 90) { vx = bx + bw / 2; vw = bw / 2; }
@@ -4315,6 +4326,7 @@
       ctx.drawImage(IMG.cur, bx + (bw - dw) / 2 + IMG.panX, by + (bh - dh) / 2 + IMG.panY, dw, dh);
       ctx.restore();
     }
+    cutSecond(ctx);
     applyTone(ctx);                                  // 明るさ・彩度 (実機へ送る絵にも同じ式でかかる)
     hardenEdge(ctx);                                 // 縁の半透明を潰す (実機に透過が無いので輪郭に暗い線が出る)
     IMG.masked = imgCv.toDataURL('image/png');
@@ -4386,6 +4398,11 @@
     $('shapesel').innerHTML = two ? [1, 2].map((i) => `<button type="button" data-i="${i}" class="${IMG.sel === i ? 'on' : ''}">${name(i === 1 ? IMG.shape : IMG.shape2)}${same ? ' ' + i : ''}</button>`).join('')
       + `<button type="button" data-i="3" class="${IMG.sel === 3 ? 'on' : ''}" title="Size, Rotate and dragging the frame act on both shapes">Both</button>` : '';
     if (two) $('shapesel').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { IMG.sel = Number(b.dataset.i); renderShapeSel(); }));
+    // 2 つ目の形の足し方: Add = 2 つを合わせる / Cut = 1 つ目から 2 つ目を抜く (2026-09-22)
+    $('shapeop').innerHTML = two ? [[0, 'Add'], [1, 'Cut']].map(([v, lb]) => `<button type="button" data-v="${v}" class="${cutOn() === !!v ? 'on' : ''}">${lb}</button>`).join('') : '';
+    if (two) $('shapeop').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+      const was = unionSize(); IMG.cut = b.dataset.v === '1'; const r = unionSize() / (was || 100); IMG.panX *= r; IMG.panY *= r;
+      renderShapeSel(); redrawImg(); }));
     $('imgsizewho').textContent = two ? (IMG.sel === 3 ? 'both shapes' : name(IMG.sel === 1 ? IMG.shape : IMG.shape2) + (same ? ' ' + IMG.sel : '')) : '';
     const shown = IMG.sel === 3 ? 1 : IMG.sel;
     $('imgsize').value = sizeOf(shown); $('imgsizev').textContent = sizeOf(shown) + '%';
@@ -4402,7 +4419,7 @@
     const [nk, rot] = normShape(k, IMG.rot); IMG.shape = nk; IMG.rot = rot;
     const had = IMG.shape2;
     IMG.shape2 = (k2 && SHAPES.some(([x]) => x === k2)) ? k2 : null;   // 同じ形を 2 つ重ねてもよい
-    if (!IMG.shape2) { IMG.size2 = null; IMG.rot2 = null; IMG.cx2 = null; IMG.cy2 = null; IMG.sel = 1; }
+    if (!IMG.shape2) { IMG.size2 = null; IMG.rot2 = null; IMG.cx2 = null; IMG.cy2 = null; IMG.sel = 1; IMG.cut = false; }
     else if (!had) {
       IMG.size2 = IMG.size; IMG.cx2 = null; IMG.cy2 = null;
       // 同じ形どうしは重ねただけでは見た目が変わらないので、2 つ目を 45° 回した位置から始める。
@@ -4436,7 +4453,7 @@
   $('imgclear').addEventListener('click', () => {
     clearImgPreview();
     IMG.k = 0; IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; IMG.size = 100; IMG.size2 = null;
-    IMG.cx = 160; IMG.cy = 160; IMG.cx2 = null; IMG.cy2 = null; IMG.rot = 0; IMG.rot2 = null; IMG.shape2 = null;
+    IMG.cx = 160; IMG.cy = 160; IMG.cx2 = null; IMG.cy2 = null; IMG.rot = 0; IMG.rot2 = null; IMG.shape2 = null; IMG.cut = false;
     IMG.br = 100; IMG.sa = 100; IMG.show = true;
     setShape(IMG.shape, null);
     ['imgzoom', 'imgsize', 'imgbr', 'imgsa'].forEach((id) => { const el = $(id); if (el) el.value = id === 'imgzoom' ? '1' : '100'; });
@@ -4614,7 +4631,7 @@
   });
   // ── Draft: image editor state ──
   function imgDraftState() {
-    const base = { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, shape2: IMG.shape2 || null, rot: IMG.rot, rot2: IMG.shape2 ? rotOf(2) : null, size: IMG.size, size2: IMG.shape2 ? sizeOf(2) : null, cx: IMG.cx, cy: IMG.cy, cx2: IMG.shape2 ? cxOf(2) : null, cy2: IMG.shape2 ? cyOf(2) : null, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom,
+    const base = { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, shape2: IMG.shape2 || null, cut: cutOn() ? 1 : null, rot: IMG.rot, rot2: IMG.shape2 ? rotOf(2) : null, size: IMG.size, size2: IMG.shape2 ? sizeOf(2) : null, cx: IMG.cx, cy: IMG.cy, cx2: IMG.shape2 ? cxOf(2) : null, cy2: IMG.shape2 ? cyOf(2) : null, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom,
                    colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, br: brOf(), sa: saOf(), src: IMG.src };
     if (IMG.fill && !IMG.cur) return base;
     if (!IMG.cur) return Object.assign(base, { none: true });
@@ -4629,6 +4646,7 @@
     if (!d || typeof d !== 'object') return;
     const [nk, rot] = normShape(d.shape, Number.isFinite(d.rot) ? d.rot : null);
     IMG.rot = ((Math.round(rot / 45) * 45) % 360 + 360) % 360; setShape(nk, d.shape2 || null);
+    IMG.cut = !!(IMG.shape2 && (d.cut === 1 || d.cut === true));   // 旧データ (cut 無し) は Add
     IMG.size = Math.max(30, Math.min(100, Number(d.size) || 100));
     IMG.size2 = IMG.shape2 && Number.isFinite(Number(d.size2)) ? Math.max(30, Math.min(100, Number(d.size2))) : null;
     IMG.rot2 = IMG.shape2 && Number.isFinite(Number(d.rot2)) ? ((Math.round(Number(d.rot2) / 45) * 45) % 360 + 360) % 360 : null;

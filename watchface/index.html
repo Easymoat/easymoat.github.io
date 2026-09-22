@@ -378,7 +378,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-22 02:03</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-22 12:49</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -402,6 +402,7 @@
         <button class="btn" id="tofulled" title="Show the whole editor on this screen">Editor</button>
       </div>
       <div class="status" id="watchseen2"></div>
+      <div class="muted" id="passnote2"></div>
     </div>
   </div>
   <aside class="left">
@@ -3845,6 +3846,7 @@
       } else if (j.enforced) html = `Free for 7 days from your first save, then the 1-Year Pass ($9.99, one payment, no subscription).${buyLink('Get the Pass')}`;
       else html = 'Everything is free for now. When the Pass goes on sale, you get 7 free days from your first save.' + buyLink('Get the Pass');
       note.innerHTML = html; note.className = cls ? 'status ' + cls : 'muted';
+      const n2 = $('passnote2'); if (n2) { n2.innerHTML = html; n2.className = cls ? 'status ' + cls : 'muted'; }   // スマホ表示用 (同じ文言)
       const signedIn = !!tokenFor(id);
       keyrow.hidden = !!j.exempt || !(p && p.active) || signedIn;   // キーは買った人だけ (共有機能のログイン)
       $('passkeynote').hidden = keyrow.hidden;

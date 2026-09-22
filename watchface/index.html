@@ -378,7 +378,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-22 21:52</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-22 22:32</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -497,7 +497,7 @@
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
           <div class="ctl" id="passrow"><span>Pass</span><span id="passnote" class="muted">…</span></div>
           <div class="ctl" id="passkeyrow" hidden><span>Pass key</span><input type="text" id="passkey" placeholder="XXXXX-XXXXX-XXXXX-XXXXX" maxlength="30" spellcheck="false" autocomplete="off" style="width:240px"><button class="btn" id="passuse">Use key</button><span class="status" id="passstatus"></span></div>
-          <div class="ctl" id="passkeynote" hidden><span></span><span class="muted" style="max-width:640px">Your Pass key — needed only to share dials (make or add links). Saving and To watch work without it. Check the email from the purchase. Can't find it? <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a></span></div>
+          <div class="ctl" id="passkeynote" hidden><span></span><span class="muted" style="max-width:640px">Your Pass key — needed only to make share links. Saving and To watch work without it. Check the email from the purchase. Can't find it? <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a></span></div>
           <div class="ctl" id="passinrow" hidden><span>Signed in</span><span class="muted" id="passinnote"></span><button class="btn" id="passout" title="Forget the key on this browser. Saving and To watch keep working.">Sign out</button></div>
           <div class="status" id="watchseen" title="Your watch asks the server for a new dial about every 5 minutes. This line says when it last asked, and whether it already has the dial you sent."></div>
       </div>
@@ -3872,7 +3872,7 @@
       keyrow.hidden = !!j.exempt || !(p && p.active) || signedIn;   // キーは買った人だけ (共有機能のログイン)
       $('passkeynote').hidden = keyrow.hidden;
       $('passinrow').hidden = !signedIn;
-      if (signedIn) $('passinnote').textContent = `${id} — you can make and add share links on this browser.`;
+      if (signedIn) $('passinnote').textContent = `${id} — you can make share links on this browser.`;
     } catch (e) { note.textContent = ''; }
   }
   $('passout').addEventListener('click', () => {
@@ -3970,6 +3970,10 @@
         body: JSON.stringify({ device_id: id, n, by: AUTHOR, dev: (DEVICES[st.dev] || {}).name || '', devk: st.dev }) });
       const j = await r.json();
       if (r.status === 402) { loadAccess(); throw new Error(payMsg(j)); }
+      // リンクを作れるのは Pass の持ち主だけ (受け取りはトライアル中も可、2026-09-22)
+      if (j.error === 'login_required') { PASS.url = j.buy_url || PASS.url;
+        throw new Error(PASS.st && PASS.st.pass && PASS.st.pass.active ? 'enter your Pass key in 5 Watch to make links on this browser'
+          : 'making links comes with the 1-Year Pass. Opening and adding links others send you works during the trial too'); }
       if (!r.ok || !j.ok) throw new Error(j.error === 'share_full' ? `you already have ${j.max} links — remove one first`
         : j.error === 'need_author' ? 'put your name in "Shared as" below first' : (j.error || r.status));
       const link = location.origin + location.pathname + '?s=' + j.code;

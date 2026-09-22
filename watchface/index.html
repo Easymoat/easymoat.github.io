@@ -206,10 +206,10 @@
   .cb.units button.on { background: var(--ok); border-color: var(--ok); color: #05170c; }
   .cb.units.dpad { display: inline-grid; grid-template-columns: repeat(3, 30px); grid-template-rows: repeat(2, auto); gap: 3px; }
   .cb.units.dpad button { min-width: 30px; padding: 3px 0; text-align: center; }
-  .cb.units.dpad button[data-d="up"]    { grid-area: 1 / 2; }
-  .cb.units.dpad button[data-d="left"]  { grid-area: 2 / 1; }
-  .cb.units.dpad button[data-d="down"]  { grid-area: 2 / 2; }
-  .cb.units.dpad button[data-d="right"] { grid-area: 2 / 3; }
+  .cb.units.dpad button[data-d="up"],    .cb.units.dpad button[data-f="up"]    { grid-area: 1 / 2; }
+  .cb.units.dpad button[data-d="left"],  .cb.units.dpad button[data-f="left"]  { grid-area: 2 / 1; }
+  .cb.units.dpad button[data-d="down"],  .cb.units.dpad button[data-f="down"]  { grid-area: 2 / 2; }
+  .cb.units.dpad button[data-d="right"], .cb.units.dpad button[data-f="right"] { grid-area: 2 / 3; }
   .cb.units.step { align-items: center; }
   .cb.units.step button { min-width: 28px; padding: 3px 0; text-align: center; }
   .cb.units.step b { min-width: 42px; text-align: center; font-weight: 600; }
@@ -378,7 +378,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-22 21:28</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-22 21:29</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>

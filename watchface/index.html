@@ -378,7 +378,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 00:40</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 01:03</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3801,14 +3801,19 @@
     const cur = WSLOTS.faces[String(WSLOTS.active || 1)] || WSLOTS.faces['1'] || null;
     document.querySelectorAll('.shelf .item').forEach((d) => {
       const on = !!(cur && Number(cur.shelf) === Number(d.dataset.n));
+      // 出ている品を上書きした後は、実機がまだ古い写しを持っている。
+      // 送った時の保存時刻 (sts) と今の保存時刻を比べて「Update watch」に変える (2026-09-26)。
+      const item = (SHELF.items || []).find((x) => Number(x.n) === Number(d.dataset.n));
+      const stale = on && !!(item && cur && Number(cur.sts) && Number(item.ts) > Number(cur.sts));
       const b = d.querySelector('[data-a="send"]');
       if (b) {
-        b.textContent = on ? 'Showing' : ('To watch ' + (devId() || '—'));   // 送り先を取り違えないよう ID をボタンに出す
-        b.classList.toggle('primary', !on);
-        b.classList.toggle('toggle', on);
-        b.classList.toggle('on', on);
-        b.disabled = on;
-        b.title = on ? 'This is the dial your watch shows' : 'Make this the dial your watch shows';
+        b.textContent = stale ? 'Update watch' : on ? 'Showing' : ('To watch ' + (devId() || '—'));   // 送り先を取り違えないよう ID をボタンに出す
+        b.classList.toggle('primary', !on || stale);
+        b.classList.toggle('toggle', on && !stale);
+        b.classList.toggle('on', on && !stale);
+        b.disabled = on && !stale;
+        b.title = stale ? 'You changed this dial after sending it — send the new one to the watch'
+          : on ? 'This is the dial your watch shows' : 'Make this the dial your watch shows';
       }
       const el = d.querySelector('.onw'); if (el) el.textContent = '';
       d.classList.toggle('onwatch', on);
@@ -3847,7 +3852,7 @@
       const parked = (st.park || []).length ? ` — ${st.park.length} parked ${st.park.length === 1 ? 'part is' : 'parts are'} not in it` : '';
       const note = (hasImg ? '' : (hasSource() ? ' (saved without the picture — Show is off)' : ' (no picture)')) + parked;
       EDIT_N = j.n; EDIT_ITEM_NAME = body.name || '';   // 保存したらその品を編集中あつかい
-      setStatus('shelfstatus', `${j.replaced ? 'Saved over' : 'Saved as'} ${body.name || 'item ' + j.n}${note}${j.replaced ? ' — the watch keeps the copy it already has until you send this one.' : ' — use "To watch…" on it to put it on the watch.'}`, hasImg ? 'ok' : 'warn');
+      setStatus('shelfstatus', `${j.replaced ? 'Saved over' : 'Saved as'} ${body.name || 'item ' + j.n}${note}${j.replaced ? ' — the watch still has the old copy: send this one to it again.' : ' — use "To watch…" on it to put it on the watch.'}`, hasImg ? 'ok' : 'warn');
       loadShelf(); }
     catch (e) { setStatus('shelfstatus', 'Save failed: ' + e.message, 'err'); }
   });
@@ -4111,7 +4116,7 @@
       const j = await r.json(); if (r.status === 402) { loadAccess(); throw new Error(payMsg(j)); }
       if (!r.ok || !j.ok) throw new Error(j.error || r.status);
       setStatus('syncstatus', `Your watch now shows "${name}". It arrives within 5 minutes.`, 'ok');
-      WSLOTS.active = 1; WSLOTS.faces = { '1': { v: j.v, shelf: n, kind: it.kind || 'none' } }; markShelfOnWatch();
+      WSLOTS.active = 1; WSLOTS.faces = { '1': { v: j.v, shelf: n, kind: it.kind || 'none', sts: it.ts || 0 } }; markShelfOnWatch();
       loadWatchSlots(); loadWatchState();
     } catch (e) { setStatus('syncstatus', 'Send failed: ' + e.message, 'err'); }
   }

@@ -378,7 +378,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-25 06:45</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-25 12:53</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2179,7 +2179,10 @@
         ? `<span style="display:inline-block;text-shadow:none;transform:translateX(${(bo / 2).toFixed(1)}px) scale(${Math.sqrt(1 + bo / (0.10 * px)).toFixed(3)})">:</span>` : null;
       const sampleHtml = isCrew(t) ? crewLines(e).join('<br>')       // Crew は行を積む (行の高さ = 文字の高さ)
         : colonHtml ? String(sample).split(':').join(colonHtml) : sample;
-      const val = showVal ? `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px${bo ? `;padding-right:${bo}px` : ''}${vGap ? `;margin-top:${vGap.toFixed(1)}px` : ''}">${sampleHtml}</span>` : '';
+      // Crew は行を積む。実機の行の送りは :size の px そのもの (行間を足さない) なので、
+      // 行の高さも px に固定する (CSS の既定だと font-size × 1.17 になり実機より広がる、2026-09-25)。
+      const crewLH = isCrew(t) ? `;line-height:${px}px;display:inline-block;text-align:${e[3] === 1 ? 'left' : e[3] === 2 ? 'right' : 'center'}` : '';
+      const val = showVal ? `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px${crewLH}${bo ? `;padding-right:${bo}px` : ''}${vGap ? `;margin-top:${vGap.toFixed(1)}px` : ''}">${sampleHtml}</span>` : '';
       let ic2 = icon;
       if (lay === 2) {
         div.style.flexDirection = 'column';

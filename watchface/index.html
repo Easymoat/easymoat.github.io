@@ -378,7 +378,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-25 12:53</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 00:40</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -663,7 +663,7 @@
     44: { name: 'Analog',      grp: 'clock', analog: true },
     // Crew (2026-09-25): PulseLink の家族との距離。1 行 = 名前 + 距離 + 最後に届いてからの分。
     // 中身は実機が PulseLink から直に受け取る (サーバは通らない)。行数は el の 9 番目。
-    47: { name: 'Crew',        grp: 'crew',  sample: 'Rina 1.2km 3m', icon: null, iw: 0, crew: true },
+    47: { name: 'Crew',        grp: 'crew',  sample: 'Ema 1.2km 3m', icon: null, iw: 0, crew: true },
     45: { name: 'Text',        grp: 'text',  sample: 'TEXT',   icon: null,        iw: 0, text: true },   // 自分で書いた文字 (2026-09-21)
     46: { name: 'Text (picture)', grp: 'text', sample: 'TEXT',  icon: null,        iw: 0, text: true, hidden: true },   // 実機へ送る形。読み込む時に 45 へ戻す
     // 50-54 / 60-64 = whole-dial parts: they sit at the centre, cover the dial and are not moved.
@@ -909,7 +909,7 @@
   const isText = (t) => !!(TYPES[t] && TYPES[t].text);
   const isCrew = (t) => !!(TYPES[t] && TYPES[t].crew);
   const crewRows = (e) => { const v = Number(e[8]); return (v === 1 || v === 2 || v === 3) ? v : 3; };
-  const CREW_SAMPLE = ['Rina 1.2km 3m', 'Ken 850m 1m', '--'];
+  const CREW_SAMPLE = ['Ema 1.2km 3m', 'Ken 850m 1m', '--'];
   const crewLines = (e) => CREW_SAMPLE.slice(0, crewRows(e));
   const TT_MAX = 8, TT_LEN = 20;
   // 打てる字に制限は無い。英数字だけならベクターフォントで即時に出て、

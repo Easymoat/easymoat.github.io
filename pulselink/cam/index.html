@@ -129,6 +129,7 @@
   <a href="../delete/" data-en="🗑️ Delete my data" data-ja="🗑️ データ削除">🗑️ Delete my data</a>
   <a class="all" href="../tools/" data-en="All web tools →" data-ja="Web ツール一覧 →">All web tools →</a>
 </div>
+<script src="../pl-auth.js" data-kind="cam"></script>
 <script>
 const API = 'https://mlbwatch-server.onrender.com/api/pulselink';
 const CAM_SLOT = 6;
@@ -182,8 +183,8 @@ function onAuthLost() {
   const box = document.getElementById('camAlert');
   if (box) {
     box.innerHTML = '<div class="alert error"><b>'
-      + (ja() ? 'このウォッチではカメラを使えません。撮影を停止します。'
-              : 'This watch is not entitled to the camera. Capture has stopped.')
+      + (ja() ? 'サインインが切れました。撮影を停止します。もう一度サインインしてください。'
+              : 'You have been signed out. Capture has stopped. Please sign in again.')
       + '</b></div>';
   }
   disconnectDevice();
@@ -191,6 +192,7 @@ function onAuthLost() {
 
 function disconnectDevice() {
   devId = null;
+  plAuth.clear();
   try { localStorage.removeItem('pl_devid'); } catch (e) {}
   stopCamera();
   document.getElementById('devForm').style.display = '';
@@ -212,6 +214,16 @@ function enterConnected() {
   try {
     const r = await fetch(withDev(API + '/user/me'));
     if (r.ok) { enterConnected(); }
+    else if (await plAuth.needsCode(r)) {
+      // 登録済みのウォッチでトークンが切れた / 取り消された → Device ID は残してコードだけ聞く。
+      plAuth.clear();
+      const saved = devId;
+      devId = null;
+      document.getElementById('devid').value = saved;
+      await plAuth.askCode(document.getElementById('devAlert'), saved, ja());
+      devId = saved;
+      enterConnected();
+    }
     else { devId = null; try { localStorage.removeItem('pl_devid'); } catch (e) {} }
   } catch (e) { /* 通信不能時は保存値を残したまま入力画面を出す */ }
 })();
@@ -234,7 +246,13 @@ document.getElementById('devBtn').addEventListener('click', async function () {
   }
   btn.disabled = true;
   try {
-    const r = await fetch(API + '/user/me?device_id=' + encodeURIComponent(v));
+    let r = await fetch(API + '/user/me?device_id=' + encodeURIComponent(v));
+    // 登録済みのウォッチは Device ID だけでは入れない → ウォッチの Web code を聞いてから取り直す。
+    if (await plAuth.needsCode(r)) {
+      plAuth.clear();
+      await plAuth.askCode(box, v, ja());
+      r = await fetch(API + '/user/me?device_id=' + encodeURIComponent(v));
+    }
     if (!r.ok) { throw new Error('http_' + r.status); }
     // カメラは有料機能。ただしトライアル未使用ならここから始められる。
     // 以前は「ウォッチで Link up を開いてトライアルを始めてください」と案内していたが、

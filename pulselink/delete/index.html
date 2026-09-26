@@ -91,6 +91,7 @@
 </div>
 <footer>© 2026 Easymoat</footer>
 
+<script src="../pl-auth.js" data-kind="web"></script>
 <script>
 const API = 'https://mlbwatch-server.onrender.com/api/pulselink';
 function ja() { return document.documentElement.lang === 'ja'; }
@@ -126,11 +127,18 @@ document.getElementById('delBtn').addEventListener('click', async function () {
   if (!ok) { return; }
   btn.disabled = true;
   try {
-    const r = await fetch(API + '/user/delete', {
+    const del = () => fetch(API + '/user/delete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ device_id: v })
     });
+    let r = await del();
+    // 登録済みのウォッチは Device ID だけでは消せない (他人に消されないため) → Web code を聞く。
+    if (await plAuth.needsCode(r)) {
+      plAuth.clear();
+      await plAuth.askCode(box, v, ja());
+      r = await del();
+    }
     if (r.status === 404) {
       box.innerHTML = '<div class="alert success">' + (ja()
         ? 'この Device ID のデータはサーバにありません。すでに何も残っていません。'
@@ -140,6 +148,7 @@ document.getElementById('delBtn').addEventListener('click', async function () {
     if (!r.ok) { throw new Error('http_' + r.status); }
     // 端末に残っているサインイン状態も消す (画像/カメラページと共有している値)。
     try { localStorage.removeItem('pl_devid'); } catch (e) {}
+    plAuth.clearAll();
     box.innerHTML = '<div class="alert success">' + (ja()
       ? 'すべて削除しました。'
       : 'Everything has been deleted.') + '</div>';

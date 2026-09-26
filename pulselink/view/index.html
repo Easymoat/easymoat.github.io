@@ -170,6 +170,7 @@
   <a href="../delete/" data-en="🗑️ Delete my data" data-ja="🗑️ データ削除">🗑️ Delete my data</a>
   <a class="all" href="../tools/" data-en="All web tools →" data-ja="Web ツール一覧 →">All web tools →</a>
 </div>
+<script src="../pl-auth.js" data-kind="web"></script>
 <script>
 const API = 'https://mlbwatch-server.onrender.com/api/pulselink';
 const CAM_SLOT = 6;
@@ -212,6 +213,7 @@ function enterConnected() {
 }
 function disconnectDevice() {
   devId = null;
+  plAuth.clear();
   try { localStorage.removeItem('pl_devid'); } catch (e) {}
   mode = null;
   if (pollTimer) { try { clearInterval(pollTimer); } catch (e) {} pollTimer = null; }
@@ -227,6 +229,16 @@ function disconnectDevice() {
   try {
     const r = await fetch(withDev(API + '/user/me'));
     if (r.ok) { enterConnected(); }
+    else if (await plAuth.needsCode(r)) {
+      // 登録済みのウォッチでトークンが切れた / 取り消された → Device ID は残してコードだけ聞く。
+      plAuth.clear();
+      const saved = devId;
+      devId = null;
+      document.getElementById('devid').value = saved;
+      await plAuth.askCode(document.getElementById('devAlert'), saved, ja());
+      devId = saved;
+      enterConnected();
+    }
     else { devId = null; try { localStorage.removeItem('pl_devid'); } catch (e) {} }
   } catch (e) {}
 })();
@@ -247,7 +259,13 @@ document.getElementById('devBtn').addEventListener('click', async function () {
   }
   btn.disabled = true;
   try {
-    const r = await fetch(API + '/user/me?device_id=' + encodeURIComponent(v));
+    let r = await fetch(API + '/user/me?device_id=' + encodeURIComponent(v));
+    // 登録済みのウォッチは Device ID だけでは入れない → ウォッチの Web code を聞いてから取り直す。
+    if (await plAuth.needsCode(r)) {
+      plAuth.clear();
+      await plAuth.askCode(box, v, ja());
+      r = await fetch(API + '/user/me?device_id=' + encodeURIComponent(v));
+    }
     if (!r.ok) { throw new Error('http_' + r.status); }
     // カメラは有料機能。ただしトライアル未使用ならここから始められる。
     // 以前は「ウォッチで Link up を開いてトライアルを始めてください」と案内していたが、
@@ -313,8 +331,8 @@ function onAuthLost() {
   const el = document.getElementById('metaLine');
   if (el) {
     el.innerHTML = '<b style="color:#DC2626;">'
-      + (ja() ? 'このウォッチではカメラを使えません。もう一度サインインしてください。'
-              : 'This watch is not entitled to the camera. Please sign in again.') + '</b>';
+      + (ja() ? 'サインインが切れました。もう一度サインインしてください。'
+              : 'You have been signed out. Please sign in again.') + '</b>';
   }
   disconnectDevice();
 }
@@ -325,6 +343,7 @@ async function initSource() {
     if (r.status === 401) { onAuthLost(); return; }
     if (!r.ok) return;
     const j = await r.json();
+    imgT = j.img_t || '';
     if (j.image_slots && j.image_slots['6'] === true) {
       mode = 'own';
       camUid = j.user_id;
@@ -348,10 +367,25 @@ async function initSource() {
   } catch (e) {}
 }
 
+// 画像の短期トークン (/user/me の img_t、48 時間)。切れて表示に失敗したら 1 回だけ取り直す。
+let imgT = '';
+let imgRetryAt = 0;
+async function refreshImgT() {
+  try {
+    const r = await fetch(withDev(API + '/user/me'), { headers: authHeaders() });
+    if (r.ok) { const j = await r.json(); imgT = j.img_t || ''; }
+  } catch (e) {}
+}
+document.getElementById('camImg').addEventListener('error', async function () {
+  if (Date.now() - imgRetryAt < 60000) return;
+  imgRetryAt = Date.now();
+  await refreshImgT();
+  updateImg();
+});
 function updateImg() {
   if (!camUid) return;
   document.getElementById('camImg').src =
-    API + '/compass-image/' + camUid + '_s' + CAM_SLOT + '.png?v=' + camVer;
+    API + '/compass-image/' + camUid + '_s' + CAM_SLOT + '.png?v=' + camVer + plAuth.imgParam(imgT, false);
   renderMeta();
 }
 
@@ -374,6 +408,7 @@ async function pollCrew() {
     const r = await fetch(withDev(API + '/user/me'), { headers: authHeaders() });
     if (!r.ok) return;
     const j = await r.json();
+    if (j.img_t) { imgT = j.img_t; }
     if (j.crew_camera === true && j.crew_camera_version !== camVer) {
       camVer = j.crew_camera_version;
       updateImg();

@@ -233,6 +233,7 @@
 <footer>© 2026 Easymoat</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/rgbquant@1.1.2/src/rgbquant.js"></script>
+<script src="../pl-auth.js" data-kind="web"></script>
 <script>
 const API = 'https://mlbwatch-server.onrender.com/api/pulselink';
 // ───── 認証は Device ID のみ (アカウントは 2026-08-29 に全廃) ─────
@@ -313,6 +314,7 @@ function enterConnected() {
   loadSlots();
 }
 function disconnectDevice() {
+  plAuth.clear();
   devId = null;
   try { localStorage.removeItem('pl_devid'); } catch (e) {}
   document.getElementById('devForm').style.display = '';
@@ -338,7 +340,13 @@ document.getElementById('devBtn').addEventListener('click', async function () {
   }
   btn.disabled = true;
   try {
-    const r = await fetch(API + '/user/me?device_id=' + encodeURIComponent(v));
+    let r = await fetch(API + '/user/me?device_id=' + encodeURIComponent(v));
+    // 登録済みのウォッチは Device ID だけでは入れない → ウォッチの Web code を聞いてから取り直す。
+    if (await plAuth.needsCode(r)) {
+      plAuth.clear();
+      await plAuth.askCode(box, v, jaNow);
+      r = await fetch(API + '/user/me?device_id=' + encodeURIComponent(v));
+    }
     if (r.status === 403) {
       box.innerHTML = '<div class="alert error">' + (jaNow
         ? 'このウォッチでは画像機能を使えません。ウォッチで Link up を開き、トライアルを始めるか購入してください。'
@@ -361,6 +369,16 @@ document.getElementById('devBtn').addEventListener('click', async function () {
   try {
     const r = await fetch(withDev(API + '/user/me'));
     if (r.ok) { enterConnected(); }
+    else if (await plAuth.needsCode(r)) {
+      // 登録済みのウォッチでトークンが切れた / 取り消された → Device ID は残してコードだけ聞く。
+      plAuth.clear();
+      const saved = devId;
+      devId = null;
+      document.getElementById('devid').value = saved;
+      await plAuth.askCode(document.getElementById('devAlert'), saved, document.documentElement.lang === 'ja');
+      devId = saved;
+      enterConnected();
+    }
     else { devId = null; try { localStorage.removeItem('pl_devid'); } catch (e) {} }
   } catch (e) {}
 })();
@@ -503,7 +521,7 @@ async function loadSlotImage(n) {
   note.textContent = ja ? 'スロット ' + n + ' の画像を読み込み中…' : 'Loading image in slot ' + n + '…';
   try {
     const meta = slotState.meta[String(n)] || {};
-    const url = API + '/compass-image/' + slotState.uid + '_s' + n + '.png?t=' + Date.now();
+    const url = API + '/compass-image/' + slotState.uid + '_s' + n + '.png?t=' + Date.now() + plAuth.imgParam(slotState.imgT, false);
     const r = await fetch(url);
     if (!r.ok) throw new Error('http_' + r.status);
     const blob = await r.blob();
@@ -632,6 +650,7 @@ async function loadSlots() {
     slotState.active = Number(me.image_active_slot || 1);
     slotState.meta = me.image_slot_meta || {};
     slotState.uid = me.user_id || '';
+    slotState.imgT = me.img_t || '';
     renderSlots();
   } catch (e) {}
 }

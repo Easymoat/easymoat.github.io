@@ -236,7 +236,8 @@ document.getElementById('devBtn').addEventListener('click', async function () {
   const btn = document.getElementById('devBtn');
   box.innerHTML = '';
   // 入力ゆれを吸収: 大文字化し、ハイフンが無ければ 4桁目に補う (ウォッチ表示は XXXX-XXXX)。
-  let v = (document.getElementById('devid').value || '').trim().toUpperCase().replace(/\s/g, '');
+  // 全角英数字・全角ハイフンも受ける (日本語入力のまま打たれても通るように)。
+  let v = plAuth.normDeviceId(document.getElementById('devid').value || '');
   if (/^[0-9A-Z]{8}$/.test(v)) { v = v.slice(0, 4) + '-' + v.slice(4); }
   if (!/^[0-9A-Z]{4}-[0-9A-Z]{4}$/.test(v)) {
     box.innerHTML = '<div class="alert error">' + (ja()

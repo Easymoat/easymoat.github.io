@@ -37,6 +37,19 @@
     catch (e) { return false; }
   }
 
+  // 日本語入力のまま打たれた全角を半角に (全角英数字・記号 U+FF01-FF5E)。
+  // \D だけで数字以外を消すと、全角の １２３ が丸ごと消えて「コードが違う」になっていた (2026-09-26)。
+  function toHalf(s) {
+    return String(s == null ? '' : s).replace(/[\uFF01-\uFF5E]/g, function (c) {
+      return String.fromCharCode(c.charCodeAt(0) - 0xFEE0);
+    });
+  }
+  function toDigits(s) { return toHalf(s).replace(/\D/g, '').slice(0, 6); }
+  // Device ID (XXXX-XXXX): 全角英数字を半角に、ハイフンに見える字 (－ ー ‐ – — − ｰ) を - に、空白を除いて大文字に。
+  function normDeviceId(s) {
+    return toHalf(s).replace(/[\u2010-\u2015\u2212\u30FC\uFF70]/g, '-').replace(/\s/g, '').toUpperCase();
+  }
+
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
 
   // box の中にコード欄を出し、正しいコードでトークンを得たら true で解決する。
@@ -62,7 +75,7 @@
       var msg = document.getElementById('plCodeMsg');
       try { inp.focus(); } catch (e) {}
       async function submit() {
-        var code = (inp.value || '').replace(/\D/g, '');
+        var code = toDigits(inp.value || '');
         if (code.length !== 6) { msg.textContent = t.bad; return; }
         btn.disabled = true; msg.textContent = '';
         try {
@@ -88,6 +101,8 @@
     clear: function () { setTok(null); },
     clearAll: function () { try { localStorage.removeItem('pl_tok_web'); localStorage.removeItem('pl_tok_cam'); } catch (e) {} },
     needsCode: needsCode,
+    normDeviceId: normDeviceId,
+    toDigits: toDigits,
     askCode: askCode,
     // 画像 URL に付ける短期トークン (/user/me の img_t)。無ければ空文字。
     imgParam: function (imgT, first) { return imgT ? ((first ? '?' : '&') + 'it=' + encodeURIComponent(imgT)) : ''; }

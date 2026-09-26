@@ -378,7 +378,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 09:00</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 09:14</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1170,6 +1170,27 @@
     return (Number.isFinite(v) && v >= 0 && v <= RIM_INSET.max) ? Math.round(v) : (rimInner(e) ? RIM_INSET.def : 0); };
   // 数字の縁 (62) の出し方: 0 = 12 3 6 9 / 1 = 1〜12 全部 / 2 = ローマ数字。8 番目に持つ。
   const rimNum = (e) => { const v = Number(e[8]); return (v === 1 || v === 2) ? v : 0; };
+  // メーターの指標・色・表示。昔は面ごとに 1 組だけだったので、Meter の縁を 2 つ置くと
+  // 片方を変えるともう片方も変わっていた。部品ごとに持てるようにする (2026-09-26)。
+  //   el[10] = st.ms の何番目か。持たない部品は面の mt/mc/mk/mv を使う (昔の面はこのまま)。
+  const MS_MAX = 4;
+  const msFace = () => ({ mt: (st.mt || [0, 0, 0, 0]).slice(), mc: (st.mc || [-1, -1, -1, -1]).slice(),
+                          mk: (st.mk || [-1, -1, -1, -1]).slice(), mv: (st.mv || [1, 1, 1, 1]).slice() });
+  const msIdx = (e) => { const v = Number(e[10]); return (Number.isInteger(v) && v >= 0 && v < MS_MAX && (st.ms || [])[v]) ? v : -1; };
+  const msOf = (e) => { const i = msIdx(e); return i >= 0 ? st.ms[i] : msFace(); };
+  function msOwn(e) {            // この部品だけの組を用意する (無ければ今の値を写して作る)
+    let i = msIdx(e);
+    if (i < 0) {
+      const cur = msOf(e);
+      st.ms = (st.ms || []).slice();
+      i = Math.min(st.ms.length, MS_MAX - 1);
+      st.ms[i] = { mt: cur.mt.slice(), mc: cur.mc.slice(), mk: cur.mk.slice(), mv: cur.mv.slice() };
+      rimGrow(e); while (e.length < 11) e.push(0); e[10] = i;
+    } else { st.ms = st.ms.slice(); st.ms[i] = { mt: st.ms[i].mt.slice(), mc: st.ms[i].mc.slice(), mk: st.ms[i].mk.slice(), mv: st.ms[i].mv.slice() }; }
+    return st.ms[i];
+  }
+  const msRead = (a) => (Array.isArray(a) ? a : []).slice(0, MS_MAX).filter((x) => Array.isArray(x) && x.length === 16)
+    .map((x) => ({ mt: x.slice(0, 4).map(Number), mc: x.slice(4, 8).map(Number), mk: x.slice(8, 12).map(Number), mv: x.slice(12).map(Number) }));
   const rimGrow = (e) => { const ins = rimInset(e), nm = rimNum(e); while (e.length < 10) e.push(e.length === 8 ? nm : ins); };
   function rectLines(e) {
     const [, x, y, , s, c, f] = e, w = rectW(e), h = rectH(e), d = dev();
@@ -1354,7 +1375,7 @@
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
-  let st = { dev: 'fr965', hr: [], sc: [], hc: [], grid: 50, showGrid: true, gridBright: false, selBright: true, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], stk: ['', ''], stn: ['', ''], uc: 0, bb: [null, null, null, null], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
+  let st = { dev: 'fr965', hr: [], sc: [], hc: [], grid: 50, showGrid: true, gridBright: false, selBright: true, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], ms: [], stk: ['', ''], stn: ['', ''], uc: 0, bb: [null, null, null, null], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
   // Selection: `sel` is the primary (last clicked) element, `selSet` every selected index.
   // Shift / Cmd / Ctrl + click adds or removes one; the Selected panel, dragging, arrows and
   // Delete act on all of them.
@@ -1808,10 +1829,11 @@
     return { R, hands, rim, svgFor, analogArt };
   })();
   // One dial part as an <svg> that fills the dial; color comes from the element (currentColor).
-  function dialArt(t, s, w, h, col, inset, lenPct, rimIn, numMode) {
+  function dialArt(t, s, w, h, col, inset, lenPct, rimIn, numMode, ms) {
     const k0 = DIAL_SCALE[Math.min(Math.max(s, 0), 3)];
     const k = (lenPct && lenPct !== 100) || rimIn != null ? { l: k0.l * ((lenPct || 100) / 100), w: k0.w, rim: rimIn } : k0;
-    const inner = DIAL.svgFor(t, k, st.mt, st.mc, col, st.mk, st.mv, inset, numMode);
+    const m = ms || msFace();   // 部品ごとのメーターの組 (無い時は面の組)
+    const inner = DIAL.svgFor(t, k, m.mt, m.mc, col, m.mk, m.mv, inset, numMode);
     if (!inner) return '';
     return `<svg width="${w}" height="${h}" viewBox="0 0 454 454" fill="currentColor" style="display:block">${inner}</svg>`;
   }
@@ -2035,14 +2057,14 @@
                     || ((isStock(t) && (f & 8)) ? (stkInfo(t) ? (stkInfo(t).u < 0 ? downCol() : stkInfo(t).u > 0 ? upCol() : colOf(c)) : upCol())
                       : (isBall(t) && (f & 8)) ? gameColor(t, colOf(c))      // 実データの状態の色 (取れるまでは表の青)
                       : colOf(c));
-    if (def.dial && ARCSET[t] && (st.mt || []).includes(10) && hrCol()) div.style.color = hrBandCol();   // 縁のメーターも心拍で色分け
+    if (def.dial && ARCSET[t] && msOf(e).mt.includes(10) && hrCol()) div.style.color = hrBandCol();   // 縁のメーターも心拍で色分け
     if (def.dial) {   // hands / rim: one drawing over the whole dial, color from the element
       // 画面全体を覆うので、当たり判定は「描かれた線の上」だけにする。板のまま置くと
       // 下の部品が選べず、写真のドラッグも拾えなくなる (2026-09-12 の不具合)。
       const dv = dev();
       div.classList.add('dialpart');
       div.style.width = dv.w + 'px'; div.style.height = dv.h + 'px';
-      div.innerHTML = dialArt(t, s, dv.w, dv.h, colOf(c), rimInset(e), isHands(t) ? handLen(e) : 100, isRimMarks(t) ? markInset(e) : null, rimNum(e)) + '<span class="anchor"></span>';
+      div.innerHTML = dialArt(t, s, dv.w, dv.h, colOf(c), rimInset(e), isHands(t) ? handLen(e) : 100, isRimMarks(t) ? markInset(e) : null, rimNum(e), msOf(e)) + '<span class="anchor"></span>';
       div.addEventListener('pointerdown', (ev) => startMove(ev, i));
       return div;
     }
@@ -2257,7 +2279,7 @@
       if (!(TYPES[e[0]] && TYPES[e[0]].grp === 'rim')) return;
       const d = stage.querySelector(`.el[data-i="${i}"]`); if (!d) return;
       const svg = d.querySelector('svg'); if (!svg) return;
-      svg.outerHTML = dialArt(e[0], e[4], dv.w, dv.h, colOf(e[5]), rimInset(e), 100, null, rimNum(e));
+      svg.outerHTML = dialArt(e[0], e[4], dv.w, dv.h, colOf(e[5]), rimInset(e), 100, null, rimNum(e), msOf(e));
     });
   }
   function dialFields() {
@@ -2267,7 +2289,8 @@
       const h = DIAL.hands(e[0], isHands(e[0]) ? { l: k.l * handLen(e) / 100, w: k.w, rim: isRimMarks(e[0]) ? markInset(e) : null } : k);
       // 針の中心は動かせる (2026-09-20 ユーザー指示)。盤の真ん中以外に置いた時だけ hp = [x‰, y‰] を送る。
       if (h && !out.hd) { out.hd = h; if (e[1] !== 500 || e[2] !== 500) out.hp = [e[1], e[2]]; continue; }
-      const r = DIAL.rim(e[0], k, st.mt, st.mc, st.mk, st.mv, rimInset(e), rimNum(e));
+      const ms0 = msOf(e);
+      const r = DIAL.rim(e[0], k, ms0.mt, ms0.mc, ms0.mk, ms0.mv, rimInset(e), rimNum(e));
       // 縁は 2 つまで重ねられるので、原型ごとにその部品の色 (rc) と「何番目の縁の行のものか」(ro) を添える。
       // ro があると、実機は i 番目の縁の行でその番号の原型だけを描く = 縁ごとに前後を変えられる (2026-09-21)。
       if (r) { out.rm = (out.rm || []).concat(r); out.rc = (out.rc || []).concat(r.map(() => e[5]));
@@ -2495,6 +2518,8 @@
     const hcOut = st.hc && String(st.hc) !== String(HC_DEF) ? hcCols() : undefined;
     const o = Object.assign({ bg: st.bg, el: el0, as: as0, hr: hrOut, sc: scOut, hc: hcOut, pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined, mc: (st.mc || []).some((c) => c >= 0) ? st.mc : undefined,
     mk: (st.mk || []).some((c) => c >= 0) ? st.mk : undefined, mv: (st.mv || []).some((v) => v === 0) ? st.mv : undefined,
+    // ms = 部品ごとのメーターの組 (2026-09-26)。1 組 = 指標 4 + 弧の色 4 + 下地の色 4 + 表示 4。
+    ms: (st.ms || []).length ? st.ms.map((m) => m.mt.concat(m.mc, m.mk, m.mv)) : undefined,
     tt: (() => { const n = st.el.filter((x) => isText(x[0])).length; if (!n) return undefined;
       const out = []; for (let i = 0; i < TT_MAX; i++) out.push(ttClean((st.tt || [])[i] || ''));
       while (out.length && out[out.length - 1] === '') out.pop();     // 後ろの空きは送らない
@@ -2858,11 +2883,11 @@
         <div class="field" title="Ticker (AAPL) or the company name as the data provider writes it"><span>Label</span><span class="cb units" id="fstkn"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 16)) ? 'on' : ''}">Symbol</button><button type="button" data-v="16" class="${all.every((x) => (x[6] & 16)) ? 'on' : ''}">Name</button></span></div>
         <div class="field" title="The price turns green when it is up and red when it is down. The symbol or name keeps the color below."><span>Up / down</span><span class="cb units" id="fstkc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep color</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By move</button></span></div>` : ''}
         ${arcEl ? `<div class="field" title="Each arc can be a meter. Pick what it measures; none = plain arc."><span>Meters</span><span class="mts">${
-          ARCSET[arcEl[0]].lbl.map((pos, i) => { const on = (st.mv || [])[i] !== 0; return `<label class="mt${on ? '' : ' off'}"><button type="button" class="mvb${on ? ' on' : ''}" data-i="${i}" title="Show or hide this arc">${pos}</button><select data-i="${i}" ${on ? '' : 'disabled'}>${
-            METERS.map(([id, nm]) => `<option value="${id}" ${(st.mt || [])[i] === id ? 'selected' : ''}>${nm}</option>`).join('')
-          }</select><input type="color" class="pick mtc" data-i="${i}" value="${colOf((st.mc || [])[i] >= 0 ? st.mc[i] : arcEl[5])}" title="Color of the arc itself — right-click to follow the Rim part again"><input type="color" class="pick mtk" data-i="${i}" value="${colOf((st.mk || [])[i] >= 0 ? st.mk[i] : arcEl[5])}" title="Color of the track (the empty part of the arc) — right-click for the automatic faint shade"></label>`; }).join('')
+          ARCSET[arcEl[0]].lbl.map((pos, i) => { const on = msOf(arcEl).mv[i] !== 0; return `<label class="mt${on ? '' : ' off'}"><button type="button" class="mvb${on ? ' on' : ''}" data-i="${i}" title="Show or hide this arc">${pos}</button><select data-i="${i}" ${on ? '' : 'disabled'}>${
+            METERS.map(([id, nm]) => `<option value="${id}" ${msOf(arcEl).mt[i] === id ? 'selected' : ''}>${nm}</option>`).join('')
+          }</select><input type="color" class="pick mtc" data-i="${i}" value="${colOf(msOf(arcEl).mc[i] >= 0 ? msOf(arcEl).mc[i] : arcEl[5])}" title="Color of the arc itself — right-click to follow the Rim part again"><input type="color" class="pick mtk" data-i="${i}" value="${colOf((st.mk || [])[i] >= 0 ? st.mk[i] : arcEl[5])}" title="Color of the track (the empty part of the arc) — right-click for the automatic faint shade"></label>`; }).join('')
         }</span></div>` : ''}
-        ${arcEl && (st.mt || []).includes(10) ? hrRows() : ''}
+        ${arcEl && msOf(arcEl).mt.includes(10) ? hrRows() : ''}
       </div>
       <div class="muted hint">${COLOR_NOTE ? `<span class="status err">${COLOR_NOTE}</span> ` : ''}${none ? '' : multi ? `${all.length} parts selected — Anchor, Size, Icon size, Color and Icon apply to all of them.` : ''}</div>`;
     // 色の入力欄を触っている間は右の欄を作り直さない (作り直すとパネルごと消える)。
@@ -2871,22 +2896,24 @@
       pk.addEventListener('blur', () => { PICK_OPEN = Math.max(0, PICK_OPEN - 1); setTimeout(renderInspector, 0); });
     });
     const bindMeters = () => {
+      // 書き込む先は「選んでいる縁だけの組」。Meter の縁を 2 つ置いても連動しない (2026-09-26)。
+      if (!arcEl) return;
       document.querySelectorAll('.mts select').forEach((sel) => sel.addEventListener('change', () => {
-        const i = Number(sel.dataset.i); st.mt = (st.mt || [0, 0, 0, 0]).slice(); st.mt[i] = Number(sel.value); commit();
+        const i = Number(sel.dataset.i); msOwn(arcEl).mt[i] = Number(sel.value); commit();
       }));
       const pick = (cls, key) => document.querySelectorAll('.mts .' + cls).forEach((pk) => {
         pk.addEventListener('change', () => {
-          const i = Number(pk.dataset.i); st[key] = (st[key] || [-1, -1, -1, -1]).slice(); const ci = pickColor(pk, pk.value); if (ci >= 0) st[key][i] = ci; commit();
+          const i = Number(pk.dataset.i); const ci = pickColor(pk, pk.value); if (ci >= 0) msOwn(arcEl)[key][i] = ci; commit();
         });
         pk.addEventListener('contextmenu', (ev) => {   // 右クリックで自動 (部品と同じ色 / 薄い下地) に戻す
           ev.preventDefault();
-          const i = Number(pk.dataset.i); st[key] = (st[key] || [-1, -1, -1, -1]).slice(); st[key][i] = -1; commit();
+          const i = Number(pk.dataset.i); msOwn(arcEl)[key][i] = -1; commit();
         });
       });
       pick('mtc', 'mc');    // 弧そのものの色
       pick('mtk', 'mk');    // 下地 (空の部分) の色
       document.querySelectorAll('.mts .mvb').forEach((b) => b.addEventListener('click', () => {
-        const i = Number(b.dataset.i); st.mv = (st.mv || [1, 1, 1, 1]).slice(); st.mv[i] = st.mv[i] === 0 ? 1 : 0; commit();
+        const i = Number(b.dataset.i); const m = msOwn(arcEl); m.mv[i] = m.mv[i] === 0 ? 1 : 0; commit();
       }));
     };
     // 揃える / 戻す。Meters と同じく常に出しておく (選ぶ前から場所が動かない)。
@@ -3176,6 +3203,7 @@
     tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b,
     wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0, hr: (st.hr || []).slice(), sc: (st.sc || []).slice(), hc: (st.hc || []).slice(),
     mt: (st.mt || []).slice(), mc: (st.mc || []).slice(), mk: (st.mk || []).slice(), mv: (st.mv || []).slice(),
+    ms: (st.ms || []).map((m) => m.mt.concat(m.mc, m.mk, m.mv)),
     st: (st.stk || ['', '']).slice(0, 2), sn: (st.stn || ['', '']).slice(0, 2),
     uc: st.uc === 1 ? 1 : 0, bb: (st.bb || []).slice(0, BB_MAX), tt: (st.tt || []).slice(),
     park: (st.park || []).map((e) => e.slice()),
@@ -3462,7 +3490,7 @@
     if (st.el.length && !confirm(`Clear the dial? ${elCount(st.el)} parts, the background and the sizes go back to the start. Undo (\u2318Z) puts it back.`)) return;
     st.el = []; st.bg = 0; st.pc = DEF_PC.slice();
     st.tx = DEF_TX.slice(); st.tm = DEF_TM.slice(); st.ic = DEF_IC.slice(); st.io = DEF_IO; st.b = 0;
-    st.mt = [0, 0, 0, 0]; st.mc = [-1, -1, -1, -1]; st.mk = [-1, -1, -1, -1]; st.mv = [1, 1, 1, 1];
+    st.mt = [0, 0, 0, 0]; st.mc = [-1, -1, -1, -1]; st.mk = [-1, -1, -1, -1]; st.mv = [1, 1, 1, 1]; st.ms = [];
     EDIT_N = null; EDIT_ITEM_NAME = ''; shelfName();
     st.stk = ['', '']; st.stn = ['', '']; st.bb = []; st.uc = 0; st.tt = [];
     clearSel(); commit(); renderSizes(); renderBold(); renderUpCol();
@@ -3517,10 +3545,11 @@
         continue;
       } else if (isText(n[0])) {   // 文字: 9 番目 = tt の何番目か
         const ix = Number(e[8]); n.push((Number.isInteger(ix) && ix >= 0 && ix < TT_MAX) ? ix : 0);
-      } else if (n[0] >= 60 && n[0] <= 69) {   // 縁: 9 番目 = 数字の出し方、10 番目 = 内側への寄せ
-        const nm = Number(e[8]), ins = Number(e[9]);
+      } else if (n[0] >= 60 && n[0] <= 69) {   // 縁: 9 番目 = 数字の出し方、10 番目 = 内側への寄せ、11 番目 = メーターの組
+        const nm = Number(e[8]), ins = Number(e[9]), msi = Number(e[10]);
         n.push((nm === 1 || nm === 2) ? nm : 0,
                (Number.isFinite(ins) && ins >= 0 && ins <= RIM_INSET.max) ? Math.round(ins) : (((n[0] === 69) !== !!(e[6] & F_EDGE)) ? RIM_INSET.def : 0));   // 昔の 2 択から
+        if (Number.isInteger(msi) && msi >= 0 && msi < MS_MAX) n.push(msi);   // 11 番目 = メーターの組
       } else if (isCrew(n[0])) {   // Crew: 9 番目 = 行数 (1-3)
         const rw = Number(e[8]); n.push((rw === 1 || rw === 2) ? rw : 3);
       } else if (isStrip(n[0])) {   // 帯: 9 番目 = アイコンの並び、10 番目 = コマの数
@@ -3566,6 +3595,7 @@
     const bg = Number.isInteger(j.bg) && j.bg >= 0 && j.bg <= 0xFFFFFF ? j.bg : 0;
     return { bg, el, hr, sc, hc, tt: Array.isArray(j.tt) ? j.tt.slice(0, TT_MAX).map(ttClean) : [], tx: intArr3(j.tx, 10, 200, DEF_TX) || DEF_TX.slice(), tm: intArr3(j.tm, 10, 200, DEF_TM) || DEF_TM.slice(),
              ic: intArr3(j.ic, 6, 120, DEF_IC) || DEF_IC.slice(),
+             ms: Array.isArray(j.ms) ? j.ms.slice(0, MS_MAX) : [],   // 部品ごとのメーターの組 (2026-09-26)
              io: (Number.isInteger(j.io) && j.io >= -20 && j.io <= 20) ? j.io : DEF_IO,
              b: (Number(j.b) === 1 || Number(j.b) === 2) ? Number(j.b) : 0,
              wu: (Number.isInteger(j.wu) && j.wu >= 0 && j.wu <= 3) ? j.wu : 0,
@@ -3630,7 +3660,7 @@
       try { insertJoints(inner, '', arcs, d, d.w / 454); } finally { st = hold; }
     }
   }
-  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, BB_MAX); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); st.hr = (c.hr || []).slice(); st.sc = (c.sc || []).slice(); st.hc = (c.hc || []).slice(); st.tt = (c.tt || []).slice(); clearSel(); pushBgHist(st.bg); renderHr(); }
+  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, BB_MAX); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.ms = msRead(c.ms); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); st.hr = (c.hr || []).slice(); st.sc = (c.sc || []).slice(); st.hc = (c.hc || []).slice(); st.tt = (c.tt || []).slice(); clearSel(); pushBgHist(st.bg); renderHr(); }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
   // ウォッチが最後に来た時刻は 2 か所から来る: 従来経路 (/layouts) と実機が今使う経路 (/watch)。
   // 実機はもう従来経路を見に来ないので、そちらの値は何日も古いまま。新しい方だけを使う

@@ -378,7 +378,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 01:03</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 09:00</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1161,7 +1161,7 @@
   // f の bit4 = 四角形から作った線 (読み直す時に捨て、rq から四角形に戻す)。
   const F_RECTLINE = 16;
   const F_EDGE = 16;       // 縁 (60-63, 69): 既定と反対の位置 (Inner / Edge) に置く印 (2026-09-19)。線の F_RECTLINE とは種別が違うので重ならない
-  const RIM_POS = [60, 61, 62, 63, 69];
+  const RIM_POS = [60, 61, 62, 63, 69, 64, 66, 67, 68];   // Meter の弧も内側へ寄せられる (2026-09-26)
   const rimInner = (e) => (e[0] === 69) !== !!(e[6] & F_EDGE);
   // 縁の「内側への寄せ」は 0 (縁ぎりぎり) 〜 60 の目盛り。9 番目に持つ。
   // 無い面は昔の 2 択 (Edge = 0 / Inner = 18) から読む = 見た目が変わらない (2026-09-21)。
@@ -1694,7 +1694,7 @@
         const tcol = (i) => (Number.isInteger(trk[i]) && trk[i] >= 0 ? trk[i] : -1);     // -1 = 自動 (薄く塗る)
         const on = (i) => vis[i] !== 0;                                                  // 非表示の弧は送らない
         // 端が画素の格子に乗る半径と角度を選ぶ。左右上下の対称は崩さない (第 1・3 象限は +、第 2・4 は -)。
-        const sc = scOf(), fit = arcFit(A.deg[0], A.half, Math.round((R - 3 - W(6)) * sc), Math.round(227 * sc));
+        const sc = scOf(), fit = arcFit(A.deg[0], A.half, Math.round((R - 3 - W(6) - d) * sc), Math.round(227 * sc));
         const rr = Math.round((fit.rPx + 0.15) / sc * 10) / 10, hf = fit.half, sh = fit.ctr - A.deg[0];
         const ang = (d) => Math.round((d + sh * (Math.floor(d / 90) % 2 === 0 ? 1 : -1)) * 10) / 10;
         // 指標を選んでいない間は飾りの弧のまま。1 つでも選べば弧ごとの「メーター」で送る。
@@ -2823,7 +2823,7 @@
           (e[0] === 10 ? hcCols() : scCols()).map((ci, n) => `<input type="color" class="pick" data-n="${n}" value="${colOf(ci)}" title="${['rest', 'low', 'medium', 'high'][n]}">`).join('')
         }</span></div>` : ''}
         ${e[0] === 10 && (e[6] & F_LEVEL) ? hrRows() : ''}` : ''}
-        ${!none && all.every((x) => RIM_POS.includes(x[0])) ? `<div class="field" title="Slide the rim in from the bezel. 0 sits right at the edge; further in leaves room for the Meter arcs."><span>Position</span><input type="range" id="frimpos" min="0" max="${RIM_INSET.max}" step="1" value="${rimInset(e)}" style="width:150px"><span class="muted" id="frimposv">${rimInset(e) === 0 ? 'Edge' : rimInset(e)}</span></div>` : ''}
+        ${!none && all.every((x) => RIM_POS.includes(x[0])) ? `<div class="field" title="Slide the rim in from the bezel. 0 sits right at the edge; further in leaves room for other rims."><span>Position</span><input type="range" id="frimpos" min="0" max="${RIM_INSET.max}" step="1" value="${rimInset(e)}" style="width:150px"><span class="muted" id="frimposv">${rimInset(e) === 0 ? 'Edge' : rimInset(e)}</span></div>` : ''}
         ${!none && all.every((x) => x[0] === 62) ? `<div class="field" title="Which numbers the rim shows"><span>Numbers</span><span class="cb units" id="frimnum">${
           [[0, '12 3 6 9'], [1, 'All 12'], [2, 'Roman']].map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => rimNum(x) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>` : ''}

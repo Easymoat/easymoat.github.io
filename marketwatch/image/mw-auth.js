@@ -38,11 +38,11 @@
     setTok(devId, null);   // 失効したトークンは捨てる
     return new Promise(function (resolve) {
       var t = isJa ? {
-        lead: 'このウォッチは登録済みです。ウォッチの MarketWatch で Device ID を開き、<b>Web code</b> を選ぶと 6 桁が出ます。それをここに入力してください (10 分以内)。',
+        lead: 'このウォッチは登録済みです。ウォッチの MarketWatch の Device ID メニューで <b>Web code</b> を選ぶと 6 桁が出ます。それをここに入力してください (10 分以内)。',
         btn: 'サインイン', bad: 'コードが違うか、期限が切れています。ウォッチで新しいコードを出してください。',
         net: '通信できませんでした: '
       } : {
-        lead: 'This watch is registered. In MarketWatch on the watch, open Device ID and choose <b>Web code</b> to show 6 digits, then enter them here (within 10 minutes).',
+        lead: 'This watch is registered. In MarketWatch on the watch, choose <b>Web code</b> in the Device ID menu to show 6 digits, then enter them here (within 10 minutes).',
         btn: 'Sign in', bad: 'That code is wrong or has expired. Show a new code on the watch.',
         net: 'Could not connect: '
       };

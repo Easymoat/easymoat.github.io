@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 10:29</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 13:02</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -912,8 +912,19 @@
   const isText = (t) => !!(TYPES[t] && TYPES[t].text);
   const isCrew = (t) => !!(TYPES[t] && TYPES[t].crew);
   const crewRows = (e) => { const v = Number(e[8]); return (v === 1 || v === 2 || v === 3) ? v : 3; };
-  const CREW_SAMPLE = ['Ema 1.2km 3m', 'Ken 850m 1m', '--'];
-  const crewLines = (e) => CREW_SAMPLE.slice(0, crewRows(e));
+  // 1 行 = 名前 (Icon 扱い) + 数字 (Value 扱い、距離と経過分)。3 行目はデータが無い行の見本。
+  const CREW_SAMPLE = [['Ema', '1.2km 3m'], ['Ken', '850m 1m'], ['--', '']];
+  const crewLines = (e) => CREW_SAMPLE.slice(0, crewRows(e)).map((r) => r.join(' '));
+  // el[9] = 並び + 1 (1 名前左 / 2 名前右 / 3 名前上)。0 / 無し = 最初の形 (名前と数字を 1 行で、Show は見ない)。
+  //   昔の面を描き変えないための目印を兼ねる (2026-09-27、ユーザー指示で Icon = 名前・Value = 数字に)。
+  const crewNew = (e) => { const v = Number(e[9]); return v === 1 || v === 2 || v === 3; };
+  const crewArr = (e) => (crewNew(e) ? Number(e[9]) - 1 : 0);
+  const crewShow = (e) => (crewNew(e) ? (e[6] & 3) : 1);   // 1 名前+数字 / 3 名前だけ / 0 数字だけ
+  const crewNorm = (x) => {                                  // 触った時に新しい形へ移す (見た目は変えない)
+    if (crewNew(x)) return;
+    while (x.length < 10) x.push(x.length === 7 ? -1 : x.length === 8 ? 3 : 0);
+    x[9] = 1; x[6] = (x[6] & ~3) | 1;
+  };
   const TT_MAX = 8, TT_LEN = 20;
   // 打てる字に制限は無い。英数字だけならベクターフォントで即時に出て、
   // 日本語などが混ざった文字は「絵にして送る」方式に自動で切り替わる (2026-09-21 ユーザー決定)。
@@ -961,7 +972,8 @@
   const rectW = (e) => { const v = Number(e[8]); return Number.isFinite(v) && v >= RECT_MIN ? Math.min(1000, Math.round(v)) : RECT_DEF.w; };
   const rectH = (e) => { const v = Number(e[9]); return Number.isFinite(v) && v >= RECT_MIN ? Math.min(1000, Math.round(v)) : RECT_DEF.h; };
   // 文字系の部品の並び: 0 アイコン左・値右 (既定) / 1 値左・アイコン右 / 2 アイコン上・値下
-  const arrOf = (e) => { const v = Number(e[8]); return (v === 1 || v === 2) ? v : 0; };
+  const arrOf = (e) => { if (TYPES[e[0]] && TYPES[e[0]].crew) return crewArr(e);   // Crew は 10 番目 (9 番目は行数)
+    const v = Number(e[8]); return (v === 1 || v === 2) ? v : 0; };
   const CIRC_DEF = { dia: 300, fill: -1, met: 0, dir: 1 };
   const circDia = (e) => { const v = Number(e[8]); return Number.isFinite(v) && v >= 20 ? Math.min(1000, v) : CIRC_DEF.dia; };
   const circFill = (e) => { const v = Number(e[10]); return Number.isInteger(v) && v >= 0 ? v : -1; };
@@ -2232,6 +2244,22 @@
       }
       div.style.gap = '0px';
       div.innerHTML = cells.join('') + '<span class="anchor"></span>';
+    } else if (isCrew(t)) {
+      // Crew (47): 名前 = Icon、距離と経過分 = Value (2026-09-27 ユーザー指示)。Show / Arrange / Gap は他の部品と同じ意味。
+      //   行の高さは :size の px そのまま (実機と同じ)。名前上 (Arrange = Icon above) は 1 人 2 行になる。
+      const arr = crewArr(e), sh = crewShow(e), showN = !!(sh & 1), showV = !(sh & 2);
+      const al = e[3] === 1 ? 'flex-start' : e[3] === 2 ? 'flex-end' : 'center';
+      const gp = gapOf(e) * ki, vG = arr === 2 ? (gapOf(e) - DEF_IG) * ki : 0;
+      const top = `position:relative;top:${inkShift(px).toFixed(2)}px`;
+      const rowsH = CREW_SAMPLE.slice(0, crewRows(e)).map(([nm, vl]) => {
+        const N = showN ? `<span class="ico">${nm}</span>` : '';
+        const V = showV && vl ? `<span class="val"${vG ? ` style="margin-top:${vG.toFixed(1)}px"` : ''}>${vl}</span>` : '';
+        const one = N || V ? '' : '<span class="val">--</span>';   // 何も出ない行 (データ無しで名前を隠した時)
+        if (arr === 2) return `<div style="display:flex;flex-direction:column;align-items:${al};line-height:${px}px;${top}">${N}${V}${one}</div>`;
+        return `<div style="display:flex;gap:${gp.toFixed(1)}px;line-height:${px}px;${top}">${arr === 1 ? V + N : N + V}${one}</div>`;
+      });
+      div.style.flexDirection = 'column'; div.style.alignItems = al; div.style.gap = '0px';
+      div.innerHTML = rowsH.join('') + '<span class="anchor"></span>';
     } else {
       const showVal = !(f & 2);   // f の bit 1 = 値を出さない (アイコンだけ)
       const sample = isText(t) ? (ttOf(e) || def.sample) : isStock(t) ? stkValue(t, f) : isBall(t) ? ballSample(t) : (t === 2 && !splitDate) ? 'Fri Sep 4' : cityOf(e) ? citySample(t, cityOf(e)) : def.sample;
@@ -2246,12 +2274,8 @@
       //   倍率 = √(1 + bo / 点の幅)、点の幅 = 行高 × 0.10 (Roboto の実測)。位置は太字の数字に合わせて bo/2 右へ。
       const colonHtml = (bo && /:/.test(sample) && (t === 1 || t === 4))
         ? `<span style="display:inline-block;text-shadow:none;transform:translateX(${(bo / 2).toFixed(1)}px) scale(${Math.sqrt(1 + bo / (0.10 * px)).toFixed(3)})">:</span>` : null;
-      const sampleHtml = isCrew(t) ? crewLines(e).join('<br>')       // Crew は行を積む (行の高さ = 文字の高さ)
-        : colonHtml ? String(sample).split(':').join(colonHtml) : sample;
-      // Crew は行を積む。実機の行の送りは :size の px そのもの (行間を足さない) なので、
-      // 行の高さも px に固定する (CSS の既定だと font-size × 1.17 になり実機より広がる、2026-09-25)。
-      const crewLH = isCrew(t) ? `;line-height:${px}px;display:inline-block;text-align:${e[3] === 1 ? 'left' : e[3] === 2 ? 'right' : 'center'}` : '';
-      const val = showVal ? `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px${crewLH}${bo ? `;padding-right:${bo}px` : ''}${vGap ? `;margin-top:${vGap.toFixed(1)}px` : ''}">${sampleHtml}</span>` : '';
+      const sampleHtml = colonHtml ? String(sample).split(':').join(colonHtml) : sample;
+      const val = showVal ? `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px${bo ? `;padding-right:${bo}px` : ''}${vGap ? `;margin-top:${vGap.toFixed(1)}px` : ''}">${sampleHtml}</span>` : '';
       let ic2 = icon;
       if (lay === 2) {
         div.style.flexDirection = 'column';
@@ -2771,7 +2795,7 @@
     const stepRow = (label, key, val, ttl) => `<div class="field" title="${ttl}"><span>${label}</span><span class="cb units step" data-step="${key}"><button type="button" data-d="-1">&minus;</button><b>${val == null ? '—' : val}</b><button type="button" data-d="1">+</button></span></div>`;
     const isOf = (x) => (Number.isInteger(x[7]) && x[7] >= 0 && x[7] <= SIZE_MAX) ? x[7] : -1;
     const sameIs = all.every((x) => isOf(x) === isOf(e));
-    const anyIcon = all.some((x) => TYPES[x[0]]?.icon || cityOf(x));
+    const anyIcon = all.some((x) => TYPES[x[0]]?.icon || cityOf(x) || isCrew(x[0]));   // Crew の Icon = 名前
     const arcEl = none ? null : all.find((x) => ARCSET[x[0]]);   // Meters は弧の部品を選んだ時だけ出す (2026-09-19)
     const allLine = all.every((x) => isLine(x[0]));   // 線だけを選んでいる時は線の操作に差し替える
     const allStock = !none && all.every((x) => isStock(x[0])) && all.every((x) => x[0] === e[0]);   // 同じ銘柄の部品だけ
@@ -2798,18 +2822,18 @@
         ${seg('Anchor', ['Center', 'Left', 'Right'], same(3) ? e[3] : -1, 3, 0, allCirc || allRect || allAna)}
         ${allGraph ? seg('Size', ['Small', 'Large'], same(4) ? e[4] : -9, 4)
           : seg('Size', SIZES, (shapeOnly && !allRim) ? -9 : (same(4) ? e[4] : -9), 4, 0, shapeOnly && !allRim)}
-        ${seg('Icon size', ['Auto'].concat(SIZES), anyIcon && !shapeOnly && !allAna ? (sameIs ? isOf(e) : -9) : -9, 7, -1, shapeOnly || allAna)}
+        ${seg('Icon size', ['Auto'].concat(SIZES), anyIcon && !shapeOnly && !allAna && !allCrew ? (sameIs ? isOf(e) : -9) : -9, 7, -1, shapeOnly || allAna || allCrew)}
         <div class="brk"></div>
         <div class="field${shapeOnly || allAna ? ' off' : ''}" title="${anyIcon ? 'What this part draws' : 'This part has no icon'}"><span>Show</span><span class="cb units" id="fshow">${
           [['Icon + value', 1], ['Icon only', 3], ['Value only', 0]].map(([lbl, v]) =>
-            `<button type="button" data-v="${v}" class="${all.every((x) => (x[6] & 3) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none || shapeOnly || allAna ? 'disabled' : ''}>${lbl}</button>`).join('')
+            `<button type="button" data-v="${v}" class="${all.every((x) => (isCrew(x[0]) ? crewShow(x) : (x[6] & 3)) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none || shapeOnly || allAna ? 'disabled' : ''}>${lbl}</button>`).join('')
         }</span></div>
-        <div class="field${allText && !allAna && !allCrew ? '' : ' off'}" title="Where the icon sits relative to the value"><span>Arrange</span><span class="cb units" id="farr">${
+        <div class="field${allText && !allAna ? '' : ' off'}" title="Where the icon sits relative to the value"><span>Arrange</span><span class="cb units" id="farr">${
           [['Icon left', 0], ['Icon right', 1], ['Icon above', 2]].map(([nm, v]) =>
             `<button type="button" data-v="${v}" class="${allText && all.every((x) => arrOf(x) === v) ? 'on' : ''}" ${allText ? '' : 'disabled'}>${nm}</button>`).join('')
         }</span></div>
         ${/* Gap と Bold は常に出す (文字以外では薄く無効)。出したり消したりすると行数が変わり Dial が上下に動いた (2026-09-22) */''}
-        ${allText && !allAna && !allCrew ? stepRow('Gap', 10, all.every((x) => gapOf(x) === gapOf(e)) ? gapOf(e) : null, 'Space between the icon and the value (px on a 454 dial)')
+        ${allText && !allAna ? stepRow('Gap', 10, all.every((x) => gapOf(x) === gapOf(e)) ? gapOf(e) : null, 'Space between the icon and the value (px on a 454 dial)')
           : `<div class="field off"><span>Gap</span><span class="cb units step"><button type="button" disabled>&minus;</button><b>—</b><button type="button" disabled>+</button></span></div>`}
         <div class="field${allText && !allAna ? '' : ' off'}" title="Bold for this part. Style follows the Bold setting on the right for the whole dial."><span>Bold</span><span class="cb units" id="fbold">${
           [[-1, 'Style'], [0, 'Off'], [1, 'Bold'], [2, 'Bold 2']].map(([v, lb]) => `<button type="button" data-v="${v}" class="${allText && !allAna && all.every((x) => boldOwn(x) === v) ? 'on' : ''}" ${allText && !allAna ? '' : 'disabled'}>${lb}</button>`).join('')
@@ -3182,6 +3206,7 @@
     document.querySelectorAll('#fstkn button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStock(x[0])) x[6] = (x[6] & ~16) | (+b.dataset.v); })));
     document.querySelectorAll('#farr button').forEach((b) => b.addEventListener('click', () => each((x) => {
       if (isLine(x[0]) || isCircle(x[0]) || TYPES[x[0]].dial) return;
+      if (isCrew(x[0])) { crewNorm(x); x[9] = +b.dataset.v + 1; return; }
       while (x.length < 8) x.push(-1); x[8] = +b.dataset.v;
     })));
     box.querySelectorAll('[data-fill]').forEach((b) => b.addEventListener('click', () => each((x) => {
@@ -3219,7 +3244,7 @@
     if (fl) fl.addEventListener('change', (ev) => { setBb(slot, { lg: ev.target.value, tm: 0 }); commit(); });   // リーグを変えたらチームは選び直し
     document.querySelectorAll('#fshow button').forEach((b) => b.addEventListener('click', () => {
       const v = Number(b.dataset.v);
-      each((x) => { if (TYPES[x[0]]?.icon) { x[6] = (x[6] & ~3) | v; } });
+      each((x) => { if (isCrew(x[0])) crewNorm(x); if (TYPES[x[0]]?.icon || isCrew(x[0])) { x[6] = (x[6] & ~3) | v; } });
     }));
     $('dup').addEventListener('click', () => {   // copies of every selected element, one grid step down, and the copies become the selection
       const add = all.filter((x) => !isLine(x[0])).length;   // 線は上限に数えない
@@ -3392,6 +3417,7 @@
             : isLine(t) ? [t, 500, 500, 0, 1, 0, 0, -1, LINE_LEN_DEF]
             : isText(t) ? [t, 500, 500, 0, 1, 0, 0, -1, ttFree()]
             : isGraph(t) ? [t, 500, 500, 0, 0, 0, 0, -1]
+            : isCrew(t) ? [t, 500, 500, 0, 1, 0, 1, -1, 3, 1]
             : [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, (d.icon ? 1 : 0) | (pct ? 4 : 0) | (t === 2 ? F_DOW : 0), -1];
     st.el.push(e); setSel(st.el.length - 1, false);
     if (center) { const [cx, cy] = freeSpot(); e[1] = cx; e[2] = cy; render(); commit(); return; }
@@ -3608,8 +3634,9 @@
         n.push((nm === 1 || nm === 2) ? nm : 0,
                (Number.isFinite(ins) && ins >= 0 && ins <= RIM_INSET.max) ? Math.round(ins) : (((n[0] === 69) !== !!(e[6] & F_EDGE)) ? RIM_INSET.def : 0));   // 昔の 2 択から
         if (Number.isInteger(msi) && msi >= 0 && msi < MS_MAX) n.push(msi);   // 11 番目 = メーターの組
-      } else if (isCrew(n[0])) {   // Crew: 9 番目 = 行数 (1-3)
-        const rw = Number(e[8]); n.push((rw === 1 || rw === 2) ? rw : 3);
+      } else if (isCrew(n[0])) {   // Crew: 9 番目 = 行数 (1-3)、10 番目 = 並び + 1 (0 = 最初の形)
+        const rw = Number(e[8]), ar = Number(e[9]);
+        n.push((rw === 1 || rw === 2) ? rw : 3, (ar === 1 || ar === 2 || ar === 3) ? ar : 0);
       } else if (isStrip(n[0])) {   // 帯: 9 番目 = アイコンの並び、10 番目 = コマの数
         const ar = Number(e[8]), cn = Number(e[9]);
         n.push((ar === 1 || ar === 2) ? ar : 0, (cn === 4 || cn === 5) ? cn : 3);

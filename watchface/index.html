@@ -219,6 +219,9 @@
   .mts .mvb { min-width: 34px; height: 22px; padding: 0 5px; border: 1px solid var(--line); border-radius: 5px;
               background: var(--bg-2); color: var(--ink-3); font: 11px var(--mono); cursor: pointer; }
   .mts .mvb.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .mts .mdb { width: 24px; height: 22px; padding: 0; border: 1px solid var(--line); border-radius: 5px;
+              background: var(--panel-2); color: var(--ink-2); font-size: 13px; line-height: 1; cursor: pointer; }
+  .mts .mt.off .mdb { opacity: .35; }
   .mts select { height: 26px; font-size: 12px; }
   .imgstage { position: relative; width: 320px; height: 320px; border-radius: 50%; background: #000; overflow: hidden; touch-action: none; cursor: grab; }
   .imgstage canvas { width: 320px; height: 320px; display: block; }
@@ -378,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 09:50</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 09:58</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1175,7 +1178,8 @@
   //   el[10] = st.ms の何番目か。持たない部品は面の mt/mc/mk/mv を使う (昔の面はこのまま)。
   const MS_MAX = 4;
   const msFace = () => ({ mt: (st.mt || [0, 0, 0, 0]).slice(), mc: (st.mc || [-1, -1, -1, -1]).slice(),
-                          mk: (st.mk || [-1, -1, -1, -1]).slice(), mv: (st.mv || [1, 1, 1, 1]).slice() });
+                          mk: (st.mk || [-1, -1, -1, -1]).slice(), mv: (st.mv || [1, 1, 1, 1]).slice(),
+                          md: [0, 0, 0, 0] });   // 弧の増える向き (0 = その弧の既定、2026-09-26)
   const msIdx = (e) => { const v = Number(e[10]); return (Number.isInteger(v) && v >= 0 && v < MS_MAX && (st.ms || [])[v]) ? v : -1; };
   const msOf = (e) => { const i = msIdx(e); return i >= 0 ? st.ms[i] : msFace(); };
   function msOwn(e) {            // この部品だけの組を用意する (無ければ今の値を写して作る)
@@ -1184,13 +1188,18 @@
       const cur = msOf(e);
       st.ms = (st.ms || []).slice();
       i = Math.min(st.ms.length, MS_MAX - 1);
-      st.ms[i] = { mt: cur.mt.slice(), mc: cur.mc.slice(), mk: cur.mk.slice(), mv: cur.mv.slice() };
+      st.ms[i] = { mt: cur.mt.slice(), mc: cur.mc.slice(), mk: cur.mk.slice(), mv: cur.mv.slice(), md: (cur.md || [0, 0, 0, 0]).slice() };
       rimGrow(e); while (e.length < 11) e.push(0); e[10] = i;
-    } else { st.ms = st.ms.slice(); st.ms[i] = { mt: st.ms[i].mt.slice(), mc: st.ms[i].mc.slice(), mk: st.ms[i].mk.slice(), mv: st.ms[i].mv.slice() }; }
+    } else { const o = st.ms[i]; st.ms = st.ms.slice();
+      st.ms[i] = { mt: o.mt.slice(), mc: o.mc.slice(), mk: o.mk.slice(), mv: o.mv.slice(), md: (o.md || [0, 0, 0, 0]).slice() }; }
     return st.ms[i];
   }
-  const msRead = (a) => (Array.isArray(a) ? a : []).slice(0, MS_MAX).filter((x) => Array.isArray(x) && x.length === 16)
-    .map((x) => ({ mt: x.slice(0, 4).map(Number), mc: x.slice(4, 8).map(Number), mk: x.slice(8, 12).map(Number), mv: x.slice(12).map(Number) }));
+  const msRead = (a) => (Array.isArray(a) ? a : []).slice(0, MS_MAX).filter((x) => Array.isArray(x) && (x.length === 16 || x.length === 20))
+    .map((x) => ({ mt: x.slice(0, 4).map(Number), mc: x.slice(4, 8).map(Number), mk: x.slice(8, 12).map(Number),
+                   mv: x.slice(12, 16).map(Number), md: (x.length === 20 ? x.slice(16) : [0, 0, 0, 0]).map(Number) }));
+  const msDir = (e, i) => { const d = (msOf(e).md || [])[i]; return (d === 1 || d === -1) ? d : (ARCSET[e[0]] ? ARCSET[e[0]].dir[i] : 1); };
+  const msOut = (m) => { const b = m.mt.concat(m.mc, m.mk, m.mv);
+    return (m.md || []).some((d) => d === 1 || d === -1) ? b.concat(m.md) : b; };   // 向きが既定のままなら 16 個 (昔の形)
   const rimGrow = (e) => { const ins = rimInset(e), nm = rimNum(e); while (e.length < 10) e.push(e.length === 8 ? nm : ins); };
   function rectLines(e) {
     const [, x, y, , s, c, f] = e, w = rectW(e), h = rectH(e), d = dev();
@@ -1691,7 +1700,7 @@
     // 縁の仕様 (複数可)
     // alt = 部品の el[6] の F_EDGE。位置は Inner (Meter の弧と重ならない) と Edge (縁ぎりぎり) の 2 つ (2026-09-19)。
     // 既定は Batons だけ Inner、他は Edge (既存の面の見た目を変えないため)。alt はその逆側を選ぶ印。
-    function rim(t, k, mt, mc, mk, mv, inset, numMode) {
+    function rim(t, k, mt, mc, mk, mv, inset, numMode, md) {
       const L = (v) => v * k.l, W = (v) => v * k.w;
       const d = L(Number.isFinite(inset) ? inset : 0);   // 縁ぎりぎり (0) 〜 内側 (大きいほど内)
       if (t === 60) return [[0, 60, 5, r1(2 + d), r1(L(10)), odd(W(3)), r1(L(22)), odd(W(6))]];
@@ -1711,6 +1720,8 @@
         const A = ARCSET[t];                              // 位置・長さ・向き
         const mt = (arguments[2] || [0, 0, 0, 0]), mcol = (arguments[3] || [-1, -1, -1, -1]);
         const trk = (arguments[4] || [-1, -1, -1, -1]), vis = (arguments[5] || [1, 1, 1, 1]);
+        const mdir = (md || [0, 0, 0, 0]);                 // 0 = その弧の既定の向き
+        const dirOf = (i) => (mdir[i] === 1 || mdir[i] === -1 ? mdir[i] : A.dir[i]);
         const sw = odd(W(11));
         const col = (i) => (Number.isInteger(mcol[i]) && mcol[i] >= 0 ? mcol[i] : -1);   // -1 = 部品の色
         const tcol = (i) => (Number.isInteger(trk[i]) && trk[i] >= 0 ? trk[i] : -1);     // -1 = 自動 (薄く塗る)
@@ -1721,12 +1732,13 @@
         const ang = (d) => Math.round((d + sh * (Math.floor(d / 90) % 2 === 0 ? 1 : -1)) * 10) / 10;
         // 指標を選んでいない間は飾りの弧のまま。1 つでも選べば弧ごとの「メーター」で送る。
         if (!mt.some((m) => m)) {
-          if (t === 64 && !mcol.some((c) => c >= 0) && !trk.some((c) => c >= 0) && vis.every((v) => v !== 0)) {
+          if (t === 64 && !mcol.some((c) => c >= 0) && !trk.some((c) => c >= 0) && vis.every((v) => v !== 0)
+              && !mdir.some((d) => d === 1 || d === -1)) {
             return [[3, 4, rr, sw, hf]];                                                 // 均等 4 本・色も同じなら種別 3 で足りる
           }
-          return A.deg.map((d, i) => [5, ang(d), hf, rr, sw, 0, A.dir[i], col(i), tcol(i)]).filter((e, i) => on(i));
+          return A.deg.map((d, i) => [5, ang(d), hf, rr, sw, 0, dirOf(i), col(i), tcol(i)]).filter((e, i) => on(i));
         }
-        return A.deg.map((d, i) => [5, ang(d), hf, rr, sw, mt[i] || 0, A.dir[i], col(i), tcol(i)]).filter((e, i) => on(i));
+        return A.deg.map((d, i) => [5, ang(d), hf, rr, sw, mt[i] || 0, dirOf(i), col(i), tcol(i)]).filter((e, i) => on(i));
       }
       return null;
     }
@@ -1807,11 +1819,11 @@
       return o;
     }
     let elCol = '';                                   // 部品の色 (下地の混色に使う)
-    function svgFor(t, k, mt, mc, col, mk, mv, inset, numMode) {
+    function svgFor(t, k, mt, mc, col, mk, mv, inset, numMode, md) {
       elCol = col || '';
       const h = hands(t, k);
       if (h) return handSvg(h[1], T.h) + handSvg(h[2], T.m) + (h[0] > 0 ? `<circle cx="${R}" cy="${R}" r="${h[0]}"/>` : '');
-      return rimSvg(rim(t, k, mt, mc, mk, mv, inset, numMode));
+      return rimSvg(rim(t, k, mt, mc, mk, mv, inset, numMode, md));
     }
     // アナログ部品 (2026-09-20)。dia = 直径‰。針は 454 の座標のまま dia に比例して縮め、
     // viewBox でその円のぶんだけ切り出す = 実機も同じ点列を中心 (x,y) で回すだけで同じ絵になる。
@@ -1834,7 +1846,7 @@
     const k0 = DIAL_SCALE[Math.min(Math.max(s, 0), 3)];
     const k = (lenPct && lenPct !== 100) || rimIn != null ? { l: k0.l * ((lenPct || 100) / 100), w: k0.w, rim: rimIn } : k0;
     const m = ms || msFace();   // 部品ごとのメーターの組 (無い時は面の組)
-    const inner = DIAL.svgFor(t, k, m.mt, m.mc, col, m.mk, m.mv, inset, numMode);
+    const inner = DIAL.svgFor(t, k, m.mt, m.mc, col, m.mk, m.mv, inset, numMode, m.md);
     if (!inner) return '';
     return `<svg width="${w}" height="${h}" viewBox="0 0 454 454" fill="currentColor" style="display:block">${inner}</svg>`;
   }
@@ -2291,7 +2303,7 @@
       // 針の中心は動かせる (2026-09-20 ユーザー指示)。盤の真ん中以外に置いた時だけ hp = [x‰, y‰] を送る。
       if (h && !out.hd) { out.hd = h; if (e[1] !== 500 || e[2] !== 500) out.hp = [e[1], e[2]]; continue; }
       const ms0 = msOf(e);
-      const r = DIAL.rim(e[0], k, ms0.mt, ms0.mc, ms0.mk, ms0.mv, rimInset(e), rimNum(e));
+      const r = DIAL.rim(e[0], k, ms0.mt, ms0.mc, ms0.mk, ms0.mv, rimInset(e), rimNum(e), ms0.md);
       // 縁は 2 つまで重ねられるので、原型ごとにその部品の色 (rc) と「何番目の縁の行のものか」(ro) を添える。
       // ro があると、実機は i 番目の縁の行でその番号の原型だけを描く = 縁ごとに前後を変えられる (2026-09-21)。
       if (r) { out.rm = (out.rm || []).concat(r); out.rc = (out.rc || []).concat(r.map(() => e[5]));
@@ -2520,7 +2532,7 @@
     const o = Object.assign({ bg: st.bg, el: el0, as: as0, hr: hrOut, sc: scOut, hc: hcOut, pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined, mc: (st.mc || []).some((c) => c >= 0) ? st.mc : undefined,
     mk: (st.mk || []).some((c) => c >= 0) ? st.mk : undefined, mv: (st.mv || []).some((v) => v === 0) ? st.mv : undefined,
     // ms = 部品ごとのメーターの組 (2026-09-26)。1 組 = 指標 4 + 弧の色 4 + 下地の色 4 + 表示 4。
-    ms: (st.ms || []).length ? st.ms.map((m) => m.mt.concat(m.mc, m.mk, m.mv)) : undefined,
+    ms: (st.ms || []).length ? st.ms.map(msOut) : undefined,
     tt: (() => { const n = st.el.filter((x) => isText(x[0])).length; if (!n) return undefined;
       const out = []; for (let i = 0; i < TT_MAX; i++) out.push(ttClean((st.tt || [])[i] || ''));
       while (out.length && out[out.length - 1] === '') out.pop();     // 後ろの空きは送らない
@@ -2687,7 +2699,7 @@
                            if ((isCircle(x[0]) || isRect(x[0])) && map[x[10]] != null) x[10] = map[x[10]]; });
     if (st.mc) st.mc = st.mc.map(fix);
     if (st.mk) st.mk = st.mk.map(fix);
-    if (st.ms) st.ms = st.ms.map((m) => ({ mt: m.mt.slice(), mc: m.mc.map(fix), mk: m.mk.map(fix), mv: m.mv.slice() }));
+    if (st.ms) st.ms = st.ms.map((m) => ({ mt: m.mt.slice(), mc: m.mc.map(fix), mk: m.mk.map(fix), mv: m.mv.slice(), md: (m.md || [0, 0, 0, 0]).slice() }));
     if (st.sc && st.sc.length) st.sc = st.sc.map(fix);
     if (st.hc && st.hc.length) st.hc = st.hc.map(fix);
     return next;
@@ -2891,7 +2903,7 @@
         ${arcEl ? `<div class="field" title="Each arc can be a meter. Pick what it measures; none = plain arc."><span>Meters</span><span class="mts">${
           ARCSET[arcEl[0]].lbl.map((pos, i) => { const on = msOf(arcEl).mv[i] !== 0; return `<label class="mt${on ? '' : ' off'}"><button type="button" class="mvb${on ? ' on' : ''}" data-i="${i}" title="Show or hide this arc">${pos}</button><select data-i="${i}" ${on ? '' : 'disabled'}>${
             METERS.map(([id, nm]) => `<option value="${id}" ${msOf(arcEl).mt[i] === id ? 'selected' : ''}>${nm}</option>`).join('')
-          }</select><input type="color" class="pick mtc" data-i="${i}" value="${colOf(msOf(arcEl).mc[i] >= 0 ? msOf(arcEl).mc[i] : arcEl[5])}" title="Color of the arc itself — right-click to follow the Rim part again"><input type="color" class="pick mtk" data-i="${i}" value="${colOf((st.mk || [])[i] >= 0 ? st.mk[i] : arcEl[5])}" title="Color of the track (the empty part of the arc) — right-click for the automatic faint shade"></label>`; }).join('')
+          }</select><input type="color" class="pick mtc" data-i="${i}" value="${colOf(msOf(arcEl).mc[i] >= 0 ? msOf(arcEl).mc[i] : arcEl[5])}" title="Color of the arc itself — right-click to follow the Rim part again"><input type="color" class="pick mtk" data-i="${i}" value="${colOf(msOf(arcEl).mk[i] >= 0 ? msOf(arcEl).mk[i] : arcEl[5])}" title="Color of the track (the empty part of the arc) — right-click for the automatic faint shade"><button type="button" class="mdb" data-i="${i}" ${on ? '' : 'disabled'} title="Which way this arc fills">${msDir(arcEl, i) > 0 ? '&#8635;' : '&#8634;'}</button></label>`; }).join('')
         }</span></div>` : ''}
         ${arcEl && msOf(arcEl).mt.includes(10) ? hrRows() : ''}
       </div>
@@ -2918,6 +2930,9 @@
       });
       pick('mtc', 'mc');    // 弧そのものの色
       pick('mtk', 'mk');    // 下地 (空の部分) の色
+      document.querySelectorAll('.mts .mdb').forEach((b) => b.addEventListener('click', () => {
+        const i = Number(b.dataset.i); const cur = msDir(arcEl, i); msOwn(arcEl).md[i] = cur > 0 ? -1 : 1; commit();
+      }));
       document.querySelectorAll('.mts .mvb').forEach((b) => b.addEventListener('click', () => {
         const i = Number(b.dataset.i); const m = msOwn(arcEl); m.mv[i] = m.mv[i] === 0 ? 1 : 0; commit();
       }));
@@ -3209,7 +3224,7 @@
     tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b,
     wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0, hr: (st.hr || []).slice(), sc: (st.sc || []).slice(), hc: (st.hc || []).slice(),
     mt: (st.mt || []).slice(), mc: (st.mc || []).slice(), mk: (st.mk || []).slice(), mv: (st.mv || []).slice(),
-    ms: (st.ms || []).map((m) => m.mt.concat(m.mc, m.mk, m.mv)),
+    ms: (st.ms || []).map(msOut),
     st: (st.stk || ['', '']).slice(0, 2), sn: (st.stn || ['', '']).slice(0, 2),
     uc: st.uc === 1 ? 1 : 0, bb: (st.bb || []).slice(0, BB_MAX), tt: (st.tt || []).slice(),
     park: (st.park || []).map((e) => e.slice()),

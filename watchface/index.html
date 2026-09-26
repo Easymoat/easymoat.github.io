@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-27 05:46</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-27 06:43</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -406,6 +406,7 @@
       </div>
       <div class="status" id="watchseen2"></div>
       <div class="muted" id="passnote2"></div>
+      <div class="prow" id="wfsignrow2" hidden><input type="text" id="wfcode2" inputmode="numeric" placeholder="Web code (6 digits)" maxlength="8" autocomplete="off" style="width:170px"><button class="btn primary" id="wfsignin2">Sign in</button><span class="status" id="wfsignst2"></span></div>
     </div>
   </div>
   <aside class="left">
@@ -505,6 +506,8 @@
           <div class="ctl" id="passkeyrow" hidden><span>Pass key</span><input type="text" id="passkey" placeholder="XXXXX-XXXXX-XXXXX-XXXXX" maxlength="30" spellcheck="false" autocomplete="off" style="width:240px"><button class="btn" id="passuse">Use key</button><span class="status" id="passstatus"></span></div>
           <div class="ctl" id="passkeynote" hidden><span></span><span class="muted" style="max-width:640px">Your Pass key — needed only to make share links. Saving and To watch work without it. Check the email from the purchase. Can't find it? <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a></span></div>
           <div class="ctl" id="passinrow" hidden><span>Signed in</span><span class="muted" id="passinnote"></span><button class="btn" id="passout" title="Forget the key on this browser. Saving and To watch keep working.">Sign out</button></div>
+          <div class="ctl" id="wfsignrow" hidden><span>Web code</span><input type="text" id="wfcode" inputmode="numeric" placeholder="6 digits" maxlength="8" autocomplete="off" style="width:110px"><button class="btn primary" id="wfsignin">Sign in</button><span class="status" id="wfsignst"></span></div>
+          <div class="ctl" id="wfsignnote" hidden><span></span><span class="muted" style="max-width:640px">This watch is registered, so this browser has to sign in once (it stays signed in for 30 days). On the watch, open settings → Watch Face → Customize → Web code: it shows a 6-digit code that changes every minute. Type it here. To end every sign-in, choose Sign out web on the watch.</span></div>
           <div class="status" id="watchseen" title="Your watch asks the server for a new dial about every 5 minutes. This line says when it last asked, and whether it already has the dial you sent."></div>
       </div>
       <div class="grp" id="locbox">
@@ -3887,7 +3890,8 @@
     box.title = EDIT_N != null ? `Editing item ${EDIT_N} from the collection` : 'The next item number';
   }
   function itemMini(el, it, layout) {
-    el.style.backgroundImage = it.url ? `url("${absUrl(it.url)}")` : '';
+    el.style.backgroundImage = '';
+    if (it.url) imgSrc(it.url).then((u) => { el.style.backgroundImage = `url("${u}")`; });
     el.style.backgroundColor = hex(layout ? layout.bg : 0);
     if (layout) renderFaceMini(el, layout);
     else { el.innerHTML = '<span class="cap" style="display:block;text-align:center;padding-top:40%">?</span>'; el.title = 'This dial uses something this page does not know yet — reload the page.'; }
@@ -3895,7 +3899,9 @@
   async function loadShelf() {
     const wrap = $('shelf'); const id = devId();
     if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { wrap.innerHTML = '<span class="muted">Enter the Device ID to see your collection.</span>'; return; }
-    try { const r = await fetch($('api').value + '/shelf?device_id=' + encodeURIComponent(id)); if (!r.ok) throw new Error(r.status); const j = await r.json();
+    try { const r = await fetch($('api').value + '/shelf?device_id=' + encodeURIComponent(id), { headers: authHeaders() });
+      if (r.status === 401) { wrap.innerHTML = `<span class="status warn">${authMsg(await r.json().catch(() => null))}.</span>`; SHELF.items = []; $('shelfcount').textContent = ''; return; }
+      if (!r.ok) throw new Error(r.status); const j = await r.json();
       SHELF.items = j.items || []; SHELF.max = j.max || 30;
       SHELF.next = Number(j.next) || (SHELF.items.reduce((m, it) => Math.max(m, it.n), 0) + 1); } catch (e) { return; }
     shelfName(); loadAuthor(); loadLinks();
@@ -3983,6 +3989,71 @@
   const TOKEN_KEY = 'faceComposer.wftoken';
   const tokenFor = (id) => { try { const t = JSON.parse(localStorage.getItem(TOKEN_KEY) || 'null'); return t && t.id === id && Date.parse(t.exp) > Date.now() ? t.token : null; } catch (e) { return null; } };
   const authHeaders = () => { const t = tokenFor(devId()); return Object.assign({ 'Content-Type': 'application/json' }, t ? { Authorization: 'Bearer ' + t } : {}); };
+  // 束縛 (M2、2026-09-27): ウォッチが登録済みの ID は、Web code でサインインしないと読み書きできない。
+  // WF の API への fetch には、サインインしていれば全部 Authorization を付ける (呼び出しが 40 か所以上あるので 1 か所で)。
+  // 明示的に headers を渡している所はそのまま。画像は <img> なので imgSrc (fetch + Blob) を別に通す。
+  (() => {
+    const f0 = window.fetch.bind(window);
+    window.fetch = (u, o) => {
+      try {
+        const url = typeof u === 'string' ? u : (u && u.url) || '';
+        const api = $('api').value;
+        if (url.startsWith(api) || url.startsWith(new URL(api).origin + '/api/wf')) {
+          const t = tokenFor(devId());
+          if (t) {
+            const h = new Headers((o && o.headers) || (typeof u !== 'string' && u.headers) || undefined);
+            if (!h.has('Authorization')) { h.set('Authorization', 'Bearer ' + t); o = Object.assign({}, o || {}, { headers: h }); }
+          }
+        }
+      } catch (e) {}
+      return f0(u, o);
+    };
+  })();
+  const SIGN = { bound: false, signed: false, kind: null, legacy: true };
+  const needSignIn = () => SIGN.bound && !SIGN.signed;
+  // 401 の一言 (保存 / 読み込み共通)
+  const authMsg = (j) => (j && j.error === 'bind_required') ? 'this watch has to be registered first — open The Face on the watch once (it registers by itself), then sign in with its Web code'
+    : (j && j.error === 'contested') ? 'this Device ID is frozen because two watches claimed it — contact easymoat@gmail.com'
+    : 'sign in with the Web code from the watch (5 Watch → Web code)';
+  // 認証付きで画像を取る: <img> にはヘッダを付けられないので、サインイン中は fetch + Blob。それ以外は今までどおりの URL
+  const IMG_BLOBS = new Map();
+  async function imgSrc(url) {
+    const abs = absUrl(url); const t = tokenFor(devId());
+    if (!t) return abs;
+    if (IMG_BLOBS.has(abs)) return IMG_BLOBS.get(abs);
+    try { const r = await fetch(abs, { headers: { Authorization: 'Bearer ' + t } }); if (!r.ok) throw new Error(r.status);
+      const u = URL.createObjectURL(await r.blob()); IMG_BLOBS.set(abs, u); if (IMG_BLOBS.size > 200) { const k = IMG_BLOBS.keys().next().value; URL.revokeObjectURL(IMG_BLOBS.get(k)); IMG_BLOBS.delete(k); } return u; }
+    catch (e) { swallow('img')(e); return abs; }
+  }
+  const normWebCode = (v) => String(v || '').replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/\D/g, '').slice(0, 6);
+  function bindCodeInput(el) {
+    if (!el) return; let composing = false;   // 全角のまま入れても半角に。変換中は触らない (QC 指示)
+    el.addEventListener('compositionstart', () => { composing = true; });
+    el.addEventListener('compositionend', () => { composing = false; el.value = normWebCode(el.value); });
+    el.addEventListener('input', () => { if (!composing) el.value = normWebCode(el.value); });
+  }
+  bindCodeInput($('wfcode')); bindCodeInput($('wfcode2'));
+  async function webSignIn(inputId, statusId) {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus(statusId, 'Enter the Device ID first.', 'err');
+    const code = normWebCode($(inputId).value);
+    if (code.length !== 6) return setStatus(statusId, 'Enter the 6-digit Web code shown on the watch (settings → Watch Face → Customize → Web code).', 'err');
+    setStatus(statusId, 'Signing in…');
+    try {
+      const r = await fetch($('api').value + '/web-auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, code }) });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error === 'code_invalid' ? 'the code was not accepted — check the digits, and use the code the watch shows right now (each one works once)'
+        : j.error === 'too_many_tries' ? 'too many tries — wait a few minutes and try again'
+        : j.error === 'not_bound' ? 'this watch is not registered yet, so no sign-in is needed (update The Face to the latest version to enable it)' : (j.error || r.status));
+      try { localStorage.setItem(TOKEN_KEY, JSON.stringify({ id, token: j.token, exp: j.expires_at })); } catch (e) {}
+      $(inputId).value = ''; setStatus(statusId, 'Signed in.', 'ok');
+      IMG_BLOBS.clear();
+      loadAccess(); loadShelf(); loadWatchSlots(); loadWatchState(); loadPhotos(); loadPlLink(); loadLoc();
+    } catch (e) { setStatus(statusId, 'Could not sign in: ' + e.message, 'err'); }
+  }
+  $('wfsignin')?.addEventListener('click', () => webSignIn('wfcode', 'wfsignst'));
+  $('wfsignin2')?.addEventListener('click', () => webSignIn('wfcode2', 'wfsignst2'));
+  $('wfcode')?.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') webSignIn('wfcode', 'wfsignst'); });
+  $('wfcode2')?.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') webSignIn('wfcode2', 'wfsignst2'); });
   const ymd = (iso) => String(iso || '').slice(0, 10);
   const buyLink = (label) => PASS.url ? ` <a href="${PASS.url}" target="_blank" rel="noopener">${label}</a>` : '';
   // 402 の時の一言 (保存 / To watch 共通)
@@ -3997,12 +4068,16 @@
     try {
       const r = await fetch($('api').value + '/access?device_id=' + encodeURIComponent(id), { headers: authHeaders() });
       const j = await r.json(); PASS.st = j; PASS.url = j.buy_url || null;
+      SIGN.bound = !!j.bound; SIGN.signed = !!j.logged_in; SIGN.kind = j.signin || null; SIGN.legacy = j.legacy_active !== false;
+      const signRow = $('wfsignrow'), signNote = $('wfsignnote'), signRow2 = $('wfsignrow2');
+      if (signRow) signRow.hidden = !needSignIn(); if (signNote) signNote.hidden = !needSignIn(); if (signRow2) signRow2.hidden = !needSignIn();
       const p = j.pass, now = Date.now(), days = (t) => Math.max(0, Math.ceil((t - now) / 86400000));
       // 文言は LP / マニュアルと同じ言い回しでそろえる (マーケ担当と合意、2026-09-21):
       //   "1-Year Pass" / "$9.99, one payment, no subscription" / "365 days are added to what is left"
       //   / "saving and To watch are off" / "keeps showing the last dial"
       let html, cls = '';
-      if (j.exempt) html = 'Not needed for this ID.';
+      if (needSignIn()) { html = `This watch is registered${j.registered_at ? ' (since ' + ymd(j.registered_at) + ')' : ''}. Sign in with its Web code below to see and edit your dials.`; cls = 'warn'; }
+      else if (j.exempt) html = 'Not needed for this ID.';
       else if (p && p.active && !p.expires_at) { html = 'Pass valid (no end date).'; cls = 'ok'; }
       else if (p && p.active) {
         const left = days(Date.parse(p.expires_at));
@@ -4020,16 +4095,17 @@
       note.innerHTML = html; note.className = cls ? 'status ' + cls : 'muted';
       const n2 = $('passnote2'); if (n2) { n2.innerHTML = html; n2.className = cls ? 'status ' + cls : 'muted'; }   // スマホ表示用 (同じ文言)
       const signedIn = !!tokenFor(id);
-      keyrow.hidden = !!j.exempt || !(p && p.active) || signedIn;   // キーは買った人だけ (共有機能のログイン)
+      keyrow.hidden = !!j.exempt || !(p && p.active) || signedIn || !!j.bound;   // キーは買った人だけ (共有機能のログイン)。登録済みのウォッチは Web code で
       $('passkeynote').hidden = keyrow.hidden;
       $('passinrow').hidden = !signedIn;
-      if (signedIn) $('passinnote').textContent = `${id} — you can make share links on this browser.`;
+      if (signedIn) $('passinnote').textContent = j.signin === 'web' ? `${id} — signed in with the Web code on this browser.` : `${id} — you can make share links on this browser.`;
     } catch (e) { note.textContent = ''; }
   }
   $('passout').addEventListener('click', () => {
     try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
     setStatus('passstatus', 'Signed out on this browser. Saving and To watch keep working.', 'ok');
-    loadAccess();
+    IMG_BLOBS.clear();
+    loadAccess(); loadShelf(); loadWatchSlots(); loadPhotos(); loadPlLink(); loadLoc();
   });
   $('passuse').addEventListener('click', async () => {
     const id = devId(), key = $('passkey').value.trim();
@@ -4195,7 +4271,7 @@
     else if (full.url) {   // photo gone: show the finished cut-out (frame changes only; no re-crop possible)
       applyImgDraft({ none: true }); const img = new Image(); img.crossOrigin = 'anonymous';
       img.onload = () => { IMG.cur = img; IMG.src = 'shelf'; IMG.k = 0; setShape('square'); IMG.size = 100; IMG.size2 = null; IMG.rot2 = null; IMG.cx = 160; IMG.cy = 160; IMG.zoom = 1; IMG.panX = 0; IMG.panY = 0; $('imgzoom').value = '1'; renderShapeSel(); IMG.show = true; renderShowToggle(); redrawImg(); $('imgfilename').textContent = 'From the collection (photo no longer on the shelf)'; };
-      img.src = absUrl(full.url) + '&c=1';
+      imgSrc(full.url + '&c=1').then((u) => { if (u.startsWith('blob:')) img.crossOrigin = null; img.src = u; });
     }
     setStatus('shelfstatus', `Loaded ${full.name || 'item ' + n} into the editors.`, 'ok');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -4214,7 +4290,7 @@
     const id = devId();
     if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { WSLOTS.active = 0; WSLOTS.faces = {}; markShelfOnWatch(); return; }
     try {
-      const r = await fetch($('api').value + '/watch?device_id=' + encodeURIComponent(id)); if (!r.ok) return;
+      const r = await fetch($('api').value + '/watch?device_id=' + encodeURIComponent(id), { headers: authHeaders() }); if (!r.ok) return;
       const j = await r.json(); WSLOTS.active = j.active || 0; WSLOTS.faces = j.faces || {};
       WATCH.seenWatch = j.seen || null; renderWatchSeen();
     } catch (e) { return; }
@@ -4712,7 +4788,7 @@
   const PHOTOS = { list: [], max: 10 };
   function renderPhotos() {
     const w = $('photos'); w.innerHTML = '';
-    for (const p of PHOTOS.list) { const b = document.createElement('button'); b.type = 'button'; b.className = 'photo' + (p.k === IMG.k ? ' on' : ''); b.title = p.name || `Photo ${p.k}`; b.style.backgroundImage = `url("${absUrl(p.url)}")`;
+    for (const p of PHOTOS.list) { const b = document.createElement('button'); b.type = 'button'; b.className = 'photo' + (p.k === IMG.k ? ' on' : ''); b.title = p.name || `Photo ${p.k}`; imgSrc(p.url).then((u) => { b.style.backgroundImage = `url("${u}")`; });
       // もう一度押すと外す (2026-09-19)
       b.addEventListener('click', () => { if (p.k === IMG.k && hasSource()) { clearImgPreview(); IMG.k = 0; renderPhotos(); $('imgfilename').textContent = ''; } else loadPhoto(p.k); }); w.appendChild(b); }
     if (!PHOTOS.list.length) w.innerHTML = '<span class="muted">No photos yet — Add photo… below.</span>';
@@ -4721,7 +4797,7 @@
   }
   async function loadPhotos() {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { PHOTOS.list = []; renderPhotos(); return; }
-    try { const r = await fetch(imgApi() + '/photos?device_id=' + encodeURIComponent(id)); if (!r.ok) return; const j = await r.json(); PHOTOS.list = j.photos || []; PHOTOS.max = j.max || 10; renderPhotos(); } catch (e) {}
+    try { const r = await fetch(imgApi() + '/photos?device_id=' + encodeURIComponent(id), { headers: authHeaders() }); if (!r.ok) return; const j = await r.json(); PHOTOS.list = j.photos || []; PHOTOS.max = j.max || 10; renderPhotos(); } catch (e) {}
   }
   // Load a photo into the editor. keep=true leaves the frame/zoom/colors as they are (draft / collection restore).
   async function loadPhoto(k, keep) {
@@ -4731,7 +4807,7 @@
       if (!keep) { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; $('imgzoom').value = '1'; }
       redrawImg(); IMG.dirty = true; renderPhotos(); $('imgfilename').textContent = p.name || `Photo ${k}`; };
     img.onerror = () => setStatus('imgstatus', 'Could not load photo ' + k + '.', 'err');
-    img.src = absUrl(p.url) + '&c=1';
+    imgSrc(p.url + '&c=1').then((u) => { if (u.startsWith('blob:')) img.crossOrigin = null; img.src = u; });
   }
   // Store a picked file on the photo shelf as it is (downscaled to ≤1024 px JPEG), then open it.
   async function addPhoto(img, name) {
@@ -4910,7 +4986,8 @@
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { camNote('Fill in the Device ID first.', 'err'); return; }
     try {
       const base = `${$('api').value}/cam-preview?device_id=${encodeURIComponent(id)}&full=1`;   // full=1: 角を切っていない四角も送ってもらう
-      const r = await fetch(base + '&meta=1'); const j = await r.json();
+      const r = await fetch(base + '&meta=1', { headers: authHeaders() }); const j = await r.json();
+      if (r.status === 401) { camNote(authMsg(j) + '.', 'err'); return; }
       if (r.status === 403) { camNote('Link PulseLink first (5 Watch → Link PulseLink) — the camera only shows a PulseLink you linked.', 'err'); return; }
       if (r.status === 402) { camNote(payMsg(j), 'err'); return; }
       if (!r.ok) throw new Error(j.error || r.status);
@@ -4921,8 +4998,8 @@
       // on the dial. PulseLink masks its own frame to a circle (its watch draws it inside the compass ring),
       // so prefer the unmasked square when the camera phone sends one — a square is the only thing that can
       // fill the dial at 100 % and still read as a square when it is made smaller.
-      const load = (u) => new Promise((res, rej) => { const i = new Image(); i.crossOrigin = 'anonymous';
-        i.onload = () => res(i); i.onerror = () => rej(new Error('frame_load')); i.src = u; });
+      const load = (u0) => imgSrc(u0).then((u) => new Promise((res, rej) => { const i = new Image(); if (!u.startsWith('blob:')) i.crossOrigin = 'anonymous';
+        i.onload = () => res(i); i.onerror = () => rej(new Error('frame_load')); i.src = u; }));
       let img = null;
       if (j.square) {
         try { const sq = await load(base + '&v=' + encodeURIComponent(ov)); if (sq.naturalWidth === sq.naturalHeight) img = sq; } catch (e) {}   // 四角のときだけ使う

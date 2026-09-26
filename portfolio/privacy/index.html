@@ -52,7 +52,7 @@
   <!-- ===================== ENGLISH ===================== -->
   <div class="lang-block" id="content-en">
     <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: September 23, 2026</p>
+    <p class="updated">Last updated: September 26, 2026</p>
 
     <p><strong>WebMemo</strong> (app.easymoat.com) and <strong>MarketWatch Max</strong> are services operated by <strong>Easymoat</strong> (sole proprietor: Yoshicchi), Japan. This policy explains exactly what data these services handle. The MarketWatch watch app itself has its own policy on the <a href="../../marketwatch/">MarketWatch page</a>.</p>
 
@@ -69,7 +69,7 @@
     </ul>
 
     <h2>2. Your account</h2>
-    <p>Signing in takes your MarketWatch license key and your watch's Device ID. That Device ID is the account. It is a random identifier of the watch, not of you as a person.</p>
+    <p>Signing in takes your watch's Device ID and a proof that you have the watch: on an updated MarketWatch, the 6-digit Web code shown in the watch's Device ID menu; otherwise your MarketWatch license key. That Device ID is the account. It is a random identifier of the watch, not of you as a person. A web sign-in lasts up to 30 days and ends with your MarketWatch entitlement; Sign out web on the watch ends every web sign-in for that watch at once.</p>
 
     <h2>3. What is stored on our server</h2>
     <p>To sync between your browser and your watch, our server stores, keyed to your Device ID:</p>
@@ -77,6 +77,7 @@
       <li>Portfolio contents: tickers, and — <strong>only if you choose to enter them</strong> — cost basis, quantity and memos</li>
       <li>Portfolio names and display settings (colors, section order, Markets selection and alert threshold)</li>
       <li>Net-worth history derived from the values above</li>
+      <li>Watch verification data (only for a watch running an updated MarketWatch): one-way fingerprints of the watch's own identifier and of a secret the watch holds (neither the identifier nor the secret is stored), when the watch was registered or re-registered, whether and when it was frozen because another device claimed the same Device ID, a sign-in version number, the date (not the time) of the watch's most recent connection, and a pending MarketWatch Max link (the owner's Device ID and the Max's, kept for 24 hours). A Max link is approved by the owner in WebMemo.</li>
     </ul>
     <p><strong>Entering amounts is optional.</strong> Without cost basis or quantity, WebMemo works as a watchlist and no financial amounts of yours exist anywhere on our server.</p>
 
@@ -93,7 +94,7 @@
     <p>Data is stored on Render's cloud infrastructure and encrypted in transit (HTTPS). Servers may be located outside your country.</p>
 
     <h2>8. Taking your data out, and deleting it</h2>
-    <p>Nothing is locked in. <strong>Export</strong> in the header writes all of your portfolios to a single CSV file at any time — the same file can be read back with Import, so you can keep your own copy or move it elsewhere whenever you like.</p>
+    <p>Nothing is locked in. <strong>Export</strong> in the header writes all of your portfolios to a single CSV file at any time — the same file can be read back with Import, so you can keep your own copy or move it elsewhere whenever you like. Deleting also removes the watch verification data listed in section 3.</p>
     <p>Your data is kept while you use the service. You can erase it yourself at any time: sign in to WebMemo and use <strong>Delete all my data</strong> at the bottom of the page. This immediately and permanently removes your portfolios, memo tabs, asset classes, net-worth history, display settings and any attachments from our server. Your MarketWatch license is unaffected, so you can sign in again and start over. If you prefer, email your Device ID to <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a> and we will do it for you. Since we hold no email address or name, there is nothing else to erase.</p>
 
     <h2>9. Changes</h2>
@@ -106,7 +107,7 @@
   <!-- ===================== JAPANESE ===================== -->
   <div class="lang-block hidden" id="content-ja">
     <h1>プライバシーポリシー</h1>
-    <p class="updated">最終更新日: 2026年9月23日</p>
+    <p class="updated">最終更新日: 2026年9月26日</p>
 
     <p><strong>WebMemo</strong>（app.easymoat.com）と <strong>MarketWatch Max</strong> は、<strong>Easymoat</strong>（個人事業主: Yoshicchi、日本）が運営するサービスです。本ポリシーは、これらのサービスが取り扱うデータを説明します。MarketWatch ウォッチアプリ本体のポリシーは <a href="../../marketwatch/">MarketWatch ページ</a>に記載しています。</p>
 
@@ -123,7 +124,7 @@
     </ul>
 
     <h2>2. アカウントについて</h2>
-    <p>サインインに使うのは MarketWatch のライセンスキーとウォッチの Device ID の2つで、この Device ID がアカウントです。ウォッチ個体のランダムな識別子であり、個人を示すものではありません。</p>
+    <p>サインインに使うのは、ウォッチの Device ID と、そのウォッチを持っている証明です。更新した MarketWatch では、ウォッチの Device ID メニューに表示される 6 桁の Web code を、それ以外では MarketWatch のライセンスキーを使います。この Device ID がアカウントです。ウォッチ個体のランダムな識別子であり、個人を示すものではありません。 Web のサインインは最長 30 日で、MarketWatch の権利が切れると終わります。ウォッチの Sign out web で、そのウォッチの Web のサインインをすべて一度に終了できます。</p>
 
     <h2>3. サーバーに保存するもの</h2>
     <p>ブラウザとウォッチを同期するため、Device ID に紐づけて以下を保存します:</p>
@@ -131,7 +132,8 @@
       <li>ポートフォリオの内容: ティッカーと、<strong>入力した場合に限り</strong>取得単価・数量・メモ</li>
       <li>ポートフォリオ名と表示設定（配色・セクション順・Markets の選択と通知しきい値）</li>
       <li>上記から算出される純資産の履歴</li>
-    </ul>
+          <li>ウォッチの確認情報（更新した MarketWatch を入れたウォッチのみ）: ウォッチ固有の識別子と、ウォッチが持つ秘密から作った一方向の照合値（識別子も秘密も保存しません）、登録・再登録の日時、別の端末が同じ Device ID を名乗った場合の凍結の有無と日時、サインインの版数、最後に接続した日付（時刻は含みません）、MarketWatch Max をつなぐ保留（持ち主の Device ID と Max の Device ID、24 時間で消えます）。Max の接続は持ち主が WebMemo で承認します。</li>
+</ul>
     <p><strong>金額の入力は任意です。</strong>取得単価や数量を入れなければウォッチリストとして使え、あなたの資産額はサーバー上のどこにも存在しません。</p>
 
     <h2>4. メモタブと添付ファイル</h2>
@@ -147,7 +149,7 @@
     <p>データは Render のクラウド基盤に保存され、通信は HTTPS で暗号化されます。サーバーは国外に所在する場合があります。</p>
 
     <h2>8. データの持ち出しと削除</h2>
-    <p>囲い込みはありません。ヘッダーの<strong>「エクスポート」</strong>から、全ポートフォリオをいつでも1つの CSV ファイルに書き出せます。同じファイルは「インポート」で読み戻せるので、手元に控えを持つことも、他へ移すことも自由です。</p>
+    <p>囲い込みはありません。ヘッダーの<strong>「エクスポート」</strong>から、全ポートフォリオをいつでも1つの CSV ファイルに書き出せます。同じファイルは「インポート」で読み戻せるので、手元に控えを持つことも、他へ移すことも自由です。 削除では、第 3 条のウォッチの確認情報も同時に消えます。</p>
     <p>データはサービスの利用中のみ保持します。削除はいつでもご自身で行えます。WebMemo にサインインし、ページ最下部の<strong>「全データを削除」</strong>をご利用ください。ポートフォリオ・メモタブ・資産クラス・純資産の履歴・表示設定・添付ファイルが、当社サーバーから即座かつ完全に消去されます。MarketWatch のライセンスには影響しないため、再度サインインして最初から使えます。ご希望であれば、Device ID を添えて <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a> までご連絡いただければ当社で対応します。メールアドレスも氏名もお預かりしていないため、それ以外に消すべきものはありません。</p>
 
     <h2>9. 変更</h2>

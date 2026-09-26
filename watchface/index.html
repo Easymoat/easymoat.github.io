@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 13:21</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 13:24</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -541,7 +541,7 @@
       <div class="ctl" title="Unit for the Wind part. The same choice as MarketWatch and PulseLink; m/s is their default too.">Wind <span class="cb units" id="windunit"></span></div>
       <div class="ctl" title="Unit for Weather, Today hi/lo and Next 3h.">Temp <span class="cb units" id="tempunit"></span></div>
       <div class="ctl" title="Unit for the Pressure part.">Pressure <span class="cb units" id="pressunit"></span></div>
-      <div class="ctl" title="Unit for the Altitude and Crew parts.">Distance <span class="cb units" id="distunit"></span></div>
+      <div class="ctl" title="Unit for the Altitude part (m / ft) and the Crew part (km / mi).">Distance <span class="cb units" id="distunit"></span></div>
       <div class="ctl" title="Clock format. Device = follow the watch's own setting.">Hours <span class="cb units" id="hourfmt"></span></div>
       <div class="ctl" title="What a long press on a weather part opens. In face = the dial redraws as a detail screen (now / hourly / daily). Garmin = the watch's own weather screen (scrolls freely, no time limit, Garmin's own look).">Weather detail <span class="cb units" id="wxdetail"></span></div></div>
     <div class="group"><span class="lbl">Markets</span><div class="parts" id="parts-mkt"></div><span class="muted">Drop one on the dial, then type its ticker in Selected part. The % parts show the change instead of the price.</span></div>
@@ -913,10 +913,10 @@
   const isCrew = (t) => !!(TYPES[t] && TYPES[t].crew);
   const crewRows = (e) => { const v = Number(e[8]); return (v === 1 || v === 2 || v === 3) ? v : 3; };
   // 1 行 = 名前 (Icon 扱い) + 数字 (Value 扱い、距離と経過分)。3 行目はデータが無い行の見本。
-  // 距離の単位は右の Distance (du) に従う (2026-09-27 ユーザー指示)。ft は実機と同じく 1 mi 未満を ft、以上を小数 1 桁の mi。
-  //   見本は同じ距離 (1.2 km / 850 m) をそれぞれの単位で書いたもの。
+  // 距離の単位は右の Distance (du) に従う (2026-09-27 ユーザー指示)。du = 1 は常にマイル (ft は桁が多すぎる、同日ユーザー指示):
+  //   0.1 mi 未満は小数 2 桁、10 mi 未満は小数 1 桁、それ以上は整数。見本は同じ距離 (1.2 km / 850 m) をそれぞれの単位で書いたもの。
   const CREW_SAMPLE_M = [['Ema', '1.2km 3m'], ['Ken', '850m 1m'], ['--', '']];
-  const CREW_SAMPLE_FT = [['Ema', '3937ft 3m'], ['Ken', '2789ft 1m'], ['--', '']];
+  const CREW_SAMPLE_FT = [['Ema', '0.7mi 3m'], ['Ken', '0.5mi 1m'], ['--', '']];
   const crewSample = () => (st.du === 1 ? CREW_SAMPLE_FT : CREW_SAMPLE_M);
   const crewLines = (e) => crewSample().slice(0, crewRows(e)).map((r) => r.join(' '));
   // el[9] = 並び + 1 (1 名前左 / 2 名前右 / 3 名前上)。0 / 無し = 最初の形 (名前と数字を 1 行で、Show は見ない)。

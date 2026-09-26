@@ -378,7 +378,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 09:34</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 09:43</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1386,7 +1386,8 @@
   // こうすると呼び出し側は何も変えなくていい (ドラッグも 1 回で 1 段)。
   const UNDO_MAX = 60;
   let UNDO = [], REDO = [], UNDO_SNAP = null, UNDO_BUSY = false;
-  const UNDO_KEYS = ['bg', 'el', 'park', 'pc', 'tt', 'tx', 'tm', 'ic', 'io', 'b', 'mt', 'mc', 'mk', 'mv', 'stk', 'stn', 'bb', 'uc'];
+  // ★ 色に関わる控え (pc) とメーターの組 (ms) を入れ忘れると、元に戻した時に色が化ける (2026-09-26)。
+  const UNDO_KEYS = ['bg', 'el', 'park', 'pc', 'tt', 'tx', 'tm', 'ic', 'io', 'b', 'mt', 'mc', 'mk', 'mv', 'ms', 'sc', 'hc', 'hr', 'stk', 'stn', 'bb', 'uc'];
   const undoSnap = () => JSON.stringify(UNDO_KEYS.map((k) => st[k]));
   function undoPush() {
     const cur = undoSnap();

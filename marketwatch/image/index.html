@@ -218,6 +218,8 @@
 <footer>© 2026 Easymoat</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/rgbquant@1.1.2/src/rgbquant.js"></script>
+<!-- ウォッチの Web code でのサインイン (登録済みのウォッチだけ。2026-09-26) -->
+<script src="mw-auth.js"></script>
 <script>
 const API = 'https://mlbwatch-server.onrender.com/api/marketwatch';
 let deviceId = null;
@@ -455,6 +457,23 @@ function resetUploadBtn() {
   btn.classList.remove('done');
 }
 
+// 画像 API への POST (アップロード / 削除)。登録済みのウォッチで「Web code が要る」と
+// 返ったら、コード欄を出してトークンを得てから 1 回だけやり直す (mw-auth.js)。
+// 未登録のウォッチは今までどおり Device ID だけで 1 回で終わる。
+async function postImage(body, box, ja) {
+  const send = () => fetch(API + '/image', {
+    method: 'POST',
+    headers: Object.assign({ 'Content-Type': 'application/json' }, window.mwAuth ? mwAuth.headers(deviceId) : {}),
+    body: JSON.stringify(body)
+  });
+  let r = await send();
+  if (window.mwAuth && await mwAuth.needsCode(r)) {
+    await mwAuth.askCode(box, deviceId, ja);
+    r = await send();
+  }
+  return r;
+}
+
 document.getElementById('uploadBtn').addEventListener('click', async () => {
   if (!deviceId || !maskedPng) return;
   const ja = document.documentElement.lang === 'ja';
@@ -466,11 +485,7 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
     // 画像から最適パレット (median-cut) を mColors 色で算出して一緒に送る。
     // ウォッチはこのパレットで makeImageRequest するので、同じ色数でも画質が大幅向上。
     const palette = computeOptimalPalette(mColors);
-    const r = await fetch(API + '/image', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ device_id: deviceId, image: maskedPng, size: sizeMode, colors: mColors, palette: palette, bg_auto: mBgAuto })
-    });
+    const r = await postImage({ device_id: deviceId, image: maskedPng, size: sizeMode, colors: mColors, palette: palette, bg_auto: mBgAuto }, box, ja);
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || 'upload_failed');
     box.innerHTML = '<div class="alert success">' + (ja ? 'アップロード完了。MarketWatch を再起動すると反映されます。' : 'Uploaded. Restart MarketWatch to see it.') + '</div>';
@@ -489,11 +504,7 @@ document.getElementById('removeBtn').addEventListener('click', async () => {
   const box = document.getElementById('uploadAlert');
   box.innerHTML = '';
   try {
-    const r = await fetch(API + '/image', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ device_id: deviceId, remove: true })
-    });
+    const r = await postImage({ device_id: deviceId, remove: true }, box, ja);
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || 'remove_failed');
     box.innerHTML = '<div class="alert success">' + (ja ? '削除しました。ウォッチフェイスはデフォルトの画像に戻ります。' : 'Removed. The watchface goes back to the default image.') + '</div>';

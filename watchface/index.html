@@ -378,7 +378,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 09:43</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 09:50</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2672,7 +2672,9 @@
     // (数えるだけで付け替えないと、詰め直した後に別の色を指す。2026-09-21)。
     const note = (c) => { const k = c - PC_BASE; if (k >= 0 && k < pc.length) keep.add(k); };
     const parts = st.el.concat(st.park || []);
-    parts.forEach((x) => { note(x[5]); if (isCircle(x[0])) note(circFill(x)); });
+    // 塗りの色は円 (75) も四角形 (76) も 11 番目。四角形を数え損ねていて、
+    // 枠が詰め直されると四角形の塗りと他の部品の色が入れ替わっていた (2026-09-26)。
+    parts.forEach((x) => { note(x[5]); if (isCircle(x[0])) note(circFill(x)); else if (isRect(x[0])) note(rectFill(x)); });
     [].concat(st.mc || [], st.mk || [], st.sc || [], st.hc || []).forEach(note);
     // 部品ごとのメーターの組の色も使用中 (2026-09-26: 数え損ねて他の部品の色が変わった)
     (st.ms || []).forEach((m) => { (m.mc || []).forEach(note); (m.mk || []).forEach(note); });
@@ -2682,7 +2684,7 @@
     pc.forEach((c, i) => { if (keep.has(i)) { map[PC_BASE + i] = PC_BASE + next.length; next.push(c); } });
     const fix = (c) => (map[c] != null ? map[c] : c);
     parts.forEach((x) => { if (map[x[5]] != null) x[5] = map[x[5]];
-                           if (isCircle(x[0]) && map[x[10]] != null) x[10] = map[x[10]]; });
+                           if ((isCircle(x[0]) || isRect(x[0])) && map[x[10]] != null) x[10] = map[x[10]]; });
     if (st.mc) st.mc = st.mc.map(fix);
     if (st.mk) st.mk = st.mk.map(fix);
     if (st.ms) st.ms = st.ms.map((m) => ({ mt: m.mt.slice(), mc: m.mc.map(fix), mk: m.mk.map(fix), mv: m.mv.slice() }));

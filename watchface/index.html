@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 13:35</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-27 05:46</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -463,7 +463,8 @@
           <div class="ctl" id="imgdragrow" title="What dragging the empty part of the dial does. Dragging a part always moves that part.">Dragging the dial moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Picture</button><button type="button" data-m="frame">Frame</button></span><span class="vsep"></span><span class="muted">Nudge</span><span class="cb units dpad" id="imgnudge" title="Move it one step at a time. Hold Shift for a bigger step."><button type="button" data-d="up">&#8593;</button><button type="button" data-d="left">&#8592;</button><button type="button" data-d="down">&#8595;</button><button type="button" data-d="right">&#8594;</button></span></div>
           <div class="ctl"><button class="btn" id="imgreset" title="Put the frame back to the middle at 100 % (the picture stays)">Reset frame</button><button class="btn danger" id="imgclear" title="Take the picture (or the color) out of this editor and start over. Nothing is deleted from the server or from the collection.">Reset image</button></div>
           <details class="box camdet" id="camgrp"><summary class="lbl" style="cursor:pointer">PulseLink camera</summary>
-            <div class="ctl"><button class="btn toggle" id="camon">Camera: OFF</button><span class="muted">PL ID</span><input type="text" id="plid" placeholder="XXXX-XXXX" style="width:110px"><span class="status" id="camnote" style="flex:1 1 auto"></span></div>
+            <div class="ctl"><button class="btn toggle" id="camon">Camera: OFF</button><span class="status" id="camnote" style="flex:1 1 auto"></span></div>
+            <div class="ctl"><span class="muted" style="max-width:640px">Shows the latest picture from the PulseLink Cam of the PulseLink you linked in 5 Watch → Link PulseLink. Nothing to type here.</span></div>
           </details>
         </div>
         <div class="opts">
@@ -510,7 +511,10 @@
           <span class="lbl">b · Where the weather parts get their forecast</span>
           <div class="status" id="locnote" title="Which of the three below is in use right now">Not set yet — pick one of the three below.</div>
           <div class="opt"><button class="btn" id="locset">Use this computer's place</button><span class="muted">Asks this browser where you are and sends that. Opening this page updates it, so it follows you when you travel.</span></div>
-          <div class="opt"><button class="btn" id="locplset">Follow PulseLink</button><input type="text" id="locpl" placeholder="XXXX-XXXX" style="width:110px"><span class="muted">PulseLink is another Easymoat app. If it runs on this watch, the forecast follows the watch wherever it goes — no need to open this page.</span></div>
+          <div class="opt"><button class="btn" id="locplset">Follow PulseLink</button><span class="muted">PulseLink is another Easymoat app. If it runs on this watch, the forecast follows the watch wherever it goes — no need to open this page. Uses the PulseLink you linked below.</span></div>
+          <div class="opt" id="pllinkrow" title="Proves you hold that PulseLink watch. The code is shown on the watch for 10 minutes and works once."><span class="lbl">Link PulseLink</span><span class="status" id="pllinkst" style="flex:1 1 auto"></span></div>
+          <div class="opt"><input type="text" id="plidnew" placeholder="PulseLink ID XXXX-XXXX" style="width:170px" autocomplete="off"><input type="text" id="plcode" inputmode="numeric" placeholder="6-digit Web code" maxlength="8" style="width:140px" autocomplete="off"><button class="btn primary" id="pllink">Link</button><button class="btn" id="plunlink">Unlink</button></div>
+          <div class="opt"><span class="muted" style="max-width:640px">On the PulseLink watch, open You → Device ID → Web code: it shows a 6-digit code (valid 10 minutes, one use). Type that code and PulseLink's Device ID above. Once linked, the forecast can follow that watch and the PulseLink Cam can appear on a dial. Unlink here any time; signing out of the web in PulseLink also ends it.</span></div>
           <div class="opt"><button class="btn danger" id="locclear">Use the watch's own GPS</button><span class="muted">Stops sending a place from here. The watch then has to find its own position, which can be slow or fail indoors.</span></div>
       </div>
     </div>
@@ -3803,13 +3807,13 @@
     try {
       const r = await fetch($('api').value + '/loc?device_id=' + encodeURIComponent(id)); if (!r.ok) return;
       const j = await r.json();
-      if (j.pl != null) { $('locpl').value = j.pl; }
       // サーバは座標も追従先の状態も返さない (2026-09-26 の直し)。位置があるかどうかだけを見る。
-      el.textContent = !j.has_pos ? (j.pl ? 'Following PulseLink — waiting for a position.'
+      el.textContent = (j.pl && j.linked === false) ? 'Following PulseLink, but the link has ended — link PulseLink again with a new Web code below.'
+        : !j.has_pos ? (j.pl ? 'Following PulseLink — waiting for a position.'
           : locAutoOn() ? 'Not set — press the button so the forecast has a place.' : 'Not set — the watch must supply its own position.')
         : j.pl ? 'Following PulseLink.'
         : `${j.src === 'web' ? 'Using the place set from this browser' : "Using the watch's own position"}${j.ts ? ' · ' + fmtTime(j.ts * 1000) : ''}`;
-      el.className = 'status';
+      el.className = 'status' + ((j.pl && j.linked === false) ? ' err' : '');
     } catch (e) { swallow('loc')(e); }
   }
   // 一度許可した端末では、開くたびに黙って今の位置に更新する (旅先で Composer を開けば追従)。
@@ -3834,18 +3838,15 @@
       }, () => {}, { maximumAge: 600000, timeout: 10000 });
     } catch (e) {}
   }
-  // PulseLink のウォッチの位置に追従する (PL の You メニューにある Device ID)
+  // PulseLink のウォッチの位置に追従する。追従先は Web code で結び付けた PL だけ (ID は送らない、2026-09-27)
   $('locplset').addEventListener('click', async () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('locnote', 'Fill in the Device ID above first — the forecast is stored against that watch.', 'err');
-    const pl = $('locpl').value.trim();
-    if (pl && !/^[0-9a-zA-Z-]{4,40}$/.test(pl)) return setStatus('locnote', 'That PulseLink ID does not look right (XXXX-XXXX).', 'err');
-    try { localStorage.setItem('faceComposer.locpl', pl); } catch (e) {}
+    if (!PLL.valid) { const row = $('pllinkrow'); if (row) row.scrollIntoView({ block: 'center' }); return setStatus('locnote', 'Link PulseLink first (below) — the forecast can only follow a PulseLink you have linked with its Web code.', 'err'); }
     try {
       const r = await fetch($('api').value + '/loc', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ device_id: id, pl_id: pl }) });
-      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error === 'bad_pl_id' ? 'that ID is not valid' : (j.error || r.status));
-      if (!pl) setStatus('locnote', 'No longer following PulseLink. Press one of the other two to choose where the forecast comes from.', 'ok');
-      else if (j.has_pos) setStatus('locnote', 'Following PulseLink — its position is in use.', 'ok');
+        body: JSON.stringify({ device_id: id, follow_pl: true }) });
+      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error === 'pl_link_required' ? 'link PulseLink first (below)' : (j.error || r.status));
+      if (j.has_pos) setStatus('locnote', 'Following PulseLink — its position is in use.', 'ok');
       else setStatus('locnote', 'Following PulseLink — waiting for a position. Open PulseLink on that watch once, then come back.', '');
       setTimeout(loadLoc, 1200);
     } catch (e) { setStatus('locnote', 'Could not save: ' + e.message, 'err'); }
@@ -3944,7 +3945,7 @@
   }
   // The recipe = how the picture was framed (which photo, shape, size, position, zoom, colors, Auto).
   function currentRecipe() {
-    return { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, shape2: IMG.shape2 || null, cut: cutOn() ? 1 : undefined, rot: IMG.rot, rot2: IMG.shape2 ? rotOf(2) : undefined, size: IMG.size, size2: IMG.shape2 ? sizeOf(2) : undefined, cx: IMG.cx, cy: IMG.cy, cx2: IMG.shape2 ? cxOf(2) : undefined, cy2: IMG.shape2 ? cyOf(2) : undefined, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom, colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, br: brOf(), sa: saOf(), plId: IMG.src === 'camera' ? plId() : undefined };
+    return { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, shape2: IMG.shape2 || null, cut: cutOn() ? 1 : undefined, rot: IMG.rot, rot2: IMG.shape2 ? rotOf(2) : undefined, size: IMG.size, size2: IMG.shape2 ? sizeOf(2) : undefined, cx: IMG.cx, cy: IMG.cy, cx2: IMG.shape2 ? cxOf(2) : undefined, cy2: IMG.shape2 ? cyOf(2) : undefined, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom, colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, br: brOf(), sa: saOf() };   // plId は入れない (カメラのコマは結び付けた PL からしか作らない、2026-09-27)
   }
   $('shelfsave').addEventListener('click', async () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID (XXXX-XXXX) — on the watch: settings → Watch Face → Customize → Device ID.', 'err');
@@ -4247,7 +4248,7 @@
     catch (e) { setStatus('shelfstatus', 'Delete failed: ' + e.message, 'err'); }
   }
 
-  document.fonts?.ready.then(() => { positionAll(); loadShelf(); loadWatchSlots(); loadLoc(); refreshLocIfAllowed(); });
+  document.fonts?.ready.then(() => { positionAll(); loadShelf(); loadWatchSlots(); loadPlLink(); loadLoc(); refreshLocIfAllowed(); });
   // ── Background image (ported from easymoat.com/pulselink/image/; keyed by this Device ID, /api/wf/image*) ──
   // src: where the editor image came from — 'file' (chosen by the user; kept while switching slots so it
   // can be uploaded to any slot) or 'slot' (loaded from the server; cleared when an empty slot is picked).
@@ -4848,24 +4849,73 @@
     // ID を入れ替えたら「編集中の品」は別の人の Collection の番号になる = 上書きの相手が変わってしまう。
     // 新規あつかいに戻す (2026-09-21)。盤面の中身はそのまま残す (作りかけを失わないため)。
     EDIT_N = null; EDIT_ITEM_NAME = ''; SENT_TO = null;
-    loadAccess(); IMG.k = 0; clearImgPreview(); loadPhotos(); loadShelf(); loadWatchSlots(); loadWatchState(); loadLoc(); refreshLocIfAllowed(); });
+    loadAccess(); IMG.k = 0; clearImgPreview(); loadPhotos(); loadShelf(); loadWatchSlots(); loadWatchState(); loadPlLink(); loadLoc(); refreshLocIfAllowed(); });
   $('imgparts').addEventListener('click', () => { stage.classList.toggle('noparts'); $('imgparts').textContent = stage.classList.contains('noparts') ? 'Show parts' : 'Hide parts'; });
   $('imghide').addEventListener('click', () => { stage.classList.toggle('noimg'); $('imghide').textContent = stage.classList.contains('noimg') ? 'Show image' : 'Hide image'; });
 
   // ── Live camera (PulseLink): while ON the latest camera frame replaces the picture in the editor ──
-  const PL_API = 'https://mlbwatch-server.onrender.com/api/pulselink';
+  // 2026-09-27: PL の cam-ping / compass-image をブラウザから直接呼ぶのをやめ、WF の /cam-preview から取る。
+  //   サーバが「Web code で結び付けた PL か」を確かめてからコマを返す (PL の ID も uid もブラウザに持たない)。
   const CAM = { on: false, timer: null, ver: '', prev: null };
-  try { $('plid').value = localStorage.getItem('faceComposer.plid') || ''; } catch (e) {}
-  try { const v = localStorage.getItem('faceComposer.locpl'); if (v && !$('locpl').value) $('locpl').value = v; } catch (e) {}
-  const plId = () => { const v = $('plid').value.trim(); try { localStorage.setItem('faceComposer.plid', v); } catch (e) {} return v; };
+  // 結び付きの状態 (GET /pl-link)。linked = 記録あり、valid = PL 側でまだ有効
+  const PLL = { linked: false, valid: false, pl: null };
+  function renderPlLink() {
+    const st0 = $('pllinkst'); if (!st0) return;
+    if (!PLL.linked) { st0.textContent = 'Not linked.'; st0.className = 'status'; }
+    else if (!PLL.valid) { st0.textContent = `Linked to ${PLL.pl}, but the link has ended (signed out of the web in PulseLink, or its data was deleted). Link again with a new Web code.`; st0.className = 'status err'; }
+    else { st0.textContent = `Linked to PulseLink ${PLL.pl}.`; st0.className = 'status ok'; }
+    const un = $('plunlink'); if (un) un.disabled = !PLL.linked;
+  }
+  async function loadPlLink() {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { PLL.linked = false; PLL.valid = false; PLL.pl = null; renderPlLink(); return; }
+    try { const r = await fetch($('api').value + '/pl-link?device_id=' + encodeURIComponent(id)); const j = await r.json();
+      PLL.linked = !!j.linked; PLL.valid = !!j.valid; PLL.pl = j.pl || null; } catch (e) { swallow('pllink')(e); }
+    renderPlLink();
+  }
+  // Web code: 全角数字を半角に (日本語入力 ON のまま入れる人がいる)。変換中 (composition) は触らない。
+  const normCode = (v) => String(v || '').replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/\D/g, '').slice(0, 6);
+  (() => { const el = $('plcode'); if (!el) return; let composing = false;
+    el.addEventListener('compositionstart', () => { composing = true; });
+    el.addEventListener('compositionend', () => { composing = false; el.value = normCode(el.value); });
+    el.addEventListener('input', () => { if (!composing) el.value = normCode(el.value); }); })();
+  $('pllink')?.addEventListener('click', async () => {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('pllinkst', 'Fill in the Device ID above first.', 'err');
+    const pl = $('plidnew').value.trim(), code = normCode($('plcode').value);
+    if (!/^[0-9a-zA-Z-]{4,40}$/.test(pl)) return setStatus('pllinkst', "Enter PulseLink's Device ID (XXXX-XXXX) — on the PulseLink watch: You → Device ID.", 'err');
+    if (code.length !== 6) return setStatus('pllinkst', 'Enter the 6-digit Web code shown on the PulseLink watch (You → Device ID → Web code).', 'err');
+    setStatus('pllinkst', 'Linking…');
+    try {
+      const r = await fetch($('api').value + '/pl-link', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ device_id: id, pl_id: pl, code }) });
+      const j = await r.json();
+      if (r.status === 402) { loadAccess(); throw new Error(payMsg(j)); }
+      if (!r.ok || !j.ok) throw new Error(j.error === 'code_invalid' ? 'the code was not accepted — check the digits, the ID, and that the code is less than 10 minutes old and unused. Ask the watch for a new one and try again'
+        : j.error === 'too_many_tries' ? 'too many tries — wait a minute and try again'
+        : j.error === 'bad_pl_id' ? 'that PulseLink ID does not look right' : (j.error || r.status));
+      $('plcode').value = '';
+      await loadPlLink(); loadLoc();
+      setStatus('pllinkst', `Linked to PulseLink ${j.pl}. The forecast can follow it (Follow PulseLink above) and its camera can go on a dial.`, 'ok');
+    } catch (e) { setStatus('pllinkst', 'Could not link: ' + e.message, 'err'); }
+  });
+  $('plunlink')?.addEventListener('click', async () => {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return;
+    if (!window.confirm('Unlink PulseLink from this watch? The forecast stops following it and the camera stops updating. You can link again with a new Web code.')) return;
+    try { const r = await fetch($('api').value + '/pl-link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, remove: true }) });
+      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || r.status);
+      if (CAM.on) setCamera(false);
+      await loadPlLink(); loadLoc(); setStatus('pllinkst', 'Unlinked.', 'ok');
+    } catch (e) { setStatus('pllinkst', 'Could not unlink: ' + e.message, 'err'); }
+  });
   function camNote(msg, cls) { const el = $('camnote'); el.textContent = msg; el.title = msg; el.className = 'status ' + (cls || ''); }
   async function fetchCam() {
-    const id = plId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { camNote('Enter the PulseLink Device ID (XXXX-XXXX).', 'err'); return; }
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { camNote('Fill in the Device ID first.', 'err'); return; }
     try {
-      const r = await fetch(`${PL_API}/cam-ping?device_id=${encodeURIComponent(id)}&full=1`); const j = await r.json();   // full=1: 角を切っていない四角も送ってもらう
+      const base = `${$('api').value}/cam-preview?device_id=${encodeURIComponent(id)}&full=1`;   // full=1: 角を切っていない四角も送ってもらう
+      const r = await fetch(base + '&meta=1'); const j = await r.json();
+      if (r.status === 403) { camNote('Link PulseLink first (5 Watch → Link PulseLink) — the camera only shows a PulseLink you linked.', 'err'); return; }
+      if (r.status === 402) { camNote(payMsg(j), 'err'); return; }
       if (!r.ok) throw new Error(j.error || r.status);
-      const ov = String(j.ov || '0');
-      if (ov === '0' || !j.uid) { camNote('No camera frame yet — the camera phone has not sent a picture.', 'err'); return; }
+      const ov = String(j.version || '0');
+      if (!j.has) { camNote('No camera frame yet — the camera phone has not sent a picture.', 'err'); return; }
       if (ov === CAM.ver && IMG.src === 'camera') { camNote(`Live camera · frame ${fmtTime(Number(ov))}`, 'ok'); return; }
       // 2026-09-10: the angle is set in the PulseLink Viewer; the editor only decides how the picture sits
       // on the dial. PulseLink masks its own frame to a circle (its watch draws it inside the compass ring),
@@ -4874,11 +4924,10 @@
       const load = (u) => new Promise((res, rej) => { const i = new Image(); i.crossOrigin = 'anonymous';
         i.onload = () => res(i); i.onerror = () => rej(new Error('frame_load')); i.src = u; });
       let img = null;
-      try {
-        const sq = await load(`${PL_API}/compass-image/${encodeURIComponent(j.uid)}_s6_full.png?v=${ov}&c=1`);
-        if (sq.naturalWidth === sq.naturalHeight) img = sq;   // 四角のときだけ使う (元比率のフル画像は角度が違う)
-      } catch (e) {}
-      if (!img) img = await load(`${PL_API}/compass-image/${encodeURIComponent(j.uid)}_s6.png?v=${ov}&c=1`);
+      if (j.square) {
+        try { const sq = await load(base + '&v=' + encodeURIComponent(ov)); if (sq.naturalWidth === sq.naturalHeight) img = sq; } catch (e) {}   // 四角のときだけ使う
+      }
+      if (!img) img = await load(`${$('api').value}/cam-preview?device_id=${encodeURIComponent(id)}&v=${encodeURIComponent(ov)}`);
       CAM.ver = ov; IMG.cur = img; IMG.src = 'camera'; IMG.k = 0; IMG.fill = null; IMG.fromSlot = 0;
       renderPhotos(); $('imgfilename').textContent = 'Live camera (framed in PulseLink)'; redrawImg();
       camNote(`Live camera · frame ${fmtTime(Number(ov))}`, 'ok');
@@ -4894,7 +4943,7 @@
     $('imgzoom').value = '1'; renderShapeSel();
   }
   function setCamera(on) {
-    if (on && !/^[0-9a-zA-Z-]{4,40}$/.test(plId())) { camNote('Enter the PulseLink Device ID (XXXX-XXXX) first.', 'err'); return; }   // stays OFF
+    if (on && !PLL.valid) { camNote('Link PulseLink first (5 Watch → Link PulseLink), then turn the camera on.', 'err'); return; }   // stays OFF
     CAM.on = on; $('camon').classList.toggle('on', on); $('camon').textContent = 'Camera: ' + (on ? 'ON' : 'OFF');
     renderCamLock();
     if (on) { CAM.prev = { cur: IMG.cur, src: IMG.src, k: IMG.k, fill: IMG.fill }; CAM.ver = ''; if (!hasSource()) camSquare(); fetchCam(); CAM.timer = setInterval(fetchCam, 60000); }
@@ -4908,7 +4957,6 @@
     }
   }
   $('camon').addEventListener('click', () => setCamera(!CAM.on));
-  $('plid').addEventListener('change', () => { if (CAM.on) { CAM.ver = ''; fetchCam(); } });
   setShape('square'); renderPhotos(); measure();
 
   // ── 携帯の画面: コレクションだけ出す。Device ID とウォッチの状態は上のバーに写す ──

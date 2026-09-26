@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 10:14</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 10:29</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1064,7 +1064,7 @@
     const want = key; GAMEQ.key = key; GAMEQ.at = Date.now();
     const tzo = -new Date().getTimezoneOffset() * 60;
     fetch(`${$('api').value}/game?bb=${encodeURIComponent(key)}&tzo=${tzo}`).then((r) => (r.ok ? r.json() : null))
-      .then((j) => { if (j && GAMEQ.key === want) { GAMEQ.g = j.g || []; render(); } }).catch(() => {});
+      .then((j) => { if (j && GAMEQ.key === want) { GAMEQ.g = j.g || []; render(); } }).catch(swallow('games'));
   }
   setInterval(() => { if (GAMEQ.key.replace(/,/g, '')) syncGames(true); }, 60000);
   const gameOf = (i) => (GAMEQ.key === gameKey() ? GAMEQ.g[i] : undefined);   // undefined = まだ / null = 試合なし
@@ -1182,10 +1182,24 @@
                           md: [0, 0, 0, 0] });   // 弧の増える向き (0 = その弧の既定、2026-09-26)
   const msIdx = (e) => { const v = Number(e[10]); return (Number.isInteger(v) && v >= 0 && v < MS_MAX && (st.ms || [])[v]) ? v : -1; };
   const msOf = (e) => { const i = msIdx(e); return i >= 0 ? st.ms[i] : msFace(); };
+  // 使われていない組を捨てて詰め直す。捨てないと組が 4 つで埋まり、次に作る部品が
+  // 他の部品の組を横取りして「片方を変えるともう片方も変わる」状態に戻る (2026-09-26)。
+  function msGc() {
+    if (!Array.isArray(st.ms) || !st.ms.length) return;
+    const rows = st.el.concat(st.park || []);
+    const idxOf = (e) => { const v = Number(e[10]); return (ARCSET[e[0]] && Number.isInteger(v) && v >= 0 && v < st.ms.length) ? v : -1; };
+    const used = new Set(); rows.forEach((e) => { const v = idxOf(e); if (v >= 0) used.add(v); });
+    if (used.size === st.ms.length) return;
+    const map = {}, next = [];
+    st.ms.forEach((m, i) => { if (used.has(i)) { map[i] = next.length; next.push(m); } });
+    rows.forEach((e) => { const v = idxOf(e); if (v >= 0 && map[v] != null) e[10] = map[v]; });
+    st.ms = next;
+  }
   function msOwn(e) {            // この部品だけの組を用意する (無ければ今の値を写して作る)
     let i = msIdx(e);
     if (i < 0) {
       const cur = msOf(e);
+      msGc();
       st.ms = (st.ms || []).slice();
       i = Math.min(st.ms.length, MS_MAX - 1);
       st.ms[i] = { mt: cur.mt.slice(), mc: cur.mc.slice(), mk: cur.mk.slice(), mv: cur.mv.slice(), md: (cur.md || [0, 0, 0, 0]).slice() };
@@ -1391,6 +1405,19 @@
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
+  // ★★ 面の状態に項目を 1 つ足す時に必ず見る 9 か所 (2026-09-26 に 4 か所落として回帰を 3 件出した) ★★
+  //   1. UNDO_KEYS          … 元に戻す/やり直しの対象。抜けると Undo で値が化ける
+  //   2. gcColors           … 色 index を持つなら「使用中」に数える + 詰め直しの付け替え。抜けると他の部品の色が変わる
+  //   3. sanitize           … 読み込みの入口。**保存の形 → 編集の形に必ずここで直す** (st に入る値は常に編集の形)
+  //   4. loadIntoEditor     … 読み込んだ面を状態へ写す
+  //   5. draftKeys          … 下書き (localStorage)。抜けると開き直しで消える
+  //   6. layoutObj          … サーバ / ウォッチへ送る形
+  //   7. renderFaceMini     … サムネイルは状態を差し替えて描く。形が違うと描画が黙って止まる
+  //   8. サーバ wf_layout.js … 検査を通らない項目は保存で落ちる
+  //   9. ウォッチとの取り決め … 実機が読む値なら実機セッションへ連絡
+  // 公開前の最低限の確認 (本番ではなく手元で 1 周):
+  //   新規で保存 → Edit で読み戻し → サムネイル → Undo → 色を 2 回変更 → 既存の面を 1 つ開く
+  //   (既存の面は実機 Collection を**読み取りのみ**。実機 4041-1544 には書かない。自分の確認用 ID は aaaa-0001)
   let st = { dev: 'fr965', hr: [], sc: [], hc: [], grid: 50, showGrid: true, gridBright: false, selBright: true, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], ms: [], stk: ['', ''], stn: ['', ''], uc: 0, bb: [null, null, null, null], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
   // Selection: `sel` is the primary (last clicked) element, `selSet` every selected index.
   // Shift / Cmd / Ctrl + click adds or removes one; the Selected panel, dragging, arrows and
@@ -2658,6 +2685,9 @@
   }
   // 色を選ぶ入口はここだけ。-1 = 入らなかった (呼ぶ側は色を変えない)。
   function pickColor(el, str) { return useColor(str); }
+  // 握り潰した失敗はコンソールに残す。サムネイルが空になった不具合 (2026-09-26) は
+  // 例外がどこにも出ず、原因を探すのに時間がかかった。画面の動きは変えない。
+  const swallow = (tag) => (e) => { try { console.warn('[' + tag + ']', e); } catch (e2) {} };
   let COLOR_NOTE = '';   // 控えがいっぱいで他の部品の色まで変わった時だけ出す一言
   // 選んだ色の index を返す。基本色 (0-9) か控えに同じ色があればその index、無ければ控えに足す。
   // 足すだけなので、既に置いた部品の色は変わらない。上限に達したら、どの部品も使っていない色を
@@ -3719,7 +3749,7 @@
   async function loadWatchState() {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { WATCH.faces = {}; WATCH.seenLegacy = null; WATCH.seenWatch = null; renderWatchSeen(); return; }
     try { const r = await fetch($('api').value + '/layouts?device_id=' + encodeURIComponent(id)); if (!r.ok) return; const j = await r.json();
-      WATCH.faces = j.faces || {}; WATCH.active = Number(j.active || 1); WATCH.seenLegacy = j.seen || null; renderWatchSeen(); } catch (e) {}
+      WATCH.faces = j.faces || {}; WATCH.active = Number(j.active || 1); WATCH.seenLegacy = j.seen || null; renderWatchSeen(); } catch (e) { swallow('watch')(e); }
   }
   setInterval(loadWatchState, 30000);   // refresh the watch line while the page is open
   // カメラの面はコマが 3 分ごとに変わるので、開いている間は絵札も見直す。
@@ -3741,19 +3771,18 @@
       const r = await fetch($('api').value + '/loc?device_id=' + encodeURIComponent(id)); if (!r.ok) return;
       const j = await r.json();
       if (j.pl != null) { $('locpl').value = j.pl; }
-      el.textContent = j.lat == null ? (locAutoOn() ? 'Not set — press the button so the forecast has a place.' : 'Not set — the watch must supply its own position.')
-        : `${j.src === 'pulselink' ? 'Following PulseLink' : j.src === 'web' ? 'Using the place set from this browser' : "Using the watch's own position"} · ${fmtTime(j.ts * 1000)}`;
-      if (j.lat == null && j.pl) el.textContent = 'Following PulseLink — ' + PL_WHY[j.pl_state || ''];
+      // サーバは座標も追従先の状態も返さない (2026-09-26 の直し)。位置があるかどうかだけを見る。
+      el.textContent = !j.has_pos ? (j.pl ? 'Following PulseLink — waiting for a position.'
+          : locAutoOn() ? 'Not set — press the button so the forecast has a place.' : 'Not set — the watch must supply its own position.')
+        : j.pl ? 'Following PulseLink.'
+        : `${j.src === 'web' ? 'Using the place set from this browser' : "Using the watch's own position"}${j.ts ? ' · ' + fmtTime(j.ts * 1000) : ''}`;
       el.className = 'status';
-    } catch (e) {}
+    } catch (e) { swallow('loc')(e); }
   }
   // 一度許可した端末では、開くたびに黙って今の位置に更新する (旅先で Composer を開けば追従)。
   // 許可を求めるのはボタンを押した時だけ。permissions API が無いブラウザでは何もしない。
-  // なぜ PulseLink の位置が使えないのか、そのまま出す文。
-  const PL_WHY = { no_device: 'no PulseLink with that ID yet. Open PulseLink on the watch and check the ID in the You menu.',
-                   not_sharing: 'PulseLink has not shared a position. Turn location sharing on in PulseLink on the watch.',
-                   stale: 'its last position is over a day old, so the saved place is used instead.',
-                   bad_id: 'that ID is not valid.', '': 'waiting for a position.' };
+  // 追従先の細かい理由はサーバが返さなくなった (他人の端末の状態を漏らさないため、2026-09-26)。
+  // 出せるのは「位置があるか無いか」だけ。
   const LOC_AUTO = 'faceComposer.locauto';
   const locAutoOn = () => { try { return localStorage.getItem(LOC_AUTO) !== 'off'; } catch (e) { return true; } };
   async function refreshLocIfAllowed() {
@@ -3783,8 +3812,8 @@
         body: JSON.stringify({ device_id: id, pl_id: pl }) });
       const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error === 'bad_pl_id' ? 'that ID is not valid' : (j.error || r.status));
       if (!pl) setStatus('locnote', 'No longer following PulseLink. Press one of the other two to choose where the forecast comes from.', 'ok');
-      else if (j.lat != null) setStatus('locnote', 'Following PulseLink — its position is in use.', 'ok');
-      else setStatus('locnote', 'Following PulseLink — ' + PL_WHY[j.pl_state || ''], j.pl_state === 'stale' ? '' : 'err');
+      else if (j.has_pos) setStatus('locnote', 'Following PulseLink — its position is in use.', 'ok');
+      else setStatus('locnote', 'Following PulseLink — waiting for a position. Open PulseLink on that watch once, then come back.', '');
       setTimeout(loadLoc, 1200);
     } catch (e) { setStatus('locnote', 'Could not save: ' + e.message, 'err'); }
   });
@@ -3850,7 +3879,7 @@
       d.querySelector('[data-a="del"]').addEventListener('click', () => removeShelfItem(it.n, it.name));
       d.querySelector('[data-a="share"]').addEventListener('click', () => shareShelfItem(it.n, it.name));
       wrap.appendChild(d);
-      fetchShelfItem(it.n).then((full) => { if (full) itemMini(d.querySelector('.mini'), it, faceLayout(full.layout)); }).catch(() => {});
+      fetchShelfItem(it.n).then((full) => { if (full) itemMini(d.querySelector('.mini'), it, faceLayout(full.layout)); }).catch(swallow('thumb'));
     }
     markShelfOnWatch();
   }
@@ -3993,7 +4022,7 @@
   async function saveAuthor(name) {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return '';
     try { const r = await fetch($('api').value + '/author', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ device_id: id, name }) });
-      const j = await r.json(); AUTHOR = j.name || ''; } catch (e) {}
+      const j = await r.json(); AUTHOR = j.name || ''; } catch (e) { swallow('author')(e); }
     if ($('authorname')) $('authorname').value = AUTHOR;
     return AUTHOR;
   }

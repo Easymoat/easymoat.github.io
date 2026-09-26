@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MarketWatch Max &amp; WebMemo — User Manual</title>
+<link rel="icon" type="image/png" href="../../favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FC; --white: #FFFFFF; --border: #E2E6EF;
+    --accent: #4F46E5; --accent-light: #EEF2FF; --accent-dark: #3730A3;
+    --accent2: #DB2777;
+    --text: #111827; --text2: #374151; --muted: #6B7280; --muted2: #9CA3AF;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+    --warn-bg: #FEF3C7; --warn-border: #F59E0B; --warn-text: #92400E;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.7; }
+
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 24px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); position: sticky; top: 0; z-index: 200; }
+  .lang-bar a.home { color: var(--accent-dark); text-decoration: none; font-weight: 600; }
+  .lang-bar a.home:hover { text-decoration: underline; }
+  .lang-bar .toggle { display: flex; gap: 8px; }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: inherit; cursor: pointer; color: var(--muted); }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; display: grid; grid-template-columns: 240px 1fr; gap: 48px; }
+  @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; padding: 24px 16px 60px; gap: 24px; } }
+
+  /* ─── Sidebar ─── */
+  aside { position: sticky; top: 60px; align-self: start; max-height: calc(100vh - 80px); overflow-y: auto; }
+  aside h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 12px; }
+  aside ol { list-style: none; counter-reset: chnum; }
+  aside ol li { counter-increment: chnum; }
+  aside ol li a {
+    display: block; padding: 6px 0 6px 28px; color: var(--text2); text-decoration: none;
+    font-size: 14px; border-left: 2px solid transparent; position: relative;
+  }
+  aside ol li a::before { content: counter(chnum); position: absolute; left: 6px; color: var(--muted2); font-size: 12px; font-weight: 600; }
+  aside ol li a:hover { color: var(--accent-dark); border-left-color: var(--accent); }
+  @media (max-width: 900px) { aside { position: static; max-height: none; border: 1px solid var(--border); border-radius: 8px; padding: 16px; background: var(--white); } }
+  /* 目次下の Web ツール導線。章リンクと同じ余白感で並べつつ、区切り線で別物と分かるように。 */
+  aside .toc-tools { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+  aside .toc-tools h3 { margin-bottom: 8px; }
+  aside .toc-tools ul { list-style: none; }
+  aside .toc-tools li a { display: block; padding: 5px 0 5px 4px; color: var(--text2); text-decoration: none; font-size: 13.5px; }
+  aside .toc-tools li a:hover { color: var(--accent-dark); }
+  aside .toc-tools .all { margin-top: 6px; font-weight: 600; color: var(--accent); font-size: 13px; }
+
+  /* ─── Article ─── */
+  article > h1 { font-size: 36px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; }
+  article > .subtitle { color: var(--muted); margin-bottom: 40px; font-size: 16px; }
+
+  section.chapter { margin-bottom: 60px; scroll-margin-top: 60px; }
+  section.chapter > h2 { font-size: 24px; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-light); color: var(--accent-dark); }
+  section.chapter > h3 { font-size: 17px; font-weight: 600; margin: 28px 0 10px; color: var(--text); }
+  /* トラブルシューティングの個別ケース見出し。h3 (グループ) の下の階層で、
+     アクセント色の縦線を添えて「ここから1件」の切れ目を分かりやすくする。 */
+  section.chapter > h4 { font-size: 15px; font-weight: 600; margin: 20px 0 6px; color: var(--text);
+    padding-left: 10px; border-left: 3px solid var(--accent-light); }
+  section.chapter > p { color: var(--text2); margin-bottom: 12px; }
+  section.chapter > ul, section.chapter > ol { margin: 8px 0 16px 24px; color: var(--text2); }
+  section.chapter > ul li, section.chapter > ol li { margin-bottom: 6px; }
+  section.chapter strong { color: var(--text); font-weight: 600; }
+  section.chapter code { background: var(--accent-light); color: var(--accent-dark); padding: 1px 6px; border-radius: 3px; font-size: 13px; font-family: 'SF Mono', monospace; }
+
+  /* ─── Annotated figure (SVG overlay) ─── */
+  /* stage は画像表示エリア (max-width 480px、padding-hack で正方形)。
+     SVG オーバーレイは stage の外 (figure 内の余白) まで広がり、ラベルや
+     引き出し線を画像の左右外側に置ける (overflow: visible)。
+     SVG の viewBox は 0 0 500 500 のままで画像と座標一致、余白は負値/500超
+     範囲 (例: x=-50 や x=540) で配置できる。 */
+  figure.annotated {
+    background: var(--white); border: 1px solid var(--border); border-radius: 12px;
+    padding: 24px 80px; margin: 16px 0 24px; box-shadow: var(--shadow);
+  }
+  @media (max-width: 700px) { figure.annotated { padding: 16px 32px; } }
+  figure.annotated .stage {
+    position: relative; max-width: 480px; margin: 0 auto;
+  }
+  figure.annotated .stage::before {
+    content: ''; display: block; padding-bottom: 100%;
+  }
+  figure.annotated .stage img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; border-radius: 50%; background: #111;
+  }
+  figure.annotated .stage .placeholder {
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; aspect-ratio: 1 / 1; border-radius: 50%;
+    background: #111; color: #555; font-size: 13px;
+  }
+  /* オーバーレイを画像と完全一致 (inset:0) させ、viewBox 0-500 を画像に 1:1 対応。
+     ブラウザ・画面幅に依存せず注釈が常に画像と揃う。円外/枠外のラベルは overflow:visible で余白へ。 */
+  figure.annotated .stage svg.overlay {
+    position: absolute; inset: 0;
+    overflow: visible; pointer-events: none;
+  }
+  figure.annotated .stage svg.overlay line { stroke: var(--accent); stroke-width: 1.5; }
+  figure.annotated .stage svg.overlay circle.dot { fill: var(--accent); }
+  figure.annotated .stage svg.overlay rect.box,
+  figure.annotated .stage svg.overlay circle.ring {
+    fill: none; stroke: var(--accent2); stroke-width: 2; stroke-dasharray: 4 3;
+  }
+  figure.annotated .stage svg.overlay text {
+    fill: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+    paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round;
+  }
+  figure.annotated figcaption { text-align: center; margin-top: 12px; color: var(--muted); font-size: 13px; }
+
+  /* ─── Callout boxes ─── */
+  .callout {
+    border-radius: 8px; padding: 12px 16px; margin: 12px 0; font-size: 14px;
+    background: var(--accent-light); border-left: 3px solid var(--accent); color: var(--accent-dark);
+  }
+  .callout.warn { background: var(--warn-bg); border-left-color: var(--warn-border); color: var(--warn-text); }
+  .callout strong { color: inherit; }
+  /* 本文中のリンク (章内から関連ページへ飛ぶ用)。setLang は子要素を持つ要素を
+     翻訳対象から外すため、リンクは翻訳される文中に入れず「独立した a」として置き、
+     a 自身に data-en/data-ja を持たせること。 */
+  .chapter li a, .chapter p a { color: var(--accent-dark); text-decoration: underline; }
+  .chapter li a:hover, .chapter p a:hover { color: var(--accent); }
+  .beta-tag { display: inline-block; background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 7px; border-radius: 10px; vertical-align: middle; }
+  p.note { font-size: 13px; color: var(--muted); font-style: italic; margin-top: 8px; }
+
+  /* ─── Step list ─── */
+  ol.steps { counter-reset: step; list-style: none !important; margin-left: 0 !important; }
+  ol.steps li { counter-increment: step; position: relative; padding-left: 40px; margin-bottom: 14px !important; }
+  ol.steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 2px;
+    width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
+  }
+  figure.shot { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin: 16px 0 24px; box-shadow: var(--shadow); }
+  figure.shot img { display: block; width: 100%; height: auto; border-radius: 8px; margin: 0 auto; }
+  figure.shot.narrow img { max-width: 260px; }
+  figure.shot.round img { max-width: 360px; border-radius: 50%; }
+  figure.shot figcaption { text-align: center; margin-top: 10px; color: var(--muted); font-size: 13px; }
+  table.ref { width: 100%; border-collapse: collapse; margin: 8px 0 20px; font-size: 14px; background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  table.ref th, table.ref td { text-align: left; vertical-align: top; padding: 8px 12px; border-top: 1px solid var(--border); color: var(--text2); }
+  table.ref th { background: var(--bg); color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; border-top: none; }
+  table.ref td:first-child { font-weight: 600; color: var(--text); width: 34%; }
+  kbd { font-family: 'SF Mono', monospace; font-size: 12px; background: var(--white); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; }
+</style>
+
+</head>
+<body>
+
+<div class="lang-bar">
+  <a href="../" class="home">← WebMemo &amp; MarketWatch Max</a>
+  <div class="toggle">
+    <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+    <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <aside>
+    <h3 data-en="Contents" data-ja="目次">Contents</h3>
+    <ol>
+        <li><a href="#start" data-en="Getting Started" data-ja="はじめに">Getting Started</a></li>
+        <li><a href="#max" data-en="MarketWatch Max" data-ja="MarketWatch Max">MarketWatch Max</a></li>
+        <li><a href="#webmemo" data-en="WebMemo" data-ja="WebMemo">WebMemo</a></li>
+        <li><a href="#together" data-en="Working Together" data-ja="連携">Working Together</a></li>
+        <li><a href="#help" data-en="Troubleshooting" data-ja="トラブルシューティング">Troubleshooting</a></li>
+    </ol>
+    <div class="toc-tools">
+      <h3 data-en="Links" data-ja="リンク">Links</h3>
+      <ul>
+        <li><a href="https://app.easymoat.com/webmemo/" data-en="🌐 Open WebMemo" data-ja="🌐 WebMemo を開く">🌐 Open WebMemo</a></li>
+        <li><a href="../../marketwatch/manual/" data-en="📖 MarketWatch manual" data-ja="📖 MarketWatch マニュアル">📖 MarketWatch manual</a></li>
+        <li><a href="../privacy/" data-en="🔒 Privacy Policy" data-ja="🔒 プライバシーポリシー">🔒 Privacy Policy</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <article>
+    <h1 data-en="MarketWatch Max &amp; WebMemo — User Manual" data-ja="MarketWatch Max と WebMemo ユーザーマニュアル">MarketWatch Max &amp; WebMemo — User Manual</h1>
+    <p class="subtitle" data-en="Two companions to MarketWatch: a bigger portfolio view on the watch, and a workspace on the web. What each one does, and how they connect." data-ja="MarketWatch の 2 つの相棒。ウォッチで見る大きなポートフォリオと、Web の作業場。それぞれの役割と、つなぎ方のガイドです。">Two companions to MarketWatch: a bigger portfolio view on the watch, and a workspace on the web. What each one does, and how they connect.</p>
+
+    <section class="chapter" id="start">
+      <h2 data-en="1. Getting Started" data-ja="1. はじめに">1. Getting Started</h2>
+      <p data-en="MarketWatch is the paid Garmin app: up to 3 portfolios of 20 symbols each, live prices, charts, alerts and a watch-face home. Two companions come with it at no extra cost." data-ja="MarketWatch は有料の Garmin アプリで、最大 3 つのポートフォリオ (各 20 銘柄)、ライブ価格、チャート、通知、文字盤ホームを備えます。これに追加料金なしの相棒が 2 つ付きます。">MarketWatch is the paid Garmin app: up to 3 portfolios of 20 symbols each, live prices, charts, alerts and a watch-face home. Two companions come with it at no extra cost.</p>
+      <ul>
+        <li><strong data-en="MarketWatch Max" data-ja="MarketWatch Max">MarketWatch Max</strong> — <span data-en="a second Garmin app for bigger portfolios: up to 7 portfolios of 20 symbols each, a portfolio overview home and a Markets list. It unlocks with your MarketWatch license key." data-ja="大きなポートフォリオ向けの 2 つ目の Garmin アプリ。最大 7 つのポートフォリオ (各 20 銘柄)、ポートフォリオ俯瞰ホーム、Markets 一覧。MarketWatch のライセンスキーで使えます。">a second Garmin app for bigger portfolios: up to 7 portfolios of 20 symbols each, a portfolio overview home and a Markets list. It unlocks with your MarketWatch license key.</span></li>
+        <li><strong data-en="WebMemo" data-ja="WebMemo">WebMemo</strong> — <span data-en="a web page (app.easymoat.com/webmemo/) where you build and analyze portfolios on a big screen: holdings, trades, allocation, dividends and analysis. You sign in with your MarketWatch Device ID and license key. It works from the first day of a new MarketWatch trial: the key is shown on the watch during the trial, and it comes by email when you buy." data-ja="大きな画面でポートフォリオを組み立て、分析する Web ページ (app.easymoat.com/webmemo/)。保有・取引・配分・配当・分析。MarketWatch の Device ID とライセンスキーでサインインします。新規トライアルの初日から使えます。トライアル中はキーがウォッチに表示され、購入するとメールで届きます。">a web page (app.easymoat.com/webmemo/) where you build and analyze portfolios on a big screen: holdings, trades, allocation, dividends and analysis. You sign in with your MarketWatch Device ID and license key. It works from the first day of a new MarketWatch trial: the key is shown on the watch during the trial, and it comes by email when you buy.</span></li>
+      </ul>
+      <p data-en="One purchase covers all three. Nothing is charged for Max or WebMemo, and there is no subscription." data-ja="購入は MarketWatch の 1 回だけです。Max と WebMemo に料金はなく、サブスクリプションもありません。">One purchase covers all three. Nothing is charged for Max or WebMemo, and there is no subscription.</p>
+      <h3 data-en="Which one do I open?" data-ja="どれを開けばいい?">Which one do I open?</h3>
+      <table class="ops">
+        <tr><th data-en="I want to…" data-ja="したいこと">I want to…</th><th data-en="Open" data-ja="開くもの">Open</th></tr>
+        <tr><td data-en="Check prices on the wrist" data-ja="手首で価格を見る">Check prices on the wrist</td><td data-en="MarketWatch (up to 3 portfolios) or Max (up to 7)" data-ja="MarketWatch (最大 3 つ) または Max (最大 7 つ)">MarketWatch (up to 3 portfolios) or Max (up to 7)</td></tr>
+        <tr><td data-en="Enter holdings, record trades, plan allocation" data-ja="保有を入力する、取引を記録する、配分を考える">Enter holdings, record trades, plan allocation</td><td data-en="WebMemo" data-ja="WebMemo">WebMemo</td></tr>
+        <tr><td data-en="Choose what each watch shows" data-ja="どのウォッチに何を載せるか決める">Choose what each watch shows</td><td data-en="WebMemo (chapter 4)" data-ja="WebMemo (第 4 章)">WebMemo (chapter 4)</td></tr>
+        <tr><td data-en="Set price alerts and complications" data-ja="価格通知とコンプリケーション">Set price alerts and complications</td><td data-en="MarketWatch (see its manual)" data-ja="MarketWatch (そのマニュアルへ)">MarketWatch (see its manual)</td></tr>
+      </table>
+    </section>
+
+    <section class="chapter" id="max">
+      <h2 data-en="2. MarketWatch Max" data-ja="2. MarketWatch Max">2. MarketWatch Max</h2>
+      <p data-en="Max shows the same market data as MarketWatch, with the same detail screens and the same controls. This chapter covers what is different. For charts, technical overlays, the position memo, the Net detail and alerts, use the MarketWatch manual." data-ja="Max は MarketWatch と同じ市場データを、同じ詳細画面と同じ操作で表示します。この章では違う部分だけを説明します。チャート、テクニカル、ポジションメモ、Net 詳細、通知は MarketWatch のマニュアルを参照してください。">Max shows the same market data as MarketWatch, with the same detail screens and the same controls. This chapter covers what is different. For charts, technical overlays, the position memo, the Net detail and alerts, use the MarketWatch manual.</p>
+      <h3 data-en="Unlocking Max" data-ja="Max を使えるようにする">Unlocking Max</h3>
+      <ol class="steps">
+        <li data-en="Install MarketWatch Max from the Connect IQ Store. On its own it shows a License Required screen." data-ja="Connect IQ ストアから MarketWatch Max をインストールします。そのままでは License Required の画面が出ます。">Install MarketWatch Max from the Connect IQ Store. On its own it shows a License Required screen.</li>
+        <li data-en="In the Connect IQ app on your phone, open the settings of MarketWatch Max and enter your MarketWatch license key in License Key. After a purchase it is the key from the confirmation email. During a new MarketWatch trial it is shown on the watch: open the Device ID screen of MarketWatch and copy the two lines under Key for WebMemo / Max." data-ja="スマホの Connect IQ アプリで MarketWatch Max の設定を開き、License Key に MarketWatch のライセンスキーを入れます。購入後は認証メールのキーです。MarketWatch の新規トライアル中はウォッチに表示されます。MarketWatch の Device ID 画面を開き、Key for WebMemo / Max の下の 2 行を写してください。">In the Connect IQ app on your phone, open the settings of MarketWatch Max and enter your MarketWatch license key in License Key. After a purchase it is the key from the confirmation email. During a new MarketWatch trial it is shown on the watch: open the Device ID screen of MarketWatch and copy the two lines under Key for WebMemo / Max.</li>
+        <li data-en="Open Max. It is now linked to your MarketWatch and uses the same account, so the portfolios you choose in WebMemo appear here." data-ja="Max を開きます。これで MarketWatch とつながり、同じアカウントを使うので、WebMemo で選んだポートフォリオがここに出ます。">Open Max. It is now linked to your MarketWatch and uses the same account, so the portfolios you choose in WebMemo appear here.</li>
+      </ol>
+      <div class="callout" data-en="MarketWatch must be purchased or in a new 14-day trial. One Max can be linked per key; a second watch with the same key will not unlock. If you move to a new watch, email easymoat@gmail.com and we move the link for you. Once linked, Max keeps working without entering the key again." data-ja="MarketWatch が購入済みか、新規の 14 日トライアル中であることが必要です。1 つのキーでつなげる Max は 1 台で、2 台目に同じキーを入れても使えません。機種変更で別のウォッチに移す時は easymoat@gmail.com に連絡してください。こちらで付け替えます。一度つながれば、キーを入れ直さなくても使い続けられます。">MarketWatch must be purchased or in a new 14-day trial. One Max can be linked per key; a second watch with the same key will not unlock. If you move to a new watch, email easymoat@gmail.com and we move the link for you. Once linked, Max keeps working without entering the key again.</div>
+      <h3 data-en="What Max adds" data-ja="Max で増えること">What Max adds</h3>
+      <ul>
+        <li><strong data-en="Up to 7 portfolios" data-ja="最大 7 つのポートフォリオ">Up to 7 portfolios</strong> — <span data-en="each with up to 20 symbols, 140 in all. Which portfolios are on the watch is chosen in WebMemo (chapter 4). MarketWatch carries up to 3." data-ja="各 20 銘柄、合計 140 銘柄。どのポートフォリオをウォッチに載せるかは WebMemo で選びます (第 4 章)。MarketWatch に載るのは最大 3 つです。">each with up to 20 symbols, 140 in all. Which portfolios are on the watch is chosen in WebMemo (chapter 4). MarketWatch carries up to 3.</span></li>
+        <li><strong data-en="Portfolio overview home" data-ja="ポートフォリオ俯瞰ホーム">Portfolio overview home</strong> — <span data-en="Max opens on a list of your portfolios with each one&#x27;s aggregate P&amp;L. Scroll to a portfolio and open it to see its symbols." data-ja="Max を開くとポートフォリオの一覧が出て、それぞれの合計損益が見えます。スクロールして選び、開くと銘柄の一覧です。">Max opens on a list of your portfolios with each one&#x27;s aggregate P&amp;L. Scroll to a portfolio and open it to see its symbols.</span></li>
+        <li><strong data-en="Markets" data-ja="Markets">Markets</strong> — <span data-en="a read-only list of up to 20 indices and FX rates, chosen in WebMemo (the symbols you mark for sync there, with the names you gave them) and brought over with Markets Down (chapter 4). Each has its own detail screen. Prices refresh while it is open, and Refresh in the portfolio list updates it too." data-ja="指数と為替のタイルを最大 20 (WebMemo で同期に指定した銘柄と、そこで付けた表示名が、Markets Down (第 4 章) で取り込まれます)。それぞれに詳細画面があります。価格は開いている間は自動更新され、ポートフォリオ一覧の Refresh でも更新されます。">a read-only list of up to 20 indices and FX rates, chosen in WebMemo (the symbols you mark for sync there, with the names you gave them) and brought over with Markets Down (chapter 4). Each has its own detail screen. Prices refresh while it is open, and Refresh in the portfolio list updates it too.</span></li>
+        <li><strong data-en="Price move alerts" data-ja="値動きの通知">Price move alerts</strong> — <span data-en="symbols that reach the ±% you set in Markets on the web are highlighted, and the Markets row in the menu blinks yellow while one is alerting." data-ja="WebMemo の Markets で設定した ±% に達した銘柄が強調され、該当がある間はメニューの Markets 行が黄色く点滅します。">symbols that reach the ±% you set in Markets on the web are highlighted, and the Markets row in the menu blinks yellow while one is alerting.</span></li>
+        <li><strong data-en="Net detail per portfolio" data-ja="ポートフォリオごとの Net 詳細">Net detail per portfolio</strong> — <span data-en="the day&#x27;s move, the aggregate P&amp;L chart with its break-even line, and the Contribution screen that splits today&#x27;s move by symbol, exactly as in MarketWatch." data-ja="当日の増減、損益分岐線付きの合計損益チャート、当日の増減を銘柄ごとに分ける Contribution 画面。MarketWatch と同じです。">the day&#x27;s move, the aggregate P&amp;L chart with its break-even line, and the Contribution screen that splits today&#x27;s move by symbol, exactly as in MarketWatch.</span></li>
+      </ul>
+      <h3 data-en="The detail screen" data-ja="詳細画面">The detail screen</h3>
+      <p data-en="Same as MarketWatch: chart with Per: (window) and TF: (bar size), high/low, S:/E:, Vol:, volume bars, technical overlays and the position memo. Prices are shown with the decimals of their currency (yen and won as whole numbers, dollars to two decimals)." data-ja="MarketWatch と同じです。Per: (表示範囲) と TF: (足) 付きのチャート、高値/安値、S:/E:、Vol:、出来高バー、テクニカル、ポジションメモ。価格は通貨の桁で表示されます (円・ウォンは整数、ドルは小数 2 位)。">Same as MarketWatch: chart with Per: (window) and TF: (bar size), high/low, S:/E:, Vol:, volume bars, technical overlays and the position memo. Prices are shown with the decimals of their currency (yen and won as whole numbers, dollars to two decimals).</p>
+      <table class="ops">
+        <tr><th data-en="Action" data-ja="操作">Action</th><th data-en="What it does" data-ja="動作">What it does</th></tr>
+        <tr><td data-en="UP / DOWN (or swipe)" data-ja="UP / DOWN (またはスワイプ)">UP / DOWN (or swipe)</td><td data-en="Previous / next symbol" data-ja="前 / 次の銘柄">Previous / next symbol</td></tr>
+        <tr><td data-en="Tap the clock (top)" data-ja="上部の時計をタップ">Tap the clock (top)</td><td data-en="Refresh this symbol now" data-ja="この銘柄を今すぐ更新">Refresh this symbol now</td></tr>
+        <tr><td data-en="START" data-ja="START">START</td><td data-en="Cycle the chart period" data-ja="チャート期間を順送り">Cycle the chart period</td></tr>
+        <tr><td data-en="Tap the chart" data-ja="チャートをタップ">Tap the chart</td><td data-en="Open the position memo (tap again to close). Long-press a memo row to edit it." data-ja="ポジションメモを開く (もう一度タップで閉じる)。メモの行を長押しで編集。">Open the position memo (tap again to close). Long-press a memo row to edit it.</td></tr>
+        <tr><td data-en="Tap the H/L · S/E area" data-ja="H/L・S/E エリアをタップ">Tap the H/L · S/E area</td><td data-en="Toggle the volume bars" data-ja="出来高バーの切替">Toggle the volume bars</td></tr>
+        <tr><td data-en="Tap the Vol: row (bottom)" data-ja="下部の Vol: の行をタップ">Tap the Vol: row (bottom)</td><td data-en="Technical overlay menu" data-ja="テクニカルのメニュー">Technical overlay menu</td></tr>
+        <tr><td data-en="Long-press the Vol: row" data-ja="Vol: の行を長押し">Long-press the Vol: row</td><td data-en="Chart Period menu (1 Day / 1 Week / 1 Month / 3 Months / 1 Year / 5 Years)" data-ja="Chart Period メニュー (1 Day / 1 Week / 1 Month / 3 Months / 1 Year / 5 Years)">Chart Period menu (1 Day / 1 Week / 1 Month / 3 Months / 1 Year / 5 Years)</td></tr>
+        <tr><td data-en="BACK" data-ja="BACK">BACK</td><td data-en="Return to the list" data-ja="リストへ戻る">Return to the list</td></tr>
+      </table>
+      <p data-en="In the Net detail: START cycles the period, a tap on the clock refreshes every symbol, a tap on the chart opens Contribution, and BACK returns." data-ja="Net 詳細では、START で期間を順送り、時計のタップで全銘柄を更新、チャートのタップで Contribution、BACK で戻ります。">In the Net detail: START cycles the period, a tap on the clock refreshes every symbol, a tap on the chart opens Contribution, and BACK returns.</p>
+    </section>
+
+    <section class="chapter" id="webmemo">
+      <h2 data-en="3. WebMemo" data-ja="3. WebMemo">3. WebMemo</h2>
+      <p data-en="WebMemo runs in any browser at app.easymoat.com/webmemo/, on a computer, a tablet or a phone in landscape. There is no account to create: your MarketWatch Device ID is the account." data-ja="WebMemo は app.easymoat.com/webmemo/ で、パソコン・タブレット・横向きのスマホのブラウザから使えます。作るアカウントはありません。MarketWatch の Device ID がアカウントです。">WebMemo runs in any browser at app.easymoat.com/webmemo/, on a computer, a tablet or a phone in landscape. There is no account to create: your MarketWatch Device ID is the account.</p>
+      <h3 data-en="Signing in" data-ja="サインイン">Signing in</h3>
+      <ul>
+        <li><strong data-en="Device ID and key" data-ja="Device ID とキー">Device ID and key</strong> — <span data-en="enter the Device ID shown in MarketWatch and your license key. After a purchase the key is in the confirmation email. During a new 14-day trial it is on the watch: the Device ID screen of MarketWatch shows it in two lines under Key for WebMemo / Max. The watch receives this key only once, when the trial starts. It stays on that screen for the rest of the trial, but reinstalling the app erases it, so note it down." data-ja="MarketWatch に表示される Device ID とライセンスキーを入れます。購入後のキーは認証メールにあります。新規の 14 日トライアル中はウォッチにあります。MarketWatch の Device ID 画面に Key for WebMemo / Max として 2 行で表示されます。キーはトライアルを始めた時に一度だけ届きます。トライアル中はその画面にいつでも表示されますが、アプリを入れ直すと消えるので控えておいてください。">enter the Device ID shown in MarketWatch and your license key. After a purchase the key is in the confirmation email. During a new 14-day trial it is on the watch: the Device ID screen of MarketWatch shows it in two lines under Key for WebMemo / Max. The watch receives this key only once, when the trial starts. It stays on that screen for the rest of the trial, but reinstalling the app erases it, so note it down.</span></li>
+        <li><strong data-en="Demo" data-ja="デモ">Demo</strong> — <span data-en="open app.easymoat.com/webmemo/?demo=1 to try every screen on sample data without signing in." data-ja="app.easymoat.com/webmemo/?demo=1 を開くと、サインインせずに見本データで全画面を試せます。">open app.easymoat.com/webmemo/?demo=1 to try every screen on sample data without signing in.</span></li>
+      </ul>
+      <h3 data-en="Portfolios and holdings" data-ja="ポートフォリオと保有">Portfolios and holdings</h3>
+      <ul>
+        <li><strong data-en="Up to 20 portfolios" data-ja="最大 20 のポートフォリオ">Up to 20 portfolios</strong> — <span data-en="each with up to 20 symbols and its own cash. Organize by account, strategy or theme." data-ja="各 20 銘柄と現金。口座・戦略・テーマなど、好きな分け方で。">each with up to 20 symbols and its own cash. Organize by account, strategy or theme.</span></li>
+        <li><strong data-en="Memo tabs" data-ja="メモのタブ">Memo tabs</strong> — <span data-en="every symbol has a Memo tab (cost basis, quantity, alert prices), a Trades tab, and any tabs you add for your own notes." data-ja="銘柄ごとに Memo タブ (取得単価・保有数・通知価格)、Trades タブ、自分で足す自由なメモのタブがあります。">every symbol has a Memo tab (cost basis, quantity, alert prices), a Trades tab, and any tabs you add for your own notes.</span></li>
+        <li><strong data-en="Trades tab" data-ja="取引タブ">Trades tab</strong> — <span data-en="record buys and sells and the holdings, average cost and cash update themselves." data-ja="売買を記録すると、保有数・取得単価・現金が自動で更新されます。">record buys and sells and the holdings, average cost and cash update themselves.</span></li>
+        <li><strong data-en="Charts" data-ja="チャート">Charts</strong> — <span data-en="pick a period and the bar size is shown with it, for example 1D · 5-minute bars, the same periods as on the watch." data-ja="期間を選ぶと足も併記されます (例: 1D · 5 分足)。ウォッチと同じ期間です。">pick a period and the bar size is shown with it, for example 1D · 5-minute bars, the same periods as on the watch.</span></li>
+      </ul>
+      <h3 data-en="Planning and analysis" data-ja="計画と分析">Planning and analysis</h3>
+      <ul>
+        <li><strong data-en="Allocation and rebalance" data-ja="資産配分とリバランス">Allocation and rebalance</strong> — <span data-en="set a target across asset classes and see how far your holdings have drifted from it. A calculator for your own plan, not advice." data-ja="資産クラスごとの目標を決め、今の保有がどれだけずれているかを見ます。自分の計画のための計算機で、助言ではありません。">set a target across asset classes and see how far your holdings have drifted from it. A calculator for your own plan, not advice.</span></li>
+        <li><strong data-en="Dividends" data-ja="配当">Dividends</strong> — <span data-en="trailing-12-month income per symbol and for the whole portfolio." data-ja="銘柄ごと、ポートフォリオ全体の直近 12 か月の配当。">trailing-12-month income per symbol and for the whole portfolio.</span></li>
+        <li><strong data-en="Analysis" data-ja="分析">Analysis</strong> — <span data-en="a correlation matrix against market benchmarks you choose from Japan, the US, Europe, Asia and FX, a correlation ranking, benchmark comparison and index sensitivity (beta)." data-ja="日本・米国・欧州・アジア・為替から選んだ市場指標との相関マトリクス、相関ランキング、ベンチマーク比較、指数感応度 (ベータ)。">a correlation matrix against market benchmarks you choose from Japan, the US, Europe, Asia and FX, a correlation ranking, benchmark comparison and index sensitivity (beta).</span></li>
+        <li><strong data-en="Economic calendar" data-ja="経済カレンダー">Economic calendar</strong> — <span data-en="market-moving releases grouped by day, with importance, consensus, previous and actual values." data-ja="市場を動かす発表を日別に。重要度、予想、前回、結果の値付き。">market-moving releases grouped by day, with importance, consensus, previous and actual values.</span></li>
+        <li><strong data-en="CSV" data-ja="CSV">CSV</strong> — <span data-en="export and import your data, to back it up or move it between browsers." data-ja="データの書き出しと読み込み。バックアップや、別のブラウザへの移行に。">export and import your data, to back it up or move it between browsers.</span></li>
+      </ul>
+      <div class="callout" data-en="Your data is kept under your Device ID only. Delete all my data at the bottom of the page removes everything at once. See the privacy policy for details." data-ja="データは Device ID にだけ紐づいて保存されます。ページ下部の Delete all my data で全部を一度に消せます。詳しくはプライバシーポリシーへ。">Your data is kept under your Device ID only. Delete all my data at the bottom of the page removes everything at once. See the privacy policy for details.</div>
+    </section>
+
+    <section class="chapter" id="together">
+      <h2 data-en="4. Working Together" data-ja="4. 連携">4. Working Together</h2>
+      <p data-en="WebMemo is where you decide what each watch shows. The watches then pull it in, and what you edit on a watch can go back to WebMemo." data-ja="どのウォッチに何を載せるかは WebMemo で決めます。ウォッチはそれを取り込み、ウォッチで編集した内容は WebMemo に戻せます。">WebMemo is where you decide what each watch shows. The watches then pull it in, and what you edit on a watch can go back to WebMemo.</p>
+      <h3 data-en="Choosing what goes to each watch" data-ja="ウォッチに載せるものを選ぶ">Choosing what goes to each watch</h3>
+      <ul>
+        <li><strong data-en="MWM chip" data-ja="MWM チップ">MWM chip</strong> — <span data-en="each portfolio in WebMemo has an MWM chip. Turn it on for up to 7 portfolios and those are the ones MarketWatch Max shows." data-ja="WebMemo の各ポートフォリオに MWM チップがあります。最大 7 つに付けると、それが MarketWatch Max に載ります。">each portfolio in WebMemo has an MWM chip. Turn it on for up to 7 portfolios and those are the ones MarketWatch Max shows.</span></li>
+        <li><strong data-en="MW chip" data-ja="MW チップ">MW chip</strong> — <span data-en="the same for MarketWatch, for up to 3 portfolios." data-ja="MarketWatch 用も同じで、最大 3 つです。">the same for MarketWatch, for up to 3 portfolios.</span></li>
+        <li><strong data-en="Markets" data-ja="Markets">Markets</strong> — <span data-en="in the Markets view, mark up to 20 indices and FX rates for sync. They become the Markets list in Max, with the names and ±% alerts you set, the next time you run Markets Down on the watch." data-ja="Markets の画面で最大 20 の指数・為替を同期に指定します。ウォッチで Markets Down を実行すると、付けた表示名と ±% の通知ごと Max の Markets 一覧になります。">in the Markets view, mark up to 20 indices and FX rates for sync. They become the Markets list in Max, with the names and ±% alerts you set, the next time you run Markets Down on the watch.</span></li>
+      </ul>
+      <h3 data-en="Two-way sync" data-ja="双方向の反映">Two-way sync</h3>
+      <p data-en="Both directions are started from the watch, so you decide when each side is updated. In Max, open Menu at the bottom of the portfolio list, then Sync: WebMemo Down brings the portfolios you chose on the web to the watch, WebMemo Up sends the watch&#x27;s current portfolios and memos to the web, and Markets Down brings the Markets list. In MarketWatch the same two items are called WebMemo Load and WebMemo Save. Cost basis, quantity and alert prices you edit on the watch reach WebMemo with the next Up, and edits made on the web reach the watch with the next Down. Nothing syncs on its own." data-ja="どちらの向きもウォッチから始めるので、いつ更新するかは自分で決められます。Max では、ポートフォリオ一覧の最下行の Menu から Sync を開きます。WebMemo Down で Web で選んだポートフォリオをウォッチへ、WebMemo Up でウォッチの今のポートフォリオとメモを Web へ、Markets Down で Markets の一覧を取り込みます。MarketWatch では同じ 2 つが WebMemo Load と WebMemo Save という名前です。ウォッチで編集した取得単価・保有数・通知価格は次の Up で WebMemo に届き、Web での編集は次の Down でウォッチに届きます。自動では同期しません。">Both directions are started from the watch, so you decide when each side is updated. In Max, open Menu at the bottom of the portfolio list, then Sync: WebMemo Down brings the portfolios you chose on the web to the watch, WebMemo Up sends the watch&#x27;s current portfolios and memos to the web, and Markets Down brings the Markets list. In MarketWatch the same two items are called WebMemo Load and WebMemo Save. Cost basis, quantity and alert prices you edit on the watch reach WebMemo with the next Up, and edits made on the web reach the watch with the next Down. Nothing syncs on its own.</p>
+      <p data-en="MarketWatch and Max are linked through the same license key, so they share one account: the portfolios and memos you see in WebMemo are the ones behind both watches." data-ja="MarketWatch と Max は同じライセンスキーでつながり、1 つのアカウントを共有します。WebMemo に見えているポートフォリオとメモが、どちらのウォッチの中身でもあります。">MarketWatch and Max are linked through the same license key, so they share one account: the portfolios and memos you see in WebMemo are the ones behind both watches.</p>
+    </section>
+
+    <section class="chapter" id="help">
+      <h2 data-en="5. Troubleshooting" data-ja="5. トラブルシューティング">5. Troubleshooting</h2>
+      <h4 data-en="Max shows License Required" data-ja="Max に License Required と出る">Max shows License Required</h4>
+      <p data-en="Enter your MarketWatch license key under License Key in the Connect IQ settings of Max. If it is already there, check that MarketWatch is purchased or in a new trial, and that no other watch is linked with the same key." data-ja="Connect IQ の Max の設定で License Key に MarketWatch のライセンスキーを入れてください。入れてあるのに出る場合は、MarketWatch が購入済みか新規トライアル中か、同じキーで別のウォッチがつながっていないかを確認してください。">Enter your MarketWatch license key under License Key in the Connect IQ settings of Max. If it is already there, check that MarketWatch is purchased or in a new trial, and that no other watch is linked with the same key.</p>
+      <h4 data-en="I changed my watch and Max will not unlock" data-ja="ウォッチを替えたら Max が使えない">I changed my watch and Max will not unlock</h4>
+      <p data-en="One Max is linked per key. Email easymoat@gmail.com with your new Device ID and we move the link." data-ja="1 つのキーでつなげる Max は 1 台です。新しい Device ID を添えて easymoat@gmail.com に連絡してください。付け替えます。">One Max is linked per key. Email easymoat@gmail.com with your new Device ID and we move the link.</p>
+      <h4 data-en="WebMemo will not sign me in" data-ja="WebMemo にサインインできない">WebMemo will not sign me in</h4>
+      <p data-en="Use the Device ID shown in MarketWatch (not the one from another Easymoat app) with the matching key. Where the key is: in the confirmation email after a purchase, or on the Device ID screen of MarketWatch (Key for WebMemo / Max) during a new trial. The key is not shown during a 7-day re-trial, nor for a trial started on an older version of MarketWatch; in those cases WebMemo and Max open after the purchase. If the key is gone (for example after reinstalling the app), email easymoat@gmail.com. When a trial ends without a purchase, WebMemo and Max stop too." data-ja="MarketWatch に表示される Device ID (他の Easymoat アプリの ID ではなく) と、それに対応するキーを使ってください。キーの在りかは、購入後は認証メール、新規トライアル中は MarketWatch の Device ID 画面 (Key for WebMemo / Max) です。7 日間の再トライアル中と、古い版の MarketWatch で始めたトライアルでは表示されず、その場合 WebMemo と Max は購入後に使えます。キーが消えた時 (アプリの入れ直しなど) は easymoat@gmail.com へ。トライアルが購入なしで終わると、WebMemo と Max も使えなくなります。">Use the Device ID shown in MarketWatch (not the one from another Easymoat app) with the matching key. Where the key is: in the confirmation email after a purchase, or on the Device ID screen of MarketWatch (Key for WebMemo / Max) during a new trial. The key is not shown during a 7-day re-trial, nor for a trial started on an older version of MarketWatch; in those cases WebMemo and Max open after the purchase. If the key is gone (for example after reinstalling the app), email easymoat@gmail.com. When a trial ends without a purchase, WebMemo and Max stop too.</p>
+      <h4 data-en="The numbers on the watch and the web differ" data-ja="ウォッチと Web で数字が違う">The numbers on the watch and the web differ</h4>
+      <p data-en="Nothing syncs on its own: run WebMemo Down or WebMemo Up (Max) or WebMemo Load or WebMemo Save (MarketWatch) on the watch when you want the two sides to match. Totals also differ by design in mixed-currency portfolios: the watch adds raw values without converting currencies, while WebMemo converts foreign holdings to yen." data-ja="自動では同期しないので、揃えたい時にウォッチで WebMemo Down か WebMemo Up (Max)、WebMemo Load か WebMemo Save (MarketWatch) を実行してください。通貨が混在するポートフォリオでは合計が違うのが正常です。ウォッチは通貨を換算せずに数値を足し、WebMemo は外貨を円に換算して合計します。">Nothing syncs on its own: run WebMemo Down or WebMemo Up (Max) or WebMemo Load or WebMemo Save (MarketWatch) on the watch when you want the two sides to match. Totals also differ by design in mixed-currency portfolios: the watch adds raw values without converting currencies, while WebMemo converts foreign holdings to yen.</p>
+      <p data-en="Anything else: easymoat@gmail.com. Please include your Device ID." data-ja="その他のお問い合わせ: easymoat@gmail.com。Device ID を添えてください。">Anything else: easymoat@gmail.com. Please include your Device ID.</p>
+    </section>
+
+  </article>
+</div>
+
+<script>
+function setLang(lang) {
+  document.documentElement.lang = lang === 'ja' ? 'ja' : 'en';
+  document.querySelectorAll('[data-en]').forEach(function (el) {
+    if (el.children.length > 0) return;
+    var t = el.getAttribute('data-' + lang);
+    if (t) el.textContent = t;
+  });
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+  try { localStorage.setItem('em_lang', lang); } catch (e) {}
+}
+try {
+  var saved = localStorage.getItem('em_lang') || localStorage.getItem('pl_lang');
+  if (saved === 'ja') { setLang('ja'); }
+} catch (e) {}
+</script>
+</body>
+</html>

@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 09:58</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-26 10:14</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1194,9 +1194,16 @@
       st.ms[i] = { mt: o.mt.slice(), mc: o.mc.slice(), mk: o.mk.slice(), mv: o.mv.slice(), md: (o.md || [0, 0, 0, 0]).slice() }; }
     return st.ms[i];
   }
-  const msRead = (a) => (Array.isArray(a) ? a : []).slice(0, MS_MAX).filter((x) => Array.isArray(x) && (x.length === 16 || x.length === 20))
-    .map((x) => ({ mt: x.slice(0, 4).map(Number), mc: x.slice(4, 8).map(Number), mk: x.slice(8, 12).map(Number),
-                   mv: x.slice(12, 16).map(Number), md: (x.length === 20 ? x.slice(16) : [0, 0, 0, 0]).map(Number) }));
+  // 数の並び (保存の形) でも、組のオブジェクト (編集中の形) でも受ける。
+  // サムネイルは面の状態を差し替えて描くので、ここで形をそろえないと途中で止まる (2026-09-26)。
+  const msRead = (a) => (Array.isArray(a) ? a : []).slice(0, MS_MAX).map((x) => {
+    if (x && !Array.isArray(x) && Array.isArray(x.mt)) {
+      return { mt: x.mt.slice(), mc: x.mc.slice(), mk: x.mk.slice(), mv: x.mv.slice(), md: (x.md || [0, 0, 0, 0]).slice() };
+    }
+    if (!Array.isArray(x) || (x.length !== 16 && x.length !== 20)) return null;
+    return { mt: x.slice(0, 4).map(Number), mc: x.slice(4, 8).map(Number), mk: x.slice(8, 12).map(Number),
+             mv: x.slice(12, 16).map(Number), md: (x.length === 20 ? x.slice(16) : [0, 0, 0, 0]).map(Number) };
+  }).filter(Boolean);
   const msDir = (e, i) => { const d = (msOf(e).md || [])[i]; return (d === 1 || d === -1) ? d : (ARCSET[e[0]] ? ARCSET[e[0]].dir[i] : 1); };
   const msOut = (m) => { const b = m.mt.concat(m.mc, m.mk, m.mv);
     return (m.md || []).some((d) => d === 1 || d === -1) ? b.concat(m.md) : b; };   // 向きが既定のままなら 16 個 (昔の形)
@@ -3616,7 +3623,7 @@
     const bg = Number.isInteger(j.bg) && j.bg >= 0 && j.bg <= 0xFFFFFF ? j.bg : 0;
     return { bg, el, hr, sc, hc, tt: Array.isArray(j.tt) ? j.tt.slice(0, TT_MAX).map(ttClean) : [], tx: intArr3(j.tx, 10, 200, DEF_TX) || DEF_TX.slice(), tm: intArr3(j.tm, 10, 200, DEF_TM) || DEF_TM.slice(),
              ic: intArr3(j.ic, 6, 120, DEF_IC) || DEF_IC.slice(),
-             ms: Array.isArray(j.ms) ? j.ms.slice(0, MS_MAX) : [],   // 部品ごとのメーターの組 (2026-09-26)
+             ms: msRead(j.ms),   // 部品ごとのメーターの組。編集中と同じ形に直して渡す (2026-09-26)
              io: (Number.isInteger(j.io) && j.io >= -20 && j.io <= 20) ? j.io : DEF_IO,
              b: (Number(j.b) === 1 || Number(j.b) === 2) ? Number(j.b) : 0,
              wu: (Number.isInteger(j.wu) && j.wu >= 0 && j.wu <= 3) ? j.wu : 0,

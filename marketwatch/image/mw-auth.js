@@ -32,6 +32,16 @@
     catch (e) { return false; }
   }
 
+  // 全角数字 (日本語入力 ON で打った １２３) を半角にしてから数字以外を落とす。
+  // 旧: \D で落とすだけだったので、全角で打つと欄には見えるのに送る時に全部消えて
+  // code_invalid になっていた (ユーザー報告、2026-09-26)。欄の値は書き換えない (変換中の
+  // 書き換えで入力が消える・二重になるのを避ける) — 読むのは送る時だけ。
+  function toDigits(s) {
+    return String(s || '')
+      .replace(/[\uFF10-\uFF19]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); })
+      .replace(/\D/g, '').slice(0, 6);
+  }
+
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
 
   function askCode(box, devId, isJa) {
@@ -48,7 +58,7 @@
       };
       box.innerHTML = '<div class="alert">' + t.lead
         + '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'
-        + '<input id="mwCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"'
+        + '<input id="mwCode" inputmode="numeric" autocomplete="one-time-code" maxlength="12" placeholder="000000"'
         + ' style="font-size:20px;letter-spacing:4px;width:8.5em;padding:6px 10px;">'
         + '<button class="btn" id="mwCodeBtn">' + t.btn + '</button></div>'
         + '<div id="mwCodeMsg" style="margin-top:8px;color:#DC2626;"></div></div>';
@@ -57,7 +67,7 @@
       var msg = document.getElementById('mwCodeMsg');
       try { inp.focus(); } catch (e) {}
       async function submit() {
-        var code = (inp.value || '').replace(/\D/g, '');
+        var code = toDigits(inp.value);
         if (code.length !== 6) { msg.textContent = t.bad; return; }
         btn.disabled = true; msg.textContent = '';
         try {

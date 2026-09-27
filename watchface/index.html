@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-27 18:12</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-27 18:55</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -4394,6 +4394,8 @@
   // Cut (2 つ目で抜く) の時は見えるのは 1 つ目の中だけなので、絵は 1 つ目に合わせる (2026-09-22)。
   const cutOn = () => !!(IMG.shape2 && IMG.cut);
   const unionSize = () => (IMG.shape2 && !cutOn() ? Math.max(sizeOf(1), sizeOf(2)) : IMG.size);
+  // Flatten で置いた写真か (Photos の PNG = 透明付きの合成)。状態を増やさず、開いている写真の URL から毎回引く
+  const isFlatPhoto = () => IMG.src === 'photo' && !!IMG.k && /\.png(\?|$)/.test(((PHOTOS.list || []).find((p) => p.k === IMG.k) || {}).url || '');
   function unionBox() {
     const a = frameBox(1);
     if (!IMG.shape2 || cutOn()) return a;
@@ -4535,7 +4537,10 @@
       hardenEdge(ctx);
       IMG.masked = imgCv.toDataURL('image/png'); applyStageImage(); IMG.reduced = null; paintQuality(); renderShowToggle(); IMG.dirty = true; $('imgbgrow').hidden = false; scheduleMeasure(); return;
     }
-    const base = Math.max(bw / IMG.cur.width, bh / IMG.cur.height), sc = base * IMG.zoom;
+    // Flatten で置いた絵 (透明付き PNG) は盤面と 1:1 のまま。枠に合わせて拡大すると、合成した絵ごと膨らんで
+    // 透明だった所が形の外へ押し出され、「3 つ目の形が透過しない」ように見える (2026-09-27)。
+    const flat = isFlatPhoto();
+    const base = flat ? 320 / IMG.cur.width : Math.max(bw / IMG.cur.width, bh / IMG.cur.height), sc = base * IMG.zoom;
     const dw = IMG.cur.width * sc, dh = IMG.cur.height * sc;
     // The picture may move as long as it still covers the visible part of the frame. For the half
     // shapes that part is only half of the box, so the picture can slide across the hidden half.
@@ -4545,7 +4550,7 @@
       if (r === 0) vh = bh / 2; else if (r === 180) { vy = by + bh / 2; vh = bh / 2; }
       else if (r === 270) vw = bw / 2; else if (r === 90) { vx = bx + bw / 2; vw = bw / 2; }
     }
-    const x0 = bx + (bw - dw) / 2, y0 = by + (bh - dh) / 2;          // picture origin at pan 0
+    const x0 = flat ? (320 - dw) / 2 : bx + (bw - dw) / 2, y0 = flat ? (320 - dh) / 2 : by + (bh - dh) / 2;   // picture origin at pan 0 (flat = 盤面の中央)
     const minX = vx + vw - dw - x0, maxX = vx - x0, minY = vy + vh - dh - y0, maxY = vy - y0;
     IMG.panX = Math.max(Math.min(minX, 0), Math.min(Math.max(maxX, 0), IMG.panX)); IMG.panY = Math.max(Math.min(minY, 0), Math.min(Math.max(maxY, 0), IMG.panY));
     // Outside the frame everything stays transparent, so the watch shows its background color there.
@@ -4554,7 +4559,7 @@
     // Two shapes: the picture is drawn through each, which gives their union without winding trouble.
     for (const [k, i] of frameShapes()) {
       ctx.save(); framePath(ctx, k, i); ctx.clip();
-      ctx.drawImage(IMG.cur, bx + (bw - dw) / 2 + IMG.panX, by + (bh - dh) / 2 + IMG.panY, dw, dh);
+      ctx.drawImage(IMG.cur, x0 + IMG.panX, y0 + IMG.panY, dw, dh);
       ctx.restore();
     }
     cutSecond(ctx);

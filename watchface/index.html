@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-27 15:08</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-27 16:05</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3742,7 +3742,8 @@
     el.__lay = lay; el.__side = Math.round(el.clientWidth);
     if (MINI_RO && !el.__obs) { el.__obs = 1; MINI_RO.observe(el); }
     el.innerHTML = '';
-    if (!el.style.backgroundImage) el.style.background = hex(lay.bg);
+    // 色だけ書く。background の一括指定だと center/cover が消え、後から届く絵 (imgSrc は非同期) が左上に寄る (2026-09-27)
+    el.style.backgroundColor = hex(lay.bg);
     const inner = document.createElement('div');
     inner.className = 'inner';
     inner.style.width = d.w + 'px'; inner.style.height = d.h + 'px'; inner.style.transform = `scale(${sc})`;

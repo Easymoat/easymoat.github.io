@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-27 17:14</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-27 18:12</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -472,6 +472,7 @@
           <div class="grp" title="The shape of the image frame on the dial."><span class="lbl">Shape <span class="lblnote">Shift+click to add a second shape</span></span><div class="ctl"><span class="cb" id="imgshape"></span></div>
             <div class="ctl" id="shapeselrow" hidden title="Size and Rotate change the shape chosen here.">Adjust <span class="cb" id="shapesel"></span>
               <span class="muted" style="margin-left:10px">2nd shape</span> <span class="cb" id="shapeop" title="Add: the two shapes together. Cut: takes the second shape out of the first one — a ring, a window for the time, a crescent."></span></div>
+            <div class="ctl" title="Keeps what you see (the shapes, the cut, brightness and saturation) as one picture with a see-through outside, and puts it in Photos. Then frame that picture again with another shape — repeat for as many shapes as you like."><button class="btn" id="imgflat">Flatten to Photos</button><span class="muted">Saves the cut-out as a new photo so you can add more shapes on top of it. Uses one of the photo slots.</span></div>
             <div class="ctl">Rotate <span class="cb"><button type="button" id="rotl" title="Turn the frame 45° anticlockwise">&#8634; 45°</button><button type="button" id="rotr" title="Turn the frame 45° clockwise">&#8635; 45°</button></span><span class="muted" id="rotv">0°</span><span class="vsep"></span><span class="fillctl" title="No photo: the frame shape is filled with one color instead.">Fill color<input type="color" id="imgfill" value="#3a7bd5"><span class="swatches" id="fillsw" title="Recently used fill colors"></span><button class="btn toggle" id="imgfillon" title="ON: the frame is filled with this color instead of a photo">OFF</button></span></div>
 </div>
           <div class="grp"><span class="lbl">Photos</span><div class="photos" id="photos"></div><div class="muted" id="imgslotnote"></div>
@@ -4691,6 +4692,29 @@
     const f = $('imgfilename'); if (f) f.textContent = '';
     redrawImg(); renderShowToggle(); applyStageImage(); commit();
     setStatus('imgstatus', 'Image editor reset — nothing was deleted from the server.', 'ok');
+  });
+  // 切り抜きの結果 (IMG.masked = 320 px の透明付き PNG) を Photos に置いて、それを写真として読み直す (2026-09-27、ユーザー要望)。
+  //   形は 2 つまでしか重ねられないので、決めた 2 つを 1 枚にして、さらに別の形を重ねられるようにする。
+  //   置いた絵は 320 px 固定 (実機へ送る絵と同じ)。明るさ・彩度・縁の処理は焼き込まれる。
+  $('imgflat').addEventListener('click', async () => {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('imgstatus', 'Enter the Device ID first — on the watch: settings → Watch Face → Customize → Device ID.', 'err');
+    if (!hasSource() || !IMG.masked) return setStatus('imgstatus', 'Nothing to flatten yet — pick a photo or a fill color and a shape first.', 'err');
+    if (PHOTOS.list.length >= PHOTOS.max) return setStatus('imgstatus', `The photo shelf is full (${PHOTOS.max}) — delete one first.`, 'err');
+    const from = IMG.src === 'fill' ? 'fill' : ((PHOTOS.list.find((x) => x.k === IMG.k) || {}).name || (IMG.k ? `photo ${IMG.k}` : 'picture'));
+    const name = `Flat: ${from}`.slice(0, 40);
+    setStatus('imgstatus', 'Flattening…');
+    try { const r = await fetch(imgApi() + '/photo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, image: IMG.masked, name, w: 320, h: 320 }) });
+      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error === 'photo_shelf_full' ? 'the photo shelf is full' : (j.error || r.status));
+      await loadPhotos();
+      // 枠を素の四角 100% に戻してから読む = 合成した絵が全部見える状態から、次の形を選び直せる
+      IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; IMG.size = 100; IMG.size2 = null; IMG.cx = 160; IMG.cy = 160; IMG.cx2 = null; IMG.cy2 = null;
+      IMG.rot = 0; IMG.rot2 = null; IMG.shape2 = null; IMG.cut = false; IMG.br = 100; IMG.sa = 100;
+      setShape('square', null); renderTone();
+      ['imgzoom', 'imgsize', 'imgbr', 'imgsa'].forEach((k) => { const el = $(k); if (el) el.value = k === 'imgzoom' ? '1' : '100'; });
+      ['imgbrv', 'imgsav', 'imgsizev'].forEach((k) => { const el = $(k); if (el) el.textContent = '100%'; });
+      await loadPhoto(j.k);
+      setStatus('imgstatus', `Flattened into photo ${j.k}. Now frame it again — pick a shape, or Shift+click to add a second one.`, 'ok');
+    } catch (e) { setStatus('imgstatus', 'Could not flatten: ' + e.message, 'err'); }
   });
   $('imgreset').addEventListener('click', () => { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; IMG.size = 100; IMG.size2 = null; IMG.cx = 160; IMG.cy = 160; IMG.cx2 = null; IMG.cy2 = null; IMG.rot = 0; IMG.rot2 = null; IMG.shape2 = null; setShape(IMG.shape, null);
     $('imgzoom').value = '1'; redrawImg(); });

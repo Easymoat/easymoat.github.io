@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-27 18:55</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-27 19:36</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -472,7 +472,7 @@
           <div class="grp" title="The shape of the image frame on the dial."><span class="lbl">Shape <span class="lblnote">Shift+click to add a second shape</span></span><div class="ctl"><span class="cb" id="imgshape"></span></div>
             <div class="ctl" id="shapeselrow" hidden title="Size and Rotate change the shape chosen here.">Adjust <span class="cb" id="shapesel"></span>
               <span class="muted" style="margin-left:10px">2nd shape</span> <span class="cb" id="shapeop" title="Add: the two shapes together. Cut: takes the second shape out of the first one — a ring, a window for the time, a crescent."></span></div>
-            <div class="ctl" title="Keeps what you see (the shapes, the cut, brightness and saturation) as one picture with a see-through outside, and puts it in Photos. Then frame that picture again with another shape — repeat for as many shapes as you like."><button class="btn" id="imgflat">Flatten to Photos</button><span class="muted">Saves the cut-out as a new photo so you can add more shapes on top of it. Uses one of the photo slots.</span></div>
+            <div class="ctl" title="Fixes the shapes you have (with their Add or Cut) as one frame and frees the shape buttons for the next shape. Repeat for as many shapes as you like. Reset frame lets the fixed shapes go."><button class="btn" id="imgflat">Flatten to Another Shape</button><span class="muted" id="flatnote">Fixes the shapes you have so you can add another one on top.</span></div>
             <div class="ctl">Rotate <span class="cb"><button type="button" id="rotl" title="Turn the frame 45° anticlockwise">&#8634; 45°</button><button type="button" id="rotr" title="Turn the frame 45° clockwise">&#8635; 45°</button></span><span class="muted" id="rotv">0°</span><span class="vsep"></span><span class="fillctl" title="No photo: the frame shape is filled with one color instead.">Fill color<input type="color" id="imgfill" value="#3a7bd5"><span class="swatches" id="fillsw" title="Recently used fill colors"></span><button class="btn toggle" id="imgfillon" title="ON: the frame is filled with this color instead of a photo">OFF</button></span></div>
 </div>
           <div class="grp"><span class="lbl">Photos</span><div class="photos" id="photos"></div><div class="muted" id="imgslotnote"></div>
@@ -3968,7 +3968,7 @@
   }
   // The recipe = how the picture was framed (which photo, shape, size, position, zoom, colors, Auto).
   function currentRecipe() {
-    return { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, shape2: IMG.shape2 || null, cut: cutOn() ? 1 : undefined, rot: IMG.rot, rot2: IMG.shape2 ? rotOf(2) : undefined, size: IMG.size, size2: IMG.shape2 ? sizeOf(2) : undefined, cx: IMG.cx, cy: IMG.cy, cx2: IMG.shape2 ? cxOf(2) : undefined, cy2: IMG.shape2 ? cyOf(2) : undefined, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom, colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, br: brOf(), sa: saOf() };   // plId は入れない (カメラのコマは結び付けた PL からしか作らない、2026-09-27)
+    return { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, shape2: IMG.shape2 || null, cut: cutOn() ? 1 : undefined, rot: IMG.rot, rot2: IMG.shape2 ? rotOf(2) : undefined, size: IMG.size, size2: IMG.shape2 ? sizeOf(2) : undefined, cx: IMG.cx, cy: IMG.cy, cx2: IMG.shape2 ? cxOf(2) : undefined, cy2: IMG.shape2 ? cyOf(2) : undefined, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom, colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, br: brOf(), sa: saOf(), fl: IMG.fl.length ? IMG.fl.map((L) => Object.assign({}, L)) : undefined };   // plId は入れない (カメラのコマは結び付けた PL からしか作らない、2026-09-27)
   }
   $('shelfsave').addEventListener('click', async () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID (XXXX-XXXX) — on the watch: settings → Watch Face → Customize → Device ID.', 'err');
@@ -4347,7 +4347,9 @@
   const SHAPE_FIT = { heart: 86, spade: 96, club: 96 };   // heart: the lobes' shoulders are the farthest points (measured on the rendered mask)
   // A "picture" is either a photo (IMG.cur) or a flat color fill of the frame (IMG.fill, no photo).
   const hasSource = () => !!(IMG.cur || IMG.fill);
-  const IMG = { cur: null, src: null, k: 0, fill: null, dirty: false, fromSlot: 0, bgMode: 'dial', shape: 'square', shape2: null, cut: false, rot: 0, rot2: null, size: 100, size2: null, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 32, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
+  // fl = Flatten to Another Shape で固めた形の一覧 [{k, rot, size, cx, cy, cut}] (2026-09-27)。順に「足す (clip して絵を描く) / 抜く (destination-out)」で
+  //   評価してから、今の形 (shape / shape2) を重ねる。形は 2 つまでという枠を超えて重ねるための仕組み。recipe と下書きに fl で持つ。
+  const IMG = { cur: null, src: null, k: 0, fill: null, dirty: false, fromSlot: 0, bgMode: 'dial', shape: 'square', shape2: null, cut: false, fl: [], rot: 0, rot2: null, size: 100, size2: null, cx: 160, cy: 160, drag: 'image', panX: 0, panY: 0, zoom: 1, masked: null, colors: 32, bgAuto: 33, sel: 1, reduced: null, show: true, autoBg: '#000000',
                 state: { slots: {}, active: 1, meta: {} }, activeUrl: '' };
   const imgApi = () => $('api').value.replace(/\/$/, '');
   const absUrl = (u) => (!u || /^https?:/.test(u)) ? u : new URL($('api').value).origin + u;   // server gives /api/wf/... paths
@@ -4394,21 +4396,21 @@
   // Cut (2 つ目で抜く) の時は見えるのは 1 つ目の中だけなので、絵は 1 つ目に合わせる (2026-09-22)。
   const cutOn = () => !!(IMG.shape2 && IMG.cut);
   const unionSize = () => (IMG.shape2 && !cutOn() ? Math.max(sizeOf(1), sizeOf(2)) : IMG.size);
-  // Flatten で置いた写真か (Photos の PNG = 透明付きの合成)。状態を増やさず、開いている写真の URL から毎回引く
-  const isFlatPhoto = () => IMG.src === 'photo' && !!IMG.k && /\.png(\?|$)/.test(((PHOTOS.list || []).find((p) => p.k === IMG.k) || {}).url || '');
+  const layerBox = (L) => { const side = 320 * L.size / 100; return [L.cx - side / 2, L.cy - side / 2, side, side]; };
   function unionBox() {
-    const a = frameBox(1);
-    if (!IMG.shape2 || cutOn()) return a;
-    const b = frameBox(2);
-    const x0 = Math.min(a[0], b[0]), y0 = Math.min(a[1], b[1]);
-    const x1 = Math.max(a[0] + a[2], b[0] + b[2]), y1 = Math.max(a[1] + a[3], b[1] + b[3]);
+    const boxes = [frameBox(1)];
+    if (IMG.shape2 && !cutOn()) boxes.push(frameBox(2));
+    for (const L of IMG.fl) if (!L.cut) boxes.push(layerBox(L));   // 固めた形も絵の下にある (2026-09-27)
+    if (boxes.length === 1) return boxes[0];
+    const x0 = Math.min(...boxes.map((b) => b[0])), y0 = Math.min(...boxes.map((b) => b[1]));
+    const x1 = Math.max(...boxes.map((b) => b[0] + b[2])), y1 = Math.max(...boxes.map((b) => b[1] + b[3]));
     return [x0, y0, x1 - x0, y1 - y0];
   }
   // Path of one frame shape (k), turned by IMG.rot about the centre of the frame box. Path points are
   // transformed as they are added, so the transform can be undone right after building it.
-  function framePath(ctx, k, i) {
-    k = k || IMG.shape;
-    const P = Math.PI, [bx, by, bw, bh] = frameBox(i || 1), rot = rotOf(i || 1);
+  function framePath(ctx, k, i, L) {   // L = 固めた形 {k, rot, size, cx, cy} を渡すと、その箱と角度で引く
+    k = k || (L ? L.k : IMG.shape);
+    const P = Math.PI, [bx, by, bw, bh] = L ? layerBox(L) : frameBox(i || 1), rot = L ? L.rot : rotOf(i || 1);
     ctx.save();
     ctx.translate(bx + bw / 2, by + bh / 2); ctx.rotate(rot * P / 180); ctx.translate(-(bx + bw / 2), -(by + bh / 2));
     ctx.beginPath();
@@ -4472,6 +4474,15 @@
     ctx.restore();
   }
   const frameShapes = () => IMG.shape2 && !cutOn() ? [[IMG.shape, 1], [IMG.shape2, 2]] : [[IMG.shape, 1]];
+  // 固めた形を順に評価する。draw = その形の中に絵 (または塗り) を描く関数。抜く形は今までに描いた分から抜く。
+  function drawLayers(ctx, draw) {
+    for (const L of IMG.fl) {
+      ctx.save();
+      if (L.cut) { ctx.globalCompositeOperation = 'destination-out'; framePath(ctx, L.k, 0, L); ctx.fillStyle = '#000'; ctx.fill(); }
+      else { framePath(ctx, L.k, 0, L); ctx.clip(); draw(); }
+      ctx.restore();
+    }
+  }
   // Cut: 1 つ目を描いた後、2 つ目の形の中を透明に抜く (穴には文字盤の背景色が見える)。縁は hardenEdge が形の縁と同じに扱う。
   function cutSecond(ctx) {
     if (!cutOn()) return;
@@ -4532,34 +4543,34 @@
     const [bx, by, bw, bh] = unionBox();
     if (!IMG.cur) {   // color fill: the frame shape(s) in one color, no photo
       ctx.clearRect(0, 0, 320, 320);
+      drawLayers(ctx, () => { ctx.fillStyle = IMG.fill; ctx.fillRect(0, 0, 320, 320); });
       for (const [k, i] of frameShapes()) { ctx.save(); framePath(ctx, k, i); ctx.clip(); ctx.fillStyle = IMG.fill; ctx.fillRect(0, 0, 320, 320); ctx.restore(); }
       cutSecond(ctx);
       hardenEdge(ctx);
       IMG.masked = imgCv.toDataURL('image/png'); applyStageImage(); IMG.reduced = null; paintQuality(); renderShowToggle(); IMG.dirty = true; $('imgbgrow').hidden = false; scheduleMeasure(); return;
     }
-    // Flatten で置いた絵 (透明付き PNG) は盤面と 1:1 のまま。枠に合わせて拡大すると、合成した絵ごと膨らんで
-    // 透明だった所が形の外へ押し出され、「3 つ目の形が透過しない」ように見える (2026-09-27)。
-    const flat = isFlatPhoto();
-    const base = flat ? 320 / IMG.cur.width : Math.max(bw / IMG.cur.width, bh / IMG.cur.height), sc = base * IMG.zoom;
+    const base = Math.max(bw / IMG.cur.width, bh / IMG.cur.height), sc = base * IMG.zoom;
     const dw = IMG.cur.width * sc, dh = IMG.cur.height * sc;
     // The picture may move as long as it still covers the visible part of the frame. For the half
     // shapes that part is only half of the box, so the picture can slide across the hidden half.
     let vx = bx, vy = by, vw = bw, vh = bh;
-    if (IMG.shape === 'half' && (!IMG.shape2 || cutOn())) {
+    if (IMG.shape === 'half' && (!IMG.shape2 || cutOn()) && !IMG.fl.length) {
       const r = ((IMG.rot % 360) + 360) % 360;   // only a lone half hides a fixed side of the box
       if (r === 0) vh = bh / 2; else if (r === 180) { vy = by + bh / 2; vh = bh / 2; }
       else if (r === 270) vw = bw / 2; else if (r === 90) { vx = bx + bw / 2; vw = bw / 2; }
     }
-    const x0 = flat ? (320 - dw) / 2 : bx + (bw - dw) / 2, y0 = flat ? (320 - dh) / 2 : by + (bh - dh) / 2;   // picture origin at pan 0 (flat = 盤面の中央)
+    const x0 = bx + (bw - dw) / 2, y0 = by + (bh - dh) / 2;          // picture origin at pan 0
     const minX = vx + vw - dw - x0, maxX = vx - x0, minY = vy + vh - dh - y0, maxY = vy - y0;
     IMG.panX = Math.max(Math.min(minX, 0), Math.min(Math.max(maxX, 0), IMG.panX)); IMG.panY = Math.max(Math.min(minY, 0), Math.min(Math.max(maxY, 0), IMG.panY));
     // Outside the frame everything stays transparent, so the watch shows its background color there.
     ctx.clearRect(0, 0, 320, 320);
     // No fill behind the picture: transparent stays transparent (= the watch's background color).
     // Two shapes: the picture is drawn through each, which gives their union without winding trouble.
+    const drawPic = () => ctx.drawImage(IMG.cur, x0 + IMG.panX, y0 + IMG.panY, dw, dh);
+    drawLayers(ctx, drawPic);   // 固めた形が先
     for (const [k, i] of frameShapes()) {
       ctx.save(); framePath(ctx, k, i); ctx.clip();
-      ctx.drawImage(IMG.cur, x0 + IMG.panX, y0 + IMG.panY, dw, dh);
+      drawPic();
       ctx.restore();
     }
     cutSecond(ctx);
@@ -4689,40 +4700,34 @@
   $('imgclear').addEventListener('click', () => {
     clearImgPreview();
     IMG.k = 0; IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; IMG.size = 100; IMG.size2 = null;
-    IMG.cx = 160; IMG.cy = 160; IMG.cx2 = null; IMG.cy2 = null; IMG.rot = 0; IMG.rot2 = null; IMG.shape2 = null; IMG.cut = false;
+    IMG.cx = 160; IMG.cy = 160; IMG.cx2 = null; IMG.cy2 = null; IMG.rot = 0; IMG.rot2 = null; IMG.shape2 = null; IMG.cut = false; IMG.fl = [];
     IMG.br = 100; IMG.sa = 100; IMG.show = true;
-    setShape(IMG.shape, null);
+    setShape(IMG.shape, null); renderFlatNote();
     ['imgzoom', 'imgsize', 'imgbr', 'imgsa'].forEach((id) => { const el = $(id); if (el) el.value = id === 'imgzoom' ? '1' : '100'; });
     ['imgbrv', 'imgsav', 'imgsizev'].forEach((id) => { const el = $(id); if (el) el.textContent = '100%'; });
     const f = $('imgfilename'); if (f) f.textContent = '';
     redrawImg(); renderShowToggle(); applyStageImage(); commit();
     setStatus('imgstatus', 'Image editor reset — nothing was deleted from the server.', 'ok');
   });
-  // 切り抜きの結果 (IMG.masked = 320 px の透明付き PNG) を Photos に置いて、それを写真として読み直す (2026-09-27、ユーザー要望)。
-  //   形は 2 つまでしか重ねられないので、決めた 2 つを 1 枚にして、さらに別の形を重ねられるようにする。
-  //   置いた絵は 320 px 固定 (実機へ送る絵と同じ)。明るさ・彩度・縁の処理は焼き込まれる。
-  $('imgflat').addEventListener('click', async () => {
-    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('imgstatus', 'Enter the Device ID first — on the watch: settings → Watch Face → Customize → Device ID.', 'err');
-    if (!hasSource() || !IMG.masked) return setStatus('imgstatus', 'Nothing to flatten yet — pick a photo or a fill color and a shape first.', 'err');
-    if (PHOTOS.list.length >= PHOTOS.max) return setStatus('imgstatus', `The photo shelf is full (${PHOTOS.max}) — delete one first.`, 'err');
-    const from = IMG.src === 'fill' ? 'fill' : ((PHOTOS.list.find((x) => x.k === IMG.k) || {}).name || (IMG.k ? `photo ${IMG.k}` : 'picture'));
-    const name = `Flat: ${from}`.slice(0, 40);
-    setStatus('imgstatus', 'Flattening…');
-    try { const r = await fetch(imgApi() + '/photo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: id, image: IMG.masked, name, w: 320, h: 320 }) });
-      const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error === 'photo_shelf_full' ? 'the photo shelf is full' : (j.error || r.status));
-      await loadPhotos();
-      // 枠を素の四角 100% に戻してから読む = 合成した絵が全部見える状態から、次の形を選び直せる
-      IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; IMG.size = 100; IMG.size2 = null; IMG.cx = 160; IMG.cy = 160; IMG.cx2 = null; IMG.cy2 = null;
-      IMG.rot = 0; IMG.rot2 = null; IMG.shape2 = null; IMG.cut = false; IMG.br = 100; IMG.sa = 100;
-      setShape('square', null); renderTone();
-      ['imgzoom', 'imgsize', 'imgbr', 'imgsa'].forEach((k) => { const el = $(k); if (el) el.value = k === 'imgzoom' ? '1' : '100'; });
-      ['imgbrv', 'imgsav', 'imgsizev'].forEach((k) => { const el = $(k); if (el) el.textContent = '100%'; });
-      await loadPhoto(j.k);
-      setStatus('imgstatus', `Flattened into photo ${j.k}. Now frame it again — pick a shape, or Shift+click to add a second one.`, 'ok');
-    } catch (e) { setStatus('imgstatus', 'Could not flatten: ' + e.message, 'err'); }
+  // Flatten to Another Shape (2026-09-27、ユーザー要望): 今の形 (1 つ目と、あれば 2 つ目の Add / Cut) を IMG.fl に固めて、
+  //   形のボタンを次の形のために空ける。写真は元のまま (Photos には置かない)。固めた形は Reset frame / Reset image で消える。
+  const FL_MAX = 12;
+  function renderFlatNote() {
+    const el = $('flatnote'); if (!el) return;
+    el.textContent = IMG.fl.length ? `${IMG.fl.length} shape${IMG.fl.length > 1 ? 's' : ''} fixed under the ones you are editing — Reset frame lets them go.` : 'Fixes the shapes you have so you can add another one on top.';
+  }
+  $('imgflat').addEventListener('click', () => {
+    if (!hasSource()) return setStatus('imgstatus', 'Nothing to flatten yet — pick a photo or a fill color and a shape first.', 'err');
+    const add = IMG.shape2 ? 2 : 1;
+    if (IMG.fl.length + add > FL_MAX) return setStatus('imgstatus', `That would be more than ${FL_MAX} fixed shapes — Reset frame and start again.`, 'err');
+    IMG.fl.push({ k: IMG.shape, rot: IMG.rot, size: IMG.size, cx: IMG.cx, cy: IMG.cy, cut: 0 });
+    if (IMG.shape2) IMG.fl.push({ k: IMG.shape2, rot: rotOf(2), size: sizeOf(2), cx: cxOf(2), cy: cyOf(2), cut: cutOn() ? 1 : 0 });
+    setShape(IMG.shape, null);   // 2 つ目の枠を空ける (1 つ目は同じ形のまま = 見た目は変わらない)
+    renderFlatNote(); redrawImg();
+    setStatus('imgstatus', `Flattened — ${IMG.fl.length} shape${IMG.fl.length > 1 ? 's are' : ' is'} fixed. Pick the next shape (Shift+click adds a second one, Add or Cut), then Flatten again for more.`, 'ok');
   });
-  $('imgreset').addEventListener('click', () => { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; IMG.size = 100; IMG.size2 = null; IMG.cx = 160; IMG.cy = 160; IMG.cx2 = null; IMG.cy2 = null; IMG.rot = 0; IMG.rot2 = null; IMG.shape2 = null; setShape(IMG.shape, null);
-    $('imgzoom').value = '1'; redrawImg(); });
+  $('imgreset').addEventListener('click', () => { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; IMG.size = 100; IMG.size2 = null; IMG.cx = 160; IMG.cy = 160; IMG.cx2 = null; IMG.cy2 = null; IMG.rot = 0; IMG.rot2 = null; IMG.shape2 = null; IMG.fl = []; setShape(IMG.shape, null);
+    $('imgzoom').value = '1'; renderFlatNote(); redrawImg(); });
   // colors
   const COLOR_STEPS = [2, 4, 8, 16, 32];   // a watch face cannot fetch more than 32 colors (fr965 measured, 2026-09-07)
   COLOR_STEPS.forEach((c) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = c; b.dataset.c = c; b.classList.toggle('on', c === IMG.colors);
@@ -4891,7 +4896,7 @@
   // ── Draft: image editor state ──
   function imgDraftState() {
     const base = { k: IMG.k || 0, fill: IMG.fill || null, shape: IMG.shape, shape2: IMG.shape2 || null, cut: cutOn() ? 1 : null, rot: IMG.rot, rot2: IMG.shape2 ? rotOf(2) : null, size: IMG.size, size2: IMG.shape2 ? sizeOf(2) : null, cx: IMG.cx, cy: IMG.cy, cx2: IMG.shape2 ? cxOf(2) : null, cy2: IMG.shape2 ? cyOf(2) : null, panX: IMG.panX, panY: IMG.panY, zoom: IMG.zoom,
-                   colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, br: brOf(), sa: saOf(), src: IMG.src };
+                   colors: IMG.colors, bgAuto: IMG.bgAuto, show: IMG.show, br: brOf(), sa: saOf(), src: IMG.src, fl: IMG.fl.length ? IMG.fl.map((L) => Object.assign({}, L)) : null };
     if (IMG.fill && !IMG.cur) return base;
     if (!IMG.cur) return Object.assign(base, { none: true });
     if (!IMG.k) {   // not a shelf photo (e.g. loaded from the collection): keep a downscaled copy of the picture itself
@@ -4900,6 +4905,18 @@
         base.data = c.toDataURL('image/jpeg', 0.85); } catch (e) {}
     }
     return base;
+  }
+  // 固めた形の一覧を読む (recipe / 下書き)。形・角度・大きさ・位置を検査し、壊れた行は捨てる
+  function readLayers(a) {
+    if (!Array.isArray(a)) return [];
+    const out = [];
+    for (const L of a.slice(0, FL_MAX)) {
+      if (!L || typeof L !== 'object' || !SHAPES.some(([x]) => x === L.k)) continue;
+      const rot = Number(L.rot), size = Number(L.size), cx = Number(L.cx), cy = Number(L.cy);
+      if (!Number.isFinite(rot) || !Number.isFinite(size) || !Number.isFinite(cx) || !Number.isFinite(cy)) continue;
+      out.push({ k: L.k, rot: ((Math.round(rot / 45) * 45) % 360 + 360) % 360, size: Math.max(30, Math.min(100, size)), cx, cy, cut: (L.cut === 1 || L.cut === true) ? 1 : 0 });
+    }
+    return out;
   }
   function applyImgDraft(d) {
     if (!d || typeof d !== 'object') return;
@@ -4913,6 +4930,7 @@
     IMG.cx = Number.isFinite(d.cx) ? d.cx : 160; IMG.cy = Number.isFinite(d.cy) ? d.cy : 160;
     IMG.cx2 = IMG.shape2 && Number.isFinite(Number(d.cx2)) ? Number(d.cx2) : null;
     IMG.cy2 = IMG.shape2 && Number.isFinite(Number(d.cy2)) ? Number(d.cy2) : null;
+    IMG.fl = readLayers(d.fl); renderFlatNote();
     IMG.panX = Number(d.panX) || 0; IMG.panY = Number(d.panY) || 0;
     IMG.zoom = Math.max(1, Math.min(3, Number(d.zoom) || 1)); $('imgzoom').value = IMG.zoom;
     if (COLOR_STEPS.includes(d.colors)) { IMG.colors = d.colors; document.querySelectorAll('#imgcolors button').forEach((x) => x.classList.toggle('on', +x.dataset.c === IMG.colors)); }

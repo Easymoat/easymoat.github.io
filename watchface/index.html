@@ -196,7 +196,7 @@
   .face .mini.empty::after { content: "+"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
                              color: var(--ink-3); font: 300 28px var(--sans); }
   .imgbox { width: 100%; max-width: 1040px; gap: 22px; }
-  .imgbox .cols { display: grid; grid-template-columns: 320px 1fr; gap: 40px; align-items: start; }
+  .imgbox .cols { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 40px; align-items: start; }   /* minmax(0,…): 1 行の状態文 (nowrap) が右の列を画面の外まで押し広げないように (2026-09-27) */
   .imgbox .opts { display: flex; flex-direction: column; gap: 20px; }
   .imgbox .cb button { height: 28px; min-width: 40px; }
   .cb.units { display: inline-flex; gap: 6px; }
@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-27 19:36</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-27 19:54</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -4724,7 +4724,7 @@
     if (IMG.shape2) IMG.fl.push({ k: IMG.shape2, rot: rotOf(2), size: sizeOf(2), cx: cxOf(2), cy: cyOf(2), cut: cutOn() ? 1 : 0 });
     setShape(IMG.shape, null);   // 2 つ目の枠を空ける (1 つ目は同じ形のまま = 見た目は変わらない)
     renderFlatNote(); redrawImg();
-    setStatus('imgstatus', `Flattened — ${IMG.fl.length} shape${IMG.fl.length > 1 ? 's are' : ' is'} fixed. Pick the next shape (Shift+click adds a second one, Add or Cut), then Flatten again for more.`, 'ok');
+    setStatus('imgstatus', `Flattened — ${IMG.fl.length} fixed. Pick the next shape (Shift+click for a second one).`, 'ok');
   });
   $('imgreset').addEventListener('click', () => { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; IMG.size = 100; IMG.size2 = null; IMG.cx = 160; IMG.cy = 160; IMG.cx2 = null; IMG.cy2 = null; IMG.rot = 0; IMG.rot2 = null; IMG.shape2 = null; IMG.fl = []; setShape(IMG.shape, null);
     $('imgzoom').value = '1'; renderFlatNote(); redrawImg(); });

@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-27 07:23</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-27 15:08</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -872,13 +872,23 @@
   const DIAL_PX = 520;   // on-screen size of the big dial (the layout itself stays in device px)
   // 4 size steps S/M/L/XL (3 → 4 on 2026-09-06); older 3-entry tables are padded with the XL default.
   const SIZES = ['S', 'M', 'L', 'XL'], SIZE_MAX = 3;
-  const EL_MAX = 40;   // 実機が受け取れる部品の数 (サーバも同じ値で弾く)。**線は数えない**
-  const LINE_MAX = 60;   // 線だけの歯止め (描画コストがほぼ無いので実用上当たらない)
-  const elCount = (list) => (list || []).filter((e) => !isLine(e[0]) && !isRect(e[0])).length;   // 上限の対象 = 線と四角形以外
+  // 部品の上限は「重さの合計」(2026-09-27、実機 fr965 のメモリ実測)。数 (40) だと上限内でも落ちる面があった。
+  //   文字系 1.0 / 縁 60-69 1.2 / アナログ 44 0.5 / 円 75 0.25 / 針 50-59・塗り 76 0.1 / 線 70-74 0.05 / 予報の帯 29・グラフ 41-43 3.0。
+  //   ウォッチ (WfService.costOf) も同じ表。
+  //   **サーバ (wf_layout.js の LOAD_MAX / weightOf) と必ず揃えること。**
+  const LOAD_MAX = 28;
+  const EL_HARD = 100;   // el の行数そのものの歯止め (サーバと同じ)
+  const LINE_MAX = 60;   // 線だけの歯止め (60 本でも重さ 3、実用上当たらない)
+  const weightOf = (t) => (t >= 70 && t <= 74) ? 0.05 : ((t >= 50 && t <= 59) || t === 76) ? 0.1 : t === 75 ? 0.25 : t === 44 ? 0.5 : (t >= 60 && t <= 69) ? 1.2 : (t === 29 || (t >= 41 && t <= 43)) ? 3 : 1;
+  const loadOf = (list) => Math.round((list || []).reduce((w, e) => w + weightOf(e[0]), 0) * 100) / 100;
+  const fmtLoad = (w) => String(Math.round(w * 100) / 100);
+  const canAdd = (t, list) => loadOf(list || st.el) + weightOf(t) <= LOAD_MAX;   // この種類をもう 1 つ置けるか
+  const FULL_MSG = (t) => `The watch is full — load ${fmtLoad(loadOf(st.el))} of ${LOAD_MAX}, and ${TYPES[t]?.name || 'this part'} adds ${weightOf(t)}. Remove a part first (lines and shapes cost almost nothing).`;
+  const elCount = (list) => (list || []).filter((e) => !isLine(e[0]) && !isRect(e[0])).length;   // 表示用の数 (線と四角形以外)
   // f のビット: 0 アイコン / 1 値を出さない / 2 株は変化率 · 3 上げ下げ (野球は状態) で色 / 4 株は名前。
   // **サーバの上限と必ず揃えること** (ここが狭いと絵札が描けず真っ黒になる、2026-09-14)。
   const F_MAX = 127;   // bit5 (32) = 日付の曜日、bit6 (64) = 値のレベルで色分け (サーバと揃えること)
-  const EL_HEAVY = 32;   // これを超えると実機の描き直しが目に見えて遅くなる (部品 1 つ ≒ 4.8ms)
+  const LOAD_HEAVY = 24;   // ここから先は実機のメモリの余裕が小さい (注意色にする)
   // 線 (70-73)。太さは 454 の盤面での px、長さは幅の千分率 (x/y と同じ物差し)。
   const LINE_W = [3, 5, 7], LINE_LEN_DEF = 200, LINE_LEN_MIN = 20;   // 奇数 = 実機で端の丸めがぴったり合う
   const isLine = (t) => !!(TYPES[t] && TYPES[t].line != null);
@@ -2679,8 +2689,8 @@
       if (!t || !st.park[t.i]) return;
       const p = stagePoint(e2);
       if (p.inside) {                              // 文字盤へ戻す
-        if (!isLine(st.park[t.i][0]) && elCount(st.el) >= EL_MAX) {
-          render(); return setStatus('shelfstatus', `The watch takes ${EL_MAX} parts — make room before putting this one back.`, 'err');
+        if (!canAdd(st.park[t.i][0])) {
+          render(); return setStatus('shelfstatus', FULL_MSG(st.park[t.i][0]), 'err');
         }
         const e = st.park.splice(t.i, 1)[0];
         e[1] = clamp(p.x); e[2] = clamp(p.y);
@@ -2694,11 +2704,11 @@
     window.addEventListener('pointerup', end); window.addEventListener('pointercancel', end);
   }
   function renderList() {
-    const n = elCount(st.el), ec = $('elcount');
+    const w = loadOf(st.el), ec = $('elcount');
     if (ec) {
-      ec.textContent = `${n} / ${EL_MAX}`;
-      ec.className = 'cnt' + (n > EL_MAX ? ' over' : n > EL_HEAVY ? ' heavy' : '');
-      ec.title = (n > EL_HEAVY ? `Past ${EL_HEAVY} parts the watch redraws noticeably slower (about 5 ms per part) — you will feel it while scrolling the watch's own settings menu. ` : '') + 'Lines are not counted: they cost almost nothing to draw.';
+      ec.textContent = `load ${fmtLoad(w)} / ${LOAD_MAX}`;
+      ec.className = 'cnt' + (w > LOAD_MAX ? ' over' : w > LOAD_HEAVY ? ' heavy' : '');
+      ec.title = `${elCount(st.el)} parts. Load is what the watch's memory can hold: text parts count 1, the forecast strip and graphs 3, a rim 1.2, an analog dial 0.5, a circle 0.25, hands and shapes 0.1, lines 0.05.` + (w > LOAD_HEAVY ? ` Past ${LOAD_HEAVY} the watch is close to its limit.` : '');
     }
     const l = $('list'); l.innerHTML = '';
     if (st.el.length) { const hd = document.createElement('div'); hd.className = 'li hd'; hd.innerHTML = `<span class="dot" style="visibility:hidden"></span>Part<span class="xy">X, Y</span>`; l.appendChild(hd); }
@@ -3258,9 +3268,9 @@
       each((x) => { if (isCrew(x[0])) crewNorm(x); if (TYPES[x[0]]?.icon || isCrew(x[0])) { x[6] = (x[6] & ~3) | v; } });
     }));
     $('dup').addEventListener('click', () => {   // copies of every selected element, one grid step down, and the copies become the selection
-      const add = all.filter((x) => !isLine(x[0])).length;   // 線は上限に数えない
-      if (elCount(st.el) + add > EL_MAX) {
-        return setStatus('shelfstatus', `That would be ${elCount(st.el) + add} parts — the watch takes ${EL_MAX}. Remove some first (lines do not count).`, 'err');
+      const add = loadOf(all);
+      if (loadOf(st.el) + add > LOAD_MAX) {
+        return setStatus('shelfstatus', `That would be load ${fmtLoad(loadOf(st.el) + add)} — the watch holds ${LOAD_MAX}. Remove some parts first (lines and shapes cost almost nothing).`, 'err');
       }
       const start = st.el.length; all.forEach((x) => { const c = x.slice(); c[2] = clamp(c[2] + st.grid); st.el.push(c); });
       selSet.clear(); for (let i = start; i < st.el.length; i++) selSet.add(i); sel = st.el.length - 1; commit(); });
@@ -3387,7 +3397,7 @@
   // 針と縁は入 / 切。同じ組の中では 1 つだけ (針を 2 種類同時には置かない)。
   const DIAL_MAX = { rim: 2, hands: 1 };   // 縁は 2 つまで重ねられる (針は 1 つ)
   function toggleDialPart(t) {
-    if (elCount(st.el) >= EL_MAX && !st.el.some((x) => x[0] === t)) { setStatus('shelfstatus', `The watch takes ${EL_MAX} parts — remove one before adding another. Lines do not count.`, 'err'); return; }
+    if (!canAdd(t) && !st.el.some((x) => x[0] === t)) { setStatus('shelfstatus', FULL_MSG(t), 'err'); return; }
     const grp = TYPES[t].grp, was = st.el.findIndex((e) => e[0] === t);
     if (was >= 0) { st.el.splice(was, 1); clearSel(); commit(); return; }   // もう一度押したら外す
     const same = st.el.filter((e) => TYPES[e[0]] && TYPES[e[0]].dial && TYPES[e[0]].grp === grp);
@@ -3406,8 +3416,9 @@
   }
   let PAL_PEND = null;                 // 押したところ。動かすか離すまで部品は作らない
   function startPaletteDrag(ev, t) {
-    const wantLine = isLine(t) || isRect(t) || isLine((PAL_PCT[t] || {}).t);
-    if (!wantLine && elCount(st.el) >= EL_MAX) { setStatus('shelfstatus', `The watch takes ${EL_MAX} parts — remove one before adding another. Lines do not count.`, 'err'); return; }
+    const realT = (PAL_PCT[t] || {}).t != null ? PAL_PCT[t].t : t;   // 置かれる部品の種類 (絵札の見出しは別の番号を持つ)
+    const wantLine = isLine(t) || isRect(t) || isLine(realT);
+    if (!canAdd(realT)) { setStatus('shelfstatus', FULL_MSG(realT), 'err'); return; }
     if (wantLine && st.el.length - elCount(st.el) >= LINE_MAX) { setStatus('shelfstatus', `That is ${LINE_MAX} lines — enough for one dial.`, 'err'); return; }
     PAL_PEND = { t, x: ev.clientX, y: ev.clientY, id: ev.pointerId };
   }
@@ -3601,7 +3612,7 @@
     return pc;
   }
   function sanitize(j) {
-    if (!j || !Array.isArray(j.el) || j.el.length > EL_MAX + LINE_MAX) return null;
+    if (!j || !Array.isArray(j.el) || j.el.length > EL_HARD) return null;
     const el = [];
     for (const e of j.el) {
       if (!Array.isArray(e) || e.length < 7) return null;
@@ -3953,7 +3964,7 @@
   }
   $('shelfsave').addEventListener('click', async () => {
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('shelfstatus', 'Enter the Device ID (XXXX-XXXX) — on the watch: settings → Watch Face → Customize → Device ID.', 'err');
-    if (elCount(st.el) > EL_MAX) return setStatus('shelfstatus', `Too many parts: ${elCount(st.el)} (lines do not count). The watch takes ${EL_MAX} — remove ${elCount(st.el) - EL_MAX} and save again.`, 'err');
+    if (loadOf(st.el) > LOAD_MAX) return setStatus('shelfstatus', `Too much for the watch: load ${fmtLoad(loadOf(st.el))} of ${LOAD_MAX}. Remove parts worth ${fmtLoad(loadOf(st.el) - LOAD_MAX)} and save again (lines and shapes cost almost nothing).`, 'err');
     const hasImg = !!(IMG.show && hasSource() && IMG.masked);
     // 絵のない品はウォッチでも絵なしになる。意図しない「絵なし」で保存してしまうのを防ぐ。
     if (!hasImg && CAM.on && !IMG.cur) return setStatus('shelfstatus', 'No camera frame in the editor yet — this would be saved without a picture. Press Camera again once a frame appears.', 'err');
@@ -3972,7 +3983,7 @@
       const j = await r.json();
       if (r.status === 402) { loadAccess(); throw new Error(payMsg(j)); }
       if (!r.ok || !j.ok) throw new Error(j.error === 'shelf_full' ? `the collection is full (${j.max} items) — delete one first`
-        : j.error === 'bad_layout' ? `the server refused this dial (${elCount(st.el)} parts, limit ${EL_MAX}) — send me the JSON below if the count looks fine`
+        : j.error === 'bad_layout' ? `the server refused this dial (load ${fmtLoad(loadOf(st.el))}, limit ${LOAD_MAX}) — send me the JSON below if the load looks fine`
         : (j.error || r.status));
       const parked = (st.park || []).length ? ` — ${st.park.length} parked ${st.park.length === 1 ? 'part is' : 'parts are'} not in it` : '';
       const note = (hasImg ? '' : (hasSource() ? ' (saved without the picture — Show is off)' : ' (no picture)')) + parked;

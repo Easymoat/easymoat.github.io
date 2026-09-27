@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-27 16:05</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-27 17:14</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -465,7 +465,7 @@
           <div class="ctl"><button class="btn" id="imgreset" title="Put the frame back to the middle at 100 % (the picture stays)">Reset frame</button><button class="btn danger" id="imgclear" title="Take the picture (or the color) out of this editor and start over. Nothing is deleted from the server or from the collection.">Reset image</button></div>
           <details class="box camdet" id="camgrp"><summary class="lbl" style="cursor:pointer">PulseLink camera</summary>
             <div class="ctl"><button class="btn toggle" id="camon">Camera: OFF</button><span class="status" id="camnote" style="flex:1 1 auto"></span></div>
-            <div class="ctl"><span class="muted" style="max-width:640px">Shows the latest picture from the PulseLink Cam of the PulseLink you linked in 5 Watch → Link PulseLink. Nothing to type here.</span></div>
+            <div class="ctl"><span class="muted" style="max-width:640px">Shows the latest picture from the PulseLink Cam of the PulseLink you linked in 5 Setup → Link PulseLink. Nothing to type here.</span></div>
           </details>
         </div>
         <div class="opts">
@@ -497,13 +497,14 @@
       </details>
     </div>
     <div class="shelfbox box" id="watchbox">
-      <div class="tier"><span class="num">5</span><span class="name">Watch</span><span class="what">Two settings you make once: which watch receives your dials, and where its weather comes from</span></div>
+      <div class="tier"><span class="num">5</span><span class="name">Setup</span><span class="what">Two settings you make once: which watch receives your dials, and where its weather comes from</span></div>
       <div class="grp" id="syncbox">
           <span class="lbl">a · Which watch</span>
           <div class="ctl"><span>Device ID</span><input type="text" id="devid" placeholder="XXXX-XXXX" style="width:140px"><span class="muted">On the watch: settings → Watch Face → Customize → Device ID. Everything you send from Collection goes to this watch. It is kept on this computer — there is nothing to sign up for.</span></div>
           <input type="hidden" id="api" value="https://mlbwatch-server.onrender.com/api/wf">
           <div class="ctl" id="passrow"><span>Pass</span><span id="passnote" class="muted">…</span></div>
-          <div class="ctl" id="passinrow" hidden><span>Signed in</span><span class="muted" id="passinnote"></span><button class="btn" id="passout" title="Forget the key on this browser. Saving and To watch keep working.">Sign out</button></div>
+          <div class="ctl" id="passinrow" hidden><span>Signed in</span><span class="muted" id="passinnote"></span><button class="btn" id="passout" title="Sign this browser out. To use the collection again, sign in with the Web code from the watch.">Sign out</button></div>
+          <div class="status" id="passstatus"></div>
           <div class="ctl" id="wfsignrow" hidden><span>Web code</span><input type="text" id="wfcode" inputmode="numeric" placeholder="6 digits" maxlength="8" autocomplete="off" style="width:110px"><button class="btn primary" id="wfsignin">Sign in</button><span class="status" id="wfsignst"></span></div>
           <div class="ctl" id="wfsignnote" hidden><span></span><span class="muted" style="max-width:640px">This watch is registered, so this browser has to sign in once (it stays signed in for 30 days). On the watch, open settings → Watch Face → Customize → Web code: it shows a 6-digit code that changes every minute. Type it here. To end every sign-in, choose Sign out web on the watch.</span></div>
           <div class="status" id="watchseen" title="Your watch asks the server for a new dial about every 5 minutes. This line says when it last asked, and whether it already has the dial you sent."></div>
@@ -968,7 +969,12 @@
   const graphH = (e) => { const v = Number(e[9]); return (Number.isFinite(v) && v >= GRAPH_MIN.h) ? Math.min(1000, Math.round(v)) : graphBox(e)[1]; };
   const graphGrow = (e) => { const b = graphBox(e); while (e.length < 10) e.push(e.length === 8 ? b[0] : b[1]); };
   // 見本のデータ。心拍 = 5 分ごと 72 点 (6 時間)、ストレス = 10 分ごと 36 本、歩数 = 7 日 (右端が今日)
-  const HR_SAMPLE = Array.from({ length: 72 }, (_, i) => Math.round(64 + 6 * Math.sin(i / 6) + (i > 38 && i < 52 ? 38 * Math.sin((i - 38) / 13 * Math.PI) : 0)));
+  // 心拍の見本: 実機と同じ 5 分平均 72 点。安静時も毎点 ±5 ほど揺れ、歩いた枠は 10-25 跳ね、運動の山も上が凸凹する (2026-09-27)
+  const HR_SAMPLE = (() => { let r = 7; const rnd = () => (r = (r * 1103515245 + 12345) % 2147483648) / 2147483648;   // 決め打ちの乱数 (毎回同じ絵)
+    return Array.from({ length: 72 }, (_, i) => { let v = 62 + 5 * Math.sin(i / 9) + (rnd() - 0.5) * 9;
+      if (i > 40 && i < 54) v += 40 * Math.sin((i - 40) / 14 * Math.PI) + (rnd() - 0.5) * 18;   // 運動の山
+      else if (rnd() < 0.14) v += 10 + rnd() * 15;                                                // 歩いた枠
+      return Math.round(v); }); })();
   const STRESS_SAMPLE = Array.from({ length: 36 }, (_, i) => Math.max(5, Math.round(24 + 14 * Math.sin(i / 4) + (i > 20 && i < 28 ? 30 : 0))));
   const STEPS_SAMPLE = [6200, 8400, 5100, 10200, 7600, 9100, 4300];
   // グラフの絵 (w, h は px)。実機も同じ決め方で描く:
@@ -3945,9 +3951,9 @@
       const b = d.querySelector('[data-a="send"]');
       if (b) {
         b.textContent = stale ? 'Update watch' : on ? 'Showing' : ('To watch ' + (devId() || '—'));   // 送り先を取り違えないよう ID をボタンに出す
-        b.classList.toggle('primary', !on || stale);
-        b.classList.toggle('toggle', on && !stale);
-        b.classList.toggle('on', on && !stale);
+        b.classList.toggle('primary', !on);
+        b.classList.toggle('toggle', on);      // Showing も Update watch も同じ緑 (Update は押せる、2026-09-27)
+        b.classList.toggle('on', on);
         b.disabled = on && !stale;
         b.title = stale ? 'You changed this dial after sending it — send the new one to the watch'
           : on ? 'This is the dial your watch shows' : 'Make this the dial your watch shows';
@@ -4024,7 +4030,7 @@
   // 401 の一言 (保存 / 読み込み共通)
   const authMsg = (j) => (j && j.error === 'bind_required') ? 'this watch has to be registered first — open The Face on the watch once (it registers by itself), then sign in with its Web code'
     : (j && j.error === 'contested') ? 'this Device ID is frozen because two watches claimed it — contact easymoat@gmail.com'
-    : 'sign in with the Web code from the watch (5 Watch → Web code)';
+    : 'sign in with the Web code from the watch (5 Setup → Web code)';
   // 認証付きで画像を取る: <img> にはヘッダを付けられないので、サインイン中は fetch + Blob。それ以外は今までどおりの URL
   const IMG_BLOBS = new Map();
   async function imgSrc(url) {
@@ -4112,7 +4118,9 @@
   }
   $('passout').addEventListener('click', () => {
     try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
-    setStatus('passstatus', 'Signed out on this browser. Saving and To watch keep working.', 'ok');
+    // すぐに見た目を変える (行を畳み、状態の行を出す)。サーバの返事を待ってから直すと押した手応えが無い (2026-09-27)
+    $('passinrow').hidden = true;
+    setStatus('passstatus', 'Signed out on this browser — to use the collection again, sign in with the Web code from the watch.', 'ok');
     IMG_BLOBS.clear();
     loadAccess(); loadShelf(); loadWatchSlots(); loadPhotos(); loadPlLink(); loadLoc();
   });
@@ -4195,8 +4203,8 @@
       if (j.error === 'login_required' || j.error === 'pass_required') { PASS.url = j.buy_url || PASS.url;
         const hasPass = PASS.st && PASS.st.pass && PASS.st.pass.active;
         throw new Error(j.error === 'pass_required' || !hasPass ? 'making links comes with the 1-Year Pass. Opening and adding links others send you works during the trial too'
-          : SIGN.bound ? 'sign in with the Web code from the watch (5 Watch) to make links on this browser'
-          : 'update The Face on the watch to the latest version, then sign in with its Web code (5 Watch). Links can be made after that'); }
+          : SIGN.bound ? 'sign in with the Web code from the watch (5 Setup) to make links on this browser'
+          : 'update The Face on the watch to the latest version, then sign in with its Web code (5 Setup). Links can be made after that'); }
       if (!r.ok || !j.ok) throw new Error(j.error === 'share_full' ? `you already have ${j.max} links — remove one first`
         : j.error === 'need_author' ? 'put your name in "Shared as" below first' : (j.error || r.status));
       const link = location.origin + location.pathname + '?s=' + j.code;
@@ -4984,7 +4992,7 @@
       const base = `${$('api').value}/cam-preview?device_id=${encodeURIComponent(id)}&full=1`;   // full=1: 角を切っていない四角も送ってもらう
       const r = await fetch(base + '&meta=1', { headers: authHeaders() }); const j = await r.json();
       if (r.status === 401) { camNote(authMsg(j) + '.', 'err'); return; }
-      if (r.status === 403) { camNote('Link PulseLink first (5 Watch → Link PulseLink) — the camera only shows a PulseLink you linked.', 'err'); return; }
+      if (r.status === 403) { camNote('Link PulseLink first (5 Setup → Link PulseLink) — the camera only shows a PulseLink you linked.', 'err'); return; }
       if (r.status === 402) { camNote(payMsg(j), 'err'); return; }
       if (!r.ok) throw new Error(j.error || r.status);
       const ov = String(j.version || '0');
@@ -5016,7 +5024,7 @@
     $('imgzoom').value = '1'; renderShapeSel();
   }
   function setCamera(on) {
-    if (on && !PLL.valid) { camNote('Link PulseLink first (5 Watch → Link PulseLink), then turn the camera on.', 'err'); return; }   // stays OFF
+    if (on && !PLL.valid) { camNote('Link PulseLink first (5 Setup → Link PulseLink), then turn the camera on.', 'err'); return; }   // stays OFF
     CAM.on = on; $('camon').classList.toggle('on', on); $('camon').textContent = 'Camera: ' + (on ? 'ON' : 'OFF');
     renderCamLock();
     if (on) { CAM.prev = { cur: IMG.cur, src: IMG.src, k: IMG.k, fill: IMG.fill }; CAM.ver = ''; if (!hasSource()) camSquare(); fetchCam(); CAM.timer = setInterval(fetchCam, 60000); }

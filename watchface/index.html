@@ -148,11 +148,11 @@
   .stage-col { display: flex; flex-direction: column; flex: none; gap: 24px; }
   .dialrow { display: flex; align-items: stretch; gap: 28px; flex-wrap: wrap; }   /* 騨置き場は文字盤と同じ高さ。狭ければ下へ回る */
   /* 騨置き場: 文字盤と同じ高さ。幅は上下の操作列からはみ出さない程度にとどめる。 */
-  .tray { width: 336px; display: flex; flex-direction: column; gap: 8px; padding: 10px;
+  .tray { width: min(336px, 100%); display: flex; flex-direction: column; gap: 8px; padding: 10px;   /* 狭い画面では画面幅まで縮む (2026-09-28) */
           border: 2px dashed var(--line-2); border-radius: 12px; background: var(--panel-2); box-sizing: border-box; }
   .tray.over { border-color: var(--accent); background: rgba(242, 180, 65, .08); }
   .trayhd { display: flex; align-items: center; gap: 8px; }
-  .traylist { position: relative; overflow: hidden; flex: 1 1 auto; border-radius: 8px; }
+  .traylist { position: relative; overflow: hidden; flex: 1 1 auto; min-height: 200px; border-radius: 8px; }   /* 文字盤の下へ回った時 (狭い画面) は高さが見出しだけに潰れ、置いた部品が枠の外へ出ていた (2026-09-28) */
   .trayitem { position: absolute; display: flex; align-items: center; justify-content: center;
               padding: 2px; border-radius: 4px; cursor: grab; white-space: nowrap; }
   .trayitem:hover { outline: 1px dashed var(--line-2); outline-offset: 2px; }
@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-27 19:54</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-28 20:10</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2665,6 +2665,8 @@
     });
   }
   const trayPos = (e) => [Math.max(20, Math.min(980, e[1] | 0)), Math.max(20, Math.min(980, e[2] | 0))];
+  // 置き場の幅が変わったら (画面の回転・幅の狭い端末) 中身を描き直す。位置は千分率、縮尺は幅から決めるので描き直すだけで収まる (2026-09-28)
+  if (typeof ResizeObserver === 'function') { const tl = $('traylist'); if (tl) { let w0 = 0; new ResizeObserver(() => { const w = Math.round(tl.clientWidth); if (w && w !== w0) { w0 = w; renderTray(); } }).observe(tl); } }
   // ポインタの位置 → 騨置き場の千分率
   function trayPoint(ev) {
     const l = $('traylist'), r = l.getBoundingClientRect();

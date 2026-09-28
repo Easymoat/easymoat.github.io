@@ -145,10 +145,10 @@
      so the send button never disappears below the fold. */
   .stage-row { display: flex; align-items: flex-end; gap: 56px; flex-wrap: wrap-reverse;   /* wrap-reverse: flex-end = top edge */ justify-content: flex-start; width: 100%; max-width: 1040px; }
   .rail { display: flex; flex-direction: column; gap: 20px; width: 410px; }
-  .stage-col { display: flex; flex-direction: column; flex: none; gap: 24px; }
-  .dialrow { display: flex; align-items: stretch; gap: 28px; flex-wrap: wrap; }   /* 騨置き場は文字盤と同じ高さ。狭ければ下へ回る */
+  .stage-col { display: flex; flex-direction: column; flex: 0 1 auto; min-width: 0; gap: 24px; }   /* 縮めるのは騨置き場の幅だけ (2026-09-28) */
+  .dialrow { display: flex; align-items: stretch; gap: 28px; }   /* 騨置き場は文字盤と同じ高さで横に置いたまま。狭い時は幅だけ縮む (2026-09-28 ユーザー指示) */
   /* 騨置き場: 文字盤と同じ高さ。幅は上下の操作列からはみ出さない程度にとどめる。 */
-  .tray { width: 336px; display: flex; flex-direction: column; gap: 8px; padding: 10px;
+  .tray { width: 336px; flex: 0 1 auto; min-width: 120px; display: flex;   /* 横に置いたまま幅だけ縮む。はみ出た部品は .traylist の overflow で隠れる (2026-09-28 ユーザー指示: 描き直さない) */ flex-direction: column; gap: 8px; padding: 10px;
           border: 2px dashed var(--line-2); border-radius: 12px; background: var(--panel-2); box-sizing: border-box; }
   .tray.over { border-color: var(--accent); background: rgba(242, 180, 65, .08); }
   .trayhd { display: flex; align-items: center; gap: 8px; }
@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-28 20:13</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-28 20:23</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>

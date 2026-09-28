@@ -52,6 +52,10 @@
   .zoom-ctl { display: flex; align-items: center; gap: 10px; }
   .zoom-ctl input[type=range] { flex: 1; }
   .zoom-ico { font-size: 18px; font-weight: 700; color: var(--text2); width: 14px; text-align: center; }
+  .tone-ctl { display: grid; grid-template-columns: auto 1fr 3.2em; align-items: center; gap: 6px 10px; margin-top: 10px; }
+  .tone-ctl label { font-size: 14px; color: var(--text2); }
+  .tone-ctl input[type=range] { width: 100%; }
+  .tone-ctl .tone-val { font-size: 13px; color: var(--text2); text-align: right; font-variant-numeric: tabular-nums; }
   .btn-link { background: none; border: none; color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer; padding: 4px 6px; }
   .preview-note { text-align: center; font-size: 12px; color: var(--muted); margin-top: -8px; margin-bottom: 16px; }
   .footer-links { text-align: center; margin-top: 20px; font-size: 13px; color: var(--muted); }
@@ -156,12 +160,21 @@
       </div>
     </div>
     <div id="adjustRow" class="adjust-row" style="display:none;">
-      <p class="adjust-hint" data-en="Drag the image to position it. Use the slider to zoom." data-ja="画像をドラッグして位置を調整。スライダーで拡大できます。">Drag the image to position it. Use the slider to zoom.</p>
+      <p class="adjust-hint" data-en="Drag the image to position it. Use the slider to zoom, and Brightness / Saturation to adjust the colors. Reset returns all of them." data-ja="画像をドラッグして位置を調整。スライダーで拡大、明るさ・彩度で色味を調整できます。リセットですべて元に戻ります。">Drag the image to position it. Use the slider to zoom, and Brightness / Saturation to adjust the colors. Reset returns all of them.</p>
       <div class="zoom-ctl">
         <span class="zoom-ico" aria-hidden="true">−</span>
         <input id="zoom" type="range" min="1" max="3" step="0.01" value="1">
         <span class="zoom-ico" aria-hidden="true">+</span>
         <button type="button" class="btn-link" id="resetAdjust" data-en="Reset" data-ja="リセット">Reset</button>
+      </div>
+      <!-- 明るさ・彩度 (MW の画像ページ・Face Composer と同じ式、2026-09-29)。送る画像そのものに焼き込む。 -->
+      <div class="tone-ctl">
+        <label for="toneBr" data-en="Brightness" data-ja="明るさ">Brightness</label>
+        <input id="toneBr" type="range" min="20" max="180" step="1" value="100">
+        <span class="tone-val" id="toneBrV">100%</span>
+        <label for="toneSa" data-en="Saturation" data-ja="彩度">Saturation</label>
+        <input id="toneSa" type="range" min="0" max="200" step="1" value="100">
+        <span class="tone-val" id="toneSaV">100%</span>
       </div>
     </div>
     <p class="preview-note" style="text-align:left;" data-en="True-to-watch preview, shown full screen. On the watch, You menu → Watch face → Image chooses where it sits: Center full fills the screen, Center small leaves a black margin, Upper puts it in the top half." data-ja="実機どおりのプレビュー（全画面表示）。ウォッチ側の配置は You メニュー → Watch face → Image で選びます。Center full は画面いっぱい、Center small は周りに黒い縁が残り、Upper は上半分に表示されます。">True-to-watch preview, shown full screen. On the watch, You menu → Watch face → Image chooses where it sits: Center full fills the screen, Center small leaves a black margin, Upper puts it in the top half.</p>
@@ -255,6 +268,34 @@ let maskedPng = null;   // 320x320 円形マスク済み data URL
 const sizeMode = 'full';
 // 位置決め状態: 読み込んだ画像と、ユーザーが調整した移動量(panX/panY px)・拡大率(zoom)
 let curImg = null, panX = 0, panY = 0, zoom = 1;
+// 明るさ (toneBr) と彩度 (toneSa) は % で持つ。100 = 元のまま (MW の画像ページ・Face Composer と同じ範囲)。
+let toneBr = 100, toneSa = 100;
+
+// 明るさ → 彩度の順に画素を直に計算する (Face Composer の applyTone と同じ式。
+// canvas の filter は古い Safari などで無視されるため使わない)。
+function applyTone(ctx) {
+  const br = toneBr / 100, sa = toneSa / 100;
+  if (br === 1 && sa === 1) return;
+  const im = ctx.getImageData(0, 0, 320, 320), d = im.data;
+  const rr = 0.213 + 0.787 * sa, rg = 0.715 - 0.715 * sa, rb = 0.072 - 0.072 * sa;
+  const gr = 0.213 - 0.213 * sa, gg = 0.715 + 0.285 * sa, gb = 0.072 - 0.072 * sa;
+  const br_ = 0.213 - 0.213 * sa, bg = 0.715 - 0.715 * sa, bb = 0.072 + 0.928 * sa;
+  for (let i = 0; i < d.length; i += 4) {
+    if (!d[i + 3]) continue;
+    const r = d[i] * br, g = d[i + 1] * br, b = d[i + 2] * br;
+    const R = rr * r + rg * g + rb * b, G = gr * r + gg * g + gb * b, B = br_ * r + bg * g + bb * b;
+    d[i] = R < 0 ? 0 : R > 255 ? 255 : R;
+    d[i + 1] = G < 0 ? 0 : G > 255 ? 255 : G;
+    d[i + 2] = B < 0 ? 0 : B > 255 ? 255 : B;
+  }
+  ctx.putImageData(im, 0, 0);
+}
+function renderTone() {
+  document.getElementById('toneBr').value = toneBr;
+  document.getElementById('toneSa').value = toneSa;
+  document.getElementById('toneBrV').textContent = toneBr + '%';
+  document.getElementById('toneSaV').textContent = toneSa + '%';
+}
 
 // 現在の curImg + pan/zoom 状態で 320x320 円形マスクを再描画し maskedPng を更新する。
 function redrawPreview() {
@@ -274,6 +315,7 @@ function redrawPreview() {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, 320, 320);
   ctx.drawImage(curImg, (320 - dw) / 2 + panX, (320 - dh) / 2 + panY, dw, dh);
+  applyTone(ctx);   // 明るさ・彩度 (送る画像・色数の判定・最適パレットにも同じ絵が載る)
   // 円形マスク
   ctx.globalCompositeOperation = 'destination-in';
   ctx.beginPath();
@@ -392,6 +434,7 @@ document.getElementById('file').addEventListener('change', (ev) => {
   img.onload = () => {
     curImg = img;
     panX = 0; panY = 0; zoom = 1;            // 新しい画像は中央・等倍から
+    toneBr = 100; toneSa = 100; renderTone(); // 明るさ・彩度も元のまま
     document.getElementById('zoom').value = '1';
     document.getElementById('adjustRow').style.display = '';
     redrawPreview();
@@ -430,9 +473,17 @@ document.getElementById('zoom').addEventListener('input', (e) => {
   redrawPreview();
 });
 
-// ─── リセット (中央・等倍に戻す) ───
+// ─── 明るさ・彩度スライダー ───
+['toneBr', 'toneSa'].forEach((id) => document.getElementById(id).addEventListener('input', (e) => {
+  if (id === 'toneBr') toneBr = +e.target.value; else toneSa = +e.target.value;
+  renderTone();
+  redrawPreview();
+}));
+
+// ─── リセット (中央・等倍・明るさ彩度 100% に戻す) ───
 document.getElementById('resetAdjust').addEventListener('click', () => {
   panX = 0; panY = 0; zoom = 1;
+  toneBr = 100; toneSa = 100; renderTone();   // リセットは明るさ・彩度も元に戻す
   document.getElementById('zoom').value = '1';
   redrawPreview();
 });
@@ -532,6 +583,7 @@ async function loadSlotImage(n) {
       img.onload = () => {
         curImg = img;
         panX = 0; panY = 0; zoom = 1;   // 保存済み画像は 320x320 マスク済み = 等倍中央でぴったり
+        toneBr = 100; toneSa = 100; renderTone();   // 明るさ・彩度は保存時に焼き込み済み (二重にかけない)
         const z = document.getElementById('zoom');
         if (z) z.value = '1';
         document.getElementById('adjustRow').style.display = '';

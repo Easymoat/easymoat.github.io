@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-28 20:23</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-28 22:22</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -416,7 +416,7 @@
     <div class="group"><span class="lbl">Text</span><div class="parts" id="parts-text"></div></div>
     <div class="group"><span class="lbl">Body</span><div class="parts" id="parts-body"></div></div>
     <div class="group"><span class="lbl">Graphs</span><div class="parts" id="parts-graph"></div></div>
-    <div class="group"><span class="lbl">Crew</span><div class="parts" id="parts-crew"></div><span class="muted">Needs PulseLink on the same watch. Who is in each line is set in PulseLink.</span></div>
+    <div class="group"><span class="lbl">Crew</span><div class="parts" id="parts-crew"></div><span class="muted">Shows the Crew of the PulseLink you link in 5 Setup. Choose who is in each line in the part's settings.</span></div>
     <div class="group"><span class="lbl">Weather</span><div class="parts" id="parts-wx"></div></div>
     <div class="group"><span class="lbl">Hands</span><div class="parts" id="parts-hands"></div></div>
     <div class="group"><span class="lbl">Rim</span><div class="parts" id="parts-rim"></div></div>
@@ -936,7 +936,27 @@
   //   見本は同じ距離 (1.2 km / 120 m) をそれぞれの単位で書いたもの。
   const CREW_SAMPLE_M = [['Ema', '1.2km 3m'], ['Ken', '120m 1m'], ['--', '']];
   const CREW_SAMPLE_FT = [['Ema', '0.7mi 3m'], ['Ken', '394ft 1m'], ['--', '']];
-  const crewSample = () => (st.du === 1 ? CREW_SAMPLE_FT : CREW_SAMPLE_M);
+  // cw = 3 行それぞれに誰を出すか (2026-09-28、サーバ直参照)。1-3 = 近い順の何番目 / 'm_' + 16 桁 = PulseLink の特定のメンバー
+  //   (外向き ID。Device ID は持たない)。既定 [1,2,3]。**サーバ wf_layout.js の cw と同じ検査**。
+  const cwRead = (a) => { const d = [1, 2, 3]; if (!Array.isArray(a) || !a.length || a.length > 3) return d;
+    const v = a.map((x) => (typeof x === 'string' ? (/^m_[0-9a-f]{16}$/.test(x) ? x : null) : ([1, 2, 3].indexOf(Number(x)) >= 0 ? Number(x) : null)));
+    if (v.some((x) => x == null)) return d; while (v.length < 3) v.push(v.length + 1); return v; };
+  // 部品の設定の「Who」: 行ごとに「近い順の何番目」か「特定のメンバー」を選ぶ。一覧は結び付けた PL の Crew
+  function crewWhoHtml(rows) {
+    const c = cwRead(st.cw), esc = (t) => String(t).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+    const note = !PLL.valid ? '<span class="muted">Link PulseLink in 5 Setup to list your Crew here.</span>' : (!PLCREW.length ? '<span class="muted">No one in your Crew shares a location yet.</span>' : '');
+    const line = (i) => { const w = c[i];
+      const opts = [1, 2, 3].map((k) => `<option value="${k}"${w === k ? ' selected' : ''}>Nearest ${k}</option>`).join('')
+        + PLCREW.map((m) => `<option value="${esc(m.id)}"${w === m.id ? ' selected' : ''}>${esc(m.name)}</option>`).join('')
+        + (typeof w === 'string' && !PLCREW.some((m) => m.id === w) ? `<option value="${esc(w)}" selected>A member not in the list now</option>` : '');
+      return `<select class="crewwho" data-i="${i}" title="Line ${i + 1}">${opts}</select>`; };
+    return `<div class="field" title="Who each line shows: the nearest members in order, or one member always. Nearest counts only the members not chosen for another line. The list comes from the PulseLink you linked in 5 Setup."><span>Who</span><span class="ctl" style="gap:6px;flex-wrap:wrap">${[0, 1, 2].slice(0, rows).map(line).join('')}${note}</span></div>`;
+  }
+  const cwOut = () => { const c = cwRead(st.cw); return (c[0] === 1 && c[1] === 2 && c[2] === 3) ? undefined : c.slice(); };
+  let PLCREW = [];   // 結び付けた PulseLink の Crew [{id, name}] (GET /pl-crew)。特定のメンバーを選ぶ一覧と見本の名前に使う
+  const crewSample = () => { const base = st.du === 1 ? CREW_SAMPLE_FT : CREW_SAMPLE_M, c = cwRead(st.cw);
+    return base.map((r, i) => { const w = c[i]; if (typeof w !== 'string') return r;
+      const m = PLCREW.find((x) => x.id === w); return [m ? m.name.slice(0, 5) : 'Mem' + (i + 1), r[1]]; }); };
   const crewLines = (e) => crewSample().slice(0, crewRows(e)).map((r) => r.join(' '));
   // el[9] = 並び + 1 (1 名前左 / 2 名前右 / 3 名前上)。0 / 無し = 最初の形 (名前と数字を 1 行で、Show は見ない)。
   //   昔の面を描き変えないための目印を兼ねる (2026-09-27、ユーザー指示で Icon = 名前・Value = 数字に)。
@@ -1458,7 +1478,7 @@
   // 公開前の最低限の確認 (本番ではなく手元で 1 周):
   //   新規で保存 → Edit で読み戻し → サムネイル → Undo → 色を 2 回変更 → 既存の面を 1 つ開く
   //   (既存の面は実機 Collection を**読み取りのみ**。実機 4041-1544 には書かない。自分の確認用 ID は aaaa-0001)
-  let st = { dev: 'fr965', hr: [], sc: [], hc: [], grid: 50, showGrid: true, gridBright: false, selBright: true, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], ms: [], stk: ['', ''], stn: ['', ''], uc: 0, bb: [null, null, null, null], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
+  let st = { dev: 'fr965', hr: [], sc: [], hc: [], grid: 50, showGrid: true, gridBright: false, selBright: true, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], ms: [], stk: ['', ''], stn: ['', ''], cw: [1, 2, 3], uc: 0, bb: [null, null, null, null], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
   // Selection: `sel` is the primary (last clicked) element, `selSet` every selected index.
   // Shift / Cmd / Ctrl + click adds or removes one; the Selected panel, dragging, arrows and
   // Delete act on all of them.
@@ -1470,7 +1490,7 @@
   const UNDO_MAX = 60;
   let UNDO = [], REDO = [], UNDO_SNAP = null, UNDO_BUSY = false;
   // ★ 色に関わる控え (pc) とメーターの組 (ms) を入れ忘れると、元に戻した時に色が化ける (2026-09-26)。
-  const UNDO_KEYS = ['bg', 'el', 'park', 'pc', 'tt', 'tx', 'tm', 'ic', 'io', 'b', 'mt', 'mc', 'mk', 'mv', 'ms', 'sc', 'hc', 'hr', 'stk', 'stn', 'bb', 'uc'];
+  const UNDO_KEYS = ['bg', 'el', 'park', 'pc', 'tt', 'tx', 'tm', 'ic', 'io', 'b', 'mt', 'mc', 'mk', 'mv', 'ms', 'sc', 'hc', 'hr', 'stk', 'stn', 'cw', 'bb', 'uc'];
   const undoSnap = () => JSON.stringify(UNDO_KEYS.map((k) => st[k]));
   function undoPush() {
     const cur = undoSnap();
@@ -2625,6 +2645,7 @@
       return out.length ? out : undefined; })(),
     st: (st.stk || []).some((v) => v) ? (st.stk || ['', '']).slice(0, 2).map(stkClean) : undefined,
     sn: (st.stn || []).some((v) => v) ? (st.stn || ['', '']).slice(0, 2).map(nameClean) : undefined,
+    cw: st.el.some((x) => isCrew(x[0])) ? cwOut() : undefined,   // Crew の行に誰を出すか (既定なら送らない)
     uc: st.uc === 1 ? 1 : undefined,
     // 絵が単色の塗りなら、その色を渡す (実機はメーターの下地をこの色と混ぜる。写真の時は渡さない = 黒)
     ib: (typeof IMG !== 'undefined' && IMG.show && !IMG.cur && IMG.fill) ? parseInt(String(IMG.fill).slice(1), 16) : undefined,
@@ -2972,9 +2993,9 @@
           ['<option value="">— pick a team —</option>'].concat(leagueTeams(bbLg(bbSlot(e[0]))).map(([id, nm]) => `<option value="${id}" ${String(bbTm(bbSlot(e[0]))) === String(id) ? 'selected' : ''}>${nm}</option>`)).join('')
         }</select></div>
         <div class="field" title="Green while the game is on, orange when it is over — instead of the color below"><span>State</span><span class="cb units" id="fbbc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep color</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By state</button></span></div>` : ''}
-        ${allCrew ? `<div class="field" title="How many lines this part shows. Who is in each line is set in PulseLink (You &gt; Watch face &gt; Complications)."><span>Lines</span><span class="cb units" id="fcrewn">${
+        ${allCrew ? `<div class="field" title="How many lines this part shows."><span>Lines</span><span class="cb units" id="fcrewn">${
           [1, 2, 3].map((v) => `<button type="button" data-v="${v}" class="${all.every((x) => crewRows(x) === v) ? 'on' : ''}">${v}</button>`).join('')
-        }</span></div>` : ''}
+        }</span></div>${crewWhoHtml(Math.max(...all.map(crewRows)))}` : ''}
         ${allStrip ? `<div class="field" title="How many hours the strip shows: now and the next 2, 3 or 4 hours. Five columns with icons are wider than the dial."><span>Columns</span><span class="cb units" id="fstripn">${
           [3, 4, 5].map((v) => `<button type="button" data-v="${v}" class="${all.every((x) => stripCells(x) === v) ? 'on' : ''}">${v === 3 ? 'Now 1h 2h' : v === 4 ? '+3h' : '+4h'}</button>`).join('')
         }</span></div>` : ''}
@@ -3224,6 +3245,9 @@
     });
     document.querySelectorAll('#fstkv button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStock(x[0])) x[6] = (x[6] & ~4) | (+b.dataset.v); })));
     document.querySelectorAll('#fstrip button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isStrip(x[0])) x[6] = (x[6] & ~12) | (+b.dataset.v); })));
+    box.querySelectorAll('.crewwho').forEach((sel) => sel.addEventListener('change', () => {
+      const i = +sel.dataset.i, v = sel.value, c = cwRead(st.cw).slice();
+      c[i] = /^m_/.test(v) ? v : Number(v); st.cw = c; commit(); }));
     box.querySelectorAll('#fcrewn button').forEach((b) => b.addEventListener('click', () => each((x) => {
       if (!isCrew(x[0])) return;
       while (x.length < 9) x.push(x.length === 7 ? -1 : 0);
@@ -3315,7 +3339,7 @@
     wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0, hr: (st.hr || []).slice(), sc: (st.sc || []).slice(), hc: (st.hc || []).slice(),
     mt: (st.mt || []).slice(), mc: (st.mc || []).slice(), mk: (st.mk || []).slice(), mv: (st.mv || []).slice(),
     ms: (st.ms || []).map(msOut),
-    st: (st.stk || ['', '']).slice(0, 2), sn: (st.stn || ['', '']).slice(0, 2),
+    st: (st.stk || ['', '']).slice(0, 2), sn: (st.stn || ['', '']).slice(0, 2), cw: cwRead(st.cw),
     uc: st.uc === 1 ? 1 : 0, bb: (st.bb || []).slice(0, BB_MAX), tt: (st.tt || []).slice(),
     park: (st.park || []).map((e) => e.slice()),
     img: imgDraftState(), savedAt: Date.now() });
@@ -3605,7 +3629,7 @@
     st.tx = DEF_TX.slice(); st.tm = DEF_TM.slice(); st.ic = DEF_IC.slice(); st.io = DEF_IO; st.b = 0;
     st.mt = [0, 0, 0, 0]; st.mc = [-1, -1, -1, -1]; st.mk = [-1, -1, -1, -1]; st.mv = [1, 1, 1, 1]; st.ms = [];
     EDIT_N = null; EDIT_ITEM_NAME = ''; shelfName();
-    st.stk = ['', '']; st.stn = ['', '']; st.bb = []; st.uc = 0; st.tt = [];
+    st.stk = ['', '']; st.stn = ['', '']; st.cw = [1, 2, 3]; st.bb = []; st.uc = 0; st.tt = [];
     clearSel(); commit(); renderSizes(); renderBold(); renderUpCol();
     setStatus('jsonstatus', 'Dial reset — Undo puts it back.', 'ok');
   });
@@ -3724,6 +3748,7 @@
              bb: (Array.isArray(j.bb) ? j.bb : (j.bb ? [j.bb] : [])).slice(0, BB_MAX).map((b) => (b && b.tm ? { lg: String(b.lg || 'mlb'), tm: b.tm } : null)),
              stk: (Array.isArray(j.st) && j.st.length <= 2) ? [stkClean(j.st[0]), stkClean(j.st[1])] : ['', ''],
              stn: (Array.isArray(j.sn) && j.sn.length <= 2) ? [nameClean(j.sn[0]), nameClean(j.sn[1])] : ['', ''],
+             cw: cwRead(j.cw),
              uc: Number(j.uc) === 1 ? 1 : 0,
              pc: (Array.isArray(j.pc) && j.pc.length >= 1 && j.pc.length <= PC_MAX && j.pc.every((c) => Number.isInteger(c) && c >= 0 && c <= 0xFFFFFF)) ? j.pc.slice() : legacyPc(el),
              mc: (Array.isArray(j.mc) && j.mc.length === 4 && j.mc.every((c) => Number.isInteger(c) && c >= -1 && c <= PC_BASE + PC_MAX)) ? j.mc.slice() : [-1, -1, -1, -1] };
@@ -3775,7 +3800,7 @@
       try { insertJoints(inner, '', arcs, d, d.w / 454); } finally { st = hold; }
     }
   }
-  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, BB_MAX); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.ms = msRead(c.ms); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); st.hr = (c.hr || []).slice(); st.sc = (c.sc || []).slice(); st.hc = (c.hc || []).slice(); st.tt = (c.tt || []).slice(); clearSel(); pushBgHist(st.bg); renderHr(); }
+  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.cw = cwRead(c.cw); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, BB_MAX); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.ms = msRead(c.ms); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); st.hr = (c.hr || []).slice(); st.sc = (c.sc || []).slice(); st.hc = (c.hc || []).slice(); st.tt = (c.tt || []).slice(); clearSel(); pushBgHist(st.bg); renderHr(); }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
   // ウォッチが最後に来た時刻は 2 か所から来る: 従来経路 (/layouts) と実機が今使う経路 (/watch)。
   // 実機はもう従来経路を見に来ないので、そちらの値は何日も古いまま。新しい方だけを使う
@@ -4998,6 +5023,15 @@
     try { const r = await fetch($('api').value + '/pl-link?device_id=' + encodeURIComponent(id)); const j = await r.json();
       PLL.linked = !!j.linked; PLL.valid = !!j.valid; PLL.pl = j.pl || null; } catch (e) { swallow('pllink')(e); }
     renderPlLink();
+    await loadPlCrew();
+  }
+  async function loadPlCrew() {   // 結び付けた PL の Crew (外向き ID と名前だけ)。Crew 部品の Who と見本の名前に使う
+    const id = devId(); PLCREW = [];
+    if (PLL.valid && /^[0-9a-zA-Z-]{4,40}$/.test(id)) {
+      try { const r = await fetch($('api').value + '/pl-crew?device_id=' + encodeURIComponent(id)); if (r.ok) { const j = await r.json(); PLCREW = Array.isArray(j.members) ? j.members.filter((m) => m && /^m_[0-9a-f]{16}$/.test(m.id)) : []; } }
+      catch (e) { swallow('plcrew')(e); }
+    }
+    if (st.el.some((x) => isCrew(x[0]))) render();
   }
   // Web code: 全角数字を半角に (日本語入力 ON のまま入れる人がいる)。変換中 (composition) は触らない。
   const normCode = (v) => String(v || '').replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/\D/g, '').slice(0, 6);

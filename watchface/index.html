@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-29 18:15</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-29 18:25</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3031,7 +3031,9 @@
       }));
     };
     // 揃える / 戻す。Meters と同じく常に出しておく (選ぶ前から場所が動かない)。
-    // そろえるのは「見た目の中心」。x をそのまま写すと、寄せ方 (Anchor) が違う部品はずれる。
+    // Same X でそろえるのは、基準の部品 (最後にクリックした部品) の Anchor の位置: 左なら左端・右なら右端・中央なら中心 (2026-09-29 ユーザー指摘。
+    //   以前は常に中心をそろえていたので、Anchor を右にした部品どうしの右端がそろわなかった)。
+    //   位置は盤面に実際に描いた箱から測る (線・縦積み・円も同じ扱い)。線と縦積みは Anchor が左右の端を意味しないので中心。
     // 盤面全体に描く部品 (縁・針) は動かせず必ず真ん中なので、それが入っている時は 500 が基準になる
     // (同心円のデザインで「そろえたのにずれる」原因だった。2026-09-21)。
     const boxW = (i) => {
@@ -3042,6 +3044,15 @@
       const pad = (d.classList.contains('linepart') || d.classList.contains('dialpart') || d.classList.contains('graphpart')) ? 0 : 4;
       return sr.width ? Math.max(0, r.width - pad) / sr.width * 1000 : 0;   // 画面を隠している間は 0 = 中央寄せとして扱う
     };
+    const boxLW = (i) => {   // 描いた箱の左端と幅 (‰)。画面を隠している間は null
+      const d = document.querySelector(`#stage .el[data-i="${i}"]`), sg = $('stage');
+      if (!d || !sg) return null;
+      const r = d.getBoundingClientRect(), sr = sg.getBoundingClientRect(); if (!sr.width) return null;
+      const pad = (d.classList.contains('linepart') || d.classList.contains('dialpart') || d.classList.contains('graphpart')) ? 0 : 4;
+      return [(r.left + pad / 2 - sr.left) / sr.width * 1000, Math.max(0, r.width - pad) / sr.width * 1000];
+    };
+    const edgeKind = (i) => { const x = st.el[i]; if (isLine(x[0]) || isVert(arrOf(x))) return 0; return (x[3] === 1 || x[3] === 2) ? x[3] : 0; };
+    const edgeOf = (i, E) => { const b = boxLW(i); if (!b) return st.el[i][1]; const [L, W] = b; return E === 1 ? L : E === 2 ? L + W : L + W / 2; };
     const ctrOf = (i, k) => { const x = st.el[i]; if (k === 2) return x[2];
       const w = boxW(i); return x[3] === 1 ? x[1] + w / 2 : x[3] === 2 ? x[1] - w / 2 : x[1]; };
     const setCtr = (i, k, c) => { const x = st.el[i];
@@ -3055,8 +3066,20 @@
       if (!move.length) return;                   // 縁・針だけ: すでに真ん中にある
       const useDial = move.length !== idxs.length;   // 縁・針が混じっている = 盤面の真ん中にそろえる
       const refI = (move.indexOf(sel) >= 0) ? sel : move[0];
-      const c = useDial ? 500 : ctrOf(refI, k);
-      move.forEach((i) => setCtr(i, k, c));
+      if (k === 1) {
+        // 横: 基準の Anchor の位置 (左端 / 右端 / 中心) をそろえる。箱ごと動かすので x に差を足すだけ (Anchor の種類によらない)
+        const E = useDial ? 0 : edgeKind(refI), target = useDial ? 500 : edgeOf(refI, E);
+        // x の位置がちょうどその端になる部品 (Anchor の種類が同じ) は、測らずに基準の x をそのまま入れる (時計も x に Anchor を合わせて描く)。
+        //   線は Anchor が端点の意味なので、中央 (0) の時だけ x = 中心。
+        const atX = (i) => { const x = st.el[i]; return isLine(x[0]) ? (x[3] === 0 && E === 0) : edgeKind(i) === E; };
+        const refX = (!useDial && atX(refI)) ? st.el[refI][1] : (useDial && E === 0 ? 500 : null);
+        const d = move.map((i) => target - edgeOf(i, E));          // 先に全部測ってから動かす
+        move.forEach((i, j) => { if (!useDial && i === refI) return;
+          st.el[i][1] = (refX != null && atX(i)) ? refX : clamp(st.el[i][1] + d[j]); });
+      } else {
+        const c = useDial ? 500 : ctrOf(refI, k);
+        move.forEach((i) => setCtr(i, k, c));
+      }
       commit();                                   // 戻すのは上の Undo (盤面の編集全体)
     }));
     COLOR_NOTE = '';

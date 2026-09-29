@@ -462,8 +462,8 @@
       <h3>Weather Bar</h3>
       <ul>
         <li data-en="Top row: condition icon + temperature / humidity / wind speed &amp; direction" data-ja="上段: 天気アイコン + 気温 / 湿度 / 風速・風向">Top row: condition icon + temperature / humidity / wind speed &amp; direction</li>
-        <li data-en="Bottom row: air pressure (hPa) / altitude (m)" data-ja="下段: 気圧 (hPa) / 高度 (m)">Bottom row: air pressure (hPa) / altitude (m)</li>
-        <li data-en="Wind speed unit (m/s, km/h, mph, knots) is set in the Connect IQ settings panel" data-ja="風速の単位 (m/s, km/h, mph, knots) は Connect IQ 設定パネルで変更できます">Wind speed unit (m/s, km/h, mph, knots) is set in the Connect IQ settings panel</li>
+        <li data-en="Bottom row: air pressure / altitude" data-ja="下段: 気圧 / 高度">Bottom row: air pressure / altitude</li>
+        <li data-en="Units for temperature, pressure, altitude and wind speed are set in the Connect IQ settings panel (see Units in chapter 11). Pressure in inHg shows two decimals, such as 29.92." data-ja="気温・気圧・高度・風速の単位は Connect IQ 設定パネルで選べます (第 11 章「単位」)。気圧を inHg にすると 29.92 のように小数 2 桁で表示します。">Units for temperature, pressure, altitude and wind speed are set in the Connect IQ settings panel (see Units in chapter 11). Pressure in inHg shows two decimals, such as 29.92.</li>
       </ul>
       <h3>Physical Bar</h3>
       <ul>
@@ -522,11 +522,17 @@
         <tr><th data-en="Phone (Connect IQ panel)" data-ja="スマホ (Connect IQ パネル)">Phone (Connect IQ panel)</th><th data-en="Purpose" data-ja="用途">Purpose</th></tr>
         <tr><td>License Key</td><td data-en="Activate your purchase" data-ja="購入後のアクティベーション">Activate your purchase</td></tr>
         <tr><td>Color Mode</td><td data-en="Red Up / Green Down — or Green Up / Red Down" data-ja="「赤=上 / 緑=下」または「緑=上 / 赤=下」">Red Up / Green Down — or Green Up / Red Down</td></tr>
-        <tr><td data-en="Wind speed unit" data-ja="風速の単位">Wind speed unit</td><td>m/s / km/h / mph / knots</td></tr>
+        <tr><td>Temperature unit</td><td>Auto / °C / °F</td></tr>
+        <tr><td>Pressure unit</td><td>hPa / inHg / mmHg</td></tr>
+        <tr><td>Altitude unit</td><td>Auto / m / ft</td></tr>
+        <tr><td>Wind speed unit</td><td>Auto / m/s / km/h / mph / knots</td></tr>
+        <tr><td>Weight unit</td><td>Auto / kg / lb</td></tr>
         <tr><td>Complication Slot 1 / 2</td><td data-en="Which symbols feed your watchface (chapter 12)" data-ja="ウォッチフェイスに出す銘柄 (第 12 章)">Which symbols feed your watchface (chapter 12)</td></tr>
         <tr><td>Glance Display</td><td data-en="Net or a chosen symbol in the Glance widget" data-ja="Glance に表示する対象 (Net または任意の 1 銘柄)">Net or a chosen symbol in the Glance widget</td></tr>
         <tr><td>Pushover (optional)</td><td data-en="Earnings / dividend push notifications to your phone (US stocks and some Japanese stocks)" data-ja="決算・配当のスマホ通知 (米国株と一部日本株のみ対応)">Earnings / dividend push notifications to your phone (US stocks and some Japanese stocks)</td></tr>
       </table>
+      <h3 data-en="Units" data-ja="単位">Units</h3>
+      <p data-en="The five unit settings change only what you see: the Weather Bar (temperature, pressure, altitude, wind speed), the weather screen and its hourly and daily forecasts (temperature, wind speed), the altitude and pressure graphs, and the weight in the Physical Bar. Auto follows your watch&#x27;s own unit settings (temperature, altitude and weight use their own settings; wind speed follows the distance unit: m/s for metric, mph for statute). Everything defaults to Auto except pressure, which defaults to hPa. If you had already chosen a wind speed unit, it stays as it was." data-ja="5 つの単位の設定は、表示だけを変えます。対象は Weather Bar (気温・気圧・高度・風速)、天気の画面と時間別・日別の予報 (気温・風速)、高度と気圧のグラフ、Physical Bar の体重です。Auto はウォッチ本体の単位設定に従います (気温・高度・体重はそれぞれの単位設定、風速は距離の単位でメートル法なら m/s、ヤード・ポンド法なら mph)。既定はすべて Auto で、気圧だけ hPa です。これまで風速の単位を選んでいた方は、その設定のままです。">The five unit settings change only what you see: the Weather Bar (temperature, pressure, altitude, wind speed), the weather screen and its hourly and daily forecasts (temperature, wind speed), the altitude and pressure graphs, and the weight in the Physical Bar. Auto follows your watch&#x27;s own unit settings (temperature, altitude and weight use their own settings; wind speed follows the distance unit: m/s for metric, mph for statute). Everything defaults to Auto except pressure, which defaults to hPa. If you had already chosen a wind speed unit, it stays as it was.</p>
     </section>
 
     <!-- ─── 11. Complications & Glance ─── -->

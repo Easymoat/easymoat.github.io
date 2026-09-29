@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-28 22:44</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-29 18:15</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -940,7 +940,7 @@
   const crewLines = (e) => crewSample().slice(0, crewRows(e)).map((r) => r.join(' '));
   // el[9] = 並び + 1 (1 名前左 / 2 名前右 / 3 名前上)。0 / 無し = 最初の形 (名前と数字を 1 行で、Show は見ない)。
   //   昔の面を描き変えないための目印を兼ねる (2026-09-27、ユーザー指示で Icon = 名前・Value = 数字に)。
-  const crewNew = (e) => { const v = Number(e[9]); return v === 1 || v === 2 || v === 3; };
+  const crewNew = (e) => { const v = Number(e[9]); return v === 1 || v === 2 || v === 3 || v === 4; };   // 4 = 名前下 (2026-09-29)
   const crewArr = (e) => (crewNew(e) ? Number(e[9]) - 1 : 0);
   const crewShow = (e) => (crewNew(e) ? (e[6] & 3) : 1);   // 1 名前+数字 / 3 名前だけ / 0 数字だけ
   const crewNorm = (x) => {                                  // 触った時に新しい形へ移す (見た目は変えない)
@@ -999,9 +999,11 @@
   const RECT_MIN = 40;
   const rectW = (e) => { const v = Number(e[8]); return Number.isFinite(v) && v >= RECT_MIN ? Math.min(1000, Math.round(v)) : RECT_DEF.w; };
   const rectH = (e) => { const v = Number(e[9]); return Number.isFinite(v) && v >= RECT_MIN ? Math.min(1000, Math.round(v)) : RECT_DEF.h; };
-  // 文字系の部品の並び: 0 アイコン左・値右 (既定) / 1 値左・アイコン右 / 2 アイコン上・値下
+  // 文字系の部品の並び: 0 アイコン左・値右 (既定) / 1 値左・アイコン右 / 2 アイコン上・値下 / 3 値上・アイコン下 (2026-09-29)
   const arrOf = (e) => { if (TYPES[e[0]] && TYPES[e[0]].crew) return crewArr(e);   // Crew は 10 番目 (9 番目は行数)
-    const v = Number(e[8]); return (v === 1 || v === 2) ? v : 0; };
+    const v = Number(e[8]); return (v === 1 || v === 2 || v === 3) ? v : 0; };
+  const isVert = (lay) => lay === 2 || lay === 3;        // 縦積み (上 / 下)
+  const iconAfter = (lay) => lay === 1 || lay === 3;     // 値が先・アイコンが後 (右 / 下)
   const CIRC_DEF = { dia: 300, fill: -1, met: 0, dir: 1 };
   const circDia = (e) => { const v = Number(e[8]); return Number.isFinite(v) && v >= 20 ? Math.min(1000, v) : CIRC_DEF.dia; };
   const circFill = (e) => { const v = Number(e[10]); return Number.isInteger(v) && v >= 0 ? v : -1; };
@@ -2245,7 +2247,7 @@
       const gp = gapOf(e) * ki, iw = showIco ? iArt * ki : 0;
       const vw = Math.max(textW(px, '-12\u00B0'), textW(px, '100')) + bo;
       const degW = textW(px, '\u00B0');   // 度の記号の幅 (数字の右端をそろえるために除く)
-      const colW = (lay === 2) ? Math.max(iw, vw) : iw + (iw ? gp : 0) + vw;
+      const colW = isVert(lay) ? Math.max(iw, vw) : iw + (iw ? gp : 0) + vw;
       // 風はコマごとに向きが変わる (予報の 1 時間ごとの風向)。見本は南西から西寄りへ振れる風。
       const WIND_DEG = [200, 245, 290, 315, 340];
       const art = (c) => (met === 2
@@ -2255,9 +2257,10 @@
       // 絵は枠の中央ではなく**数字と反対側の端**にそろえる。中央に置くと、幅の狭い絵
       // (傘 26 / 風 26) が広い絵 (天気 34) より内側に寄り、3 種を並べた時に絵の列がずれる。
       // scale() は基準点も端に合わせないと、同じだけ動いてしまう。
-      const jx = lay === 1 ? 'flex-end' : lay === 2 ? 'center' : 'flex-start';
-      const ox = lay === 1 ? 'right' : lay === 2 ? 'center' : 'left';
-      const icoOf = (c) => (showIco ? `<span class="ico" style="width:${iw.toFixed(1)}px;height:${icoH.toFixed(1)}px;justify-content:${jx};align-items:center;transform-origin:${ox} center;transform:translateY(${iody}px) scale(${ki});">${art(c)}</span>` : '');
+      const jx = lay === 1 ? 'flex-end' : isVert(lay) ? 'center' : 'flex-start';
+      const ox = lay === 1 ? 'right' : isVert(lay) ? 'center' : 'left';
+      const iG = lay === 3 ? (gapOf(e) - DEF_IG) * ki : 0;   // 下に置く時は、絵の側を Gap の差だけ離す
+      const icoOf = (c) => (showIco ? `<span class="ico" style="${iG ? `margin-top:${iG.toFixed(1)}px;` : ''}width:${iw.toFixed(1)}px;height:${icoH.toFixed(1)}px;justify-content:${jx};align-items:center;transform-origin:${ox} center;transform:translateY(${iody}px) scale(${ki});">${art(c)}</span>` : '');
       const nCells = stripCells(e);
       for (let c = 0; c < nCells; c++) {
         // 絵を消した時は並びに関わらず右寄せ。そろえるのは**度の記号を除いた数字の右端**で、気温の「°」だけ右へはみ出す
@@ -2266,9 +2269,9 @@
         const body = deg ? `${txt.slice(0, -1)}<span style="margin-right:${(-degW).toFixed(1)}px">°</span>` : txt;
         // 縦積みは一般の部品と同じ: 実機は隙間なしで積むので、Gap は既定 (6) からの差だけ動かす
         const vG = lay === 2 ? (gapOf(e) - DEF_IG) * ki : 0;
-        const v = `<span class="val" style="display:inline-block;width:${vw.toFixed(1)}px;box-sizing:border-box;${vG ? `margin-top:${vG.toFixed(1)}px;` : ''}${!showIco ? `padding-right:${degW.toFixed(1)}px;` : ''}text-align:${!showIco ? 'right' : lay === 2 ? 'center' : lay === 1 ? 'right' : 'left'};position:relative;top:${inkShift(px).toFixed(2)}px">${body}</span>`;
+        const v = `<span class="val" style="display:inline-block;width:${vw.toFixed(1)}px;box-sizing:border-box;${vG ? `margin-top:${vG.toFixed(1)}px;` : ''}${!showIco ? `padding-right:${degW.toFixed(1)}px;` : ''}text-align:${!showIco ? 'right' : isVert(lay) ? 'center' : lay === 1 ? 'right' : 'left'};position:relative;top:${inkShift(px).toFixed(2)}px">${body}</span>`;
         const ico = icoOf(c);
-        cells.push(`<span class="scell" style="width:${colW.toFixed(1)}px;gap:${(lay === 2 ? 0 : gp).toFixed(1)}px;${lay === 2 ? 'flex-direction:column;' : ''}${c < nCells - 1 ? `margin-right:${gp.toFixed(1)}px` : ''}">${lay === 1 ? v + ico : ico + v}</span>`);
+        cells.push(`<span class="scell" style="width:${colW.toFixed(1)}px;gap:${(isVert(lay) ? 0 : gp).toFixed(1)}px;${isVert(lay) ? 'flex-direction:column;' : ''}${c < nCells - 1 ? `margin-right:${gp.toFixed(1)}px` : ''}">${iconAfter(lay) ? v + ico : ico + v}</span>`);
       }
       div.style.gap = '0px';
       div.innerHTML = cells.join('') + '<span class="anchor"></span>';
@@ -2277,13 +2280,13 @@
       //   行の高さは :size の px そのまま (実機と同じ)。名前上 (Arrange = Icon above) は 1 人 2 行になる。
       const arr = crewArr(e), sh = crewShow(e), showN = !!(sh & 1), showV = !(sh & 2);
       const al = e[3] === 1 ? 'flex-start' : e[3] === 2 ? 'flex-end' : 'center';
-      const gp = gapOf(e) * ki, vG = arr === 2 ? (gapOf(e) - DEF_IG) * ki : 0;
+      const gp = gapOf(e) * ki, vG = arr === 2 ? (gapOf(e) - DEF_IG) * ki : 0, nG = arr === 3 ? (gapOf(e) - DEF_IG) * ki : 0;
       const top = `position:relative;top:${inkShift(px).toFixed(2)}px`;
       const rowsH = crewSample().slice(0, crewRows(e)).map(([nm, vl]) => {
-        const N = showN ? `<span class="ico">${nm}</span>` : '';
+        const N = showN ? `<span class="ico"${nG ? ` style="margin-top:${nG.toFixed(1)}px"` : ''}>${nm}</span>` : '';
         const V = showV && vl ? `<span class="val"${vG ? ` style="margin-top:${vG.toFixed(1)}px"` : ''}>${vl}</span>` : '';
         const one = N || V ? '' : '<span class="val">--</span>';   // 何も出ない行 (データ無しで名前を隠した時)
-        if (arr === 2) return `<div style="display:flex;flex-direction:column;align-items:${al};line-height:${px}px;${top}">${N}${V}${one}</div>`;
+        if (isVert(arr)) return `<div style="display:flex;flex-direction:column;align-items:${al};line-height:${px}px;${top}">${arr === 3 ? V + N : N + V}${one}</div>`;
         return `<div style="display:flex;gap:${gp.toFixed(1)}px;line-height:${px}px;${top}">${arr === 1 ? V + N : N + V}${one}</div>`;
       });
       div.style.flexDirection = 'column'; div.style.alignItems = al; div.style.gap = '0px';
@@ -2296,7 +2299,7 @@
       // 縦積み (アイコン上) の時の間隔。実機は「アイコンの箱 → 文字の行」を**隙間なしで積む**ので、
       //   Gap は既定 (6) からの差だけ離す / 詰める (負なら重なる側へ)。既定のままなら実機と同じ 0。
       //   以前は Gap × 倍率 − 行間 を足していて、Gap を変えても実機と噛み合わなかった (2026-09-22)。
-      const vGap = lay === 2 ? (gapOf(e) - DEF_IG) * ki : 0;
+      const vGap = lay === 2 ? (gapOf(e) - DEF_IG) * ki : 0;   // 下 (3) の時は絵の側を離す (下の ic2)
       // 太字の時計の「:」は、点が横に伸びて楕円になる (疑似ボールドは横にずらして重ねるため)。
       //   「:」だけ太字をかけずに、面積が同じ円になる大きさへ拡げて丸いまま太く見せる (2026-09-22 ユーザー指示)。
       //   倍率 = √(1 + bo / 点の幅)、点の幅 = 行高 × 0.10 (Roboto の実測)。位置は太字の数字に合わせて bo/2 右へ。
@@ -2305,14 +2308,15 @@
       const sampleHtml = colonHtml ? String(sample).split(':').join(colonHtml) : sample;
       const val = showVal ? `<span class="val" style="position:relative;top:${inkShift(px).toFixed(2)}px${bo ? `;padding-right:${bo}px` : ''}${vGap ? `;margin-top:${vGap.toFixed(1)}px` : ''}">${sampleHtml}</span>` : '';
       let ic2 = icon;
-      if (lay === 2) {
+      if (isVert(lay)) {
         div.style.flexDirection = 'column';
         div.style.gap = '0px';
         // 絵の箱は原寸のままで中身だけ縮んでいるので、縦積みでは箱も実寸に合わせる
         const hm = /height="([\d.]+)"/.exec(icon);
-        if (hm) ic2 = icon.replace('class="ico" style="', `class="ico" style="height:${(Number(hm[1]) * ki).toFixed(1)}px;`);
+        const iG = lay === 3 ? (gapOf(e) - DEF_IG) * ki : 0;
+        if (hm) ic2 = icon.replace('class="ico" style="', `class="ico" style="height:${(Number(hm[1]) * ki).toFixed(1)}px;${iG ? `margin-top:${iG.toFixed(1)}px;` : ''}`);
       }
-      div.innerHTML = (lay === 1 ? val + ic2 : ic2 + val) + '<span class="anchor"></span>';
+      div.innerHTML = (iconAfter(lay) ? val + ic2 : ic2 + val) + '<span class="anchor"></span>';
     }
     div.addEventListener('pointerdown', (ev) => startMove(ev, i));
     return div;
@@ -2327,7 +2331,7 @@
       const cx = px + sg * hx, cy = dir === 3 ? py - sg * hy : py + sg * hy;   // ／ だけ上下が逆
       return { left: cx - w / 2, top: cy - h / 2 };
     }
-    if (!isLine(e[0]) && !isCircle(e[0]) && arrOf(e) === 2) return { left: px - w / 2, top: py - h / 2 };   // 縦積みは左右中央
+    if (!isLine(e[0]) && !isCircle(e[0]) && isVert(arrOf(e))) return { left: px - w / 2, top: py - h / 2 };   // 縦積みは左右中央
     return { left: a === 1 ? px : a === 2 ? px - w : px - w / 2, top: py - h / 2 };
   }
   function positionAll() {
@@ -2857,7 +2861,7 @@
             `<button type="button" data-v="${v}" class="${all.every((x) => (isCrew(x[0]) ? crewShow(x) : (x[6] & 3)) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none || shapeOnly || allAna ? 'disabled' : ''}>${lbl}</button>`).join('')
         }</span></div>
         <div class="field${allText && !allAna ? '' : ' off'}" title="Where the icon sits relative to the value"><span>Arrange</span><span class="cb units" id="farr">${
-          [['Icon left', 0], ['Icon right', 1], ['Icon above', 2]].map(([nm, v]) =>
+          [['Icon left', 0], ['Icon right', 1], ['Icon above', 2], ['Icon below', 3]].map(([nm, v]) =>
             `<button type="button" data-v="${v}" class="${allText && all.every((x) => arrOf(x) === v) ? 'on' : ''}" ${allText ? '' : 'disabled'}>${nm}</button>`).join('')
         }</span></div>
         ${/* Gap と Bold は常に出す (文字以外では薄く無効)。出したり消したりすると行数が変わり Dial が上下に動いた (2026-09-22) */''}
@@ -3629,7 +3633,7 @@
       if (isLine(n[0])) { const L = Number(e[8]); n.push(Number.isFinite(L) && L >= LINE_LEN_MIN && L <= 1000 ? Math.round(L) : LINE_LEN_DEF); }   // 線は 9 番目の長さを落とさない
       else if (isRect(n[0])) { n.push(rectW(e), rectH(e), rectFill(e)); }   // 四角形は 9・10 番目に幅と高さ、11 番目に中の色
       else if (isGraph(n[0])) { n.push(graphW(e), graphH(e)); }   // グラフも 9・10 番目に幅と高さ
-      else if (hasCity(n[0]) && TZ_CITIES.some((c) => c[0] === Number(e[9]))) { n.push((Number(e[8]) === 1 || Number(e[8]) === 2) ? Number(e[8]) : 0, Number(e[9])); }   // 世界時計の都市
+      else if (hasCity(n[0]) && TZ_CITIES.some((c) => c[0] === Number(e[9]))) { n.push((Number(e[8]) === 1 || Number(e[8]) === 2 || Number(e[8]) === 3) ? Number(e[8]) : 0, Number(e[9])); }   // 世界時計の都市
       else if (isHands(n[0])) {   // 9 番目 = 針の長さ %、Rim marks は 10 番目 = 縁からの引っ込み
         const v = Number(e[8]); n.push((Number.isFinite(v) && v >= 40 && v <= 120) ? Math.round(v) : 100);
         if (isRimMarks(n[0])) { const q = Number(e[9]); n.push((Number.isFinite(q) && q >= 0 && q <= 160) ? Math.round(q) : 40); }
@@ -3665,11 +3669,11 @@
         if (Number.isInteger(msi) && msi >= 0 && msi < MS_MAX) n.push(msi);   // 11 番目 = メーターの組
       } else if (isCrew(n[0])) {   // Crew: 9 番目 = 行数 (1-3)、10 番目 = 並び + 1 (0 = 最初の形)
         const rw = Number(e[8]), ar = Number(e[9]);
-        n.push((rw === 1 || rw === 2) ? rw : 3, (ar === 1 || ar === 2 || ar === 3) ? ar : 0);
+        n.push((rw === 1 || rw === 2) ? rw : 3, (ar >= 1 && ar <= 4) ? ar : 0);   // Crew の並び 4 = 名前下 (2026-09-29)
       } else if (isStrip(n[0])) {   // 帯: 9 番目 = アイコンの並び、10 番目 = コマの数
         const ar = Number(e[8]), cn = Number(e[9]);
-        n.push((ar === 1 || ar === 2) ? ar : 0, (cn === 4 || cn === 5) ? cn : 3);
-      } else if (Number(e[8]) === 1 || Number(e[8]) === 2) { n.push(Number(e[8])); }   // アイコンの並び
+        n.push((ar >= 1 && ar <= 3) ? ar : 0, (cn === 4 || cn === 5) ? cn : 3);   // 予報の帯の並び 3 = アイコン下
+      } else if (Number(e[8]) >= 1 && Number(e[8]) <= 3) { n.push(Number(e[8])); }   // アイコンの並び (3 = 下、2026-09-29)
       // 11 番目 = アイコンと値の間隔 (文字の部品と帯)。既定 (6) と違う時だけ持つ
       if (!isLine(n[0]) && !isRect(n[0]) && !isGraph(n[0]) && !isCircle(n[0]) && !isAnalog(n[0]) && !TYPES[n[0]].dial) {
         const gv = Number(e[10]);

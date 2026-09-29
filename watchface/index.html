@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-30 06:26</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-30 08:25</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -881,7 +881,7 @@
   const LOAD_MAX = 28;
   const EL_HARD = 100;   // el の行数そのものの歯止め (サーバと同じ)
   const LINE_MAX = 60;   // 線だけの歯止め (60 本でも重さ 3、実用上当たらない)
-  const weightOf = (t) => (t >= 70 && t <= 74) ? 0.05 : ((t >= 50 && t <= 59) || t === 76) ? 0.1 : t === 75 ? 0.25 : t === 44 ? 0.5 : (t >= 60 && t <= 69) ? 1.2 : (t === 29 || (t >= 41 && t <= 43)) ? 3 : 1;
+  const weightOf = (t) => (t >= 70 && t <= 74) ? 0.05 : ((t >= 50 && t <= 59) || t === 76) ? 0.1 : t === 75 ? 0.25 : t === 44 ? 0.5 : (t >= 60 && t <= 69) ? 1.2 : (t === 29 || (t >= 41 && t <= 43)) ? 3 : t === 26 ? 2 : 1;   // 月齢 2.0 (2026-09-30、海の模様)
   const loadOf = (list) => Math.round((list || []).reduce((w, e) => w + weightOf(e[0]), 0) * 100) / 100;
   const fmtLoad = (w) => String(Math.round(w * 100) / 100);
   const canAdd = (t, list) => loadOf(list || st.el) + weightOf(t) <= LOAD_MAX;   // この種類をもう 1 つ置けるか
@@ -2736,7 +2736,7 @@
     if (ec) {
       ec.textContent = `load ${fmtLoad(w)} / ${LOAD_MAX}`;
       ec.className = 'cnt' + (w > LOAD_MAX ? ' over' : w > LOAD_HEAVY ? ' heavy' : '');
-      ec.title = `${elCount(st.el)} parts. Load is what the watch's memory can hold: text parts count 1, the forecast strip and graphs 3, a rim 1.2, an analog dial 0.5, a circle 0.25, hands and shapes 0.1, lines 0.05.` + (w > LOAD_HEAVY ? ` Past ${LOAD_HEAVY} the watch is close to its limit.` : '');
+      ec.title = `${elCount(st.el)} parts. Load is what the watch's memory can hold: text parts count 1, the forecast strip and graphs 3, moon age 2, a rim 1.2, an analog dial 0.5, a circle 0.25, hands and shapes 0.1, lines 0.05.` + (w > LOAD_HEAVY ? ` Past ${LOAD_HEAVY} the watch is close to its limit.` : '');
     }
     const l = $('list'); l.innerHTML = '';
     if (st.el.length) { const hd = document.createElement('div'); hd.className = 'li hd'; hd.innerHTML = `<span class="dot" style="visibility:hidden"></span>Part<span class="xy">X, Y</span>`; l.appendChild(hd); }

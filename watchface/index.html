@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-29 18:25</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-30 04:59</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1006,7 +1006,7 @@
   const iconAfter = (lay) => lay === 1 || lay === 3;     // 値が先・アイコンが後 (右 / 下)
   const CIRC_DEF = { dia: 300, fill: -1, met: 0, dir: 1 };
   const circDia = (e) => { const v = Number(e[8]); return Number.isFinite(v) && v >= 20 ? Math.min(1000, v) : CIRC_DEF.dia; };
-  const circFill = (e) => { const v = Number(e[10]); return Number.isInteger(v) && v >= 0 ? v : -1; };
+  const circFill = (e) => { const v = Number(e[10]); return Number.isInteger(v) && v >= 0 && v <= 31 ? v : -1; };   // 色の番号は 0-31 (サーバと同じ、2026-09-29 回帰試験で発見)
   const circMet = (e) => { const v = Number(e[11]); return METERS.some((m) => m[0] === v) ? v : 0; };
   const circDir = (e) => (Number(e[12]) === -1 ? -1 : 1);
   // 直径は実機の実 px で偶数 (= 半径が整数) に着地する値を送る。線幅は線と同じ奇数化。
@@ -1014,7 +1014,7 @@
   const NO_EDGE = 3;
   const noEdge = (e) => Number(e[4]) >= NO_EDGE;
   const circPen = (sz) => (sz >= NO_EDGE ? 0 : linePen(sz));
-  const rectFill = (e) => { const v = Number(e[10]); return (Number.isInteger(v) && v >= 0) ? v : -1; };
+  const rectFill = (e) => { const v = Number(e[10]); return (Number.isInteger(v) && v >= 0 && v <= 31) ? v : -1; };   // 色の番号は 0-31 (サーバと同じ)
   const rectGrow = (e) => { while (e.length < 11) e.push(e.length === 8 ? RECT_DEF.w : e.length === 9 ? RECT_DEF.h : -1); };
   // 円の形: 14 番目 = 弧の角度 (360 全周 / 180 半円 / 90 4 分の 1)、15 番目 = 始まる角 (12 時 = 0、時計回り)。
   // 無い面は全周・0 度 = 今までどおり。
@@ -1457,8 +1457,10 @@
   //   7. renderFaceMini     … サムネイルは状態を差し替えて描く。形が違うと描画が黙って止まる
   //   8. サーバ wf_layout.js … 検査を通らない項目は保存で落ちる
   //   9. ウォッチとの取り決め … 実機が読む値なら実機セッションへ連絡
-  // 公開前の最低限の確認 (本番ではなく手元で 1 周):
-  //   新規で保存 → Edit で読み戻し → サムネイル → Undo → 色を 2 回変更 → 既存の面を 1 つ開く
+  // 公開前の確認 (2026-09-29 品質担当と合意、手順は docs/REGRESSION.md):
+  //   python3 tools/regress_serve.py → このページで (await import('./regress.js')).run() → 基準との差分 0 と全 CASES 通過。
+  //   サーバの検査を変えた時・面に項目を足した時は node tools/server_roundtrip.js も。差分が出たら「意図した差分」と説明できるか確かめる。
+  //   公開の承認を求める時に regress の 1 行 (通過数・差分の数) を添える。状態を足したら fixtures にその状態を持つ面を 1 つ足す。
   //   (既存の面は実機 Collection を**読み取りのみ**。実機 4041-1544 には書かない。自分の確認用 ID は aaaa-0001)
   let st = { dev: 'fr965', hr: [], sc: [], hc: [], grid: 50, showGrid: true, gridBright: false, selBright: true, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], ms: [], stk: ['', ''], stn: ['', ''], uc: 0, bb: [null, null, null, null], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
   // Selection: `sel` is the primary (last clicked) element, `selSet` every selected index.
@@ -2617,8 +2619,10 @@
     // as = [形の種別 (Composer が読み戻す用), キャップ半径, 時針, 分針]。実機は 2 番目以降だけ見る。
     const as0 = ANA_SHAPES.length ? ANA_SHAPES.map((x) => [x.style, x.spec[0], x.spec[1], x.spec[2]]) : undefined;
     const hrOut = (hrLo() || hrHi() || hrCol()) ? [hrLo(), hrHi(), hrCol()] : undefined;   // 既定 (全部 0) の時は送らない
-    const scOut = st.sc && String(st.sc) !== String(SC_DEF) ? scCols() : undefined;   // 既定の色なら送らない (実機が既定を持つ)
-    const hcOut = st.hc && String(st.hc) !== String(HC_DEF) ? hcCols() : undefined;
+    // 既定の色なら送らない (実機が既定を持つ)。空 (読み込んだ面に無かった) も既定と同じ扱い。
+    //   以前は空を「既定と違う」と見て既定の色を書き出し、次の読み込みで消える、を繰り返していた (2026-09-29 回帰試験で発見)。
+    const scOut = String(scCols()) !== String(SC_DEF) ? scCols() : undefined;
+    const hcOut = String(hcCols()) !== String(HC_DEF) ? hcCols() : undefined;
     const o = Object.assign({ bg: st.bg, el: el0, as: as0, hr: hrOut, sc: scOut, hc: hcOut, pc: (st.pc || DEF_PC).slice(), tx: st.tx, tm: st.tm, ic: st.ic, io: st.io, b: st.b, wu: st.wu || 0, tu: st.tu || 0, pu: st.pu || 0, du: st.du || 0, hf: st.hf || 0, wd: st.wd || 0, mt: (st.mt || []).some((m) => m) ? st.mt : undefined, mc: (st.mc || []).some((c) => c >= 0) ? st.mc : undefined,
     mk: (st.mk || []).some((c) => c >= 0) ? st.mk : undefined, mv: (st.mv || []).some((v) => v === 0) ? st.mv : undefined,
     // ms = 部品ごとのメーターの組 (2026-09-26)。1 組 = 指標 4 + 弧の色 4 + 下地の色 4 + 表示 4。
@@ -3612,8 +3616,10 @@
   $('apply').addEventListener('click', () => {
     try {
       const j = JSON.parse($('json').value);
-      const clean = sanitize(j); if (!clean) throw new Error('bad');
-      st.bg = clean.bg; st.el = clean.el; st.tx = clean.tx; st.tm = clean.tm; st.ic = clean.ic; st.io = clean.io; st.b = clean.b; st.tt = (clean.tt || []).slice(); clearSel(); commit(); setStatus('jsonstatus', `Applied ${clean.el.length} elements.`, 'ok');
+      // Collection の Edit と同じ読み込み (faceLayout → loadIntoEditor) を通す。以前は部品と文字の大きさだけを写していて、
+      //   株・試合・メーターの組などが落ちた (回帰試験の入口がここなので、実際の読み込みと道をそろえる、2026-09-29)。
+      const clean = faceLayout(j); if (!clean) throw new Error('bad');
+      loadIntoEditor(clean); commit(); setStatus('jsonstatus', `Applied ${clean.el.length} elements.`, 'ok');
     } catch (e) { setStatus('jsonstatus', 'Not a valid layout. Expect {"bg":n,"el":[[t,x,y,a,s,c,f],…]} with 0..1000 coordinates.', 'err'); }
   });
   $('preset-lobby').addEventListener('click', () => {

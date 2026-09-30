@@ -10,35 +10,35 @@
 <style>
   :root {
     --ground: #0E1116; --panel: #161A21; --panel-2: #1D222B; --line: #2A3140; --line-2: #3A4356;
-    --ink: #E7EAF0; --ink-2: #A3ACBC; --ink-3: #8A93A3;
+    --ink: #E7EAF0; --ink-2: #C0C7D2; --ink-3: #A7AFBD;   /* 2026-09-30 読みやすさ: #A3ACBC / #8A93A3 から明るく */
     --accent: #F2B441; --accent-ink: #1A1200; --danger: #E5484D; --ok: #4CC38A;
     --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
     --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
     --watch: "Roboto", "Helvetica Neue", Arial, sans-serif;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--ground); color: var(--ink); font: 14px/1.45 var(--sans); min-height: 100vh; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font: 15px/1.45 var(--sans); min-height: 100vh; }
   button, input, select, textarea { font: inherit; color: inherit; }
   header { display: flex; align-items: baseline; gap: 16px; padding: 14px 20px; border-bottom: 1px solid var(--line); }
-  header h1 { font-size: 17px; font-weight: 600; margin: 0; letter-spacing: .01em; }
-  header .sub { color: var(--ink-2); font-size: 13px; }
+  header h1 { font-size: 19px; font-weight: 600; margin: 0; letter-spacing: .01em; }
+  header .sub { color: var(--ink-2); font-size: 14px; }
   header .spacer { flex: 1; }
-  .lbl { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
+  .lbl { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
   .lblnote { text-transform: none; letter-spacing: 0; margin-left: 8px; font-weight: 400; }
   .tier { display: flex; align-items: baseline; gap: 12px; width: 100%; max-width: 1040px; margin: 6px 0 -6px; }
   /* Tiers 2 and 3 are not boxes: just a dividing line above each, then the heading */
   .imgbox.box, .shelfbox.box { background: none; border: 0; border-top: 1px solid var(--line); border-radius: 0; padding: 22px 0 0; }
   .box > .tier { margin: 0 0 2px; }
-  .tier .num { font: 600 13px var(--mono); color: var(--accent); }
-  .tier .name { font-size: 15px; font-weight: 600; color: var(--ink); letter-spacing: .02em; }
-  .tier .what { font-size: 12px; color: var(--ink-3); }
+  .tier .num { font: 600 14px var(--mono); color: var(--accent); }
+  .tier .name { font-size: 16px; font-weight: 600; color: var(--ink); letter-spacing: .02em; }
+  .tier .what { font-size: 13px; color: var(--ink-3); }
   main { display: grid; grid-template-columns: 200px minmax(0, 1fr) 230px; gap: 0; min-height: calc(100vh - 52px); }
   aside { background: var(--panel); border-right: 1px solid var(--line); padding: 20px 18px; display: flex; flex-direction: column; gap: 18px; }
   aside.right { border-right: 0; border-left: 1px solid var(--line); }
   aside.right .pxs { display: flex; flex-direction: column; gap: 8px; width: 100%; }   /* S / M / L stacked, each filling the row */
   aside.right .stp { width: 100%; }
   aside.right .stp input { flex: 1 1 auto; width: auto; min-width: 0; }
-  aside.right .group > .lbl { font-size: 10px; }
+  aside.right .group > .lbl { font-size: 12px; }
   aside.right .ctl { gap: 10px; }
   /* Selected sits in the bar above the dial: its fields flow in a row */
   #selgrp { flex: 1 1 560px; }
@@ -47,7 +47,7 @@
      (実際の高さは今までに出た一番高い形に合わせて JS が固定する) */
   #insp { min-height: 0; }   /* 基本の 3 行が固定なので確保しない (2026-09-19) */
   #insp .field { display: flex; gap: 8px; align-items: center; }
-  #insp .field > span:first-child { color: var(--ink-3); font-size: 12px; }
+  #insp .field > span:first-child { color: var(--ink-3); font-size: 13px; }
   #insp .field input[type=number] { width: 68px; }
   #insp .swatches { gap: 5px; max-width: 530px; }   /* ピッカーまで同じ行に収める (折り返すと左端へ回る) */
   #insp .row { margin-top: 0 !important; }
@@ -60,13 +60,13 @@
   .parts { display: grid; grid-template-columns: 1fr; gap: 4px; }
   /* 部品の群は畳める。見出しをクリックで開閉し、状態はこのブラウザに憶える。*/
   .group.fold > .lbl { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 6px; }
-  .group.fold > .lbl::before { content: "▾"; font-size: 10px; color: var(--ink-3); width: 9px; }
+  .group.fold > .lbl::before { content: "▾"; font-size: 12px; color: var(--ink-3); width: 9px; }
   .group.fold.shut > .lbl::before { content: "▸"; }
   .group.fold.shut > .lbl { color: var(--ink-3); }
-  .group.fold > .lbl .cnt { font: 11px var(--mono); color: var(--ink-3); }
+  .group.fold > .lbl .cnt { font: 12px var(--mono); color: var(--ink-3); }
   .group.fold.shut > :not(.lbl) { display: none; }
   /* その群の部品を丸い文字盤のプレビューに出すか。文字盤の中身と実機は変わらない。*/
-  .group.fold > .lbl .eye { margin-left: auto; font-size: 12px; color: var(--ok); cursor: pointer; padding: 0 2px; }
+  .group.fold > .lbl .eye { margin-left: auto; font-size: 13px; color: var(--ok); cursor: pointer; padding: 0 2px; }
   .group.fold > .lbl .eye.off { color: var(--ink-3); }
   .group.fold > .lbl .eye:hover { color: var(--ink); }
   .part { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); cursor: grab; user-select: none; touch-action: pan-y; }
@@ -75,7 +75,7 @@
   .part .ico { width: 34px; display: flex; justify-content: center; color: var(--ink-2); }
   .part .ico svg { max-height: 26px; }
   .part .nm { flex: 1; white-space: nowrap; }   /* 部品名は 1 行 (2026-09-19) */
-  .part .hint { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+  .part .hint { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
   /* 針と縁は置く場所が無い (中心固定) ので、掴んで運ぶのではなく入 / 切のボタン。
      形も並びも他の部品と同じで、使用中だけ色が付く (.sw は色見本が使っている名前なので使わない)。*/
   .part.tgl { cursor: pointer; }
@@ -94,14 +94,14 @@
   /* 幅が足りなくなったら下の行へ逃がす (どの幅でも。以前は 760px 以下でだけ折り返していた) */
   .dialsec .ctl { flex-wrap: wrap; }
   .dialsec .ctl > .sub { white-space: nowrap; }
-  footer.credits { padding: 14px 16px 22px; text-align: center; font-size: 11px; color: var(--ink-3); }
+  footer.credits { padding: 14px 16px 22px; text-align: center; font-size: 12px; color: var(--ink-3); }
   .fillctl { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .dialbar.top select { height: 28px; }
   .dialbar.top .sub { display: flex; align-items: center; gap: 10px; }   /* Grid は見出しごと折り返す */
   .vsep { width: 1px; align-self: stretch; min-height: 20px; background: var(--line-2); margin: 0 4px; }
   .grp[hidden] { display: none; }   /* the .grp display rule would otherwise beat the default [hidden] */
-  .grp > .lbl { font-size: 10px; }
-  .ctl { display: flex; align-items: center; gap: 14px; min-height: 28px; color: var(--ink-2); font-size: 13px; flex-wrap: wrap; }
+  .grp > .lbl { font-size: 12px; }
+  .ctl { display: flex; align-items: center; gap: 14px; min-height: 28px; color: var(--ink-2); font-size: 14px; flex-wrap: wrap; }
   .ctl[hidden] { display: none; }   /* display:flex が hidden 属性に勝ってしまい、隠したはずの行が出ていた (2026-09-21) */
   .ctl label { display: flex; align-items: center; gap: 6px; }
   .stagebar select { height: 28px; }
@@ -139,7 +139,7 @@
                  background: var(--accent); border: 2px solid #05070A; border-radius: 3px; cursor: nwse-resize; pointer-events: auto; touch-action: none; }
   .el.sel .rhandle { display: block; }
   #stage .el.linepart svg line, #stage .el.linepart svg circle, #stage .el.linepart svg path, #stage .el.linepart svg rect { pointer-events: auto; cursor: move; }
-  .empty { color: var(--ink-3); font-size: 13px; text-align: center; max-width: 34ch; }
+  .empty { color: var(--ink-3); font-size: 14px; text-align: center; max-width: 34ch; }
   .drawer { width: 100%; max-width: 1040px; display: grid; grid-template-columns: 1fr; gap: 24px; }
   /* The rail sits beside the dial; when the window is too narrow it wraps ABOVE the dial (wrap-reverse)
      so the send button never disappears below the fold. */
@@ -161,7 +161,7 @@
   .trayitem .el { position: static; margin: 0; cursor: grab; pointer-events: none; }
   .trayitem .anchor, .trayitem .el.sel { display: none; outline: none; }
   .trayitem .el.sel { display: flex; outline: none; }
-  .tray .empty { font-size: 12px; color: var(--ink-3); line-height: 1.5; }
+  .tray .empty { font-size: 13px; color: var(--ink-3); line-height: 1.5; }
   .synchelp { margin: 0; padding-left: 18px; line-height: 1.5; }
   .synchelp li { margin: 2px 0; }
   .rail .row { flex-wrap: nowrap; }
@@ -179,10 +179,10 @@
   .item .mini .inner { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
   .item .mini .inner .anchor, .item .mini .inner .grid { display: none !important; }
   .item .mini .inner .el { outline: none !important; }
-  .item .cap { font: 11px var(--mono); color: var(--ink-3); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+  .item .cap { font: 12px var(--mono); color: var(--ink-3); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
   .item .cap b { color: var(--ink-2); font-weight: 500; }
   .item .row { gap: 6px; justify-content: center; }
-  .item .btn { padding: 3px 8px; font-size: 12px; }
+  .item .btn { padding: 3px 8px; font-size: 13px; }
   .faces { display: flex; gap: 14px; }
   .face { width: 124px; display: flex; flex-direction: column; align-items: center; gap: 7px; cursor: pointer; }
   .face .mini { position: relative; width: 124px; height: 124px; border-radius: 50%; overflow: hidden; background: #000;
@@ -191,7 +191,7 @@
   .face .mini .inner { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
   .face .mini .inner .anchor, .face .mini .inner .grid { display: none !important; }
   .face .mini .inner .el { outline: none !important; }
-  .face .cap { font: 11px var(--mono); color: var(--ink-3); }
+  .face .cap { font: 12px var(--mono); color: var(--ink-3); }
   .face.on .cap { color: var(--accent); }
   .face .mini.empty::after { content: "+"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
                              color: var(--ink-3); font: 300 28px var(--sans); }
@@ -201,7 +201,7 @@
   .imgbox .cb button { height: 28px; min-width: 40px; }
   .cb.units { display: inline-flex; gap: 6px; }
   .cb.units button { background: var(--panel-2); border: 2px solid var(--line-2); border-radius: 5px; padding: 3px 9px;
-                     cursor: pointer; color: var(--ink); font: 12px var(--mono); white-space: nowrap; }
+                     cursor: pointer; color: var(--ink); font: 13px var(--mono); white-space: nowrap; }
   .cb.units button:hover { border-color: var(--ink-2); }
   .cb.units button.on { background: var(--ok); border-color: var(--ok); color: #05170c; }
   .cb.units.dpad { display: inline-grid; grid-template-columns: repeat(3, 30px); grid-template-rows: repeat(2, auto); gap: 3px; }
@@ -214,15 +214,15 @@
   .cb.units.step button { min-width: 28px; padding: 3px 0; text-align: center; }
   .cb.units.step b { min-width: 42px; text-align: center; font-weight: 600; }
   .mts { display: flex; gap: 10px; flex-wrap: wrap; }
-  .mts .mt { display: flex; align-items: center; gap: 4px; font: 11px var(--mono); color: var(--ink-3); }
+  .mts .mt { display: flex; align-items: center; gap: 4px; font: 12px var(--mono); color: var(--ink-3); }
   .mts .mt.off select, .mts .mt.off .pick { opacity: .35; }
   .mts .mvb { min-width: 34px; height: 22px; padding: 0 5px; border: 1px solid var(--line); border-radius: 5px;
-              background: var(--bg-2); color: var(--ink-3); font: 11px var(--mono); cursor: pointer; }
+              background: var(--bg-2); color: var(--ink-3); font: 12px var(--mono); cursor: pointer; }
   .mts .mvb.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
   .mts .mdb { width: 24px; height: 22px; padding: 0; border: 1px solid var(--line); border-radius: 5px;
-              background: var(--panel-2); color: var(--ink-2); font-size: 13px; line-height: 1; cursor: pointer; }
+              background: var(--panel-2); color: var(--ink-2); font-size: 14px; line-height: 1; cursor: pointer; }
   .mts .mt.off .mdb { opacity: .35; }
-  .mts select { height: 26px; font-size: 12px; }
+  .mts select { height: 26px; font-size: 13px; }
   .imgstage { position: relative; width: 320px; height: 320px; border-radius: 50%; background: #000; overflow: hidden; touch-action: none; cursor: grab; }
   .imgstage canvas { width: 320px; height: 320px; display: block; }
   .imgstage #imgQ { position: absolute; left: 0; top: 0; pointer-events: none; }
@@ -234,14 +234,14 @@
   .imgstage .parts .el { outline: none !important; }
   .imgstage .parts[hidden] { display: none; }
   .imgbox .cb { display: inline-flex; gap: 8px; flex-wrap: wrap; }
-  .imgbox .cb button { background: var(--panel-2); border: 2px solid var(--ink-3); border-radius: 5px; padding: 3px 9px; cursor: pointer; color: var(--ink); font: 12px var(--mono); }
+  .imgbox .cb button { background: var(--panel-2); border: 2px solid var(--ink-3); border-radius: 5px; padding: 3px 9px; cursor: pointer; color: var(--ink); font: 13px var(--mono); }
   .imgbox .cb button:hover { background: var(--line); border-color: var(--ink-2); }
   .imgbox .cb button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
   .imgbox .cb button:disabled { opacity: .4; cursor: default; }
   .imgbox input[type=range] { width: 140px; vertical-align: middle; }
-  .imgbox .verdict { font: 12px var(--mono); padding: 6px 8px; border-radius: 5px; background: var(--panel-2); }
+  .imgbox .verdict { font: 13px var(--mono); padding: 6px 8px; border-radius: 5px; background: var(--panel-2); }
   .imgbox .verdict.ok { color: var(--ok); } .imgbox .verdict.warn { color: var(--accent); } .imgbox .verdict.bad { color: var(--danger); }
-  .imgbox .frow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); }
+  .imgbox .frow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; color: var(--ink-2); }
   #stage .stageimg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
   #stage.overdrop { outline: 2px dashed var(--accent); outline-offset: -4px; }
   #stage .marquee { position: absolute; pointer-events: none; border: 2px dashed var(--accent); background: rgba(242, 180, 65, .10); border-radius: 3px; }
@@ -252,11 +252,11 @@
   details.box > summary::-webkit-details-marker { display: none; }
   details.box > summary::before { content: "▸ "; color: var(--ink-3); }
   details.box[open] > summary::before { content: "▾ "; }
-  textarea { width: 100%; min-height: 96px; background: var(--ground); border: 1px solid var(--line); border-radius: 5px; padding: 8px; font: 12px/1.5 var(--mono); color: var(--ink); resize: vertical; }
+  textarea { width: 100%; min-height: 96px; background: var(--ground); border: 1px solid var(--line); border-radius: 5px; padding: 8px; font: 13px/1.5 var(--mono); color: var(--ink); resize: vertical; }
   .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
   .row[hidden], .opt[hidden], .grp[hidden] { display: none; }
   .btn { background: var(--panel-2); border: 2px solid var(--ink-3); border-radius: 6px; padding: 6px 14px; cursor: pointer;
-         color: var(--ink); font: 500 13px var(--sans); line-height: 1.2; }
+         color: var(--ink); font: 500 14px var(--sans); line-height: 1.2; }
   .btn:hover { background: var(--line); border-color: var(--ink-2); }
   .btn:active { background: var(--line-2); }
   .btn:disabled { opacity: .45; cursor: default; }
@@ -273,7 +273,7 @@
   .btn:disabled { opacity: .45; cursor: default; }
   /* Every status / note line keeps a fixed one-line height and never wraps, so a message appearing or
      changing never pushes the dial or the panels up and down. Long text is cut with … (full text on hover). */
-  .status { font-family: var(--mono); font-size: 12px; color: var(--ink-2); height: 17px; line-height: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .status { font-family: var(--mono); font-size: 13px; color: var(--ink-2); height: 19px; line-height: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   #facenote, #imgslotnote { display: block; min-height: 1.4em; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   #insp .hint { min-height: 1.4em; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .imgbox .status:empty { display: none; }
@@ -285,7 +285,7 @@
   .opt > .btn { min-width: 210px; justify-content: center; }
   .opt .muted { flex: 1 1 320px; min-width: 0; }
   #locbox .lbl, #syncbox .lbl { margin-bottom: 2px; }
-  #locbox .status { white-space: normal; height: auto; line-height: 1.5; font-family: var(--sans); font-size: 13px; }
+  #locbox .status { white-space: normal; height: auto; line-height: 1.5; font-family: var(--sans); font-size: 14px; }
   .field input[type=number] { width: 100%; font-family: var(--mono); }
   .seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 5px; overflow: hidden; }
   .seg button { background: transparent; border: 0; padding: 5px 10px; cursor: pointer; color: var(--ink-2); border-right: 1px solid var(--line-2); }
@@ -299,29 +299,29 @@
   .swatches .pick { margin-left: 6px; }
   .pxs { display: inline-flex; gap: 18px; }
   .stp { display: inline-flex; align-items: center; gap: 6px; }
-  .stp .sml { font: 600 11px var(--mono); color: var(--ink-3); width: 30px; text-align: center; margin-right: 2px; }
-  .pxs input, .stp input { width: 42px; height: 28px; padding: 0 2px; font: 13px var(--mono); text-align: center; -moz-appearance: textfield;
+  .stp .sml { font: 600 12px var(--mono); color: var(--ink-3); width: 30px; text-align: center; margin-right: 2px; }
+  .pxs input, .stp input { width: 42px; height: 28px; padding: 0 2px; font: 14px var(--mono); text-align: center; -moz-appearance: textfield;
                background: var(--panel-2); border: 2px solid var(--line-2); border-radius: 5px; color: var(--ink); }
   .pxs input::-webkit-outer-spin-button, .pxs input::-webkit-inner-spin-button, .stp input::-webkit-outer-spin-button, .stp input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .pxs .step, .stp .step { width: 28px; height: 28px; padding: 0; line-height: 1; font: 600 16px var(--sans); border-radius: 5px; background: var(--panel-2); border: 2px solid var(--ink-3); color: var(--ink); cursor: pointer; }
+  .pxs .step, .stp .step { width: 28px; height: 28px; padding: 0; line-height: 1; font: 600 17px var(--sans); border-radius: 5px; background: var(--panel-2); border: 2px solid var(--ink-3); color: var(--ink); cursor: pointer; }
   .pxs .step:hover, .stp .step:hover { background: var(--line); } .pxs .step:active, .stp .step:active { background: var(--line-2); }
   .sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line-2); cursor: pointer; padding: 0; box-sizing: border-box; }
   .sw.on { border-color: var(--panel); box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px #FFFFFF; transform: scale(1.1); }
   .swatches .sep { width: 1px; height: 20px; background: var(--line-2); margin: 0 3px; }   /* 基本色 | 使った色 */
 
-  .kbd { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+  .kbd { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
   /* ── 携帯 (細い画面): コレクションだけを出して、面の切り替えに専念する ──
      body.full を付ければ全部出る (Editor ボタン)。 */
   #phonebar { display: none; }
   .only-phone { display: none; }
   /* 携帯のバー。行はすべて同じ高さで左端をそろえ、指で押せる大きさ (44px) にする。 */
   .prow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; width: 100%; }
-  .prow input[type=text] { flex: 1 1 150px; min-width: 0; height: 44px; box-sizing: border-box; font-size: 16px; }
+  .prow input[type=text] { flex: 1 1 150px; min-width: 0; height: 44px; box-sizing: border-box; font-size: 17px; }
   .prow .btn { height: 44px; padding: 0 18px; display: inline-flex; align-items: center; }
   .prow .pgrow { flex: 1 1 auto; }
   .pwho { display: flex; align-items: baseline; gap: 8px; }
-  .pwho b { font-family: var(--mono); font-size: 15px; letter-spacing: .04em; }
-  .pnote { margin: 6px 0 12px; color: var(--ink-2); font-size: 13px; line-height: 1.5; }
+  .pwho b { font-family: var(--mono); font-size: 16px; letter-spacing: .04em; }
+  .pnote { margin: 6px 0 12px; color: var(--ink-2); font-size: 14px; line-height: 1.5; }
   .pnote b { font-family: var(--mono); color: var(--ink); }
   .pnote .pname { font-weight: 600; color: var(--ink); }
   /* 携帯のサインイン: どの幅でも横にはみ出さない (412px で右が切れるという報告、2026-09-19) */
@@ -329,9 +329,9 @@
   .pnote { overflow-wrap: anywhere; }
   .prow .btn { flex: 0 0 auto; }
   #phonebar .status { white-space: normal; height: auto; line-height: 1.5; margin-top: 8px;
-                      font-family: var(--sans); font-size: 13px; }
+                      font-family: var(--sans); font-size: 14px; }
   #watchseen { white-space: normal; height: auto; line-height: 1.5; max-width: 520px;
-               font-family: var(--sans); font-size: 13px; }
+               font-family: var(--sans); font-size: 14px; }
   @media (max-width: 760px) {
     body:not(.full) header .sub, body:not(.full) header .kbd { display: none; }
     body:not(.full) aside.left, body:not(.full) aside.right,
@@ -347,22 +347,22 @@
     body:not(.full) .shelf { gap: 14px; justify-content: center; }
     body:not(.full) .item { width: 46vw; max-width: 200px; }
     body:not(.full) .item .mini { width: 42vw; height: 42vw; max-width: 180px; max-height: 180px; }
-    body:not(.full) .item .btn { padding: 8px 12px; font-size: 14px; }
+    body:not(.full) .item .btn { padding: 8px 12px; font-size: 15px; }
     body:not(.full) .item [data-a="load"] { display: none; }
     body:not(.full) .item .cap { max-width: 46vw; }
   }
-  #elcount { font-family: var(--mono); font-size: 10px; color: var(--ink-3); }
+  #elcount { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
   #elcount.over { color: var(--danger); font-weight: 700; }
   #elcount.heavy { color: var(--accent); }
   .list { display: flex; flex-direction: column; gap: 3px; }   /* grows with the dial: every element stays visible */
-  .li { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+  .li { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 14px; }
   .li:hover { background: var(--panel-2); } .li.on { background: var(--panel-2); outline: 1px solid var(--line-2); }
-  .li .xy { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
-  .li.hd { cursor: default; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); padding-bottom: 2px; border-bottom: 1px solid var(--line); border-radius: 0; }
-  .li.hd:hover { background: transparent; } .li.hd .xy { font-size: 10px; letter-spacing: .08em; }
+  .li .xy { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+  .li.hd { cursor: default; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); padding-bottom: 2px; border-bottom: 1px solid var(--line); border-radius: 0; }
+  .li.hd:hover { background: transparent; } .li.hd .xy { font-size: 12px; letter-spacing: .08em; }
   .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
-  .muted { color: var(--ink-3); font-size: 12px; }
-  .onlyfor { font-size: 14px; font-weight: 600; color: var(--accent); letter-spacing: .02em; }
+  .muted { color: var(--ink-3); font-size: 13px; }
+  .onlyfor { font-size: 15px; font-weight: 600; color: var(--accent); letter-spacing: .02em; }
   @media (min-width: 981px) {
     aside.left, aside.right { align-self: start; position: sticky; top: 0; max-height: 100vh;
                               overflow-y: auto; overscroll-behavior: contain; }
@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-30 08:25</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-30 18:27</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>

@@ -381,7 +381,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-30 18:27</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-30 18:45</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1475,7 +1475,8 @@
   //   サーバの検査を変えた時・面に項目を足した時は node tools/server_roundtrip.js も。差分が出たら「意図した差分」と説明できるか確かめる。
   //   公開の承認を求める時に regress の 1 行 (通過数・差分の数) を添える。状態を足したら fixtures にその状態を持つ面を 1 つ足す。
   //   (既存の面は実機 Collection を**読み取りのみ**。実機 4041-1544 には書かない。自分の確認用 ID は aaaa-0001)
-  let st = { dev: 'fr965', hr: [], sc: [], hc: [], grid: 50, showGrid: true, gridBright: false, selBright: true, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], ms: [], stk: ['', ''], stn: ['', ''], uc: 0, bb: [null, null, null, null], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
+  let st = { dev: 'fr965', wd: 1, hr: [], sc: [], hc: [],   // wd 1 = 天気の詳細は純正の画面 (2026-09-30 ユーザー指示で新しい面の既定を Garmin に。保存済みの面は保存した値のまま)
+     grid: 50, showGrid: true, gridBright: false, selBright: true, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], ms: [], stk: ['', ''], stn: ['', ''], uc: 0, bb: [null, null, null, null], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
   // Selection: `sel` is the primary (last clicked) element, `selSet` every selected index.
   // Shift / Cmd / Ctrl + click adds or removes one; the Selected panel, dragging, arrows and
   // Delete act on all of them.
@@ -2817,7 +2818,7 @@
   // 選ぶ部品で行数が変わっても枠が縮まないように、これまでで一番高い形に合わせておく。
   // (縮むと下の文字盤プレビューが上下に動いて編集しづらい)
   let INSP_MIN = 0;
-  function lockInspHeight() {
+  function lockInspHeight(noneSel) {   // noneSel = 何も選んでいない (その時は行が数 px 低く測れるので余裕を足す)
     const el = $('insp'); if (!el) return;
     const h = Math.ceil(el.getBoundingClientRect().height);
     // 基本の 3 行 + 種類ごとの項目 2 行ぶんを常に確保する (2 行までなら Dial が動かない、2026-09-19)。
@@ -2825,7 +2826,10 @@
     const row = f.closest('.field'), top = el.getBoundingClientRect().top, base = row.getBoundingClientRect().bottom - top;
     // 基本の 3 行の下は「区切り (brk) の上下の隙間 10 + 10」+「1 行 + 隙間 10 + 1 行」。区切りは高さ 0 でも行の隙間を 2 つ作るので
     // その分も数える (足りずに Stocks / 円 / Meters を選ぶと Dial が 10〜30px 動いていた、2026-09-19)。
-    el.style.minHeight = Math.ceil(base + 20 + 2 * row.offsetHeight + 10 + 4) + 'px';
+    // 2026-09-30: 種類ごとの項目は最大 4 行 (縁のメーター + 心拍の目盛りで 604px)。2 行分だと Meter を選ぶと Dial が 40〜110px 下がった
+    //   (ユーザー指摘)。一番高い形に合わせて最初から確保する。
+    INSP_MIN = Math.max(INSP_MIN, Math.ceil(base + 20 + 4 * row.offsetHeight + 10 + 4 + (noneSel ? 6 : 0)));   // 選ぶ前と後で数 px 違うので縮めない
+    el.style.minHeight = INSP_MIN + 'px';
   }
   window.addEventListener('resize', () => { INSP_MIN = 0; const el = $('insp'); if (el) el.style.minHeight = ''; });
   let PICK_OPEN = 0;        // 開いている OS のカラーパネルの数
@@ -3102,7 +3106,7 @@
     COLOR_NOTE = '';
     if (none) {
       box.querySelectorAll('input, button').forEach((b) => { b.disabled = true; });
-      bindMeters(); bindAlign(); bindPickers(); lockInspHeight(); return;
+      bindMeters(); bindAlign(); bindPickers(); lockInspHeight(true); return;
     }
     const each = (fn) => { all.forEach(fn); commit(); };
     // 重なり順 = el の並び。選んだ部品を先頭 (奥) / 末尾 (手前) へ動かす。

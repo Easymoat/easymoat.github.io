@@ -383,7 +383,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-30 20:30</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-30 23:13</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -488,6 +488,7 @@
     </div>
     <div class="shelfbox box">
       <div class="tier"><span class="num">4</span><span class="name">Collection</span><span class="what">Save the edited dial to the collection area, then upload it to your Garmin Watch.</span></div>
+      <div class="ctl" id="targetrow" hidden><span>Send to</span><span id="targetsel" style="display:flex;gap:8px;flex-wrap:wrap"></span></div>
       <div class="grp">
         <div class="status" id="syncstatus"></div>
         <div class="status" id="shelfstatus"></div>
@@ -508,6 +509,10 @@
           <div class="ctl" id="passrow"><span>Pass</span><span id="passnote" class="muted">…</span></div>
           <div class="ctl" id="passinrow" hidden><span>Signed in</span><span class="muted" id="passinnote"></span><button class="btn" id="passout" title="Sign this browser out. To use the collection again, sign in with the Web code from the watch.">Sign out</button></div>
           <div class="status" id="passstatus"></div>
+          <div class="ctl" id="secondrow" hidden><span>Second watch</span><span class="muted" id="secondnote"></span><button class="btn" id="secondremove" title="Stop sending to this watch. You can change the second watch once a month.">Remove</button></div>
+          <div class="ctl" id="secondaddrow" hidden><span>Add another watch</span><input type="text" id="secondid" placeholder="Its Device ID" style="width:140px" autocomplete="off"><input type="text" id="secondcode" inputmode="numeric" placeholder="Its Web code" maxlength="8" style="width:120px" autocomplete="off"><button class="btn primary" id="secondadd">Add</button></div>
+          <div class="ctl" id="secondaddnote" hidden><span></span><span class="muted" style="max-width:640px">One Pass covers two of your watches. Put The Face on the other watch, then type its Device ID and the Web code it shows now (settings → Watch Face → Customize). Collection stays one — pick which watch to send to above the collection. You can change the second watch once a month.</span></div>
+          <div class="status" id="secondst"></div>
           <div class="ctl" id="wfsignrow" hidden><span>Web code</span><input type="text" id="wfcode" inputmode="numeric" placeholder="6 digits" maxlength="8" autocomplete="off" style="width:110px"><button class="btn primary" id="wfsignin">Sign in</button><span class="status" id="wfsignst"></span></div>
           <div class="ctl" id="wfsignnote" hidden><span></span><span class="muted" style="max-width:640px">This watch is registered, so this browser has to sign in once (it stays signed in for 30 days). On the watch, open settings → Watch Face → Customize → Web code: it shows a 6-digit code that changes every minute. Type it here. To end every sign-in, choose Sign out web on the watch.</span></div>
           <div class="status" id="watchseen" title="Your watch asks the server for a new dial about every 5 minutes. This line says when it last asked, and whether it already has the dial you sent."></div>
@@ -3856,7 +3861,7 @@
     el.textContent = t; el.className = 'status ' + c;
   }
   async function loadWatchState() {
-    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { WATCH.faces = {}; WATCH.seenLegacy = null; WATCH.seenWatch = null; renderWatchSeen(); return; }
+    const id = sendTarget(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { WATCH.faces = {}; WATCH.seenLegacy = null; WATCH.seenWatch = null; renderWatchSeen(); return; }
     try { const r = await fetch($('api').value + '/layouts?device_id=' + encodeURIComponent(id)); if (!r.ok) return; const j = await r.json();
       WATCH.faces = j.faces || {}; WATCH.active = Number(j.active || 1); WATCH.seenLegacy = j.seen || null; renderWatchSeen(); } catch (e) { swallow('watch')(e); }
   }
@@ -4003,7 +4008,7 @@
       const stale = on && !!(item && cur && Number(cur.sts) && Number(item.ts) > Number(cur.sts));
       const b = d.querySelector('[data-a="send"]');
       if (b) {
-        b.textContent = stale ? 'Update watch' : on ? 'Showing' : ('To watch ' + (devId() || '—'));   // 送り先を取り違えないよう ID をボタンに出す
+        b.textContent = stale ? 'Update watch' : on ? 'Showing' : ('To watch ' + (sendTarget() || '—'));   // 送り先を取り違えないよう ID をボタンに出す
         b.classList.toggle('primary', !on);
         b.classList.toggle('toggle', on);      // Showing も Update watch も同じ緑 (Update は押せる、2026-09-27)
         b.classList.toggle('on', on);
@@ -4167,8 +4172,98 @@
       // Pass キーでのサインインは廃止 (Web code に一本化、ユーザー決定 2026-09-27)。サーバの /auth は移行期限まで残るが画面からは呼ばない
       $('passinrow').hidden = !signedIn;
       if (signedIn) $('passinnote').textContent = `${id} — signed in on this browser.`;
+      loadSecond();   // 2 台目の行と送り先 (Pass の状態が分かってから)
     } catch (e) { note.textContent = ''; }
   }
+  // ── 2 台目の時計 (1 つの Pass で 2 台、2026-09-30 ユーザー決定・QC 確認) ──
+  // Face Composer は今の ID (1 台目) で 1 つ。2 台目は To watch の送り先に選べるだけ (Collection・写真は 1 つのまま)。
+  // 送り先は見る人ごとの便利機能なので localStorage (読めなくても 1 台目に送る)。サーバは 1 台目のトークンで 2 台目への To watch だけ通す。
+  const SECOND = { id: null, change_after: null };
+  const TARGET_KEY = 'faceComposer.target';
+  const normIdIn = (v) => String(v || '').replace(/[０-９Ａ-Ｚａ-ｚ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/[－ー―‐−]/g, '-').trim().toLowerCase();
+  function sendTarget() {
+    const a = devId(); if (!SECOND.id) return a;
+    let t = null; try { t = localStorage.getItem(TARGET_KEY); } catch (e) {}
+    return t === SECOND.id ? SECOND.id : a;
+  }
+  function setTarget(id) {
+    try { localStorage.setItem(TARGET_KEY, id); } catch (e) {}
+    renderTarget(); WSLOTS.active = 0; WSLOTS.faces = {}; markShelfOnWatch(); loadWatchSlots(); loadWatchState();
+  }
+  function renderTarget() {
+    const row = $('targetrow'), box = $('targetsel'); if (!row || !box) return;
+    row.hidden = !SECOND.id; box.innerHTML = ''; if (!SECOND.id) return;
+    for (const [id, label] of [[devId(), 'Watch 1'], [SECOND.id, 'Watch 2']]) {
+      const b = document.createElement('button'); b.className = 'btn toggle' + (sendTarget() === id ? ' on' : '');
+      b.textContent = `${label} · ${id}`; b.title = `To watch sends to ${id}`;
+      b.addEventListener('click', () => setTarget(id)); box.appendChild(b);
+    }
+  }
+  function renderSecond() {
+    const signed = !!tokenFor(devId()), p = PASS.st && PASS.st.pass, paid = !!((p && p.active) || (PASS.st && PASS.st.exempt));
+    $('secondrow').hidden = !SECOND.id;
+    if (SECOND.id) {
+      const later = SECOND.change_after && Date.parse(SECOND.change_after) > Date.now();
+      $('secondnote').textContent = `${SECOND.id} — To watch can send here too.` + (later ? ` You can change it after ${ymd(SECOND.change_after)}.` : '');
+      $('secondremove').disabled = !!later;
+    }
+    const canAdd = signed && paid && !SECOND.id;
+    $('secondaddrow').hidden = !canAdd; $('secondaddnote').hidden = !canAdd;
+    renderTarget();
+  }
+  async function loadSecond() {
+    const id = devId(); SECOND.id = null; SECOND.change_after = null;
+    if (/^[0-9a-zA-Z-]{4,40}$/.test(id) && tokenFor(id)) {
+      try { const r = await fetch($('api').value + '/second-watch?device_id=' + encodeURIComponent(id), { headers: authHeaders() });
+        if (r.ok) { const j = await r.json(); SECOND.id = j.second || null; SECOND.change_after = j.change_after || null; } } catch (e) { swallow('second')(e); }
+    }
+    renderSecond(); markShelfOnWatch();
+    if (sendTarget() !== id) { loadWatchSlots(); loadWatchState(); }   // 起動時は 1 台目で読んでいるので、送り先が 2 台目なら読み直す
+  }
+  const secondMsg = (j) => {
+    const e = j && j.error;
+    return e === 'code_invalid' ? 'the Web code was not accepted — use the code that watch shows right now (each one works once)'
+      : e === 'too_many_tries' ? 'too many tries — wait 10 minutes and try again'
+      : e === 'second_not_bound' ? 'that watch has not registered yet — open The Face on it once, then try again'
+      : e === 'second_has_pass' ? 'that watch has its own Pass, so it does not need to be added'
+      : e === 'second_taken' ? 'that watch is already added to another Pass'
+      : e === 'second_is_owner' ? 'that watch already has its own second watch'
+      : e === 'owner_is_second' ? 'this watch is added as someone’s second watch, so it cannot add one'
+      : e === 'has_second' ? 'a second watch is already added — remove it first'
+      : e === 'same_watch' ? 'that is this watch — type the other watch’s Device ID'
+      : e === 'pass_required' ? 'adding a watch needs the Pass'
+      : e === 'too_soon' ? `you can change the second watch once a month — next change after ${ymd(j.change_after)}`
+      : e === 'signin_required' ? 'sign in with this watch’s Web code first'
+      : (e || 'failed');
+  };
+  bindCodeInput($('secondcode'));
+  async function addSecond() {
+    const id = devId(), sid = normIdIn($('secondid').value), code = normWebCode($('secondcode').value);
+    $('secondid').value = sid;
+    if (!/^[0-9a-z-]{4,40}$/.test(sid)) return setStatus('secondst', 'Type the other watch’s Device ID (XXXX-XXXX).', 'err');
+    if (code.length !== 6) return setStatus('secondst', 'Type the 6-digit Web code the other watch shows now.', 'err');
+    setStatus('secondst', 'Adding…');
+    try {
+      const r = await fetch($('api').value + '/second-watch', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ device_id: id, second_id: sid, code }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(secondMsg(j));
+      $('secondid').value = ''; $('secondcode').value = '';
+      setStatus('secondst', `Added ${j.second}. Pick it under "Send to" above the collection.`, 'ok');
+      loadSecond();
+    } catch (e) { setStatus('secondst', 'Could not add: ' + e.message, 'err'); }
+  }
+  $('secondadd').addEventListener('click', addSecond);
+  $('secondcode').addEventListener('keydown', (ev) => { if (ev.key === 'Enter') addSecond(); });
+  $('secondremove').addEventListener('click', async () => {
+    if (!SECOND.id || !confirm(`Stop sending to ${SECOND.id}?\n\nThe dial it shows now stays on it. You can change the second watch once a month.`)) return;
+    try {
+      const r = await fetch($('api').value + '/second-watch', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ device_id: devId(), remove: true }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(secondMsg(j));
+      setStatus('secondst', `Removed ${j.removed}.`, 'ok');
+      loadSecond(); loadWatchSlots(); loadWatchState();
+    } catch (e) { setStatus('secondst', 'Could not remove: ' + e.message, 'err'); }
+  });
   $('passout').addEventListener('click', () => {
     try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
     // すぐに見た目を変える (行を畳み、状態の行を出す)。サーバの返事を待ってから直すと押した手応えが無い (2026-09-27)
@@ -4344,7 +4439,7 @@
   const WSLOTS = { active: 0, faces: {} };
   const miniKey = (f) => String(f.v) + '/' + String(f.img_v || '');
   async function loadWatchSlots() {
-    const id = devId();
+    const id = sendTarget();
     if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { WSLOTS.active = 0; WSLOTS.faces = {}; markShelfOnWatch(); return; }
     try {
       const r = await fetch($('api').value + '/watch?device_id=' + encodeURIComponent(id), { headers: authHeaders() }); if (!r.ok) return;
@@ -4358,7 +4453,7 @@
   // ID を知っていれば誰の面でも上書きできるので、取り違えの被害が大きい (2026-09-18)。
   let SENT_TO = null;
   async function sendShelfItem(n) {
-    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('syncstatus', 'Enter the Device ID (XXXX-XXXX) — on the watch: settings → Watch Face → Customize → Device ID.', 'err');
+    const id = sendTarget(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('syncstatus', 'Enter the Device ID (XXXX-XXXX) — on the watch: settings → Watch Face → Customize → Device ID.', 'err');
     if (SENT_TO !== id && !confirm(`Send this dial to the watch ${id}?\n\nIt replaces whatever that watch is showing now.`)) return;
     SENT_TO = id;
     const it = SHELF.items.find((i) => i.n === n) || {};

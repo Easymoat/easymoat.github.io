@@ -285,6 +285,8 @@
   .opt > .btn { min-width: 210px; justify-content: center; }
   .opt .muted { flex: 1 1 320px; min-width: 0; }
   #locbox .lbl, #syncbox .lbl { margin-bottom: 2px; }
+  /* Pass の文は長く、末尾に購入リンクがある。1 行に切ると試用終了の時にリンクが見えなくなった (2026-09-30) */
+  #passnote.status, #passnote2.status { white-space: normal; height: auto; line-height: 1.5; min-width: 0; }
   #locbox .status { white-space: normal; height: auto; line-height: 1.5; font-family: var(--sans); font-size: 14px; }
   .field input[type=number] { width: 100%; font-family: var(--mono); }
   .seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 5px; overflow: hidden; }
@@ -381,7 +383,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-30 18:45</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-09-30 20:30</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2818,17 +2820,17 @@
   // 選ぶ部品で行数が変わっても枠が縮まないように、これまでで一番高い形に合わせておく。
   // (縮むと下の文字盤プレビューが上下に動いて編集しづらい)
   let INSP_MIN = 0;
-  function lockInspHeight(noneSel) {   // noneSel = 何も選んでいない (その時は行が数 px 低く測れるので余裕を足す)
+  function lockInspHeight() {
     const el = $('insp'); if (!el) return;
     const h = Math.ceil(el.getBoundingClientRect().height);
     // 基本の 3 行 + 種類ごとの項目 2 行ぶんを常に確保する (2 行までなら Dial が動かない、2026-09-19)。
-    void h; const f = $('tofront'); if (!f) return;
+    const f = $('tofront'); if (!f) return;
     const row = f.closest('.field'), top = el.getBoundingClientRect().top, base = row.getBoundingClientRect().bottom - top;
     // 基本の 3 行の下は「区切り (brk) の上下の隙間 10 + 10」+「1 行 + 隙間 10 + 1 行」。区切りは高さ 0 でも行の隙間を 2 つ作るので
     // その分も数える (足りずに Stocks / 円 / Meters を選ぶと Dial が 10〜30px 動いていた、2026-09-19)。
-    // 2026-09-30: 種類ごとの項目は最大 4 行 (縁のメーター + 心拍の目盛りで 604px)。2 行分だと Meter を選ぶと Dial が 40〜110px 下がった
-    //   (ユーザー指摘)。一番高い形に合わせて最初から確保する。
-    INSP_MIN = Math.max(INSP_MIN, Math.ceil(base + 20 + 4 * row.offsetHeight + 10 + 4 + (noneSel ? 6 : 0)));   // 選ぶ前と後で数 px 違うので縮めない
+    // 2026-09-30: 一度広がった高さ (h) は縮めない。Rim: Meter を選んで外すと Dial が上へ戻っていた (ユーザー指摘)。
+    //   最初から 4 行ぶん空けるのは Dial の上の間隔が広がるので却下 (ユーザー指示で 2 行ぶんに戻した)。
+    INSP_MIN = Math.max(INSP_MIN, h, Math.ceil(base + 20 + 2 * row.offsetHeight + 10 + 4));
     el.style.minHeight = INSP_MIN + 'px';
   }
   window.addEventListener('resize', () => { INSP_MIN = 0; const el = $('insp'); if (el) el.style.minHeight = ''; });
@@ -3106,7 +3108,7 @@
     COLOR_NOTE = '';
     if (none) {
       box.querySelectorAll('input, button').forEach((b) => { b.disabled = true; });
-      bindMeters(); bindAlign(); bindPickers(); lockInspHeight(true); return;
+      bindMeters(); bindAlign(); bindPickers(); lockInspHeight(); return;
     }
     const each = (fn) => { all.forEach(fn); commit(); };
     // 重なり順 = el の並び。選んだ部品を先頭 (奥) / 末尾 (手前) へ動かす。

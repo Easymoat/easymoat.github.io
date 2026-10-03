@@ -388,7 +388,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-03 18:42</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-03 19:49</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1540,6 +1540,9 @@
   const isSel = (i) => selSet.has(i);
   const selIdx = () => [...selSet].filter((i) => st.el[i]).sort((a, b) => a - b);
   function clearSel() { sel = -1; selSet.clear(); }
+  // 新しく置く部品は一番奥 (st.el の先頭 = 一番下) へ。後から置いた部品が、先にある部品を隠さない (2026-10-03 ユーザー指示)。
+  //   番号は 1 つずつずれるので、選択は先頭 (0) にする。部品の番号を持つ他の状態は無い (銘柄・メーターは種別で持つ)。
+  function placeBack(e) { st.el.unshift(e); setSel(0, false); }
   function setSel(i, add) {
     if (add) { if (selSet.has(i)) { selSet.delete(i); sel = selSet.size ? [...selSet].pop() : -1; } else { selSet.add(i); sel = i; } }
     else { selSet.clear(); selSet.add(i); sel = i; }
@@ -2745,7 +2748,7 @@
         }
         const e = st.park.splice(t.i, 1)[0];
         e[1] = clamp(p.x); e[2] = clamp(p.y);
-        st.el.push(e); setSel(st.el.length - 1, false); commit(); return;
+        placeBack(e); commit(); return;
       }
       if (!t.moved) { render(); return; }          // 押しただけ
       const [x, y] = trayPoint(e2);                // 騨置き場の中で移動
@@ -3483,7 +3486,9 @@
       if (max === 1) { st.el = st.el.filter((e) => same.indexOf(e) < 0); }   // 針は 1 つ = 入れ替え
       else { setStatus('shelfstatus', `${grp === 'rim' ? 'Rim' : 'Hands'} can be stacked ${max} deep — take one off first.`, 'err'); return; }
     }
-    st.el.push([t, 500, 500, 0, 1, 0, 0, -1]); setSel(st.el.length - 1, false);
+    // 縁は一番奥へ。針は数字の下に隠れないよう今までどおり一番手前 (2026-10-03)
+    const dial = [t, 500, 500, 0, 1, 0, 0, -1];
+    if (grp === 'hands') { st.el.push(dial); setSel(st.el.length - 1, false); } else placeBack(dial);
     commit();
   }
   function renderDialToggles() {
@@ -3518,7 +3523,7 @@
             : isGraph(t) ? [t, 500, 500, 0, 0, 0, 0, -1]
             : isCrew(t) ? [t, 500, 500, 0, 1, 0, 1, -1, 3, 1]
             : [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, (d.icon ? 1 : 0) | (pct ? 4 : 0) | (t === 2 ? F_DOW : 0), -1];
-    st.el.push(e); setSel(st.el.length - 1, false);
+    placeBack(e);
     if (center) { const [cx, cy] = freeSpot(); e[1] = cx; e[2] = cy; render(); commit(); return; }
     const p = stagePoint(ev); e[1] = clamp(p.x); e[2] = clamp(p.y);
     drag = { i: sel, items: [{ i: sel, dx: 0, dy: 0 }], fromPalette: true, moved: true };

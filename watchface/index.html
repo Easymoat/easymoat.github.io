@@ -287,6 +287,8 @@
   #locbox .lbl, #syncbox .lbl { margin-bottom: 2px; }
   /* Pass の文は長く、末尾に購入リンクがある。1 行に切ると試用終了の時にリンクが見えなくなった (2026-09-30) */
   #passnote.status, #passnote2.status { white-space: normal; height: auto; line-height: 1.5; min-width: 0; }
+  /* Collection の送信結果は長い案内が出る (PL Cam の未接続など)。切らずに折り返す。空の時の高さは今のまま */
+  #syncstatus, #shelfstatus { white-space: normal; height: auto; min-height: 19px; line-height: 1.5; }
   #locbox .status { white-space: normal; height: auto; line-height: 1.5; font-family: var(--sans); font-size: 14px; }
   .field input[type=number] { width: 100%; font-family: var(--mono); }
   .seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 5px; overflow: hidden; }
@@ -388,7 +390,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-03 21:18</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-03 22:16</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -4485,7 +4487,15 @@
         body: JSON.stringify({ device_id: id, slot: 1, from_shelf: n, activate: true, only: true }) });
       const j = await r.json(); if (r.status === 402) { loadAccess(); throw new Error(payMsg(j)); }
       if (!r.ok || !j.ok) throw new Error(j.error || r.status);
-      setStatus('syncstatus', `Your watch now shows "${name}". It arrives within 5 minutes.`, 'ok');
+      // PulseLink Cam の品: PL を結び付けていれば To watch の時点で最新のコマになり、あとは時計が自分で更新する。
+      // 結び付けていないと更新できない (保存した時の 1 枚のまま) ので、その理由と手順を出す (2026-10-03 ユーザー指示)。
+      if (j.camera === 'unlinked') {
+        setStatus('syncstatus', `Your watch now shows "${name}", but its PulseLink camera will not update: PulseLink is not linked here yet. Link it once (5 Setup → Link PulseLink; on a phone tap Editor first). After that the camera starts updating by itself at the watch's next check — there is no need to send this dial again.`, 'warn');
+      } else {
+        setStatus('syncstatus', j.camera === 'live'
+          ? `Your watch now shows "${name}" with the latest PulseLink camera picture. It arrives within 5 minutes, and the picture refreshes by itself after that.`
+          : `Your watch now shows "${name}". It arrives within 5 minutes.`, 'ok');
+      }
       WSLOTS.active = 1; WSLOTS.faces = { '1': { v: j.v, shelf: n, kind: it.kind || 'none', sts: it.ts || 0 } }; markShelfOnWatch();
       loadWatchSlots(); loadWatchState();
     } catch (e) { setStatus('syncstatus', 'Send failed: ' + e.message, 'err'); }

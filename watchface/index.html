@@ -388,7 +388,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-03 21:07</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-03 21:18</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1467,11 +1467,11 @@
                       const sweep = k > 0 ? 0 : 1;   // crescent bulges out, gibbous bulges in
                       const path = `M 0,${-r} A ${r},${r} 0 0 1 0,${r} A ${rx},${r} 0 0 ${sweep} 0,${-r} Z`;
                       const flip = ph > 180 ? ' transform="scale(-1,1)"' : '';   // waning: lit on the left
-                      // 月の海 (2026-09-30 ユーザー決定): 小さな円の集まりを、光っている部分の中にだけ、部品の色の 90% の明るさで描く。
-                      //   黒を 10% 重ねる = 色 × 0.9 (実機は透明が無いので色 × 0.9 の 1 色で同じ見え方)。配置は決め打ち (MOON_MARIA、実機と同じ表)。
+                      // 月の海 (2026-09-30 ユーザー決定): 小さな円の集まりを、光っている部分の中にだけ、部品の色の 80% の明るさで描く (2026-10-03 ユーザー指示で 90% から一段濃く。時計は色 × 8 / 10)。
+                      //   黒を 20% 重ねる = 色 × 0.8 (実機は透明が無いので色 × 0.8 の 1 色で同じ見え方)。配置は決め打ち (MOON_MARIA、実機と同じ表)。
                       const id = 'mo' + (++uid);
                       const maria = MOON_MARIA.map(([x, y, m]) => `<circle cx="${(x * r).toFixed(2)}" cy="${(y * r).toFixed(2)}" r="${(m * r).toFixed(2)}"/>`).join('');
-                      return `<svg width="26" height="26" viewBox="-13 -13 26 26"><defs><clipPath id="${id}"><path d="${path}"${flip}/></clipPath></defs><path d="${path}" fill="currentColor"${flip}/><g clip-path="url(#${id})" fill="#000" fill-opacity="0.10">${maria}</g></svg>`; },
+                      return `<svg width="26" height="26" viewBox="-13 -13 26 26"><defs><clipPath id="${id}"><path d="${path}"${flip}/></clipPath></defs><path d="${path}" fill="currentColor"${flip}/><g clip-path="url(#${id})" fill="#000" fill-opacity="0.20">${maria}</g></svg>`; },
     bell: () => mdiIcon('bell'),
     stock:    () => `$`,
   };

@@ -346,12 +346,17 @@
     body:not(.full) .only-phone { display: inline; }
     body:not(.full) main { padding: 10px; gap: 10px; align-content: flex-start; }
     body:not(.full) main > * { align-self: start; }
-    body:not(.full) .shelf { gap: 14px; justify-content: center; }
-    body:not(.full) .item { width: 46vw; max-width: 200px; }
-    body:not(.full) .item .mini { width: 42vw; height: 42vw; max-width: 180px; max-height: 180px; }
-    body:not(.full) .item .btn { padding: 8px 12px; font-size: 15px; }
+    /* 2026-10-03: 品の幅を vw で決めると、箱の余白ぶん 2 つ並ばず (390px で 1 列)、再読み込みで 2 列になるなど幅が動いた。
+       列の数を先に決め (560px まで 2 列)、品は列の幅に合わせる。絵の大きさは列の幅から (aspect-ratio) */
+    body:not(.full) .shelf { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 10px; justify-items: center; }
+    body:not(.full) .item { width: 100%; max-width: 200px; min-width: 0; }
+    body:not(.full) .item .mini { width: 100%; height: auto; aspect-ratio: 1 / 1; max-width: 180px; max-height: none; }
+    body:not(.full) .item .btn { padding: 8px 10px; font-size: 14px; min-width: 0; max-width: 100%; white-space: normal; line-height: 1.25; }
     body:not(.full) .item [data-a="load"] { display: none; }
-    body:not(.full) .item .cap { max-width: 46vw; }
+    body:not(.full) .item .cap { max-width: 100%; }
+  }
+  @media (min-width: 561px) and (max-width: 760px) {
+    body:not(.full) .shelf { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
   }
   #elcount { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
   #elcount.over { color: var(--danger); font-weight: 700; }
@@ -383,7 +388,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-03 17:40</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-03 18:42</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -5276,6 +5281,13 @@
       document.body.classList.toggle('full');
       $('tofulled').textContent = document.body.classList.contains('full') ? 'Collection' : 'Editor';
     });
+    // 携帯は開いた時 Dial が隠れている (display:none) ので、部品の大きさが 0 のまま位置を決めていた。
+    // Editor を押して見えるようになっても位置がそのままで、大きくずれた (もう一度押すと直った、2026-10-03)。
+    // 見えるようになった (幅が 0 から正になった) 時に描き直す。横向きにして広い画面になった時も同じ。
+    if (window.ResizeObserver && typeof stage !== 'undefined' && stage) {
+      let lastW = stage.offsetWidth;
+      new ResizeObserver(() => { const w = stage.offsetWidth; if (w && !lastW) render(); lastW = w; }).observe(stage);
+    }
   })();
   // ?s=xxxx-xxxx で開かれたら、共有された文字盤を上に出す (2026-09-21)
   (() => { const m = /[?&]s=([a-z0-9]{4}-[a-z0-9]{4})/i.exec(location.search); if (m) openSharedLink(m[1].toLowerCase()); })();

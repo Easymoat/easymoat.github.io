@@ -367,7 +367,7 @@
   #tip { position: fixed; z-index: 9999; display: none; max-width: 380px; padding: 12px 16px; box-sizing: border-box;
          background: #232A36; color: var(--ink); border: 1px solid var(--line-2); border-radius: 8px;
          font: 400 16px/1.55 var(--sans); box-shadow: 0 6px 20px rgba(0, 0, 0, .45); pointer-events: none; }
-  #elcount { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+  #elcount { font-family: var(--mono); font-size: 12px; color: var(--ink-3); white-space: nowrap; }
   .pcnt { font-family: var(--mono); font-size: 12px; color: var(--ink-3); text-transform: none; letter-spacing: 0; white-space: nowrap; }
   .pcnt.full { color: var(--accent); font-weight: 700; }
   #limitToast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 9998; display: none; max-width: min(560px, calc(100vw - 32px)); box-sizing: border-box;
@@ -404,7 +404,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 19:45</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 19:50</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2163,6 +2163,9 @@
     const bat = tile('clock', 3), ana = tile('clock', 44);
     if (bat && ana) { const ph = document.createComment(''); bat.replaceWith(ph); ana.replaceWith(bat); ph.replaceWith(ana); }
   }
+  // Time + sec の札は「10:08:30」だと枠からはみ出して名前に重なる。時刻の下に小さく秒を置く 2 段にする (2026-10-04 ユーザー指示)
+  { const ico = $('parts-clock').querySelector('.part[data-t="4"] .ico');
+    if (ico) ico.innerHTML = '<span style="display:flex;flex-direction:column;align-items:center;line-height:1.05;font:500 12px var(--watch)">10:08<span style="font-size:10px;color:var(--ink-3)">:30</span></span>'; }
   // Markets / USA Sports / Soccer の札にも絵を付ける (2026-10-04 ユーザー指示)。札の見た目だけで、時計に出るアイコンは変えない
   //   (時計の Stock は今までどおり '$'、試合の部品はアイコンなし)。
   [['mkt', 30, 'chart-line'], ['mkt', 90, 'percent-circle-outline'], ['bb', 32, 'scoreboard-outline'], ['bb', 33, 'timer-outline'],
@@ -2868,7 +2871,7 @@
     updatePalCounts();
     const w = loadOf(st.el), ec = $('elcount');
     if (ec) {
-      ec.textContent = `load ${fmtLoad(w)} / ${LOAD_MAX}`;
+      ec.textContent = `load ${fmtLoad(w)}/${LOAD_MAX}`;
       ec.className = 'cnt' + (w > LOAD_MAX ? ' over' : w > LOAD_HEAVY ? ' heavy' : '');
       ec.title = `${elCount(st.el)} parts. Load is what the watch's memory can hold: text parts count 1, the forecast strip and graphs 3, moon age 2, a rim 1.2, an analog dial 0.5, a circle 0.25, hands and shapes 0.1, lines 0.05.` + (w > LOAD_HEAVY ? ` Past ${LOAD_HEAVY} the watch is close to its limit.` : '');
     }

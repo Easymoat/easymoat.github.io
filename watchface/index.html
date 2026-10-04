@@ -43,7 +43,7 @@
   /* Style: 設定ごとに「ラベルの下にボタン」で縦に積み、ボタンの左端をそろえる (ラベル横並びと折り返しが混ざって左端がまちまちだった、2026-10-04) */
   #stylegrp > .ctl { flex-direction: column; align-items: flex-start; gap: 4px; min-height: 0; padding-left: 15px; }   /* 見出し (▾ STYLE) の文字の位置に合わせて字下げ。矢印の真下には置かない */
   /* Style のボタンは 1 行に収める (Wind の kn が折り返した、2026-10-04 ユーザー指摘)。字幅の広い画面でも入るよう、ボタンの横の余白と間隔を少し詰める */
-  #stylegrp .cb.units { flex-wrap: nowrap; gap: 4px; }
+  #stylegrp .cb.units { flex-wrap: nowrap; gap: 7px; }
   #stylegrp .cb.units button { padding-left: 6px; padding-right: 6px; }
   /* Selected sits in the bar above the dial: its fields flow in a row */
   #selgrp { flex: 1 1 560px; }
@@ -80,7 +80,7 @@
   .part .ico { width: 34px; display: flex; justify-content: center; color: var(--ink-2); }
   .part .ico svg { max-height: 30px; }   /* 升目は箱 × 1.15 (mdiIcon) */
   .part .nm { flex: 1; white-space: nowrap; }   /* 部品名は 1 行 (2026-09-19) */
-  .part .hint { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+  .part .hint { display: none; }   /* 札の右端の部品番号は出さない (使う人には意味が無い、2026-10-04 ユーザー指示)。DOM には残す */
   /* 針と縁は置く場所が無い (中心固定) ので、掴んで運ぶのではなく入 / 切のボタン。
      形も並びも他の部品と同じで、使用中だけ色が付く (.sw は色見本が使っている名前なので使わない)。*/
   .part.tgl { cursor: pointer; }
@@ -406,7 +406,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 19:54</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 23:00</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>

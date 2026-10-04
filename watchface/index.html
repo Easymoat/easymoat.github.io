@@ -394,7 +394,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 14:12</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 14:24</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2079,6 +2079,27 @@
     });
   }
   // Rim の札の絵 (26 角、太い線のデフォルメ、2026-10-04 ユーザー指示)。本体へ入れるのと同じ関数。
+  // Hands の札の絵 (26 角、太い線のデフォルメ、2026-10-04 ユーザー指示)。文字盤の輪郭 + 3 時の針 (時針は右・分針は上)。
+  const handsTileArt = (t) => {
+    const f = (v) => v.toFixed(2), pt = (pts) => pts.map(([x, y]) => `${f(x)},${f(y)}`).join(' ');
+    const g = (a, inner) => `<g transform="translate(13 13) rotate(${a})">${inner}</g>`;   // 上向きに描いて a 度回す
+    const ring = '<circle cx="13" cy="13" r="12" fill="none" stroke="currentColor" stroke-width="1.8"/>';
+    const cap = (r) => `<circle cx="13" cy="13" r="${r}" fill="currentColor"/>`;
+    const bar = (len, w, tail) => `<rect x="${f(-w / 2)}" y="${f(-len)}" width="${f(w)}" height="${f(len + tail)}" fill="currentColor"/>`;
+    const outline = (len, w, tail, rx) => `<rect x="${f(-w / 2)}" y="${f(-len)}" width="${f(w)}" height="${f(len + tail)}" rx="${rx || 0}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>`;
+    const needle = (len, hw, tail) => `<polygon points="${pt([[-hw, tail], [hw, tail], [0, -len]])}" fill="currentColor"/>`;
+    const kite = (len, hw, tail) => `<polygon points="${pt([[0, tail], [hw, -len * 0.42], [0, -len], [-hw, -len * 0.42]])}" fill="currentColor"/>`;
+    const rimKite = () => `<polygon points="${pt([[0, -6], [3, -8.5], [0, -11], [-3, -8.5]])}" fill="currentColor"/>`;
+    let o = ring;
+    if (t === 50) o += g(90, bar(7.8, 4, 1.4)) + g(0, bar(10.6, 3.4, 1.4)) + cap(2.4);                 // Bars: 太い棒 2 本
+    else if (t === 51) o += g(90, needle(8, 2.8, 1.6)) + g(0, needle(10.8, 2.4, 1.6)) + cap(2.2);     // Needles: 付け根の太い針
+    else if (t === 52) o += g(90, kite(8.4, 2.5, 1.4)) + g(0, kite(11, 2.3, 1.4)) + cap(2);              // Kite: 菱形の針
+    else if (t === 53) o += g(90, outline(8, 4.2, -2.6)) + g(0, outline(10.8, 3.8, -2.6)) + cap(1.8);  // Outline: 枠だけの棒
+    else if (t === 55) o += g(0, rimKite()) + g(90, rimKite()) + cap(2);                                 // Rim marks: 縁に沿う菱形
+    else if (t === 56) o += g(90, bar(7.8, 3, 1.4)) + g(0, bar(10.6, 2.6, 1.4)) + cap(2);              // Classic: 細めの棒 (それでも太く)
+    else if (t === 57) o += g(90, outline(8, 4.2, -2.6, 2.1)) + g(0, outline(10.8, 3.8, -2.6, 1.9)) + cap(1.8);   // Outline round: 角の丸い枠だけの棒
+    return `<svg width="26" height="26" viewBox="0 0 26 26" style="display:block">${o}</svg>`;
+  };
   const rimTileArt = (t) => {
     const p = (a, r) => [13 + r * Math.sin(a * Math.PI / 180), 13 - r * Math.cos(a * Math.PI / 180)];
     const f = (v) => v.toFixed(2);
@@ -2101,7 +2122,7 @@
     p.className = 'part'; p.dataset.t = t;
     if (d.dial) {
       p.className = 'part tgl'; p.title = 'Click to put it on the dial, click again to take it off';
-      p.innerHTML = `<span class="ico">${d.grp === 'rim' ? rimTileArt(+t) : dialArt(+t, 1, 26, 26, 'currentColor', +t === 69 ? 18 : 0)}</span><span class="nm">${d.name.replace(/^(Hands|Rim):\s*/, '')}</span>`;
+      p.innerHTML = `<span class="ico">${d.grp === 'rim' ? rimTileArt(+t) : d.grp === 'hands' ? handsTileArt(+t) : dialArt(+t, 1, 26, 26, 'currentColor', +t === 69 ? 18 : 0)}</span><span class="nm">${d.name.replace(/^(Hands|Rim):\s*/, '')}</span>`;
       p.addEventListener('click', () => toggleDialPart(+t));
     }
     else if (d.graph) p.innerHTML = `<span class="ico">${graphArt(d.graph, 30, 16, 0.5)}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
@@ -2138,6 +2159,15 @@
     const el = $('parts-mkt').querySelector(`.part[data-t="${t}"]`);
     if (el) $('parts-mkt').appendChild(el);
   });
+  // 札の並びの調整 (2026-10-04 ユーザー指示)。数字のキーは小さい順に並ぶので、作ったあとに動かす。
+  //   Rim: Batons (69) を Ticks (60) の下へ。Clock: Battery (3) と Analog (44) を入れ替え。
+  {
+    const tile = (grp, t) => $('parts-' + grp).querySelector(`.part[data-t="${t}"]`);
+    const ticks = tile('rim', 60), batons = tile('rim', 69);
+    if (ticks && batons) ticks.after(batons);
+    const bat = tile('clock', 3), ana = tile('clock', 44);
+    if (bat && ana) { const ph = document.createComment(''); bat.replaceWith(ph); ana.replaceWith(bat); ph.replaceWith(ana); }
+  }
   setupFolds();
   for (const [k, d] of Object.entries(DEVICES)) { const o = document.createElement('option'); o.value = k; o.textContent = d.name; $('dev').appendChild(o); }
   $('dev').value = st.dev; $('grid').value = String(st.grid); $('showgrid').checked = st.showGrid;

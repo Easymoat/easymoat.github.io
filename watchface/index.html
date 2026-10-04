@@ -394,7 +394,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 14:05</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 14:12</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2078,13 +2078,30 @@
       if (cnt) { cnt.textContent = gp.classList.contains('shut') ? String(n) : ''; }
     });
   }
+  // Rim の札の絵 (26 角、太い線のデフォルメ、2026-10-04 ユーザー指示)。本体へ入れるのと同じ関数。
+  const rimTileArt = (t) => {
+    const p = (a, r) => [13 + r * Math.sin(a * Math.PI / 180), 13 - r * Math.cos(a * Math.PI / 180)];
+    const f = (v) => v.toFixed(2);
+    const bar = (a, r0, r1, sw) => { const [x0, y0] = p(a, r0), [x1, y1] = p(a, r1); return `<path d="M${f(x0)} ${f(y0)}L${f(x1)} ${f(y1)}" fill="none" stroke="currentColor" stroke-width="${sw}"/>`; };
+    const arc = (c, h, r, sw) => { const [x0, y0] = p(c - h, r), [x1, y1] = p(c + h, r); return `<path d="M${f(x0)} ${f(y0)}A${r} ${r} 0 0 1 ${f(x1)} ${f(y1)}" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round"/>`; };
+    const deg12 = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330], deg8 = [0, 45, 90, 135, 180, 225, 270, 315], quarters = [0, 90, 180, 270];
+    let o = '';
+    if (t === 60) deg12.forEach((a) => { o += a % 90 === 0 ? bar(a, 5.6, 12.4, 4) : bar(a, 8.2, 12.4, 3); });          // Ticks: 12 本 (12・3・6・9 は長く太く)
+    else if (t === 69) deg8.forEach((a) => { o += a === 0 ? bar(a, 4.6, 12.6, 5) : bar(a, 6.8, 12.6, 3.8); });        // Batons: 太い棒 8 本 (12 時は特に太く長く)
+    else if (t === 61) deg8.forEach((a) => { const [x, y] = p(a, 10.2); o += `<circle cx="${f(x)}" cy="${f(y)}" r="${a % 90 === 0 ? 3 : 2.4}" fill="currentColor"/>`; });   // Dots: 8 つ
+    else if (t === 62) quarters.forEach((a) => { o += bar(a, 6.4, 12.4, 3.8); });                                           // 12 3 6 9: 4 本
+    else if (t === 63) { o = '<circle cx="13" cy="13" r="10.2" fill="none" stroke="currentColor" stroke-width="3.6"/>'; quarters.forEach((a) => { o += bar(a, 3.6, 6.6, 3); }); }   // Ring + 4 つの印
+    else { const M = { 64: [[0, 90, 180, 270], 17], 66: [[0, 90, 180, 270], 27], 67: [[45, 135, 225, 315], 23], 68: [[33, 147, 213, 327], 16] }[t];   // Meter 1-4: 弧の位置と長さの違い
+      if (M) M[0].forEach((c) => { o += arc(c, M[1], 10.4, 3.6); }); }
+    return `<svg width="26" height="26" viewBox="0 0 26 26" style="display:block">${o}</svg>`;
+  };
   for (const [t, d] of Object.entries(TYPES)) {
     if (d.hidden) continue;   // retired parts stay renderable but are not offered
     const p = document.createElement('div');
     p.className = 'part'; p.dataset.t = t;
     if (d.dial) {
       p.className = 'part tgl'; p.title = 'Click to put it on the dial, click again to take it off';
-      p.innerHTML = `<span class="ico">${dialArt(+t, 1, 26, 26, 'currentColor', +t === 69 ? 18 : 0)}</span><span class="nm">${d.name.replace(/^(Hands|Rim):\s*/, '')}</span>`;
+      p.innerHTML = `<span class="ico">${d.grp === 'rim' ? rimTileArt(+t) : dialArt(+t, 1, 26, 26, 'currentColor', +t === 69 ? 18 : 0)}</span><span class="nm">${d.name.replace(/^(Hands|Rim):\s*/, '')}</span>`;
       p.addEventListener('click', () => toggleDialPart(+t));
     }
     else if (d.graph) p.innerHTML = `<span class="ico">${graphArt(d.graph, 30, 16, 0.5)}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;

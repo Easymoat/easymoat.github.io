@@ -32,7 +32,7 @@
   .tier .num { font: 600 14px var(--mono); color: var(--accent); }
   .tier .name { font-size: 16px; font-weight: 600; color: var(--ink); letter-spacing: .02em; }
   .tier .what { font-size: 13px; color: var(--ink-3); }
-  main { display: grid; grid-template-columns: 200px minmax(0, 1fr) 230px; gap: 0; min-height: calc(100vh - 52px); }
+  main { display: grid; grid-template-columns: 200px minmax(0, 1fr) 280px; gap: 0; min-height: calc(100vh - 52px); }
   aside { background: var(--panel); border-right: 1px solid var(--line); padding: 20px 18px; display: flex; flex-direction: column; gap: 18px; }
   aside.right { border-right: 0; border-left: 1px solid var(--line); }
   aside.right .pxs { display: flex; flex-direction: column; gap: 8px; width: 100%; }   /* S / M / L stacked, each filling the row */
@@ -41,7 +41,7 @@
   aside.right .group > .lbl { font-size: 12px; }
   aside.right .ctl { gap: 10px; }
   /* Style: 設定ごとに「ラベルの下にボタン」で縦に積み、ボタンの左端をそろえる (ラベル横並びと折り返しが混ざって左端がまちまちだった、2026-10-04) */
-  #stylegrp > .ctl { flex-direction: column; align-items: flex-start; gap: 4px; min-height: 0; }
+  #stylegrp > .ctl { flex-direction: column; align-items: flex-start; gap: 4px; min-height: 0; padding-left: 15px; }   /* 見出し (▾ STYLE) の文字の位置に合わせて字下げ。矢印の真下には置かない */
   #stylegrp .cb.units { flex-wrap: wrap; }
   /* Selected sits in the bar above the dial: its fields flow in a row */
   #selgrp { flex: 1 1 560px; }
@@ -404,7 +404,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 19:18</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 19:30</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -566,14 +566,14 @@
   </section>
 
   <aside class="right">
-    <div class="group" id="stylegrp" title="Faux bold: the watch has no bold Roboto, so the text is drawn again with a small offset. Bold 2 is heavier."><span class="lbl">Style</span><div class="ctl">Bold <span class="cb units" id="bold"></span></div>
-      <div class="ctl" title="Which color means a rising price. Green up is the US habit, red up the Japanese one.">Up is <span class="cb units" id="upcol"></span></div>
-      <div class="ctl" title="Unit for the Wind part. The same choice as MarketWatch and PulseLink; m/s is their default too.">Wind <span class="cb units" id="windunit"></span></div>
-      <div class="ctl" title="Unit for Weather, Today hi/lo and Next 3h.">Temp <span class="cb units" id="tempunit"></span></div>
-      <div class="ctl" title="Unit for the Pressure part.">Pressure <span class="cb units" id="pressunit"></span></div>
-      <div class="ctl" title="Unit for the Altitude part (m / ft) and the Crew part (km / mi).">Distance <span class="cb units" id="distunit"></span></div>
-      <div class="ctl" title="Clock format. Device = follow the watch's own setting.">Hours <span class="cb units" id="hourfmt"></span></div>
-      <div class="ctl" title="What a long press on a weather part opens. In face = the dial redraws as a detail screen (now / hourly / daily). Garmin = the watch's own weather screen (scrolls freely, no time limit, Garmin's own look).">Weather detail <span class="cb units" id="wxdetail"></span></div></div>
+    <div class="group" id="stylegrp" title="Faux bold: the watch has no bold Roboto, so the text is drawn again with a small offset. Bold 2 is heavier."><span class="lbl">Style</span><div class="ctl">Font weight <span class="cb units" id="bold"></span></div>
+      <div class="ctl" title="Which color means a rising price. Green up is the US habit, red up the Japanese one.">Price up color <span class="cb units" id="upcol"></span></div>
+      <div class="ctl" title="Unit for the Wind part. The same choice as MarketWatch and PulseLink; m/s is their default too.">Wind speed unit <span class="cb units" id="windunit"></span></div>
+      <div class="ctl" title="Unit for Weather, Today hi/lo and Next 3h.">Temperature unit <span class="cb units" id="tempunit"></span></div>
+      <div class="ctl" title="Unit for the Pressure part.">Pressure unit <span class="cb units" id="pressunit"></span></div>
+      <div class="ctl" title="Unit for the Altitude part (m / ft) and the Crew part (km / mi).">Altitude & distance unit <span class="cb units" id="distunit"></span></div>
+      <div class="ctl" title="Clock format. Device = follow the watch's own setting.">Clock format (hours) <span class="cb units" id="hourfmt"></span></div>
+      <div class="ctl" title="What a long press on a weather part opens. In face = the dial redraws as a detail screen (now / hourly / daily). Garmin = the watch's own weather screen (scrolls freely, no time limit, Garmin's own look).">Long press on weather <span class="cb units" id="wxdetail"></span></div></div>
     <div class="group"><span class="lbl">Markets <span id="pcnt-mkt" class="cnt pcnt"></span></span><div class="parts" id="parts-mkt"></div></div>
     <div class="group"><span class="lbl">USA Sports <span id="pcnt-bb" class="cnt pcnt"></span></span><div class="parts" id="parts-bb"></div></div>
     <div class="group"><span class="lbl">Soccer <span id="pcnt-soc" class="cnt pcnt"></span></span><div class="parts" id="parts-soc"></div></div>

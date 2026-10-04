@@ -406,7 +406,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 23:57</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-05 06:22</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -743,6 +743,9 @@
     37: { name: 'Game 3 status',  grp: 'bb',    sample: "67'",         icon: null,   iw: 0, bb: 2, noPal: true },
     38: { name: 'Game 4 score',   grp: 'bb',    sample: 'TOK 1-1 AVF', icon: null,   iw: 0, bb: 3, noPal: true },
     39: { name: 'Game 4 status',  grp: 'bb',    sample: 'FT',          icon: null,   iw: 0, bb: 3, noPal: true },
+    // ゴルフ選手 (2026-10-05)。選手は layout "gf" [{id, nm}]、6 = 1 人目 / 7 = 2 人目。中身はサーバが /api/wf/game に載せる 1 行。
+    6:  { name: 'Golfer 1',       grp: 'bb',    sample: 'Matsuyama T5 -8 (13)', icon: null, iw: 0, gf: 0, noPal: true },
+    7:  { name: 'Golfer 2',       grp: 'bb',    sample: 'Hataoka T9 -11 F', icon: null, iw: 0, gf: 1, noPal: true },
     // 銘柄は面ごとに 2 つ持つ (layout の st)。部品は st[0] / st[1] を指すだけ。
     30: { name: 'Stock 1',   grp: 'mkt',   sample: '229.35', icon: 'stock',     iw: 0, stk: 0 },
     31: { name: 'Stock 2',   grp: 'mkt',   sample: '229.35', icon: 'stock',     iw: 0, stk: 1 },
@@ -1131,6 +1134,13 @@
   const bbOf = (i) => (st.bb || [])[i] || null;
   const bbLg = (i) => (bbOf(i) || {}).lg || 'mlb';
   const bbTm = (i) => { const b = bbOf(i); return b ? b.tm : 0; };
+  // ゴルフ選手 (部品 6/7)。st.gf = [{ id: ESPN の選手 ID, nm: 時計に出す名前 } | null] × 2
+  const GF_MAX = 2;
+  const isGolf = (t) => !!(TYPES[t] && TYPES[t].gf != null);
+  const gfSlot = (t) => (TYPES[t] || {}).gf || 0;
+  const gfOf = (i) => (st.gf || [])[i] || null;
+  const setGf = (i, v) => { const a = (st.gf || []).slice(0, GF_MAX); while (a.length < GF_MAX) a.push(null); a[i] = v; st.gf = a; };
+  const gfClean = (g) => (g && /^[0-9]{1,10}$/.test(String(g.id)) ? { id: Number(g.id), nm: String(g.nm || '').replace(/[^\x20-\x7e]/g, '').slice(0, 12) || 'Golfer' } : null);
   const setBb = (i, v) => { const a = (st.bb || []).slice(0, BB_MAX); while (a.length < BB_MAX) a.push(null); a[i] = v; st.bb = a; };
   const teamAbbr = (i) => { const lg = bbLg(i), tm = bbTm(i);
     if (lg === 'mlb') { const r = MLB_TEAMS.find((x) => x[0] === Number(tm)); return r ? r[1] : 'NYY'; }
@@ -1141,17 +1151,24 @@
   // 文字の組み立ては実機 (WfData.gameLine / gameState) と同じ。取れるまでは見本の文字。
   const GAMEQ = { key: '', at: 0, g: [] };
   const gameKey = () => [0, 1, 2, 3].map((i) => (bbTm(i) ? `${bbLg(i)}:${bbTm(i)}` : '')).join(',');
+  const golfKey = () => [0, 1].map((i) => (gfOf(i) ? `${gfOf(i).id}:${gfOf(i).nm}` : '')).join(',');
   function syncGames(force) {
-    const key = gameKey();
-    if (!key.replace(/,/g, '')) { GAMEQ.key = key; GAMEQ.g = []; return; }
+    const key = gameKey() + '|' + golfKey();
+    if (!key.replace(/[,|]/g, '')) { GAMEQ.key = key; GAMEQ.g = []; GAMEQ.gf = []; return; }
     if (!force && key === GAMEQ.key && Date.now() - GAMEQ.at < 60000) return;
     const want = key; GAMEQ.key = key; GAMEQ.at = Date.now();
     const tzo = -new Date().getTimezoneOffset() * 60;
-    fetch(`${$('api').value}/game?bb=${encodeURIComponent(key)}&tzo=${tzo}`).then((r) => (r.ok ? r.json() : null))
-      .then((j) => { if (j && GAMEQ.key === want) { GAMEQ.g = j.g || []; render(); } }).catch(swallow('games'));
+    fetch(`${$('api').value}/game?bb=${encodeURIComponent(gameKey())}&gf=${encodeURIComponent(golfKey())}&tzo=${tzo}`).then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (j && GAMEQ.key === want) { GAMEQ.g = j.g || []; GAMEQ.gf = j.gf || []; render(); } }).catch(swallow('games'));
   }
-  setInterval(() => { if (GAMEQ.key.replace(/,/g, '')) syncGames(true); }, 60000);
-  const gameOf = (i) => (GAMEQ.key === gameKey() ? GAMEQ.g[i] : undefined);   // undefined = まだ / null = 試合なし
+  setInterval(() => { if (GAMEQ.key.replace(/[,|]/g, '')) syncGames(true); }, 60000);
+  const gameOf = (i) => (GAMEQ.key === gameKey() + '|' + golfKey() ? GAMEQ.g[i] : undefined);
+  // ゴルフの 1 行: 実機と同じ文字 (サーバが組んだ t)。出ていない週は「名前 --」。取れるまでは見本。
+  const golfSample = (t) => {
+    const g = gfOf(gfSlot(t)); if (!g) return 'Pick a golfer';
+    if (GAMEQ.key !== gameKey() + '|' + golfKey() || !GAMEQ.gf) return `${g.nm} T5 -8 (13)`;
+    const r = GAMEQ.gf[gfSlot(t)]; return r && r.t ? r.t : `${g.nm} --`;
+  };   // undefined = まだ / null = 試合なし
   function gameText(t) {
     const g = gameOf(bbSlot(t));
     if (g === undefined) return null;
@@ -1161,6 +1178,11 @@
     return g.s || '--';
   }
   // By state の色 (実機と同じ: 進行中 表 = 青 / 裏 = 赤 / その他 = 緑、終了 = 橙、未開始 = 選んだ色)。見本の間は表の青。
+  function golfColor(t, own) {
+    if (GAMEQ.key !== gameKey() + '|' + golfKey() || !GAMEQ.gf) return C_GREEN;   // 取れるまでは見本 (プレー中)
+    const r = GAMEQ.gf[gfSlot(t)]; if (!r) return own;
+    return r.c === 1 ? C_GREEN : r.c === 2 ? C_ORANGE : own;
+  }
   function gameColor(t, own) {
     const g = gameOf(bbSlot(t));
     if (g === undefined) return C_BLUE;
@@ -1432,6 +1454,7 @@
   // ウォッチ (The Face) の watch/tools/gen_icon_font.py render() も同じ外接矩形と同じ 2 つの定数で描く (同じ SVG = watch/tools/mdi/)。
   const MDI = {
     // ↓ パレットの札だけで使う (時計には出さない、2026-10-04): Markets / USA Sports / Soccer の札の絵
+    'golf': ['3.9844 1.9922 17.0156 20.0156', 'M19.5,18A1.5,1.5 0 0,1 21,19.5A1.5,1.5 0 0,1 19.5,21A1.5,1.5 0 0,1 18,19.5A1.5,1.5 0 0,1 19.5,18M17,5.92L11,9V18.03C13.84,18.19 16,19 16,20C16,21.1 13.31,22 10,22C6.69,22 4,21.1 4,20C4,19.26 5.21,18.62 7,18.27V20H9V2L17,5.92Z'],
     'chart-line': ['1.9922 3.0000 20.0156 18.0000', 'M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z'],
     'percent-circle-outline': ['1.9922 1.9922 20.0156 20.0156', 'M17 15.22C17 16.2 16.2 17 15.22 17C14.24 17 13.45 16.2 13.45 15.22C13.45 14.24 14.24 13.45 15.22 13.45C16.2 13.45 17 14.24 17 15.22M8.83 10.6C9.81 10.6 10.6 9.81 10.6 8.83C10.6 7.84 9.81 7.05 8.83 7.05C7.84 7.05 7.05 7.84 7.05 8.83C7.05 9.81 7.84 10.6 8.83 10.6M7 15.53L8.5 17.03L17.03 8.5L15.53 7L7 15.53M22 12C22 17.5 17.5 22 12 22C6.5 22 2 17.5 2 12C2 6.5 6.5 2 12 2C17.5 2 22 6.5 22 12M20 12C20 7.59 16.41 4 12 4C7.59 4 4 7.59 4 12C4 16.41 7.59 20 12 20C16.41 20 20 16.41 20 12Z'],
     'scoreboard-outline': ['0.9844 3.0000 22.0312 18.0000', 'M21 3H3C1.9 3 1 3.9 1 5V19C1 20.1 1.9 21 3 21H21C22.1 21 23 20.1 23 19V5C23 3.9 22.1 3 21 3M21 19H3V5H21M5 7H9C9.6 7 10 7.4 10 8V16C10 16.6 9.6 17 9 17H5C4.4 17 4 16.6 4 16V8C4 7.4 4.4 7 5 7M6 9V15H8V9M15 7H19C19.6 7 20 7.4 20 8V16C20 16.6 19.6 17 19 17H15C14.4 17 14 16.6 14 16V8C14 7.4 14.4 7 15 7M16 9V15H18V9M12 11C12.6 11 13 10.6 13 10C13 9.4 12.6 9 12 9C11.4 9 11 9.4 11 10C11 10.6 11.4 11 12 11M12 15C12.6 15 13 14.6 13 14C13 13.4 12.6 13 12 13C11.4 13 11 13.4 11 14C11 14.6 11.4 15 12 15Z'],
@@ -1534,7 +1557,7 @@
   //   公開の承認を求める時に regress の 1 行 (通過数・差分の数) を添える。状態を足したら fixtures にその状態を持つ面を 1 つ足す。
   //   (既存の面は実機 Collection を**読み取りのみ**。実機 4041-1544 には書かない。自分の確認用 ID は aaaa-0001)
   let st = { dev: 'fr965', wd: 1, hr: [], sc: [], hc: [],   // wd 1 = 天気の詳細は純正の画面 (2026-09-30 ユーザー指示で新しい面の既定を Garmin に。保存済みの面は保存した値のまま)
-     grid: 50, showGrid: true, gridBright: false, selBright: true, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], ms: [], stk: ['', ''], stn: ['', ''], uc: 0, bb: [null, null, null, null], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
+     grid: 50, showGrid: true, gridBright: false, selBright: true, mt: [0, 0, 0, 0], mc: [-1, -1, -1, -1], ms: [], stk: ['', ''], stn: ['', ''], uc: 0, gf: [null, null], bb: [null, null, null, null], hf: 0, bg: 0, el: PRESET_LOBBY.map(e => e.slice()), tx: DEF_TX.slice(), tm: DEF_TM.slice(), ic: DEF_IC.slice(), io: DEF_IO, b: 0, pc: DEF_PC.slice() };
   // Selection: `sel` is the primary (last clicked) element, `selSet` every selected index.
   // Shift / Cmd / Ctrl + click adds or removes one; the Selected panel, dragging, arrows and
   // Delete act on all of them.
@@ -1546,7 +1569,7 @@
   const UNDO_MAX = 60;
   let UNDO = [], REDO = [], UNDO_SNAP = null, UNDO_BUSY = false;
   // ★ 色に関わる控え (pc) とメーターの組 (ms) を入れ忘れると、元に戻した時に色が化ける (2026-09-26)。
-  const UNDO_KEYS = ['bg', 'el', 'park', 'pc', 'tt', 'tx', 'tm', 'ic', 'io', 'b', 'mt', 'mc', 'mk', 'mv', 'ms', 'sc', 'hc', 'hr', 'stk', 'stn', 'bb', 'uc'];
+  const UNDO_KEYS = ['bg', 'el', 'park', 'pc', 'tt', 'tx', 'tm', 'ic', 'io', 'b', 'mt', 'mc', 'mk', 'mv', 'ms', 'sc', 'hc', 'hr', 'stk', 'stn', 'bb', 'gf', 'uc'];
   const undoSnap = () => JSON.stringify(UNDO_KEYS.map((k) => st[k]));
   function undoPush() {
     const cur = undoSnap();
@@ -1600,6 +1623,7 @@
   st.ic = intArr3(st.ic, 6, 120, DEF_IC) || DEF_IC.slice(); st.b = (st.b === 1 || st.b === 2) ? st.b : 0;
   UNITS.forEach((U) => { st[U.key] = U.opts[st[U.key]] ? st[U.key] : 0; });
   // このブラウザに残っている古い下書きを今の形に直す (旧 bb は 1 つの辞書だった、2026-09-15)。
+  st.gf = (Array.isArray(st.gf) ? st.gf : []).slice(0, GF_MAX).map(gfClean);
   st.bb = Array.isArray(st.bb) ? st.bb.slice(0, BB_MAX)
         : (st.bb && st.bb.tm ? [{ lg: String(st.bb.lg || 'mlb'), tm: st.bb.tm }] : []);
   if (!Array.isArray(st.stk)) st.stk = ['', ''];
@@ -2106,8 +2130,8 @@
     return `<svg width="26" height="26" viewBox="0 0 26 26" style="display:block">${o}</svg>`;
   };
   // Markets / USA Sports / Soccer の札は 1 種類 1 枚 (2026-10-04 ユーザー指示)。Stock 1・2 と Game 1-4 を並べず、置く時に空いている枠を選ぶ。
-  const PAL_HIDE = new Set([31, 34, 35, 36, 37, 38, 39]);
-  const PAL_NAME = { 30: 'Stock', 32: 'Game score', 33: 'Game status' };
+  const PAL_HIDE = new Set([31, 34, 35, 36, 37, 38, 39, 7]);
+  const PAL_NAME = { 30: 'Stock', 32: 'Game score', 33: 'Game status', 6: 'Golfer' };
   for (const [t, d] of Object.entries(TYPES)) {
     if (d.hidden) continue;   // retired parts stay renderable but are not offered
     if (PAL_HIDE.has(+t)) continue;
@@ -2160,12 +2184,14 @@
   }
   { const tip = 'Shows one game: MLB, NFL, NBA, NHL or soccer (Premier League, LaLiga, Serie A, Bundesliga, Ligue 1, J1 League). After you place it, pick the league and team in Selected part. The watch follows 4 games.';
     ['32', '33'].forEach((t) => { const p = $('parts-bb').querySelector(`.part[data-t="${t}"]`); if (p) p.dataset.tip = tip; }); }
+  { const gs = $('parts-bb').querySelector('.part[data-t="33"]'), gl = $('parts-bb').querySelector('.part[data-t="6"]'); if (gs && gl) gs.after(gl);
+    if (gl) gl.dataset.tip = 'One golfer: position, score and holes played this week (PGA Tour, LPGA, DP World Tour, LIV, Champions, Korn Ferry). After you place it, search the player in Selected part. The watch follows 2 golfers.'; }
   // Time + sec の札は「10:08:30」だと枠からはみ出して名前に重なる。時刻の下に小さく秒を置く 2 段にする (2026-10-04 ユーザー指示)
   { const ico = $('parts-clock').querySelector('.part[data-t="4"] .ico');
     if (ico) ico.innerHTML = '<span style="display:flex;flex-direction:column;align-items:center;line-height:1.05;font:500 12px var(--watch)">10:08<span style="font-size:10px;color:var(--ink-3)">:30</span></span>'; }
   // Markets / USA Sports / Soccer の札にも絵を付ける (2026-10-04 ユーザー指示)。札の見た目だけで、時計に出るアイコンは変えない
   //   (時計の Stock は今までどおり '$'、試合の部品はアイコンなし)。
-  [['mkt', 30, 'chart-line'], ['mkt', 90, 'percent-circle-outline'], ['bb', 32, 'scoreboard-outline'], ['bb', 33, 'timer-outline'],
+  [['mkt', 30, 'chart-line'], ['mkt', 90, 'percent-circle-outline'], ['bb', 32, 'scoreboard-outline'], ['bb', 33, 'timer-outline'], ['bb', 6, 'golf'],
    ].forEach(([g, t, n]) => {
     const ico = $('parts-' + g).querySelector(`.part[data-t="${t}"] .ico`); if (ico) ico.innerHTML = mdiIcon(n, 22);
   });
@@ -2246,7 +2272,7 @@
   // ── Render ─────────────────────────────────────────────────────────────────
   function render() {
     stage.classList.toggle('selbright', st.selBright !== false);
-    if (st.el.some((e) => isBall(e[0]))) syncGames(false);
+    if (st.el.some((e) => isBall(e[0]) || isGolf(e[0]))) syncGames(false);
     const d = dev(), k = d.w / 454;
     stage.style.width = d.w + 'px'; stage.style.height = d.h + 'px';
     const vs = DIAL_PX / Math.max(d.w, d.h);   // visual scale only
@@ -2291,6 +2317,7 @@
     // 色: 値のレベル (ストレス / 心拍) → 株の上げ下げ → 試合の状態 → 部品の色、の順に決める
     div.style.color = levelCol(t, f)
                     || ((isStock(t) && (f & 8)) ? (stkInfo(t) ? (stkInfo(t).u < 0 ? downCol() : stkInfo(t).u > 0 ? upCol() : colOf(c)) : upCol())
+                      : (isGolf(t) && (f & 8)) ? golfColor(t, colOf(c))      // ゴルフ: プレー中 = 緑 / 終了 = 橙 (実機と同じ、2026-10-05)
                       : (isBall(t) && (f & 8)) ? gameColor(t, colOf(c))      // 実データの状態の色 (取れるまでは表の青)
                       : colOf(c));
     if (def.dial && ARCSET[t] && msOf(e).mt.includes(10) && hrCol()) div.style.color = hrBandCol();   // 縁のメーターも心拍で色分け
@@ -2441,7 +2468,7 @@
       div.innerHTML = rowsH.join('') + '<span class="anchor"></span>';
     } else {
       const showVal = !(f & 2);   // f の bit 1 = 値を出さない (アイコンだけ)
-      const sample = isText(t) ? (ttOf(e) || def.sample) : isStock(t) ? stkValue(t, f) : isBall(t) ? ballSample(t) : (t === 2 && !splitDate) ? 'Fri Sep 4' : cityOf(e) ? citySample(t, cityOf(e)) : def.sample;
+      const sample = isText(t) ? (ttOf(e) || def.sample) : isStock(t) ? stkValue(t, f) : isBall(t) ? ballSample(t) : isGolf(t) ? golfSample(t) : (t === 2 && !splitDate) ? 'Fri Sep 4' : cityOf(e) ? citySample(t, cityOf(e)) : def.sample;
       const lay = arrOf(e);       // 0 アイコン左 / 1 アイコン右 / 2 アイコン上
       // 太字で右へ伸びた分 (bo) は値の幅に含める = 実機の「文字幅 + bo」。アイコン右 (arr 1) でもアイコンが bo だけ離れる。
       // 縦積み (アイコン上) の時の間隔。実機は「アイコンの箱 → 文字の行」を**隙間なしで積む**ので、
@@ -2790,7 +2817,8 @@
     })(),
     // 四角形の元の形 (実機は読まない。コレクションから開き直した時に四角形へ戻すため)
     rq: (() => { const q = st.el.filter((e) => isRect(e[0])).map((e) => [e[1], e[2], rectW(e), rectH(e), e[4], e[5], e[6] & F_SHARP, rectFill(e)]); return q.length ? q : undefined; })(),
-    bb: (st.bb || []).some((b) => b && b.tm) ? (st.bb || []).slice(0, BB_MAX).map((b) => (b && b.tm ? b : null)) : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
+    bb: (st.bb || []).some((b) => b && b.tm) ? (st.bb || []).slice(0, BB_MAX).map((b) => (b && b.tm ? b : null)) : undefined,
+    gf: (st.gf || []).some((g) => g) ? (st.gf || []).slice(0, GF_MAX).map((g) => g || null) : undefined }, dialFields()); const cam = camField(); if (cam) o.cam = cam; return o; };
   function renderJson() { $('json').value = JSON.stringify(layoutObj()).replace(/\],\[/g, '],\n     [').replace(/\]\],"tx"/, ']],\n "tx"'); }
   // ── 騨置き場 ─────────────────────────────────────────────
   // 文字盤が込み合ってきた時の一時置き場。**ここにある部品はウォッチへ行かない**
@@ -2986,6 +3014,7 @@
     const allLine = all.every((x) => isLine(x[0]));   // 線だけを選んでいる時は線の操作に差し替える
     const allStock = !none && all.every((x) => isStock(x[0])) && all.every((x) => x[0] === e[0]);   // 同じ銘柄の部品だけ
     const allBall = !none && all.every((x) => isBall(x[0]));
+    const oneGolf = !none && all.length === 1 && isGolf(e[0]);
     const allCirc = !none && all.every((x) => isCircle(x[0]));
     const allRect = !none && all.every((x) => isRect(x[0]));   // 四角形
     const allCityClock = !none && all.every((x) => hasCity(x[0]));   // 時刻 (世界時計にできる)
@@ -3123,6 +3152,9 @@
             TZ_CITIES.map((c) => [c, tzOffsetNow(c[3])]).sort((a, b) => a[1] - b[1]).map(([c, off]) =>
               `<option value="${c[0]}" ${all.every((x) => cityOf(x) === c[0]) ? 'selected' : ''}>${c[2]} (UTC${fmtOff(off)})</option>`)).join('')
         }</select></div>` : ''}
+        ${oneGolf ? `<div class="field" title="The golfer this part follows. Type at least 2 letters of the name, then pick the player."><span>Golfer ${gfSlot(e[0]) + 1}</span><b id="fgfnow">${gfOf(gfSlot(e[0])) ? String(gfOf(gfSlot(e[0])).nm).replace(/</g, '&lt;') : '— none —'}</b>
+          <input type="text" id="fgfq" placeholder="Search a name" autocomplete="off" style="width:150px"><span id="fgfres" class="cb units" style="flex-wrap:wrap"></span></div>
+        <div class="field" title="Green while the golfer is on the course, orange when the round or the event is over — instead of the color below"><span>State</span><span class="cb units" id="fbbc"><button type="button" data-v="0" class="${!(e[6] & 8) ? 'on' : ''}">Keep color</button><button type="button" data-v="8" class="${(e[6] & 8) ? 'on' : ''}">By state</button></span></div>` : ''}
         ${allBall ? `<div class="field" title="Which league and team this slot follows"><span>Game ${bbSlot(e[0]) + 1}</span><select id="fleague">${
           [['USA Sports', LEAGUES], ['Soccer', SOC_LEAGUES]].map(([gp, list]) => `<optgroup label="${gp}">` + list.map(([k, nm]) =>
             `<option value="${k}" ${bbLg(bbSlot(e[0])) === k ? 'selected' : ''}>${nm}</option>`).join('') + '</optgroup>').join('')
@@ -3447,7 +3479,30 @@
     })));
     // 全周の時は回す意味が無いので押せなくする
     if (circSpan(e) === 360) box.querySelectorAll('.step[data-step="14"] button').forEach((b) => { b.disabled = true; });
-    document.querySelectorAll('#fbbc button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isBall(x[0])) x[6] = (x[6] & ~8) | (+b.dataset.v); })));
+    // ゴルフ選手の検索 (2026-10-05)。2 文字から、打ち終わって 300ms でサーバ (ESPN の検索の中継) に聞く。
+    const fq = $('fgfq');
+    if (fq) {
+      let tmr = null, seq = 0; const res = $('fgfres'), gslot = gfSlot(e[0]);
+      fq.addEventListener('input', () => {
+        clearTimeout(tmr); const q = fq.value.trim();
+        if (q.length < 2) { res.innerHTML = ''; return; }
+        tmr = setTimeout(async () => {
+          const my = ++seq; res.innerHTML = '<span class="muted">Searching…</span>';
+          try {
+            const r = await fetch(`${$('api').value}/golf-search?q=${encodeURIComponent(q)}`); const j = await r.json();
+            if (my !== seq) return;
+            if (!r.ok) { res.innerHTML = `<span class="muted">${r.status === 429 ? 'Too many searches — wait a minute.' : 'Search is not available right now.'}</span>`; return; }
+            const ps = j.players || [];
+            res.innerHTML = ps.length ? ps.map((pl, k) => `<button type="button" data-k="${k}" title="${pl.tour}">${String(pl.nm).replace(/</g, '&lt;')} <span class="muted">${pl.tour}</span></button>`).join('')
+                                      : '<span class="muted">No golfer found (PGA Tour, LPGA, DP World Tour, LIV, Champions, Korn Ferry).</span>';
+            res.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+              const pl = ps[+b.dataset.k]; setGf(gslot, gfClean({ id: pl.id, nm: pl.last })); commit(); syncGames(true);
+            }));
+          } catch (err) { if (my === seq) res.innerHTML = '<span class="muted">Search is not available right now.</span>'; }
+        }, 300);
+      });
+    }
+    document.querySelectorAll('#fbbc button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isBall(x[0]) || isGolf(x[0])) x[6] = (x[6] & ~8) | (+b.dataset.v); })));
     const ft = $('fteam'), slot = bbSlot(e[0]);
     if (ft) ft.addEventListener('change', (ev) => {
       const lg = bbLg(slot), v = ev.target.value;
@@ -3509,7 +3564,7 @@
     mt: (st.mt || []).slice(), mc: (st.mc || []).slice(), mk: (st.mk || []).slice(), mv: (st.mv || []).slice(),
     ms: (st.ms || []).map(msOut),
     st: (st.stk || ['', '']).slice(0, 2), sn: (st.stn || ['', '']).slice(0, 2),
-    uc: st.uc === 1 ? 1 : 0, bb: (st.bb || []).slice(0, BB_MAX), tt: (st.tt || []).slice(),
+    uc: st.uc === 1 ? 1 : 0, bb: (st.bb || []).slice(0, BB_MAX), gf: (st.gf || []).slice(0, GF_MAX), tt: (st.tt || []).slice(),
     park: (st.park || []).map((e) => e.slice()),
     img: imgDraftState(), savedAt: Date.now() });
   function saveDraft() {
@@ -3627,6 +3682,10 @@
         if (!st.el.some((e) => isStock(e[0]) && TYPES[e[0]].stk === sl && !!(e[6] & 4) === want)) return { t: 30 + sl };
       }
       return { err: `Both stocks already show ${want ? 'their change %' : 'their price'} on this dial — the watch holds ${STOCK_SLOTS} stocks. Take a Stock off first to add another.` };
+    }
+    if (key === 6) {
+      for (let sl = 0; sl < GF_MAX; sl++) if (!st.el.some((e) => e[0] === 6 + sl)) return { t: 6 + sl };
+      return { err: `Both golfers are already on this dial — the watch follows ${GF_MAX} golfers. Take one off first to add another.` };
     }
     if (key === 32 || key === 33 || key === 92 || key === 93) {
       const status = key === 33 || key === 93;
@@ -3847,7 +3906,7 @@
     st.tx = DEF_TX.slice(); st.tm = DEF_TM.slice(); st.ic = DEF_IC.slice(); st.io = DEF_IO; st.b = 0;
     st.mt = [0, 0, 0, 0]; st.mc = [-1, -1, -1, -1]; st.mk = [-1, -1, -1, -1]; st.mv = [1, 1, 1, 1]; st.ms = [];
     EDIT_N = null; EDIT_ITEM_NAME = ''; shelfName();
-    st.stk = ['', '']; st.stn = ['', '']; st.bb = []; st.uc = 0; st.tt = [];
+    st.stk = ['', '']; st.stn = ['', '']; st.bb = []; st.gf = [null, null]; st.uc = 0; st.tt = [];
     clearSel(); commit(); renderSizes(); renderBold(); renderUpCol();
     setStatus('jsonstatus', 'Dial reset — Undo puts it back.', 'ok');
   });
@@ -3967,6 +4026,7 @@
              mk: (Array.isArray(j.mk) && j.mk.length === 4 && j.mk.every((c) => Number.isInteger(c) && c >= -1 && c <= PC_BASE + PC_MAX)) ? j.mk.slice() : [-1, -1, -1, -1],
              mv: (Array.isArray(j.mv) && j.mv.length === 4 && j.mv.every((v) => v === 0 || v === 1)) ? j.mv.slice() : [1, 1, 1, 1],
              bb: (Array.isArray(j.bb) ? j.bb : (j.bb ? [j.bb] : [])).slice(0, BB_MAX).map((b) => (b && b.tm ? { lg: String(b.lg || 'mlb'), tm: b.tm } : null)),
+             gf: (Array.isArray(j.gf) ? j.gf : []).slice(0, GF_MAX).map(gfClean),
              stk: (Array.isArray(j.st) && j.st.length <= 2) ? [stkClean(j.st[0]), stkClean(j.st[1])] : ['', ''],
              stn: (Array.isArray(j.sn) && j.sn.length <= 2) ? [nameClean(j.sn[0]), nameClean(j.sn[1])] : ['', ''],
              uc: Number(j.uc) === 1 ? 1 : 0,
@@ -4020,7 +4080,7 @@
       try { insertJoints(inner, '', arcs, d, d.w / 454); } finally { st = hold; }
     }
   }
-  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, BB_MAX); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.ms = msRead(c.ms); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); st.hr = (c.hr || []).slice(); st.sc = (c.sc || []).slice(); st.hc = (c.hc || []).slice(); st.tt = (c.tt || []).slice(); clearSel(); pushBgHist(st.bg); renderHr(); }
+  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, BB_MAX); st.gf = (c.gf || []).slice(0, GF_MAX).map(gfClean); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.ms = msRead(c.ms); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); st.hr = (c.hr || []).slice(); st.sc = (c.sc || []).slice(); st.hc = (c.hc || []).slice(); st.tt = (c.tt || []).slice(); clearSel(); pushBgHist(st.bg); renderHr(); }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
   // ウォッチが最後に来た時刻は 2 か所から来る: 従来経路 (/layouts) と実機が今使う経路 (/watch)。
   // 実機はもう従来経路を見に来ないので、そちらの値は何日も古いまま。新しい方だけを使う

@@ -390,7 +390,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 13:08</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 13:26</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -425,7 +425,7 @@
     <div class="group"><span class="lbl">Text</span><div class="parts" id="parts-text"></div></div>
     <div class="group"><span class="lbl">Body</span><div class="parts" id="parts-body"></div></div>
     <div class="group"><span class="lbl">Graphs</span><div class="parts" id="parts-graph"></div></div>
-    <div class="group"><span class="lbl">Crew</span><div class="parts" id="parts-crew"></div><span class="muted">Pick Crew 1, 2 or 3 and what to show next to the name. Needs PulseLink on the same watch. Who is Crew 1, 2 and 3 is set in PulseLink.</span></div>
+    <div class="group"><span class="lbl">Crew</span><div class="parts" id="parts-crew"></div><span class="muted">One part is one crew member. After you place it, pick Crew 1, 2 or 3 and what to show (distance, heart rate or steps). Needs PulseLink on the same watch. Who is Crew 1, 2 and 3 is set in PulseLink.</span></div>
     <div class="group"><span class="lbl">Weather</span><div class="parts" id="parts-wx"></div></div>
     <div class="group"><span class="lbl">Hands</span><div class="parts" id="parts-hands"></div></div>
     <div class="group"><span class="lbl">Rim</span><div class="parts" id="parts-rim"></div></div>
@@ -687,8 +687,8 @@
     44: { name: 'Analog',      grp: 'clock', analog: true },
     // Crew (2026-09-25): PulseLink の家族との距離。1 行 = 名前 + 距離 + 最後に届いてからの分。
     // 中身は実機が PulseLink から直に受け取る (サーバは通らない)。行数は el の 9 番目。
-    47: { name: 'Crew',        grp: 'crew',  sample: 'Ema 1.2km 3m', icon: null, iw: 0, crew: true, hidden: true },   // 2026-10-04: パレットからは 48 に置き換え。昔の面は描ける・直せる
-    48: { name: 'Crew member', grp: 'crew',  sample: 'Ema 1.2km', icon: null, iw: 0, crew: true, crewOne: true, hidden: true },   // 1 人 × 1 つの値 (距離 / 心拍 / 歩数)。パレットは PAL_CREW
+    47: { name: 'Crew (old)',  grp: 'crew',  sample: 'Ema 1.2km 3m', icon: null, iw: 0, crew: true, hidden: true },   // 2026-10-04: パレットからは 48 に置き換え。昔の面は描ける・直せる
+    48: { name: 'Crew',        grp: 'crew',  sample: 'Ema 1.2km', icon: null, iw: 0, crew: true, crewOne: true },   // 1 人 × 1 つの値 (距離 / 心拍 / 歩数)。誰か・値は置いた後に選ぶ (2026-10-04)
     45: { name: 'Text',        grp: 'text',  sample: 'TEXT',   icon: null,        iw: 0, text: true },   // 自分で書いた文字 (2026-09-21)
     46: { name: 'Text (picture)', grp: 'text', sample: 'TEXT',  icon: null,        iw: 0, text: true, hidden: true },   // 実機へ送る形。読み込む時に 45 へ戻す
     // 50-54 / 60-64 = whole-dial parts: they sit at the centre, cover the dial and are not moved.
@@ -1084,11 +1084,6 @@
   const PAL_PCT = { 90: { t: 30, name: 'Stock 1 %' }, 91: { t: 31, name: 'Stock 2 %' } };
   // サッカー用のパレット。部品そのものは USA Sports と同じ 32-35 で、置いた時に
   // その枠 (Game 1 / Game 2) のリーグをサッカー側へ寄せるだけ。チーム未選択の枠にしか触らない。
-  // Crew member のパレット (2026-10-04): Crew 1 / 2 / 3 の札 + 横に値の 3 択 (距離 / 心拍 / 歩数)。部品の種別は 48、
-  //   置いた時に誰か (9 番目) と値の種類 (f の bit2-3) を入れるだけ。値の選択は見る人ごとの便利機能 (localStorage)。
-  const PAL_CREW = { 101: { t: 48, m: 1, name: 'Crew 1' }, 102: { t: 48, m: 2, name: 'Crew 2' }, 103: { t: 48, m: 3, name: 'Crew 3' } };
-  let PAL_CREW_V = 0;
-  try { const v = Number(localStorage.getItem('faceComposer.palcrew')); if (v === 4 || v === 8) PAL_CREW_V = v; } catch (e) {}
   const PAL_SOC = { 92: { t: 32, name: 'Game 1 score' }, 93: { t: 33, name: 'Game 1 status' }, 94: { t: 34, name: 'Game 2 score' }, 95: { t: 35, name: 'Game 2 status' },
                     96: { t: 36, name: 'Game 3 score' }, 97: { t: 37, name: 'Game 3 status' }, 98: { t: 38, name: 'Game 4 score' }, 99: { t: 39, name: 'Game 4 status' } };
   const SOC_DEF = 'eng.1';
@@ -2060,25 +2055,6 @@
     else p.innerHTML = `<span class="ico">${d.noPal ? '' : d.icon && !TEXT_ICON[d.icon] ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${TEXT_ICON[d.icon] || d.sample || ''}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     if (!d.dial) p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +t));
     $('parts-' + d.grp).appendChild(p);
-  }
-  {   // Crew member: Crew 1 / 2 / 3 の札 + 横の値の 3 択
-    const bar = document.createElement('div'); bar.className = 'field'; bar.style.margin = '4px 0 8px';
-    bar.title = 'What the Crew part shows next to the name';
-    bar.innerHTML = '<span class="muted">Value</span><span class="cb units" id="palcrewv"></span>';
-    $('parts-crew').parentElement.insertBefore(bar, $('parts-crew'));
-    const paint = () => {
-      $('palcrewv').innerHTML = CREW_METRICS.map(([v, lb]) => `<button type="button" data-v="${v}" class="${PAL_CREW_V === v ? 'on' : ''}">${lb}</button>`).join('');
-      $('palcrewv').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { PAL_CREW_V = +b.dataset.v; try { localStorage.setItem('faceComposer.palcrew', String(PAL_CREW_V)); } catch (e) {} paint(); }));
-      document.querySelectorAll('#parts-crew .part .hint').forEach((h) => { h.textContent = (CREW_METRICS.find(([v]) => v === PAL_CREW_V) || CREW_METRICS[0])[2]; });
-    };
-    for (const [key, d] of Object.entries(PAL_CREW)) {
-      const p = document.createElement('div');
-      p.className = 'part'; p.dataset.t = key;
-      p.innerHTML = `<span class="ico" style="color:#1D222B"><svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span><span class="nm">${d.name}</span><span class="hint"></span>`;
-      p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +key));
-      $('parts-crew').appendChild(p);
-    }
-    paint();
   }
   for (const [key, d] of Object.entries(PAL_SOC)) {   // Soccer: 部品は 32-35 と同じ
     const p = document.createElement('div');
@@ -3064,9 +3040,9 @@
         ${allCrew ? `<div class="field" title="How many lines this part shows. Who is in each line is set in PulseLink (You &gt; Watch face &gt; Complications)."><span>Lines</span><span class="cb units" id="fcrewn">${
           [1, 2, 3].map((v) => `<button type="button" data-v="${v}" class="${all.every((x) => crewRows(x) === v) ? 'on' : ''}">${v}</button>`).join('')
         }</span></div>` : ''}
-        ${allCrewOne ? `<div class="field" title="Which crew member this part shows. Who is Crew 1, 2 and 3 is set in PulseLink (You &gt; Watch face &gt; Complications)."><span>Member</span><span class="cb units" id="fcrewm">${
-          [1, 2, 3].map((v) => `<button type="button" data-v="${v}" class="${all.every((x) => crewMember(x) === v) ? 'on' : ''}">Crew ${v}</button>`).join('')
-        }</span></div><div class="field" title="What is shown next to the name"><span>Shows</span><span class="cb units" id="fcrewv">${
+        ${allCrewOne ? `<div class="field" title="Which crew member this part shows, and what it shows next to the name. Who is Crew 1, 2 and 3 is set in PulseLink (You &gt; Watch face &gt; Complications)."><span>Crew</span><span class="cb units" id="fcrewm">${
+          [1, 2, 3].map((v) => `<button type="button" data-v="${v}" class="${all.every((x) => crewMember(x) === v) ? 'on' : ''}">${v}</button>`).join('')
+        }</span><span class="cb units" id="fcrewv">${
           CREW_METRICS.map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => crewMetric(x) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>` : ''}
         ${allStrip ? `<div class="field" title="How many hours the strip shows: now and the next 2, 3 or 4 hours. Five columns with icons are wider than the dial."><span>Columns</span><span class="cb units" id="fstripn">${
@@ -3548,7 +3524,7 @@
   }
   let PAL_PEND = null;                 // 押したところ。動かすか離すまで部品は作らない
   function startPaletteDrag(ev, t) {
-    const realT = (PAL_PCT[t] || PAL_CREW[t] || {}).t != null ? (PAL_PCT[t] || PAL_CREW[t]).t : t;   // 置かれる部品の種類 (絵札の見出しは別の番号を持つ)
+    const realT = (PAL_PCT[t] || {}).t != null ? PAL_PCT[t].t : t;   // 置かれる部品の種類 (絵札の見出しは別の番号を持つ)
     const wantLine = isLine(t) || isRect(t) || isLine(realT);
     if (!canAdd(realT)) { setStatus('shelfstatus', FULL_MSG(realT), 'err'); return; }
     if (wantLine && st.el.length - elCount(st.el) >= LINE_MAX) { setStatus('shelfstatus', `That is ${LINE_MAX} lines — enough for one dial.`, 'err'); return; }
@@ -3557,11 +3533,10 @@
   // 指 / マウスが動いた = 運ぶ。動かずに離した = 中央に置く。どちらも「作る」のはここ。
   function palSpawn(ev, center) {
     let t = PAL_PEND.t; PAL_PEND = null;
-    let d = TYPES[t] || TYPES[(PAL_PCT[t] || {}).t] || TYPES[(PAL_SOC[t] || {}).t] || TYPES[(PAL_CREW[t] || {}).t];
-    const pct = PAL_PCT[t], soc = PAL_SOC[t], cp = PAL_CREW[t];    // 「変化率」版は種別 30/31 + bit2、サッカーは 32-35 と同じ、Crew member は 48
+    let d = TYPES[t] || TYPES[(PAL_PCT[t] || {}).t] || TYPES[(PAL_SOC[t] || {}).t];
+    const pct = PAL_PCT[t], soc = PAL_SOC[t];    // 「変化率」版は種別 30/31 + bit2、サッカーは 32-35 と同じ
     if (pct) { t = pct.t; d = TYPES[t]; }
     if (soc) { t = soc.t; d = TYPES[t]; }
-    if (cp) { t = cp.t; d = TYPES[t]; }
     if (isBall(t)) {                             // チーム未選択の枠だけ、置いた群に合わせてリーグを寄せる
       const sl = bbSlot(t);
       if (!bbTm(sl) && isSoccer(bbLg(sl)) !== !!soc) setBb(sl, { lg: soc ? SOC_DEF : 'mlb', tm: 0 });
@@ -3572,7 +3547,7 @@
             : isLine(t) ? [t, 500, 500, 0, 1, 0, 0, -1, LINE_LEN_DEF]
             : isText(t) ? [t, 500, 500, 0, 1, 0, 0, -1, ttFree()]
             : isGraph(t) ? [t, 500, 500, 0, 0, 0, 0, -1]
-            : isCrewOne(t) ? [t, 500, 500, 0, 1, 0, 1 | PAL_CREW_V, -1, cp ? cp.m : 1, 1]   // 誰か + 値の種類、名前と値、並びは名前左
+            : isCrewOne(t) ? [t, 500, 500, 0, 1, 0, 1, -1, 1, 1]   // Crew 1・距離、名前と値、並びは名前左。誰か・値は置いた後に選ぶ
             : isCrew(t) ? [t, 500, 500, 0, 1, 0, 1, -1, 3, 1]
             : [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, (d.icon ? 1 : 0) | (pct ? 4 : 0) | (t === 2 ? F_DOW : 0), -1];
     placeBack(e);

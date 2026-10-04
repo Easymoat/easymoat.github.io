@@ -42,7 +42,9 @@
   aside.right .ctl { gap: 10px; }
   /* Style: 設定ごとに「ラベルの下にボタン」で縦に積み、ボタンの左端をそろえる (ラベル横並びと折り返しが混ざって左端がまちまちだった、2026-10-04) */
   #stylegrp > .ctl { flex-direction: column; align-items: flex-start; gap: 4px; min-height: 0; padding-left: 15px; }   /* 見出し (▾ STYLE) の文字の位置に合わせて字下げ。矢印の真下には置かない */
-  #stylegrp .cb.units { flex-wrap: wrap; }
+  /* Style のボタンは 1 行に収める (Wind の kn が折り返した、2026-10-04 ユーザー指摘)。字幅の広い画面でも入るよう、ボタンの横の余白と間隔を少し詰める */
+  #stylegrp .cb.units { flex-wrap: nowrap; gap: 4px; }
+  #stylegrp .cb.units button { padding-left: 6px; padding-right: 6px; }
   /* Selected sits in the bar above the dial: its fields flow in a row */
   #selgrp { flex: 1 1 560px; }
   #insp .group { flex-direction: row; flex-wrap: wrap; gap: 10px 22px; align-items: center; align-content: flex-start; }
@@ -404,7 +406,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 19:50</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 19:54</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>

@@ -360,6 +360,10 @@
   @media (min-width: 561px) and (max-width: 760px) {
     body:not(.full) .shelf { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
   }
+  /* 吹き出し (data-tip): ブラウザの title は小さすぎて読めないので、説明が長い所だけ自前で大きく出す (2026-10-04 ユーザー指摘) */
+  #tip { position: fixed; z-index: 9999; display: none; max-width: 380px; padding: 12px 16px; box-sizing: border-box;
+         background: #232A36; color: var(--ink); border: 1px solid var(--line-2); border-radius: 8px;
+         font: 400 16px/1.55 var(--sans); box-shadow: 0 6px 20px rgba(0, 0, 0, .45); pointer-events: none; }
   #elcount { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
   #elcount.over { color: var(--danger); font-weight: 700; }
   #elcount.heavy { color: var(--accent); }
@@ -390,7 +394,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 13:39</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 13:56</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -478,8 +482,8 @@
         <div class="opts">
           <div class="grp" title="The shape of the image frame on the dial."><span class="lbl">Shape <span class="lblnote">Shift+click to add a second shape</span></span><div class="ctl"><span class="cb" id="imgshape"></span></div>
             <div class="ctl" id="shapeselrow" hidden title="Size and Rotate change the shape chosen here.">Adjust <span class="cb" id="shapesel"></span>
-              <span class="muted" style="margin-left:10px">2nd shape</span> <span class="cb" id="shapeop" title="Add: the two shapes together. Cut: takes the second shape out of the first one — a ring, a window for the time, a crescent."></span></div>
-            <div class="ctl" title="Fixes the shapes you have (with their Add or Cut) as one frame and frees the shape buttons for the next shape. Repeat for as many shapes as you like. Reset frame lets the fixed shapes go."><button class="btn" id="imgflat">Flatten to Another Shape</button><span class="muted" id="flatnote">Fixes the shapes you have so you can add another one on top.</span></div>
+              <span class="muted" style="margin-left:10px">2nd shape</span> <span class="cb" id="shapeop" title="Add: the two shapes together. Cut: takes the second shape out of the first one — a ring, a window for the time, a crescent."></span>
+              <button class="btn" id="imgflat" style="margin-left:14px">Flatten to the one</button></div>
             <div class="ctl">Rotate <span class="cb"><button type="button" id="rotl" title="Turn the frame 45° anticlockwise">&#8634; 45°</button><button type="button" id="rotr" title="Turn the frame 45° clockwise">&#8635; 45°</button></span><span class="muted" id="rotv">0°</span><span class="vsep"></span><span class="fillctl" title="No photo: the frame shape is filled with one color instead.">Fill color<input type="color" id="imgfill" value="#3a7bd5"><span class="swatches" id="fillsw" title="Recently used fill colors"></span><button class="btn toggle" id="imgfillon" title="ON: the frame is filled with this color instead of a photo">OFF</button></span></div>
 </div>
           <div class="grp"><span class="lbl">Photos</span><div class="photos" id="photos"></div><div class="muted" id="imgslotnote"></div>
@@ -563,7 +567,7 @@
       <div class="ctl" title="Unit for the Altitude part (m / ft) and the Crew part (km / mi).">Distance <span class="cb units" id="distunit"></span></div>
       <div class="ctl" title="Clock format. Device = follow the watch's own setting.">Hours <span class="cb units" id="hourfmt"></span></div>
       <div class="ctl" title="What a long press on a weather part opens. In face = the dial redraws as a detail screen (now / hourly / daily). Garmin = the watch's own weather screen (scrolls freely, no time limit, Garmin's own look).">Weather detail <span class="cb units" id="wxdetail"></span></div></div>
-    <div class="group"><span class="lbl">Markets</span><div class="parts" id="parts-mkt"></div><span class="muted">Drop one on the dial, then type its ticker in Selected part. The % parts show the change instead of the price.</span></div>
+    <div class="group"><span class="lbl">Markets</span><div class="parts" id="parts-mkt"></div></div>
     <div class="group"><span class="lbl">USA Sports</span><div class="parts" id="parts-bb"></div></div>
     <div class="group"><span class="lbl">Soccer</span><div class="parts" id="parts-soc"></div></div>
     <div class="group"><span class="lbl">Elements <span id="elcount" class="cnt"></span></span><div class="list" id="list"></div></div>
@@ -1079,6 +1083,8 @@
   // 株の部品 (30/31)。銘柄は面ごとの st.stk[0|1]、f の bit2 = 値を変化率にする。
   // パレットに出す「変化率」版。部品の種別は 30/31 のまま、置いた時に f の bit2 を立てるだけ
   // (実機の契約は変わらない)。野球と同じで、値段と変化率を別々に置ける。
+  const STOCK_TIP = 'Drop one on the dial, then type its ticker in Selected part.';
+  const STOCK_PCT_TIP = 'Shows the change (%) instead of the price. Drop one on the dial, then type its ticker in Selected part.';
   const PAL_PCT = { 90: { t: 30, name: 'Stock 1 %' }, 91: { t: 31, name: 'Stock 2 %' } };
   // サッカー用のパレット。部品そのものは USA Sports と同じ 32-35 で、置いた時に
   // その枠 (Game 1 / Game 2) のリーグをサッカー側へ寄せるだけ。チーム未選択の枠にしか触らない。
@@ -2088,7 +2094,8 @@
     else if (d.crew) p.innerHTML = `<span class="ico" style="color:#1D222B"><svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     else if (d.line != null) p.innerHTML = `<span class="ico" style="color:#1D222B">${lineArt(d.line, 22, 3).svg}</span><span class="nm">Line</span><span class="hint">${t}</span>`;
     else p.innerHTML = `<span class="ico">${d.noPal ? '' : d.icon && !TEXT_ICON[d.icon] ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${TEXT_ICON[d.icon] || d.sample || ''}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
-    if (d.crewOne) p.title = 'One part is one crew member. After you place it, pick Crew 1, 2 or 3 and what to show (distance, heart rate or steps). Needs PulseLink on the same watch. Who is Crew 1, 2 and 3 is set in PulseLink.';
+    if (d.crewOne) p.dataset.tip = 'One part is one crew member. After you place it, pick Crew 1, 2 or 3 and what to show (distance, heart rate or steps). Needs PulseLink on the same watch. Who is Crew 1, 2 and 3 is set in PulseLink.';
+    if (d.stk != null) p.dataset.tip = STOCK_TIP;   // Stock 1 / Stock 2
     if (!d.dial) p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +t));
     $('parts-' + d.grp).appendChild(p);
   }
@@ -2103,6 +2110,7 @@
     const p = document.createElement('div');
     p.className = 'part'; p.dataset.t = key;
     p.innerHTML = `<span class="ico"><span style="font:500 13px var(--watch);white-space:nowrap">%</span></span><span class="nm">${d.name}</span><span class="hint">${d.t}</span>`;
+    p.dataset.tip = STOCK_PCT_TIP;
     p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +key));
     $('parts-mkt').appendChild(p);
   }
@@ -4956,8 +4964,9 @@
   //   形のボタンを次の形のために空ける。写真は元のまま (Photos には置かない)。固めた形は Reset frame / Reset image で消える。
   const FL_MAX = 12;
   function renderFlatNote() {
-    const el = $('flatnote'); if (!el) return;
-    el.textContent = IMG.fl.length ? `${IMG.fl.length} shape${IMG.fl.length > 1 ? 's' : ''} fixed under the ones you are editing — Reset frame lets them go.` : 'Fixes the shapes you have so you can add another one on top.';
+    const el = $('imgflat'); if (!el) return;   // 説明は吹き出し (data-tip)。固めた数も出す
+    el.dataset.tip = 'Fixes the two shapes (with their Add or Cut) as one frame and frees the shape buttons for the next shape. Repeat for as many shapes as you like. Reset frame lets the fixed shapes go.'
+      + (IMG.fl.length ? ` Now ${IMG.fl.length} shape${IMG.fl.length > 1 ? 's' : ''} fixed under the ones you are editing.` : '');
   }
   $('imgflat').addEventListener('click', () => {
     if (!hasSource()) return setStatus('imgstatus', 'Nothing to flatten yet — pick a photo or a fill color and a shape first.', 'err');
@@ -4969,6 +4978,7 @@
     renderFlatNote(); redrawImg();
     setStatus('imgstatus', `Flattened — ${IMG.fl.length} fixed. Pick the next shape (Shift+click for a second one).`, 'ok');
   });
+  renderFlatNote();   // 最初から吹き出しの説明を付ける
   $('imgreset').addEventListener('click', () => { IMG.panX = 0; IMG.panY = 0; IMG.zoom = 1; IMG.size = 100; IMG.size2 = null; IMG.cx = 160; IMG.cy = 160; IMG.cx2 = null; IMG.cy2 = null; IMG.rot = 0; IMG.rot2 = null; IMG.shape2 = null; IMG.fl = []; setShape(IMG.shape, null);
     $('imgzoom').value = '1'; renderFlatNote(); redrawImg(); });
   // colors
@@ -5369,6 +5379,26 @@
       let lastW = stage.offsetWidth;
       new ResizeObserver(() => { const w = stage.offsetWidth; if (w && !lastW) render(); lastW = w; }).observe(stage);
     }
+  })();
+  // 吹き出し (data-tip): カーソルを置くと大きな文字で説明を出す。画面からはみ出さないよう、要素の下か上に置く。
+  (() => {
+    const tip = document.createElement('div'); tip.id = 'tip'; document.body.appendChild(tip);
+    let timer = null, cur = null;
+    const hide = () => { clearTimeout(timer); timer = null; cur = null; tip.style.display = 'none'; };
+    const show = (el) => {
+      tip.textContent = el.dataset.tip; tip.style.display = 'block';
+      const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight, m = 8;
+      let x = Math.min(Math.max(m, r.left), innerWidth - w - m);
+      let y = r.bottom + 8; if (y + h > innerHeight - m) y = Math.max(m, r.top - h - 8);
+      tip.style.left = x + 'px'; tip.style.top = y + 'px';
+    };
+    document.addEventListener('mouseover', (ev) => {
+      const el = ev.target.closest && ev.target.closest('[data-tip]');
+      if (!el || el === cur) return;
+      hide(); cur = el; timer = setTimeout(() => show(el), 250);
+    });
+    document.addEventListener('mouseout', (ev) => { const el = ev.target.closest && ev.target.closest('[data-tip]'); if (el && !el.contains(ev.relatedTarget)) hide(); });
+    ['pointerdown', 'scroll', 'keydown'].forEach((t) => document.addEventListener(t, hide, true));
   })();
   // ?s=xxxx-xxxx で開かれたら、共有された文字盤を上に出す (2026-09-21)
   (() => { const m = /[?&]s=([a-z0-9]{4}-[a-z0-9]{4})/i.exec(location.search); if (m) openSharedLink(m[1].toLowerCase()); })();

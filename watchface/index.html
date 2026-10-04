@@ -40,6 +40,9 @@
   aside.right .stp input { flex: 1 1 auto; width: auto; min-width: 0; }
   aside.right .group > .lbl { font-size: 12px; }
   aside.right .ctl { gap: 10px; }
+  /* Style: 設定ごとに「ラベルの下にボタン」で縦に積み、ボタンの左端をそろえる (ラベル横並びと折り返しが混ざって左端がまちまちだった、2026-10-04) */
+  #stylegrp > .ctl { flex-direction: column; align-items: flex-start; gap: 4px; min-height: 0; }
+  #stylegrp .cb.units { flex-wrap: wrap; }
   /* Selected sits in the bar above the dial: its fields flow in a row */
   #selgrp { flex: 1 1 560px; }
   #insp .group { flex-direction: row; flex-wrap: wrap; gap: 10px 22px; align-items: center; align-content: flex-start; }
@@ -365,7 +368,7 @@
          background: #232A36; color: var(--ink); border: 1px solid var(--line-2); border-radius: 8px;
          font: 400 16px/1.55 var(--sans); box-shadow: 0 6px 20px rgba(0, 0, 0, .45); pointer-events: none; }
   #elcount { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
-  .pcnt { font-family: var(--mono); font-size: 12px; color: var(--ink-3); text-transform: none; letter-spacing: 0; }
+  .pcnt { font-family: var(--mono); font-size: 12px; color: var(--ink-3); text-transform: none; letter-spacing: 0; white-space: nowrap; }
   .pcnt.full { color: var(--accent); font-weight: 700; }
   #limitToast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 9998; display: none; max-width: min(560px, calc(100vw - 32px)); box-sizing: border-box;
                 padding: 14px 18px; background: #3A1D22; color: #FFE3E3; border: 1px solid var(--danger); border-radius: 10px; font: 500 16px/1.5 var(--sans); box-shadow: 0 8px 28px rgba(0, 0, 0, .55); cursor: pointer; }
@@ -401,7 +404,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 18:55</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 19:18</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -563,10 +566,7 @@
   </section>
 
   <aside class="right">
-    <div class="group" title="Text height in px on a 454 dial: S / M / L. Sent to the watch with the layout."><span class="lbl">Text size (px)</span><div class="ctl"><span class="pxs" id="tx"></span></div></div>
-    <div class="group" title="Clock height in px on a 454 dial: S / M / L."><span class="lbl">Time size (px)</span><div class="ctl"><span class="pxs" id="tm"></span></div></div>
-    <div class="group" title="Icon height in px on a 454 dial: S / M / L. Independent of the text size — use it to balance the look on devices whose text is fixed to S/M/L."><span class="lbl">Icon size (px)</span><div class="ctl"><span class="pxs" id="ic"></span><span class="stp" title="Move every icon up or down against the numbers (px on a 454 dial, + is down)."><span class="sml" title="Move every icon up or down against the numbers">Up&#8597;</span><button class="step" type="button" id="iodn">&minus;</button><input type="number" id="io" min="-20" max="20"><button class="step" type="button" id="ioup">+</button></span></div></div>
-    <div class="group" title="Faux bold: the watch has no bold Roboto, so the text is drawn again with a small offset. Bold 2 is heavier."><span class="lbl">Style</span><div class="ctl">Bold <span class="cb units" id="bold"></span></div>
+    <div class="group" id="stylegrp" title="Faux bold: the watch has no bold Roboto, so the text is drawn again with a small offset. Bold 2 is heavier."><span class="lbl">Style</span><div class="ctl">Bold <span class="cb units" id="bold"></span></div>
       <div class="ctl" title="Which color means a rising price. Green up is the US habit, red up the Japanese one.">Up is <span class="cb units" id="upcol"></span></div>
       <div class="ctl" title="Unit for the Wind part. The same choice as MarketWatch and PulseLink; m/s is their default too.">Wind <span class="cb units" id="windunit"></span></div>
       <div class="ctl" title="Unit for Weather, Today hi/lo and Next 3h.">Temp <span class="cb units" id="tempunit"></span></div>
@@ -577,6 +577,9 @@
     <div class="group"><span class="lbl">Markets <span id="pcnt-mkt" class="cnt pcnt"></span></span><div class="parts" id="parts-mkt"></div></div>
     <div class="group"><span class="lbl">USA Sports <span id="pcnt-bb" class="cnt pcnt"></span></span><div class="parts" id="parts-bb"></div></div>
     <div class="group"><span class="lbl">Soccer <span id="pcnt-soc" class="cnt pcnt"></span></span><div class="parts" id="parts-soc"></div></div>
+    <div class="group" title="Text height in px on a 454 dial: S / M / L. Sent to the watch with the layout."><span class="lbl">Text size (px)</span><div class="ctl"><span class="pxs" id="tx"></span></div></div>
+    <div class="group" title="Icon height in px on a 454 dial: S / M / L. Independent of the text size — use it to balance the look on devices whose text is fixed to S/M/L."><span class="lbl">Icon size (px)</span><div class="ctl"><span class="pxs" id="ic"></span><span class="stp" title="Move every icon up or down against the numbers (px on a 454 dial, + is down)."><span class="sml" title="Move every icon up or down against the numbers">Up&#8597;</span><button class="step" type="button" id="iodn">&minus;</button><input type="number" id="io" min="-20" max="20"><button class="step" type="button" id="ioup">+</button></span></div></div>
+    <div class="group" title="Clock height in px on a 454 dial: S / M / L."><span class="lbl">Time size (px)</span><div class="ctl"><span class="pxs" id="tm"></span></div></div>
     <div class="group"><span class="lbl">Elements <span id="elcount" class="cnt"></span></span><div class="list" id="list"></div></div>
   </aside>
 </main>
@@ -1567,9 +1570,16 @@
   const isSel = (i) => selSet.has(i);
   const selIdx = () => [...selSet].filter((i) => st.el[i]).sort((a, b) => a - b);
   function clearSel() { sel = -1; selSet.clear(); }
-  // 新しく置く部品は一番奥 (st.el の先頭 = 一番下) へ。後から置いた部品が、先にある部品を隠さない (2026-10-03 ユーザー指示)。
-  //   番号は 1 つずつずれるので、選択は先頭 (0) にする。部品の番号を持つ他の状態は無い (銘柄・メーターは種別で持つ)。
+  // 縁 (Rim) は一番奥 (st.el の先頭 = 一番下) へ (2026-10-03 ユーザー指示)。番号は 1 つずつずれるので、選択は先頭 (0) にする。
+  //   部品の番号を持つ他の状態は無い (銘柄・メーターは種別で持つ)。
   function placeBack(e) { st.el.unshift(e); setSel(0, false); }
+  // 新しく置く部品は一番手前。ただし針 (Hands) の下 (2026-10-04 ユーザー指示。「一番奥」は置いた後の移動で不都合が出たため取りやめ)。
+  //   針は数字の下に隠れないよう常に最前面。針が無ければ一番手前 (末尾)。
+  function placeFront(e) {
+    const hi = st.el.findIndex((x) => TYPES[x[0]] && TYPES[x[0]].dial && TYPES[x[0]].grp === 'hands');
+    const at = hi < 0 ? st.el.length : hi;
+    st.el.splice(at, 0, e); setSel(at, false);
+  }
   function setSel(i, add) {
     if (add) { if (selSet.has(i)) { selSet.delete(i); sel = selSet.size ? [...selSet].pop() : -1; } else { selSet.add(i); sel = i; } }
     else { selSet.clear(); selSet.add(i); sel = i; }
@@ -2833,7 +2843,7 @@
         }
         const e = st.park.splice(t.i, 1)[0];
         e[1] = clamp(p.x); e[2] = clamp(p.y);
-        placeBack(e); commit(); return;
+        placeFront(e); commit(); return;
       }
       if (!t.moved) { render(); return; }          // 押しただけ
       const [x, y] = trayPoint(e2);                // 騨置き場の中で移動
@@ -3626,7 +3636,7 @@
   function updatePalCounts() {
     const stocks = new Set(st.el.filter((e) => isStock(e[0])).map((e) => TYPES[e[0]].stk)).size;
     const games = new Set(st.el.filter((e) => isBall(e[0])).map((e) => bbSlot(e[0]))).size;
-    const set = (id, n, max, what, tip) => { const el = $(id); if (!el) return; el.textContent = `${n} / ${max} ${what}`; el.classList.toggle('full', n >= max); el.title = tip; };
+    const set = (id, n, max, what, tip) => { const el = $(id); if (!el) return; el.textContent = `${n}/${max} ${what}`; el.classList.toggle('full', n >= max); el.title = tip; };
     set('pcnt-mkt', stocks, STOCK_SLOTS, 'stocks', `The watch holds ${STOCK_SLOTS} stocks. A price and a change % of the same stock count once.`);
     set('pcnt-bb', games, GAME_SLOTS, 'games', `The watch follows ${GAME_SLOTS} games, shared by USA Sports and Soccer. A score and a status of the same game count once.`);
     set('pcnt-soc', games, GAME_SLOTS, 'games', `The watch follows ${GAME_SLOTS} games, shared by USA Sports and Soccer. A score and a status of the same game count once.`);
@@ -3671,7 +3681,7 @@
             : isCrewOne(t) ? [t, 500, 500, 0, 1, 0, 1, -1, 1, 1]   // Crew 1・距離、名前と値、並びは名前左。誰か・値は置いた後に選ぶ
             : isCrew(t) ? [t, 500, 500, 0, 1, 0, 1, -1, 3, 1]
             : [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, (d.icon ? 1 : 0) | (pct ? 4 : 0) | (t === 2 ? F_DOW : 0), -1];
-    placeBack(e);
+    placeFront(e);
     if (center) { const [cx, cy] = freeSpot(); e[1] = cx; e[2] = cy; render(); commit(); return; }
     const p = stagePoint(ev); e[1] = clamp(p.x); e[2] = clamp(p.y);
     drag = { i: sel, items: [{ i: sel, dx: 0, dy: 0 }], fromPalette: true, moved: true };

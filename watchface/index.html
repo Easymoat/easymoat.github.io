@@ -394,7 +394,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 15:43</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 16:04</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -4495,7 +4495,7 @@
     const other = j.dev && mine && j.dev !== mine;
     body.innerHTML = `<div class="item" style="max-width:260px"><div class="mini"></div><span class="cap"><b>${(j.name || 'Untitled').replace(/</g, '&lt;')}</b></span>
         </div>
-      ${j.by ? `<div class="ctl" style="font-size:17px;color:var(--ink)">Shared by <b>${String(j.by).replace(/</g, '&lt;')}</b>${j.orig && j.orig !== j.by ? ` <span class="muted" style="font-size:15px">· originally by ${String(j.orig).replace(/</g, '&lt;')}</span>` : ''}</div>` : ''}
+      ${j.by ? `<div class="ctl" style="font-size:17px;color:var(--ink)">Shared by <b>${String(j.by).replace(/</g, '&lt;')}</b>${j.by_id ? ` <span style="font-family:var(--mono);font-size:15px">· ID ${String(j.by_id).replace(/</g, '&lt;')}</span>` : ''}${j.orig && j.orig !== j.by ? ` <span class="muted" style="font-size:15px">· originally by ${String(j.orig).replace(/</g, '&lt;')}</span>` : ''}</div>` : ''}
       <div class="ctl"><span class="muted">${j.kind === 'none' ? 'no image' : 'with a picture'} · added ${j.adds} time${j.adds === 1 ? '' : 's'}</span></div>
       ${j.dev ? `<div class="ctl"><span class="muted">Made for ${String(j.dev).replace(/</g, '&lt;')}${other ? ' — ' + devNote(j.devk) : ''}</span></div>` : ''}
       <div class="ctl" style="flex-wrap:wrap;gap:10px"><span class="muted">Your Device ID</span><input type="text" id="shareid" placeholder="XXXX-XXXX" style="width:140px" value="${devId()}">

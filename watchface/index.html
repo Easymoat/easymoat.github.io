@@ -365,6 +365,13 @@
          background: #232A36; color: var(--ink); border: 1px solid var(--line-2); border-radius: 8px;
          font: 400 16px/1.55 var(--sans); box-shadow: 0 6px 20px rgba(0, 0, 0, .45); pointer-events: none; }
   #elcount { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+  .pcnt { font-family: var(--mono); font-size: 12px; color: var(--ink-3); text-transform: none; letter-spacing: 0; }
+  .pcnt.full { color: var(--accent); font-weight: 700; }
+  #limitToast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 9998; display: none; max-width: min(560px, calc(100vw - 32px)); box-sizing: border-box;
+                padding: 14px 18px; background: #3A1D22; color: #FFE3E3; border: 1px solid var(--danger); border-radius: 10px; font: 500 16px/1.5 var(--sans); box-shadow: 0 8px 28px rgba(0, 0, 0, .55); cursor: pointer; }
+  #limitToast b { color: #fff; }
+  #elcount.flash { animation: elflash .9s ease-out 2; }
+  @keyframes elflash { 0%, 100% { background: transparent; } 40% { background: var(--danger); color: #fff; } }
   #elcount.over { color: var(--danger); font-weight: 700; }
   #elcount.heavy { color: var(--accent); }
   .list { display: flex; flex-direction: column; gap: 3px; }   /* grows with the dial: every element stays visible */
@@ -394,7 +401,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 16:56</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 18:55</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -438,7 +445,7 @@
       <div class="tier"><span class="name">A dial was shared with you</span><span class="what">Add it to your collection, then send it to your watch when you like it</span></div>
       <div id="sharebody"></div>
     </div>
-    <div class="tier"><span class="num">1</span><span class="name">Layout</span><span class="what">Build the dial: parts, sizes, colors</span></div>
+    <div class="tier" id="tier-layout"><span class="num">1</span><span class="name">Layout</span><span class="what">Build the dial: parts, sizes, colors</span></div>
     <div class="stagebar">
       <div class="devrow">
       <div class="grp"><span class="lbl">Device</span><div class="ctl"><select id="dev"></select></div></div>
@@ -567,12 +574,13 @@
       <div class="ctl" title="Unit for the Altitude part (m / ft) and the Crew part (km / mi).">Distance <span class="cb units" id="distunit"></span></div>
       <div class="ctl" title="Clock format. Device = follow the watch's own setting.">Hours <span class="cb units" id="hourfmt"></span></div>
       <div class="ctl" title="What a long press on a weather part opens. In face = the dial redraws as a detail screen (now / hourly / daily). Garmin = the watch's own weather screen (scrolls freely, no time limit, Garmin's own look).">Weather detail <span class="cb units" id="wxdetail"></span></div></div>
-    <div class="group"><span class="lbl">Markets</span><div class="parts" id="parts-mkt"></div></div>
-    <div class="group"><span class="lbl">USA Sports</span><div class="parts" id="parts-bb"></div></div>
-    <div class="group"><span class="lbl">Soccer</span><div class="parts" id="parts-soc"></div></div>
+    <div class="group"><span class="lbl">Markets <span id="pcnt-mkt" class="cnt pcnt"></span></span><div class="parts" id="parts-mkt"></div></div>
+    <div class="group"><span class="lbl">USA Sports <span id="pcnt-bb" class="cnt pcnt"></span></span><div class="parts" id="parts-bb"></div></div>
+    <div class="group"><span class="lbl">Soccer <span id="pcnt-soc" class="cnt pcnt"></span></span><div class="parts" id="parts-soc"></div></div>
     <div class="group"><span class="lbl">Elements <span id="elcount" class="cnt"></span></span><div class="list" id="list"></div></div>
   </aside>
 </main>
+<div id="limitToast" role="alert"></div>
 <footer class="credits">Icons: Material Design Icons by Pictogrammers and Material Symbols by Google (Apache 2.0)</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/rgbquant@1.1.2/src/rgbquant.js"></script>
@@ -1084,8 +1092,8 @@
   // 株の部品 (30/31)。銘柄は面ごとの st.stk[0|1]、f の bit2 = 値を変化率にする。
   // パレットに出す「変化率」版。部品の種別は 30/31 のまま、置いた時に f の bit2 を立てるだけ
   // (実機の契約は変わらない)。野球と同じで、値段と変化率を別々に置ける。
-  const STOCK_TIP = 'Drop one on the dial, then type its ticker in Selected part.';
-  const STOCK_PCT_TIP = 'Shows the change (%) instead of the price. Drop one on the dial, then type its ticker in Selected part.';
+  const STOCK_TIP = 'Drop one on the dial, then type its ticker in Selected part. The watch holds 2 stocks; each new Stock takes the next free one.';
+  const STOCK_PCT_TIP = 'Shows the change (%) instead of the price. Drop one on the dial, then type its ticker in Selected part. It takes the next stock that has no % yet.';
   const PAL_PCT = { 90: { t: 30, name: 'Stock 1 %' }, 91: { t: 31, name: 'Stock 2 %' } };
   // サッカー用のパレット。部品そのものは USA Sports と同じ 32-35 で、置いた時に
   // その枠 (Game 1 / Game 2) のリーグをサッカー側へ寄せるだけ。チーム未選択の枠にしか触らない。
@@ -2080,8 +2088,12 @@
       if (M) M[0].forEach((c) => { o += arc(c, M[1], 10.4, 3.6); }); }
     return `<svg width="26" height="26" viewBox="0 0 26 26" style="display:block">${o}</svg>`;
   };
+  // Markets / USA Sports / Soccer の札は 1 種類 1 枚 (2026-10-04 ユーザー指示)。Stock 1・2 と Game 1-4 を並べず、置く時に空いている枠を選ぶ。
+  const PAL_HIDE = new Set([31, 34, 35, 36, 37, 38, 39]);
+  const PAL_NAME = { 30: 'Stock', 32: 'Game score', 33: 'Game status' };
   for (const [t, d] of Object.entries(TYPES)) {
     if (d.hidden) continue;   // retired parts stay renderable but are not offered
+    if (PAL_HIDE.has(+t)) continue;
     const p = document.createElement('div');
     p.className = 'part'; p.dataset.t = t;
     if (d.dial) {
@@ -2098,28 +2110,31 @@
     else if (d.line != null) p.innerHTML = `<span class="ico">${lineArt(d.line, 22, 3).svg}</span><span class="nm">Line</span><span class="hint">${t}</span>`;
     else p.innerHTML = `<span class="ico">${d.noPal ? '' : d.icon && !TEXT_ICON[d.icon] ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${TEXT_ICON[d.icon] || d.sample || ''}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     if (d.crewOne) p.dataset.tip = 'One part is one crew member. After you place it, pick Crew 1, 2 or 3 and what to show (distance, heart rate or steps). Needs PulseLink on the same watch. Who is Crew 1, 2 and 3 is set in PulseLink.';
-    if (d.stk != null) p.dataset.tip = STOCK_TIP;   // Stock 1 / Stock 2
+    if (d.stk != null) p.dataset.tip = STOCK_TIP;   // Stock
+    if (PAL_NAME[t]) { const nm = p.querySelector('.nm'); if (nm) nm.textContent = PAL_NAME[t]; }
     if (!d.dial) p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +t));
     $('parts-' + d.grp).appendChild(p);
   }
   for (const [key, d] of Object.entries(PAL_SOC)) {   // Soccer: 部品は 32-35 と同じ
+    if (+key > 93) continue;   // 札は Game score / Game status の 2 枚だけ
     const p = document.createElement('div');
     p.className = 'part'; p.dataset.t = key;
-    p.innerHTML = `<span class="ico"><span style="font:500 13px var(--watch);white-space:nowrap">${d.t % 2 === 0 ? '1-1' : "67'"}</span></span><span class="nm">${d.name}</span><span class="hint">${d.t}</span>`;
+    p.innerHTML = `<span class="ico"><span style="font:500 13px var(--watch);white-space:nowrap">${d.t % 2 === 0 ? '1-1' : "67'"}</span></span><span class="nm">${+key === 92 ? 'Game score' : 'Game status'}</span><span class="hint">${d.t}</span>`;
     p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +key));
     $('parts-soc').appendChild(p);
   }
-  for (const [key, d] of Object.entries(PAL_PCT)) {   // Stock 1 % / Stock 2 %
+  for (const [key, d] of Object.entries(PAL_PCT)) {   // Stock % (札は 1 枚、置く時に空いている枠)
+    if (+key !== 90) continue;
     const p = document.createElement('div');
     p.className = 'part'; p.dataset.t = key;
-    p.innerHTML = `<span class="ico"><span style="font:500 13px var(--watch);white-space:nowrap">%</span></span><span class="nm">${d.name}</span><span class="hint">${d.t}</span>`;
+    p.innerHTML = `<span class="ico"><span style="font:500 13px var(--watch);white-space:nowrap">%</span></span><span class="nm">Stock %</span><span class="hint">${d.t}</span>`;
     p.dataset.tip = STOCK_PCT_TIP;
     p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +key));
     $('parts-mkt').appendChild(p);
   }
-  // Markets の並びを Stock 1 / Stock 1 % / Stock 2 / Stock 2 % にする。
+  // Markets の並びを Stock / Stock % にする。
   // 価格は TYPES のループ、変化率はその後のループで作るので、作ったあとに並べ替える。
-  ['30', '90', '31', '91'].forEach((t) => {
+  ['30', '90'].forEach((t) => {
     const el = $('parts-mkt').querySelector(`.part[data-t="${t}"]`);
     if (el) $('parts-mkt').appendChild(el);
   });
@@ -2814,7 +2829,7 @@
       const p = stagePoint(e2);
       if (p.inside) {                              // 文字盤へ戻す
         if (!canAdd(st.park[t.i][0])) {
-          render(); return setStatus('shelfstatus', FULL_MSG(st.park[t.i][0]), 'err');
+          render(); return limitNotice(FULL_MSG(st.park[t.i][0]), true);
         }
         const e = st.park.splice(t.i, 1)[0];
         e[1] = clamp(p.x); e[2] = clamp(p.y);
@@ -2828,6 +2843,7 @@
     window.addEventListener('pointerup', end); window.addEventListener('pointercancel', end);
   }
   function renderList() {
+    updatePalCounts();
     const w = loadOf(st.el), ec = $('elcount');
     if (ec) {
       ec.textContent = `load ${fmtLoad(w)} / ${LOAD_MAX}`;
@@ -3559,14 +3575,14 @@
   // 針と縁は入 / 切。同じ組の中では 1 つだけ (針を 2 種類同時には置かない)。
   const DIAL_MAX = { rim: 2, hands: 1 };   // 縁は 2 つまで重ねられる (針は 1 つ)
   function toggleDialPart(t) {
-    if (!canAdd(t) && !st.el.some((x) => x[0] === t)) { setStatus('shelfstatus', FULL_MSG(t), 'err'); return; }
+    if (!canAdd(t) && !st.el.some((x) => x[0] === t)) { limitNotice(FULL_MSG(t), true); return; }
     const grp = TYPES[t].grp, was = st.el.findIndex((e) => e[0] === t);
     if (was >= 0) { st.el.splice(was, 1); clearSel(); commit(); return; }   // もう一度押したら外す
     const same = st.el.filter((e) => TYPES[e[0]] && TYPES[e[0]].dial && TYPES[e[0]].grp === grp);
     const max = DIAL_MAX[grp] || 1;
     if (same.length >= max) {
       if (max === 1) { st.el = st.el.filter((e) => same.indexOf(e) < 0); }   // 針は 1 つ = 入れ替え
-      else { setStatus('shelfstatus', `${grp === 'rim' ? 'Rim' : 'Hands'} can be stacked ${max} deep — take one off first.`, 'err'); return; }
+      else { limitNotice(`${grp === 'rim' ? 'Rim' : 'Hands'} can be stacked ${max} deep — take one off first.`); return; }
     }
     // 縁は一番奥へ。針は数字の下に隠れないよう今までどおり一番手前 (2026-10-03)
     const dial = [t, 500, 500, 0, 1, 0, 0, -1];
@@ -3579,20 +3595,69 @@
     });
   }
   let PAL_PEND = null;                 // 押したところ。動かすか離すまで部品は作らない
+  // Stock / Game の札は 1 枚。置く時に空いている枠を選ぶ。{ t } = 置く部品の種類、{ err } = 置けない理由、{} = 札の番号どおり。
+  const STOCK_SLOTS = 2, GAME_SLOTS = 4;
+  function palTarget(key) {
+    const pct = PAL_PCT[key], soc = PAL_SOC[key];
+    if (key === 30 || pct) {
+      const want = !!pct;
+      for (let sl = 0; sl < STOCK_SLOTS; sl++) {
+        if (!st.el.some((e) => isStock(e[0]) && TYPES[e[0]].stk === sl && !!(e[6] & 4) === want)) return { t: 30 + sl };
+      }
+      return { err: `Both stocks already show ${want ? 'their change %' : 'their price'} on this dial — the watch holds ${STOCK_SLOTS} stocks. Take a Stock off first to add another.` };
+    }
+    if (key === 32 || key === 33 || key === 92 || key === 93) {
+      const status = key === 33 || key === 93, isSocTile = key >= 92;
+      const lacking = [];   // この部品がまだ無い枠
+      for (let sl = 0; sl < GAME_SLOTS; sl++) { const t = 32 + 2 * sl + (status ? 1 : 0); if (!st.el.some((e) => e[0] === t)) lacking.push([sl, t]); }
+      // 1 順目 = 同じ競技の枠 (スコアと状況が同じ試合に並ぶ)。2 順目 = チーム未選択の枠 (置くと競技を寄せる)
+      const same = lacking.find(([sl]) => isSoccer(bbLg(sl)) === isSocTile && (bbTm(sl) || st.el.some((e) => isBall(e[0]) && bbSlot(e[0]) === sl)));
+      if (same) return { t: same[1] };
+      const open = lacking.find(([sl]) => !bbTm(sl) && !st.el.some((e) => isBall(e[0]) && bbSlot(e[0]) === sl)) || lacking.find(([sl]) => !bbTm(sl));
+      if (open) return { t: open[1] };
+      const free = lacking.length;
+      return { err: free === 0
+        ? `All ${GAME_SLOTS} games already have a ${status ? 'status' : 'score'} on this dial — the watch follows ${GAME_SLOTS} games, shared by USA Sports and Soccer. Take one off first to add another.`
+        : `The free game slots already follow ${isSocTile ? 'USA Sports' : 'Soccer'} teams. Change a game's team in Selected part, or take a ${status ? 'status' : 'score'} off first.` };
+    }
+    return {};
+  }
+  // 使用数 (札の見出しに出す)。同じ株・同じ試合の価格と変化率、スコアと状況は 1 つと数える。
+  function updatePalCounts() {
+    const stocks = new Set(st.el.filter((e) => isStock(e[0])).map((e) => TYPES[e[0]].stk)).size;
+    const games = new Set(st.el.filter((e) => isBall(e[0])).map((e) => bbSlot(e[0]))).size;
+    const set = (id, n, max, what, tip) => { const el = $(id); if (!el) return; el.textContent = `${n} / ${max} ${what}`; el.classList.toggle('full', n >= max); el.title = tip; };
+    set('pcnt-mkt', stocks, STOCK_SLOTS, 'stocks', `The watch holds ${STOCK_SLOTS} stocks. A price and a change % of the same stock count once.`);
+    set('pcnt-bb', games, GAME_SLOTS, 'games', `The watch follows ${GAME_SLOTS} games, shared by USA Sports and Soccer. A score and a status of the same game count once.`);
+    set('pcnt-soc', games, GAME_SLOTS, 'games', `The watch follows ${GAME_SLOTS} games, shared by USA Sports and Soccer. A score and a status of the same game count once.`);
+  }
+  // 上限で置けない時は、黙って受け付けないのではなく目に見える所へ出す (2026-10-04 ユーザー指示)。
+  // 状態行 (Collection の所) は画面の外のことが多いので、画面下に札を出す。クリックで閉じる。
+  let LIMIT_T = null;
+  { const lt = $('limitToast'); if (lt) lt.addEventListener('click', () => { lt.style.display = 'none'; }); }
+  function limitNotice(msg, flashLoad) {
+    setStatus('shelfstatus', msg, 'err');
+    const el = $('limitToast'); if (!el) return;
+    el.textContent = msg; el.style.display = 'block';
+    clearTimeout(LIMIT_T); LIMIT_T = setTimeout(() => { el.style.display = 'none'; }, 8000);
+    if (flashLoad) { const ec = $('elcount'); if (ec) { ec.classList.remove('flash'); void ec.offsetWidth; ec.classList.add('flash'); } }
+  }
   function startPaletteDrag(ev, t) {
-    const realT = (PAL_PCT[t] || {}).t != null ? PAL_PCT[t].t : t;   // 置かれる部品の種類 (絵札の見出しは別の番号を持つ)
+    const tg = palTarget(t); if (tg.err) { limitNotice(tg.err); return; }
+    const realT = tg.t != null ? tg.t : (PAL_PCT[t] || {}).t != null ? PAL_PCT[t].t : t;   // 置かれる部品の種類 (絵札の見出しは別の番号を持つ)
     const wantLine = isLine(t) || isRect(t) || isLine(realT);
-    if (!canAdd(realT)) { setStatus('shelfstatus', FULL_MSG(realT), 'err'); return; }
-    if (wantLine && st.el.length - elCount(st.el) >= LINE_MAX) { setStatus('shelfstatus', `That is ${LINE_MAX} lines — enough for one dial.`, 'err'); return; }
-    PAL_PEND = { t, x: ev.clientX, y: ev.clientY, id: ev.pointerId };
+    if (!canAdd(realT)) { limitNotice(FULL_MSG(realT), true); return; }
+    if (wantLine && st.el.length - elCount(st.el) >= LINE_MAX) { limitNotice(`That is ${LINE_MAX} lines — enough for one dial.`); return; }
+    PAL_PEND = { t, slotT: tg.t, x: ev.clientX, y: ev.clientY, id: ev.pointerId };
   }
   // 指 / マウスが動いた = 運ぶ。動かずに離した = 中央に置く。どちらも「作る」のはここ。
   function palSpawn(ev, center) {
-    let t = PAL_PEND.t; PAL_PEND = null;
+    let t = PAL_PEND.t; const slotT = PAL_PEND.slotT; PAL_PEND = null;
     let d = TYPES[t] || TYPES[(PAL_PCT[t] || {}).t] || TYPES[(PAL_SOC[t] || {}).t];
     const pct = PAL_PCT[t], soc = PAL_SOC[t];    // 「変化率」版は種別 30/31 + bit2、サッカーは 32-35 と同じ
     if (pct) { t = pct.t; d = TYPES[t]; }
     if (soc) { t = soc.t; d = TYPES[t]; }
+    if (slotT != null) { t = slotT; d = TYPES[t]; }   // 空いている枠 (Stock 1/2・Game 1-4)
     if (isBall(t)) {                             // チーム未選択の枠だけ、置いた群に合わせてリーグを寄せる
       const sl = bbSlot(t);
       if (!bbTm(sl) && isSoccer(bbLg(sl)) !== !!soc) setBb(sl, { lg: soc ? SOC_DEF : 'mlb', tm: 0 });
@@ -4540,7 +4605,8 @@
       imgSrc(full.url + '&c=1').then((u) => { if (u.startsWith('blob:')) img.crossOrigin = null; img.src = u; });
     }
     setStatus('shelfstatus', `Loaded ${full.name || 'item ' + n} into the editors.`, 'ok');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // 一番上ではなく 1 Layout の見出しへ (上に共有の箱などが出ていることがある、2026-10-04 ユーザー指示)
+    const lt = $('tier-layout'); if (lt) lt.scrollIntoView({ behavior: 'smooth', block: 'start' }); else window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   // Palette of a ≤32-color PNG = its distinct opaque colors (what the watch's makeImageRequest needs).
   function paletteOfCanvas(cv) {

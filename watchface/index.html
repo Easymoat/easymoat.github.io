@@ -41,7 +41,13 @@
   aside.right .group > .lbl { font-size: 12px; }
   aside.right .ctl { gap: 10px; }
   /* Style: 設定ごとに「ラベルの下にボタン」で縦に積み、ボタンの左端をそろえる (ラベル横並びと折り返しが混ざって左端がまちまちだった、2026-10-04) */
-  #stylegrp > .ctl { flex-direction: column; align-items: flex-start; gap: 4px; min-height: 0; padding-left: 15px; }   /* 見出し (▾ STYLE) の文字の位置に合わせて字下げ。矢印の真下には置かない */
+  #stylegrp > .ctl { flex-direction: column; align-items: flex-start; gap: 4px; min-height: 0; padding-left: 15px; }
+  /* 右の列は全グループ、中身を見出し (▾ の右の文字) の位置へ字下げする。矢印の真下に札や入力を置かない (2026-10-04 ユーザー指示)。
+     見出しは折り返さない (USA SPORTS が 2 行になり、矢印・使用数・目の位置がずれた) */
+  aside.right .group.fold > :not(.lbl) { margin-left: 15px; }
+  aside.right .group.fold > .lbl { flex-wrap: nowrap; white-space: nowrap; }
+  aside.right .group.fold > .lbl .pcnt { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  #stylegrp > .ctl { margin-left: 0 !important; }   /* Style は下の字下げ (padding) で持つ。二重にしない */   /* 見出し (▾ STYLE) の文字の位置に合わせて字下げ。矢印の真下には置かない */
   #stylegrp .cb.units { flex-wrap: wrap; }
   /* Selected sits in the bar above the dial: its fields flow in a row */
   #selgrp { flex: 1 1 560px; }
@@ -404,7 +410,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 19:30</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 19:34</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>

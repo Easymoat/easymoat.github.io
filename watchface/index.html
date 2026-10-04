@@ -406,7 +406,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 23:00</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 23:57</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -577,8 +577,7 @@
       <div class="ctl" title="Clock format. Device = follow the watch's own setting.">Clock format (hours) <span class="cb units" id="hourfmt"></span></div>
       <div class="ctl" title="What a long press on a weather part opens. In face = the dial redraws as a detail screen (now / hourly / daily). Garmin = the watch's own weather screen (scrolls freely, no time limit, Garmin's own look).">Long press on weather <span class="cb units" id="wxdetail"></span></div></div>
     <div class="group"><span class="lbl">Markets <span id="pcnt-mkt" class="cnt pcnt"></span></span><div class="parts" id="parts-mkt"></div></div>
-    <div class="group"><span class="lbl">USA Sports <span id="pcnt-bb" class="cnt pcnt"></span></span><div class="parts" id="parts-bb"></div></div>
-    <div class="group"><span class="lbl">Soccer <span id="pcnt-soc" class="cnt pcnt"></span></span><div class="parts" id="parts-soc"></div></div>
+    <div class="group"><span class="lbl">Sports <span id="pcnt-bb" class="cnt pcnt"></span></span><div class="parts" id="parts-bb"></div></div>
     <div class="group" title="Text height in px on a 454 dial: S / M / L. Sent to the watch with the layout."><span class="lbl">Text size (px)</span><div class="ctl"><span class="pxs" id="tx"></span></div></div>
     <div class="group" title="Icon height in px on a 454 dial: S / M / L. Independent of the text size — use it to balance the look on devices whose text is fixed to S/M/L."><span class="lbl">Icon size (px)</span><div class="ctl"><span class="pxs" id="ic"></span><span class="stp" title="Move every icon up or down against the numbers (px on a 454 dial, + is down)."><span class="sml" title="Move every icon up or down against the numbers">Up&#8597;</span><button class="step" type="button" id="iodn">&minus;</button><input type="number" id="io" min="-20" max="20"><button class="step" type="button" id="ioup">+</button></span></div></div>
     <div class="group" title="Clock height in px on a 454 dial: S / M / L."><span class="lbl">Time size (px)</span><div class="ctl"><span class="pxs" id="tm"></span></div></div>
@@ -2133,14 +2132,8 @@
     if (!d.dial) p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +t));
     $('parts-' + d.grp).appendChild(p);
   }
-  for (const [key, d] of Object.entries(PAL_SOC)) {   // Soccer: 部品は 32-35 と同じ
-    if (+key > 93) continue;   // 札は Game score / Game status の 2 枚だけ
-    const p = document.createElement('div');
-    p.className = 'part'; p.dataset.t = key;
-    p.innerHTML = `<span class="ico"><span style="font:500 13px var(--watch);white-space:nowrap">${d.t % 2 === 0 ? '1-1' : "67'"}</span></span><span class="nm">${+key === 92 ? 'Game score' : 'Game status'}</span><span class="hint">${d.t}</span>`;
-    p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +key));
-    $('parts-soc').appendChild(p);
-  }
+  // USA Sports と Soccer は 1 つの Sports にまとめた (2026-10-04 ユーザー指示)。札は Game score / Game status の 2 枚、リーグは置いた後に選ぶ。
+  //   PAL_SOC (92-99) は古い下書きの読み替え用に残すが、札は作らない。
   for (const [key, d] of Object.entries(PAL_PCT)) {   // Stock % (札は 1 枚、置く時に空いている枠)
     if (+key !== 90) continue;
     const p = document.createElement('div');
@@ -2165,13 +2158,15 @@
     const bat = tile('clock', 3), ana = tile('clock', 44);
     if (bat && ana) { const ph = document.createComment(''); bat.replaceWith(ph); ana.replaceWith(bat); ph.replaceWith(ana); }
   }
+  { const tip = 'Shows one game: MLB, NFL, NBA, NHL or soccer (Premier League, LaLiga, Serie A, Bundesliga, Ligue 1, J1 League). After you place it, pick the league and team in Selected part. The watch follows 4 games.';
+    ['32', '33'].forEach((t) => { const p = $('parts-bb').querySelector(`.part[data-t="${t}"]`); if (p) p.dataset.tip = tip; }); }
   // Time + sec の札は「10:08:30」だと枠からはみ出して名前に重なる。時刻の下に小さく秒を置く 2 段にする (2026-10-04 ユーザー指示)
   { const ico = $('parts-clock').querySelector('.part[data-t="4"] .ico');
     if (ico) ico.innerHTML = '<span style="display:flex;flex-direction:column;align-items:center;line-height:1.05;font:500 12px var(--watch)">10:08<span style="font-size:10px;color:var(--ink-3)">:30</span></span>'; }
   // Markets / USA Sports / Soccer の札にも絵を付ける (2026-10-04 ユーザー指示)。札の見た目だけで、時計に出るアイコンは変えない
   //   (時計の Stock は今までどおり '$'、試合の部品はアイコンなし)。
   [['mkt', 30, 'chart-line'], ['mkt', 90, 'percent-circle-outline'], ['bb', 32, 'scoreboard-outline'], ['bb', 33, 'timer-outline'],
-   ['soc', 92, 'soccer'], ['soc', 93, 'timer-outline']].forEach(([g, t, n]) => {
+   ].forEach(([g, t, n]) => {
     const ico = $('parts-' + g).querySelector(`.part[data-t="${t}"] .ico`); if (ico) ico.innerHTML = mdiIcon(n, 22);
   });
   setupFolds();
@@ -3634,18 +3629,14 @@
       return { err: `Both stocks already show ${want ? 'their change %' : 'their price'} on this dial — the watch holds ${STOCK_SLOTS} stocks. Take a Stock off first to add another.` };
     }
     if (key === 32 || key === 33 || key === 92 || key === 93) {
-      const status = key === 33 || key === 93, isSocTile = key >= 92;
+      const status = key === 33 || key === 93;
       const lacking = [];   // この部品がまだ無い枠
       for (let sl = 0; sl < GAME_SLOTS; sl++) { const t = 32 + 2 * sl + (status ? 1 : 0); if (!st.el.some((e) => e[0] === t)) lacking.push([sl, t]); }
-      // 1 順目 = 同じ競技の枠 (スコアと状況が同じ試合に並ぶ)。2 順目 = チーム未選択の枠 (置くと競技を寄せる)
-      const same = lacking.find(([sl]) => isSoccer(bbLg(sl)) === isSocTile && (bbTm(sl) || st.el.some((e) => isBall(e[0]) && bbSlot(e[0]) === sl)));
-      if (same) return { t: same[1] };
-      const open = lacking.find(([sl]) => !bbTm(sl) && !st.el.some((e) => isBall(e[0]) && bbSlot(e[0]) === sl)) || lacking.find(([sl]) => !bbTm(sl));
-      if (open) return { t: open[1] };
-      const free = lacking.length;
-      return { err: free === 0
-        ? `All ${GAME_SLOTS} games already have a ${status ? 'status' : 'score'} on this dial — the watch follows ${GAME_SLOTS} games, shared by USA Sports and Soccer. Take one off first to add another.`
-        : `The free game slots already follow ${isSocTile ? 'USA Sports' : 'Soccer'} teams. Change a game's team in Selected part, or take a ${status ? 'status' : 'score'} off first.` };
+      // 1 順目 = 相方 (スコアか状況) がもうある枠 (同じ試合に並ぶ)。2 順目 = 何も置いていない枠
+      const used = (sl) => st.el.some((e) => isBall(e[0]) && bbSlot(e[0]) === sl);
+      const pick = lacking.find(([sl]) => used(sl)) || lacking.find(([sl]) => !used(sl));
+      if (pick) return { t: pick[1] };
+      return { err: `All ${GAME_SLOTS} games already have a ${status ? 'status' : 'score'} on this dial — the watch follows ${GAME_SLOTS} games. Take one off first to add another.` };
     }
     return {};
   }
@@ -3655,8 +3646,7 @@
     const games = new Set(st.el.filter((e) => isBall(e[0])).map((e) => bbSlot(e[0]))).size;
     const set = (id, n, max, what, tip) => { const el = $(id); if (!el) return; el.textContent = `${n}/${max} ${what}`; el.classList.toggle('full', n >= max); el.title = tip; };
     set('pcnt-mkt', stocks, STOCK_SLOTS, 'stocks', `The watch holds ${STOCK_SLOTS} stocks. A price and a change % of the same stock count once.`);
-    set('pcnt-bb', games, GAME_SLOTS, 'games', `The watch follows ${GAME_SLOTS} games, shared by USA Sports and Soccer. A score and a status of the same game count once.`);
-    set('pcnt-soc', games, GAME_SLOTS, 'games', `The watch follows ${GAME_SLOTS} games, shared by USA Sports and Soccer. A score and a status of the same game count once.`);
+    set('pcnt-bb', games, GAME_SLOTS, 'games', `The watch follows ${GAME_SLOTS} games (any mix of US sports and soccer). A score and a status of the same game count once.`);
   }
   // 上限で置けない時は、黙って受け付けないのではなく目に見える所へ出す (2026-10-04 ユーザー指示)。
   // 状態行 (Collection の所) は画面の外のことが多いので、画面下に札を出す。クリックで閉じる。
@@ -3687,7 +3677,7 @@
     if (slotT != null) { t = slotT; d = TYPES[t]; }   // 空いている枠 (Stock 1/2・Game 1-4)
     if (isBall(t)) {                             // チーム未選択の枠だけ、置いた群に合わせてリーグを寄せる
       const sl = bbSlot(t);
-      if (!bbTm(sl) && isSoccer(bbLg(sl)) !== !!soc) setBb(sl, { lg: soc ? SOC_DEF : 'mlb', tm: 0 });
+      if (soc && !bbTm(sl) && !isSoccer(bbLg(sl))) setBb(sl, { lg: SOC_DEF, tm: 0 });   // Sports にまとめた後は寄せない (選んだリーグを置き換えない)
     }
     const e = isAnalog(t) ? [t, 500, 500, 0, 1, 0, 0, -1, ANA_DEF.dia, ANA_DEF.mode, ANA_DEF.style, ANA_DEF.ticks, ANA_DEF.city]
             : isRect(t) ? [t, 500, 500, 0, 1, 0, 0, -1, RECT_DEF.w, RECT_DEF.h]

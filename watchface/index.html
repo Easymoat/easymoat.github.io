@@ -394,7 +394,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 13:56</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 14:05</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2084,15 +2084,16 @@
     p.className = 'part'; p.dataset.t = t;
     if (d.dial) {
       p.className = 'part tgl'; p.title = 'Click to put it on the dial, click again to take it off';
-      p.innerHTML = `<span class="ico" style="color:#1D222B">${dialArt(+t, 1, 26, 26, '#1D222B', +t === 69 ? 18 : 0)}</span><span class="nm">${d.name.replace(/^(Hands|Rim):\s*/, '')}</span>`;
+      p.innerHTML = `<span class="ico">${dialArt(+t, 1, 26, 26, 'currentColor', +t === 69 ? 18 : 0)}</span><span class="nm">${d.name.replace(/^(Hands|Rim):\s*/, '')}</span>`;
       p.addEventListener('click', () => toggleDialPart(+t));
     }
-    else if (d.graph) p.innerHTML = `<span class="ico" style="color:#1D222B">${graphArt(d.graph, 30, 16, 0.5)}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
-    else if (d.rect) p.innerHTML = `<span class="ico" style="color:#1D222B"><svg width="24" height="20" viewBox="0 0 24 20"><rect x="2" y="2" width="20" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="3"/></svg></span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
-    else if (d.analog) p.innerHTML = `<span class="ico" style="color:#1D222B"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 12 V6 M12 12 L16 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
-    else if (d.circle) p.innerHTML = `<span class="ico" style="color:#1D222B"><svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="8.5" fill="none" stroke="currentColor" stroke-width="3"/></svg></span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
-    else if (d.crew) p.innerHTML = `<span class="ico" style="color:#1D222B"><svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
-    else if (d.line != null) p.innerHTML = `<span class="ico" style="color:#1D222B">${lineArt(d.line, 22, 3).svg}</span><span class="nm">Line</span><span class="hint">${t}</span>`;
+    else if (d.graph) p.innerHTML = `<span class="ico">${graphArt(d.graph, 30, 16, 0.5)}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
+    else if (d.rect) p.innerHTML = `<span class="ico"><svg width="24" height="20" viewBox="0 0 24 20"><rect x="2" y="2" width="20" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="3"/></svg></span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
+    else if (d.analog) p.innerHTML = `<span class="ico"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 12 V6 M12 12 L16 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
+    else if (d.circle) p.innerHTML = `<span class="ico"><svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="8.5" fill="none" stroke="currentColor" stroke-width="3"/></svg></span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
+    else if (d.crew) p.innerHTML = `<span class="ico"><svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
+    else if (d.text) p.innerHTML = `<span class="ico"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M4.5 4h15v3.4h-5.6V20h-3.8V7.4H4.5z" fill="currentColor"/></svg></span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
+    else if (d.line != null) p.innerHTML = `<span class="ico">${lineArt(d.line, 22, 3).svg}</span><span class="nm">Line</span><span class="hint">${t}</span>`;
     else p.innerHTML = `<span class="ico">${d.noPal ? '' : d.icon && !TEXT_ICON[d.icon] ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${TEXT_ICON[d.icon] || d.sample || ''}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     if (d.crewOne) p.dataset.tip = 'One part is one crew member. After you place it, pick Crew 1, 2 or 3 and what to show (distance, heart rate or steps). Needs PulseLink on the same watch. Who is Crew 1, 2 and 3 is set in PulseLink.';
     if (d.stk != null) p.dataset.tip = STOCK_TIP;   // Stock 1 / Stock 2
@@ -5392,12 +5393,20 @@
       let y = r.bottom + 8; if (y + h > innerHeight - m) y = Math.max(m, r.top - h - 8);
       tip.style.left = x + 'px'; tip.style.top = y + 'px';
     };
+    // 既存の title も同じ吹き出しにする (2026-10-04 ユーザー指示「他にもあれば同じように」)。重ねた時に title を data-tip へ移し
+    //   (ブラウザの小さな吹き出しを出さない)、文字だけのボタンの名前は aria-label に残す。あとから title を付け直されても次の時にまた移す。
+    const tipOf = (el) => {
+      const t = el.getAttribute('title');
+      if (t) { el.dataset.tip = t; el.removeAttribute('title'); if (!el.getAttribute('aria-label') && !el.textContent.trim()) el.setAttribute('aria-label', t); }
+      return el.dataset.tip || '';
+    };
+    const find = (node) => { for (let el = node && node.closest ? node.closest('[data-tip],[title]') : null; el; el = el.parentElement && el.parentElement.closest('[data-tip],[title]')) { if (tipOf(el)) return el; } return null; };
     document.addEventListener('mouseover', (ev) => {
-      const el = ev.target.closest && ev.target.closest('[data-tip]');
+      const el = find(ev.target);
       if (!el || el === cur) return;
       hide(); cur = el; timer = setTimeout(() => show(el), 250);
     });
-    document.addEventListener('mouseout', (ev) => { const el = ev.target.closest && ev.target.closest('[data-tip]'); if (el && !el.contains(ev.relatedTarget)) hide(); });
+    document.addEventListener('mouseout', (ev) => { if (cur && !cur.contains(ev.relatedTarget)) hide(); });
     ['pointerdown', 'scroll', 'keydown'].forEach((t) => document.addEventListener(t, hide, true));
   })();
   // ?s=xxxx-xxxx で開かれたら、共有された文字盤を上に出す (2026-09-21)

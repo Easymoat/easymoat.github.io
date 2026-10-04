@@ -394,7 +394,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 14:24</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-04 14:49</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -425,12 +425,12 @@
   <aside class="left">
     <div class="group"><span class="lbl">Parts</span><span class="muted">Drag onto the dial, or click to drop at center.</span></div>
     <div class="group"><span class="lbl">Clock</span><div class="parts" id="parts-clock"></div></div>
-    <div class="group"><span class="lbl">Lines &amp; Text</span><div class="parts" id="parts-line"></div></div>
-    <div class="group"><span class="lbl">Body</span><div class="parts" id="parts-body"></div></div>
-    <div class="group"><span class="lbl">Graphs</span><div class="parts" id="parts-graph"></div></div>
-    <div class="group"><span class="lbl">Weather</span><div class="parts" id="parts-wx"></div></div>
     <div class="group"><span class="lbl">Hands</span><div class="parts" id="parts-hands"></div></div>
     <div class="group"><span class="lbl">Rim</span><div class="parts" id="parts-rim"></div></div>
+    <div class="group"><span class="lbl">Body</span><div class="parts" id="parts-body"></div></div>
+    <div class="group"><span class="lbl">Weather</span><div class="parts" id="parts-wx"></div></div>
+    <div class="group"><span class="lbl">Lines &amp; Text</span><div class="parts" id="parts-line"></div></div>
+    <div class="group"><span class="lbl">Graphs</span><div class="parts" id="parts-graph"></div></div>
   </aside>
 
   <section class="stagewrap">
@@ -954,8 +954,9 @@
   const CREW_METRICS = [[0, 'Distance', 'Dist'], [4, 'Heart rate', 'HR'], [8, 'Steps', 'Steps']];
   const CREW_NAMES = ['Ema', 'Ken', 'Jun'];
   const CREW_VALS = { 0: [['1.2km', '120m', '3.4km'], ['0.7mi', '394ft', '2.1mi']], 4: ['72', '88', '64'], 8: ['8421', '5230', '10412'] };
+  const CREW_AGES = ['3m', '1m', '5m'];   // 値を受け取ってからの経過分 (昔の Crew と同じ。2026-10-04 ユーザー指示で元に戻した)
   const crewOneRow = (e) => { const m = crewMember(e) - 1, k = crewMetric(e);
-    return [CREW_NAMES[m], k === 0 ? CREW_VALS[0][st.du === 1 ? 1 : 0][m] : CREW_VALS[k][m]]; };
+    return [CREW_NAMES[m], (k === 0 ? CREW_VALS[0][st.du === 1 ? 1 : 0][m] : CREW_VALS[k][m]) + ' ' + CREW_AGES[m]]; };
   // 1 行 = 名前 (Icon 扱い) + 数字 (Value 扱い、距離と経過分)。3 行目はデータが無い行の見本。
   // 距離の単位は右の Distance (du) に従う (2026-09-27 ユーザー指示)。km と同じ使い分け:
   //   du = 0: 1000 m 未満は m、それ以上は km (小数 1 桁)

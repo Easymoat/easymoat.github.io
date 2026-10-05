@@ -252,6 +252,7 @@
   #stage .marquee { position: absolute; pointer-events: none; border: 2px dashed var(--accent); background: rgba(242, 180, 65, .10); border-radius: 3px; }
   #stage.noimg .stageimg { display: none; }
   .box { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .box[hidden] { display: none; }   /* display:flex が hidden 属性に勝ち、共有の箱が共有リンク無しでも空のまま出ていた (2026-10-06) */
   details.box > summary { list-style: none; }
   details.camdet { margin-top: 12px; padding: 12px 16px; gap: 10px; }
   details.box > summary::-webkit-details-marker { display: none; }
@@ -365,6 +366,44 @@
   @media (min-width: 561px) and (max-width: 760px) {
     body:not(.full) .shelf { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
   }
+  /* ── 携帯の Quick editor (2026-10-06): Full editor と同じ画面から、指で使う物だけを残す ── */
+  .qonly { display: none; }
+  #qpanel .qhd { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  #qpanel .cb.units button { height: 40px; padding: 0 14px; font-size: 15px; }
+  .qpad { display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(3, 56px); gap: 6px; margin: 4px 0 6px; }
+  .qpad button { font-size: 26px; border: 2px solid var(--line-2); border-radius: 10px; background: var(--panel-2); color: var(--ink); }
+  .qpad button:active { background: var(--line-2); }
+  .qpad [data-d="up"] { grid-area: 1 / 2; } .qpad [data-d="left"] { grid-area: 2 / 1; } .qpad [data-d="right"] { grid-area: 2 / 3; } .qpad [data-d="down"] { grid-area: 3 / 2; }
+  #qparts { display: flex; flex-direction: column; gap: 6px; }
+  #qparts label { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 16px; }
+  #qparts label.sel { border-color: var(--accent); }
+  #qparts input { width: 22px; height: 22px; flex: 0 0 auto; }
+  #qparts .nm { flex: 1 1 auto; }
+  @media (max-width: 760px) {
+    body.quick .qonly { display: block; }
+    body.quick aside.left, body.quick aside.right, body.quick .tray, body.quick .drawer, body.quick .shelfbox, body.quick #watchbox,
+    body.quick .stagewrap > .tier, body.quick .stagebar .devrow, body.quick #fixednote,
+    body.quick #reset, body.quick #imgparts, body.quick #imghide, body.quick .dialbar .sub:has(#grid), body.quick .dialbar .sub:has(#selcol),
+    body.quick .dialbar .tier .what,
+    body.quick #imgstage, body.quick #imgdragrow, body.quick .imgbox .ctl:has(#imgreset), body.quick #camgrp, body.quick #shapeselrow,
+    body.quick .imgbox .ctl:has(#rotl), body.quick .imgbox .ctl:has(#imgbr), body.quick .imgbox .grp:has(#imgbg), body.quick #imgbgrow,
+    body.quick .imgbox .lblnote, body.quick .imgbox .tier .what { display: none !important; }
+    /* Selected part は大きさ・色・銘柄 / チーム / 選手・文字だけ (qk の印は renderInspector が付ける) */
+    body.quick #insp .field:not(.qk), body.quick #insp .brk { display: none !important; }
+    body.quick #insp .seg button, body.quick #insp .cb.units button { min-height: 40px; min-width: 44px; font-size: 15px; }
+    body.quick #insp .sw { width: 32px; height: 32px; }
+    body.quick .imgbox .cols { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+    body.quick #qpanel { width: 100%; box-sizing: border-box; align-self: stretch; }
+    body.quick main { grid-template-columns: minmax(0, 1fr); }
+    body.quick header .sub, body.quick header .kbd, body.quick .dialbar .sep { display: none !important; }
+    /* 並び: 保存 → 文字盤 → 選んだ部品 (大きさ・色) → 矢印と部品の一覧 → 絵 */
+    body.quick .dialbar { order: 1; } body.quick .stage-row { order: 2; } body.quick .stagebar { order: 3; }
+    body.quick #qpanel { order: 4; } body.quick .imgbox { order: 5; }   /* 1fr だと中身の最小幅 (456px) まで広がり、携帯の画面からはみ出した */
+    body.quick .stagewrap { padding: 12px 10px 30px; min-width: 0; }
+    body.quick .stagebar, body.quick #insp, body.quick .dialbar, body.quick .imgbox { min-width: 0; max-width: 100%; box-sizing: border-box; }
+    body.quick .imgbox .cb, body.quick #insp .seg, body.quick #insp .swatches { flex-wrap: wrap; }
+    body.quick .stage-row, body.quick .stage-col, body.quick .dialrow { width: 100%; justify-content: center; }
+  }
   /* 吹き出し (data-tip): ブラウザの title は小さすぎて読めないので、説明が長い所だけ自前で大きく出す (2026-10-04 ユーザー指摘) */
   #tip { position: fixed; z-index: 9999; display: none; max-width: 380px; padding: 12px 16px; box-sizing: border-box;
          background: #232A36; color: var(--ink); border: 1px solid var(--line-2); border-radius: 8px;
@@ -406,7 +445,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-05 23:50</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-06 01:16</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -427,7 +466,7 @@
         <span class="pwho"><span class="lbl">Watch</span><b id="pid"></b></span>
         <span class="pgrow"></span>
         <button class="btn" id="psignout" title="Use a different watch">Change</button>
-        <button class="btn" id="tofulled" title="Show the whole editor on this screen">Editor</button>
+        <button class="btn" id="toquick" title="A simple editor for the phone: photo, colors, sizes, and moving parts with arrow buttons">Quick editor</button><button class="btn" id="tofulled" title="Show the whole editor on this screen">Full editor</button>
       </div>
       <div class="status" id="watchseen2"></div>
       <div class="muted" id="passnote2"></div>
@@ -474,6 +513,13 @@
           </div>
         </div>
       </div>
+    </div>
+    <div class="box qonly" id="qpanel">
+      <div class="qhd"><span class="lbl">Move</span><span class="cb units" id="qwhat"><button type="button" data-v="part" class="on">Selected part</button><button type="button" data-v="photo">Photo</button></span></div>
+      <div class="qpad" id="qpad"><button type="button" data-d="up" aria-label="Up">&#8593;</button><button type="button" data-d="left" aria-label="Left">&#8592;</button><button type="button" data-d="right" aria-label="Right">&#8594;</button><button type="button" data-d="down" aria-label="Down">&#8595;</button></div>
+      <div class="muted qnote" id="qnote">Tap a part on the dial, then move it one step at a time.</div>
+      <div class="qhd" style="margin-top:14px"><span class="lbl">Parts on the dial</span><span class="muted">Off = taken off the dial, kept for later</span></div>
+      <div id="qparts"></div>
     </div>
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
     <div class="imgbox box">
@@ -2277,7 +2323,9 @@
     if (st.el.some((e) => isBall(e[0]) || isGolf(e[0]))) syncGames(false);
     const d = dev(), k = d.w / 454;
     stage.style.width = d.w + 'px'; stage.style.height = d.h + 'px';
-    const vs = DIAL_PX / Math.max(d.w, d.h);   // visual scale only
+    // 携帯で編集画面を出している時は、文字盤を画面の幅に収める (Quick / Full editor、2026-10-06)。PC は今までどおり
+    const room = (document.body.classList.contains('full') && window.innerWidth <= 760) ? Math.max(200, Math.min(DIAL_PX, window.innerWidth - 48)) : DIAL_PX;
+    const vs = room / Math.max(d.w, d.h);   // visual scale only
     stage.style.transform = `scale(${vs})`;
     const outer = stage.parentElement; outer.style.width = Math.round(d.w * vs) + 'px'; outer.style.height = Math.round(d.h * vs) + 'px';
     stage.classList.toggle('round', d.round);
@@ -2304,7 +2352,7 @@
     $('empty').hidden = st.el.length > 0;
     renderBgHist();
     $('bgpick').value = hex(st.bg).toLowerCase();
-    renderInspector(); renderList(); renderTray(); renderJson(); renderSizes(); renderDialToggles();
+    renderInspector(); renderList(); renderTray(); renderJson(); renderSizes(); renderDialToggles(); renderQuick();
     const ub = $('undo'); if (ub) ub.disabled = !UNDO.length;
     const rb = $('redo'); if (rb) rb.disabled = !REDO.length;
   }
@@ -2825,6 +2873,39 @@
   // ── 騨置き場 ─────────────────────────────────────────────
   // 文字盤が込み合ってきた時の一時置き場。**ここにある部品はウォッチへ行かない**
   // (文字盤の中身ではないので、コレクションにも入らない)。このブラウザの下書きには残る。
+  // ── Quick editor (携帯) ──────────────────────────────────────────────
+  let QWHAT = 'part';
+  const qName = (x) => { const t = x[0], d = TYPES[t] || {}; return (isStock(t) ? (stkOf(t) || 'Stock') : isGolf(t) ? ((gfOf(gfSlot(t)) || {}).nm || 'Golfer') : d.name) || ('Part ' + t); };
+  function renderQuick() {
+    const box = $('qparts'); if (!box || !document.body.classList.contains('quick')) return;
+    const keep = (x) => !isLine(x[0]) && !isRect(x[0]);   // 線と四角形は数が多いので一覧に出さない
+    const rows = [];
+    st.el.forEach((x, i) => { if (keep(x)) rows.push({ on: true, i, x }); });
+    (st.park || []).forEach((x, i) => { if (keep(x)) rows.push({ on: false, i, x }); });
+    box.innerHTML = rows.map((r, k) => `<label class="${r.on && isSel(r.i) ? 'sel' : ''}" data-k="${k}"><input type="checkbox" ${r.on ? 'checked' : ''}><span class="nm">${String(qName(r.x)).replace(/</g, '&lt;')}</span></label>`).join('')
+      || '<span class="muted">No parts yet. Use the Full editor to add parts.</span>';
+    box.querySelectorAll('label').forEach((lb) => {
+      const r = rows[+lb.dataset.k];
+      lb.querySelector('input').addEventListener('change', (ev) => {
+        if (r.on) { st.park.push(st.el.splice(r.i, 1)[0]); clearSel(); commit(); return; }
+        const x = st.park[r.i]; if (!x) return;
+        if (!canAdd(x[0])) { ev.target.checked = false; limitNotice(FULL_MSG(x[0]), true); return; }
+        st.park.splice(r.i, 1); placeFront(x); commit();
+      });
+      lb.querySelector('.nm').addEventListener('click', (ev) => { ev.preventDefault(); if (!r.on) return; setSel(r.i, false); QWHAT = 'part'; syncQWhat(); render(); });
+    });
+    $('qnote').textContent = QWHAT === 'photo' ? (hasSource() ? 'Moves the photo inside its frame.' : 'No photo on this dial — add one below.')
+      : (selIdx().length ? 'Moves the selected part one grid step.' : 'Tap a part on the dial, then move it one step at a time.');
+  }
+  function syncQWhat() { document.querySelectorAll('#qwhat button').forEach((b) => b.classList.toggle('on', b.dataset.v === QWHAT)); }
+  document.querySelectorAll('#qwhat button').forEach((b) => b.addEventListener('click', () => { QWHAT = b.dataset.v; syncQWhat(); renderQuick(); }));
+  document.querySelectorAll('#qpad button').forEach((b) => b.addEventListener('click', () => {
+    const d = b.dataset.d, dx = d === 'left' ? -1 : d === 'right' ? 1 : 0, dy = d === 'up' ? -1 : d === 'down' ? 1 : 0;
+    if (QWHAT === 'photo') { nudgeImg(dx * 4, dy * 4); return; }   // 絵は 320 の台紙で 4px ずつ
+    const all = selIdx().map((i) => st.el[i]); if (!all.length) return;
+    all.forEach((x) => { if (TYPES[x[0]] && TYPES[x[0]].dial) return; x[1] = clamp(x[1] + dx * st.grid); x[2] = clamp(x[2] + dy * st.grid); });
+    commit();
+  }));
   function renderTray() {
     const l = $('traylist'), c = $('traycount'); if (!l) return;
     const n = (st.park || []).length;
@@ -3532,6 +3613,11 @@
       const start = st.el.length; all.forEach((x) => { const c = x.slice(); c[2] = clamp(c[2] + st.grid); st.el.push(c); });
       selSet.clear(); for (let i = start; i < st.el.length; i++) selSet.add(i); sel = st.el.length - 1; commit(); });
     $('del').addEventListener('click', () => { removeSelected(); commit(); });
+    // Quick editor で残す欄の印 (大きさ・色・銘柄・試合・選手・Crew・文字)。見出しの文字で決める
+    box.querySelectorAll('.field').forEach((f) => {
+      const t = ((f.querySelector('span') || {}).textContent || '').trim();
+      if (/^(Size|Color|Symbol|Name|Team|State|Crew|Shows|Text)$|^Game \d|^Golfer \d/.test(t)) f.classList.add('qk');
+    });
   }
   function removeSelected() { selIdx().reverse().forEach((i) => st.el.splice(i, 1)); clearSel(); }
   const clamp = (v) => Math.max(0, Math.min(1000, Math.round(v)));
@@ -5544,10 +5630,18 @@
     const mirror = () => { if (w2) { w2.textContent = $('watchseen').textContent; w2.className = $('watchseen').className; } };
     new MutationObserver(mirror).observe($('watchseen'), { childList: true, characterData: true, subtree: true, attributes: true });
     mirror(); showSigned();
-    $('tofulled').addEventListener('click', () => {
-      document.body.classList.toggle('full');
-      $('tofulled').textContent = document.body.classList.contains('full') ? 'Collection' : 'Editor';
-    });
+    // 携帯の編集は 2 種類 (2026-10-06 ユーザー指示): Full editor = PC と同じ全部 / Quick editor = 同じ編集画面から指で使う物だけ残す。
+    //   どちらも同じ編集の状態 (st) を触るので、行き来しても中身は同じ。押している方のボタンは「Collection」(戻る) になる。
+    const phoneMode = (m) => {
+      const b = document.body.classList;
+      if (m === 'quick') { const on = !b.contains('quick'); b.toggle('full', on); b.toggle('quick', on); }
+      else { const on = !(b.contains('full') && !b.contains('quick')); b.toggle('full', on); b.remove('quick'); }
+      $('toquick').textContent = b.contains('quick') ? 'Collection' : 'Quick editor';
+      $('tofulled').textContent = b.contains('full') && !b.contains('quick') ? 'Collection' : 'Full editor';
+      render();
+    };
+    $('tofulled').addEventListener('click', () => phoneMode('full'));
+    $('toquick').addEventListener('click', () => phoneMode('quick'));
     // 携帯は開いた時 Dial が隠れている (display:none) ので、部品の大きさが 0 のまま位置を決めていた。
     // Editor を押して見えるようになっても位置がそのままで、大きくずれた (もう一度押すと直った、2026-10-03)。
     // 見えるようになった (幅が 0 から正になった) 時に描き直す。横向きにして広い画面になった時も同じ。

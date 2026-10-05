@@ -379,6 +379,9 @@
   #qparts label.sel { border-color: var(--accent); }
   #qparts input { width: 22px; height: 22px; flex: 0 0 auto; }
   #qparts .nm { flex: 1 1 auto; }
+  #qparts .qswap { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: -2px 0 6px 34px; }
+  #qparts .qswap .muted { flex: 0 0 100%; font-size: 13px; }
+  #qparts .qswap .btn { min-height: 40px; padding: 0 12px; font-size: 15px; }
   @media (max-width: 760px) {
     body.quick .qonly { display: block; }
     body.quick aside.left, body.quick aside.right, body.quick .tray, body.quick .drawer, body.quick .shelfbox, body.quick #watchbox,
@@ -390,6 +393,9 @@
     body.quick .imgbox .lblnote, body.quick .imgbox .tier .what { display: none !important; }
     /* Selected part は大きさ・色・銘柄 / チーム / 選手・文字だけ (qk の印は renderInspector が付ける) */
     body.quick #insp .field:not(.qk), body.quick #insp .brk { display: none !important; }
+    /* PC の「選ぶ部品で枠が縮まない」高さ固定 (lockInspHeight) は、文字盤が上にある Quick では要らず、
+       隠した項目ぶんの空白が文字盤の下に残った (2026-10-06 ユーザー報告) */
+    body.quick #insp { min-height: 0 !important; }
     body.quick #insp .seg button, body.quick #insp .cb.units button { min-height: 40px; min-width: 44px; font-size: 15px; }
     body.quick #insp .sw { width: 32px; height: 32px; }
     body.quick .imgbox .cols { grid-template-columns: minmax(0, 1fr); gap: 18px; }
@@ -445,7 +451,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-06 01:16</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-06 06:45</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2324,10 +2330,19 @@
     const d = dev(), k = d.w / 454;
     stage.style.width = d.w + 'px'; stage.style.height = d.h + 'px';
     // 携帯で編集画面を出している時は、文字盤を画面の幅に収める (Quick / Full editor、2026-10-06)。PC は今までどおり
-    const room = (document.body.classList.contains('full') && window.innerWidth <= 760) ? Math.max(200, Math.min(DIAL_PX, window.innerWidth - 48)) : DIAL_PX;
+    //   幅は innerWidth で測らない: 携帯ではページのはみ出し (直前の大きい文字盤など) や拡大縮小で innerWidth が動き、
+    //   部品のオン/オフのたびに文字盤の大きさが変わって下に空白が残った (2026-10-06 ユーザー報告)。
+    //   文字盤を一度たたんでから、レイアウトの幅 (clientWidth) を測る。
+    const outer = stage.parentElement;
+    let room = DIAL_PX;
+    if (document.body.classList.contains('full') && window.innerWidth <= 760) {
+      outer.style.width = '0px'; outer.style.height = '0px';
+      const W = document.documentElement.clientWidth || window.innerWidth;
+      room = Math.max(200, Math.min(DIAL_PX, W - 48));
+    }
     const vs = room / Math.max(d.w, d.h);   // visual scale only
     stage.style.transform = `scale(${vs})`;
-    const outer = stage.parentElement; outer.style.width = Math.round(d.w * vs) + 'px'; outer.style.height = Math.round(d.h * vs) + 'px';
+    outer.style.width = Math.round(d.w * vs) + 'px'; outer.style.height = Math.round(d.h * vs) + 'px';
     stage.classList.toggle('round', d.round);
     stage.style.background = hex(st.bg);
     stage.innerHTML = '';
@@ -2876,24 +2891,88 @@
   // ── Quick editor (携帯) ──────────────────────────────────────────────
   let QWHAT = 'part';
   const qName = (x) => { const t = x[0], d = TYPES[t] || {}; return (isStock(t) ? (stkOf(t) || 'Stock') : isGolf(t) ? ((gfOf(gfSlot(t)) || {}).nm || 'Golfer') : d.name) || ('Part ' + t); };
+  // オフにした部品の元の番号 (st.el の何番目か = 重なりの順)。一覧の同じ所に残し、オンで同じ重なりへ戻す (2026-10-06 ユーザー指示)。
+  //   部品そのもの (配列) をキーにするので、Undo や再読み込みで作り直された部品は覚えていない → 一覧の最後・オンは一番手前 (今までどおり)。
+  const QOFF = new WeakMap();
+  const qShift = (from, by) => { (st.park || []).forEach((p) => { const k = QOFF.get(p); if (k != null && k >= from) QOFF.set(p, k + by); }); };
+  // 取り替えの候補: 同じ群 (Clock / Body / Weather / Graphs / Hands / Rim) の札。Markets は価格と変化率、Sports はスコア・状況・ゴルフ
+  //   [{ lb: 札の名前, t: 種類, how: 'same' (形はそのまま種類だけ) | 'pct' (Stock の価格と変化率) | 'new' (新しく作って位置と色を引き継ぐ) }]
+  function swapOpts(x) {
+    const t = x[0], d = TYPES[t] || {}, out = [];
+    if (isStock(t)) { out.push({ lb: x[6] & 4 ? 'Stock' : 'Stock %', t, how: 'pct' }); return out; }
+    if (isBall(t) || isGolf(t)) {
+      if (isBall(t)) out.push({ lb: t % 2 ? 'Game score' : 'Game status', t: t % 2 ? t - 1 : t + 1, how: 'same' });
+      else { out.push({ lb: 'Game score', t: 32, how: 'new' }, { lb: 'Game status', t: 33, how: 'new' }); }
+      if (!isGolf(t)) out.push({ lb: 'Golfer', t: 6, how: 'new' });
+      return out;
+    }
+    if (!['clock', 'body', 'wx', 'graph', 'hands', 'rim'].includes(d.grp)) return out;   // 文字・丸は取り替える相手が無い
+    // 並びは左の列の札と同じ
+    document.querySelectorAll(`#parts-${d.grp} .part`).forEach((p) => {
+      const k = +p.dataset.t, o = TYPES[k];
+      if (k === t || !o || o.grp !== d.grp || o.hidden || o.noPal) return;
+      out.push({ lb: o.name.replace(/^(Hands|Rim): /, ''), t: k, how: d.dial ? 'same' : 'new' });
+    });
+    return out;
+  }
+  function swapPart(i, o) {
+    const x = st.el[i]; if (!x || !o) return;
+    let e;
+    if (o.how === 'pct') {
+      const want = !(x[6] & 4), sl = TYPES[x[0]].stk;
+      if (st.el.some((y) => y !== x && isStock(y[0]) && TYPES[y[0]].stk === sl && !!(y[6] & 4) === want))
+        return limitNotice(`This stock already shows its ${want ? 'change %' : 'price'} on the dial.`);
+      e = x.slice(); e[6] ^= 4;
+    } else {
+      let t = o.t;
+      if (isBall(t) || isGolf(t)) {   // 空いている枠 (Game 1-4 / Golfer 1-2)。スコアと状況の入れ替えは同じ試合のまま
+        if (o.how === 'same') { if (st.el.some((y) => y[0] === t)) return limitNotice(`This game already has a ${t % 2 ? 'status' : 'score'} on the dial.`); }
+        else { const tg = palTarget(t); if (tg.err) return limitNotice(tg.err); t = tg.t; }
+      }
+      const rest = st.el.filter((y) => y !== x);
+      if (!canAdd(t, rest)) return limitNotice(`The watch is full — with ${TYPES[t].name} the load would be ${fmtLoad(loadOf(rest) + weightOf(t))} of ${LOAD_MAX}. Take a part off first.`, true);
+      if (o.how === 'same') { e = x.slice(); e[0] = t; }
+      else {
+        e = freshEl(t, false);
+        e[1] = x[1]; e[2] = x[2]; e[3] = x[3]; e[5] = x[5];   // 位置・揃え・色は引き継ぐ
+        const plain = (u) => !isAnalog(u) && !isGraph(u) && !isCrew(u) && !isClock(u);
+        if (plain(x[0]) && plain(t)) e[4] = x[4];             // 文字の大きさは同じ形の部品どうしだけ
+      }
+    }
+    st.el[i] = e; setSel(i, false); commit();
+  }
   function renderQuick() {
     const box = $('qparts'); if (!box || !document.body.classList.contains('quick')) return;
     const keep = (x) => !isLine(x[0]) && !isRect(x[0]);   // 線と四角形は数が多いので一覧に出さない
     const rows = [];
-    st.el.forEach((x, i) => { if (keep(x)) rows.push({ on: true, i, x }); });
-    (st.park || []).forEach((x, i) => { if (keep(x)) rows.push({ on: false, i, x }); });
-    box.innerHTML = rows.map((r, k) => `<label class="${r.on && isSel(r.i) ? 'sel' : ''}" data-k="${k}"><input type="checkbox" ${r.on ? 'checked' : ''}><span class="nm">${String(qName(r.x)).replace(/</g, '&lt;')}</span></label>`).join('')
-      || '<span class="muted">No parts yet. Use the Full editor to add parts.</span>';
+    st.el.forEach((x, i) => { if (keep(x)) rows.push({ on: true, i, x, at: i }); });
+    (st.park || []).forEach((x, i) => { if (keep(x)) { const k = QOFF.get(x); rows.push({ on: false, i, x, at: k != null ? k - 0.5 : 1e9 + i }); } });
+    rows.sort((a, b) => a.at - b.at);
+    const one = selIdx().length === 1 ? selIdx()[0] : -1;
+    const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    box.innerHTML = rows.map((r, k) => {
+      const lb = `<label class="${r.on && isSel(r.i) ? 'sel' : ''}" data-k="${k}"><input type="checkbox" ${r.on ? 'checked' : ''}><span class="nm">${esc(qName(r.x))}</span></label>`;
+      if (!r.on || r.i !== one) return lb;
+      const opts = swapOpts(r.x);
+      return lb + `<div class="qswap"><span class="muted">${opts.length ? 'Swap for:' : 'Nothing to swap this part for.'}</span>`
+        + opts.map((o, j) => `<button type="button" class="btn" data-j="${j}">${esc(o.lb)}</button>`).join('') + '</div>';
+    }).join('') || '<span class="muted">No parts yet. Use the Full editor to add parts.</span>';
     box.querySelectorAll('label').forEach((lb) => {
       const r = rows[+lb.dataset.k];
       lb.querySelector('input').addEventListener('change', (ev) => {
-        if (r.on) { st.park.push(st.el.splice(r.i, 1)[0]); clearSel(); commit(); return; }
+        if (r.on) { const x = st.el.splice(r.i, 1)[0]; qShift(r.i + 1, -1); QOFF.set(x, r.i); st.park.push(x); clearSel(); commit(); return; }
         const x = st.park[r.i]; if (!x) return;
         if (!canAdd(x[0])) { ev.target.checked = false; limitNotice(FULL_MSG(x[0]), true); return; }
-        st.park.splice(r.i, 1); placeFront(x); commit();
+        st.park.splice(r.i, 1);
+        const k = QOFF.get(x); QOFF.delete(x);
+        if (k == null) { placeFront(x); commit(); return; }
+        const at = Math.min(k, st.el.length);   // 元の重なりへ
+        qShift(at, 1); st.el.splice(at, 0, x); setSel(at, false); commit();
       });
       lb.querySelector('.nm').addEventListener('click', (ev) => { ev.preventDefault(); if (!r.on) return; setSel(r.i, false); QWHAT = 'part'; syncQWhat(); render(); });
     });
+    const sw = box.querySelector('.qswap');
+    if (sw) { const opts = swapOpts(st.el[one]); sw.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => swapPart(one, opts[+b.dataset.j]))); }
     $('qnote').textContent = QWHAT === 'photo' ? (hasSource() ? 'Moves the photo inside its frame.' : 'No photo on this dial — add one below.')
       : (selIdx().length ? 'Moves the selected part one grid step.' : 'Tap a part on the dial, then move it one step at a time.');
   }
@@ -3826,7 +3905,18 @@
       const sl = bbSlot(t);
       if (soc && !bbTm(sl) && !isSoccer(bbLg(sl))) setBb(sl, { lg: SOC_DEF, tm: 0 });   // Sports にまとめた後は寄せない (選んだリーグを置き換えない)
     }
-    const e = isAnalog(t) ? [t, 500, 500, 0, 1, 0, 0, -1, ANA_DEF.dia, ANA_DEF.mode, ANA_DEF.style, ANA_DEF.ticks, ANA_DEF.city]
+    const e = freshEl(t, !!pct);
+    placeFront(e);
+    if (center) { const [cx, cy] = freeSpot(); e[1] = cx; e[2] = cy; render(); commit(); return; }
+    const p = stagePoint(ev); e[1] = clamp(p.x); e[2] = clamp(p.y);
+    drag = { i: sel, items: [{ i: sel, dx: 0, dy: 0 }], fromPalette: true, moved: true };
+    render();
+    stage.querySelector('.el.sel')?.classList.add('ghost');
+  }
+  // 新しい部品の既定の形 (札から置く時と、Quick editor の取り替え)。pct = Stock の変化率版
+  function freshEl(t, pct) {
+    const d = TYPES[t] || {};
+    return isAnalog(t) ? [t, 500, 500, 0, 1, 0, 0, -1, ANA_DEF.dia, ANA_DEF.mode, ANA_DEF.style, ANA_DEF.ticks, ANA_DEF.city]
             : isRect(t) ? [t, 500, 500, 0, 1, 0, 0, -1, RECT_DEF.w, RECT_DEF.h]
             : isCircle(t) ? [t, 500, 500, 0, 1, 0, 0, -1, CIRC_DEF.dia, 0, CIRC_DEF.fill, CIRC_DEF.met, CIRC_DEF.dir]
             : isLine(t) ? [t, 500, 500, 0, 1, 0, 0, -1, LINE_LEN_DEF]
@@ -3835,12 +3925,6 @@
             : isCrewOne(t) ? [t, 500, 500, 0, 1, 0, 1, -1, 1, 1]   // Crew 1・距離、名前と値、並びは名前左。誰か・値は置いた後に選ぶ
             : isCrew(t) ? [t, 500, 500, 0, 1, 0, 1, -1, 3, 1]
             : [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, (d.icon ? 1 : 0) | (pct ? 4 : 0) | (t === 2 ? F_DOW : 0), -1];
-    placeFront(e);
-    if (center) { const [cx, cy] = freeSpot(); e[1] = cx; e[2] = cy; render(); commit(); return; }
-    const p = stagePoint(ev); e[1] = clamp(p.x); e[2] = clamp(p.y);
-    drag = { i: sel, items: [{ i: sel, dx: 0, dy: 0 }], fromPalette: true, moved: true };
-    render();
-    stage.querySelector('.el.sel')?.classList.add('ghost');
   }
   window.addEventListener('pointermove', (ev) => {
     if (!PAL_PEND || ev.pointerId !== PAL_PEND.id) return;

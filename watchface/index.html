@@ -507,7 +507,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-07 04:05</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-07 04:19</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3063,23 +3063,27 @@
   // 指を離した後の惰性のスクロールが文字盤の止まる位置 (= #qmark − 10。stage-row の margin) を通り越しそうなら、そこで止める
   //   (上へ送る時は文字盤が上に着いた所、戻す時は潜っていた欄が全部見えた所。2026-10-07 ユーザー指示)。
   //   いきなり止めず、その時の速さから滑らかに減速して止める (ease-out。最初の速さを惰性の速さに合わせる)。
+  //   止まる手前で引っ掛かって見えた (2026-10-07 ユーザー指摘) → 位置を整数に丸めない (減速の終わりが 1px ずつのコマ送りになっていた)、
+  //   速さは何コマかの平均 (1 コマだけだとばらつき、乗り換えた瞬間に速さが跳んだ)、減速の長さを速さに合わせる (下限 0.22 秒で合わなくなっていた)。
   //   指で動かしている間は止めない。止めるのは 1 回の指の動きにつき 1 回 (次に触れば先へ進める)。
   { let lastY = window.scrollY, lastT = performance.now(), v = 0, coasting = false, done = false, anim = 0;
     const stopY = () => { const m = $('qmark'); return m ? Math.round(m.getBoundingClientRect().top + window.scrollY - 10) : -1; };
     const glide = (to, speed) => {   // speed = px/ms (その時の惰性の速さ)
       const from = window.scrollY, d = to - from; if (!d) return;
-      const dur = Math.max(220, Math.min(700, 3 * Math.abs(d) / Math.max(0.05, Math.abs(speed))));   // ease-out cubic の出だしの速さ = 3d/dur
+      const dur = Math.max(120, Math.min(900, 3 * Math.abs(d) / Math.max(0.05, Math.abs(speed))));   // ease-out cubic の出だしの速さ = 3d/dur
       const t0 = performance.now(); cancelAnimationFrame(anim);
-      const step = (now) => { const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
-        window.scrollTo(0, Math.round(from + d * e)); if (k < 1) anim = requestAnimationFrame(step); else anim = 0; };
+      const step = (now) => { const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3), rest = d * (1 - e);
+        const done = k >= 1 || Math.abs(rest) < 0.3;
+        window.scrollTo(0, done ? to : from + d * e); anim = done ? 0 : requestAnimationFrame(step); };
       anim = requestAnimationFrame(step);
     };
     addEventListener('touchstart', () => { coasting = false; done = false; cancelAnimationFrame(anim); anim = 0; }, { passive: true });
-    addEventListener('touchend', () => { coasting = true; lastY = window.scrollY; lastT = performance.now(); }, { passive: true });
+    addEventListener('touchend', () => { coasting = true; }, { passive: true });   // 指で動かしていた時の速さをそのまま引き継ぐ
     addEventListener('scroll', () => {
       const y = window.scrollY, now = performance.now();
       if (anim) { lastY = y; lastT = now; return; }   // 自分で動かしている間
-      const dt = Math.max(1, now - lastT); v = (y - lastY) / dt;
+      const dt = Math.max(1, now - lastT), vi = (y - lastY) / dt;
+      v = dt > 120 ? vi : v * 0.5 + vi * 0.5;   // 何コマかの平均 (間が空いた時はその 1 回)
       if (coasting && !done && document.body.classList.contains('quick') && window.innerWidth <= 760) {
         const T = stopY();
         const crossed = T > 0 && ((lastY < T && y > T) || (lastY > T && y < T));

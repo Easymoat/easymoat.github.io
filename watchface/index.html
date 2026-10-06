@@ -451,7 +451,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-06 06:45</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-06 09:59</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2894,6 +2894,7 @@
   // オフにした部品の元の番号 (st.el の何番目か = 重なりの順)。一覧の同じ所に残し、オンで同じ重なりへ戻す (2026-10-06 ユーザー指示)。
   //   部品そのもの (配列) をキーにするので、Undo や再読み込みで作り直された部品は覚えていない → 一覧の最後・オンは一番手前 (今までどおり)。
   const QOFF = new WeakMap();
+  let QSWAP = null;   // 取り替えの候補を開いている部品
   const qShift = (from, by) => { (st.park || []).forEach((p) => { const k = QOFF.get(p); if (k != null && k >= from) QOFF.set(p, k + by); }); };
   // 取り替えの候補: 同じ群 (Clock / Body / Weather / Graphs / Hands / Rim) の札。Markets は価格と変化率、Sports はスコア・状況・ゴルフ
   //   [{ lb: 札の名前, t: 種類, how: 'same' (形はそのまま種類だけ) | 'pct' (Stock の価格と変化率) | 'new' (新しく作って位置と色を引き継ぐ) }]
@@ -2939,7 +2940,7 @@
         if (plain(x[0]) && plain(t)) e[4] = x[4];             // 文字の大きさは同じ形の部品どうしだけ
       }
     }
-    st.el[i] = e; setSel(i, false); commit();
+    QSWAP = e; st.el[i] = e; setSel(i, false); commit();   // 続けて別の候補も試せるよう開いたまま
   }
   function renderQuick() {
     const box = $('qparts'); if (!box || !document.body.classList.contains('quick')) return;
@@ -2948,7 +2949,8 @@
     st.el.forEach((x, i) => { if (keep(x)) rows.push({ on: true, i, x, at: i }); });
     (st.park || []).forEach((x, i) => { if (keep(x)) { const k = QOFF.get(x); rows.push({ on: false, i, x, at: k != null ? k - 0.5 : 1e9 + i }); } });
     rows.sort((a, b) => a.at - b.at);
-    const one = selIdx().length === 1 ? selIdx()[0] : -1;
+    // 取り替えの候補は、一覧で名前をタップした部品だけ (オンにした時や文字盤で選んだ時は出さない、2026-10-06 ユーザー指摘)
+    const one = QSWAP ? st.el.indexOf(QSWAP) : -1;
     const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
     box.innerHTML = rows.map((r, k) => {
       const lb = `<label class="${r.on && isSel(r.i) ? 'sel' : ''}" data-k="${k}"><input type="checkbox" ${r.on ? 'checked' : ''}><span class="nm">${esc(qName(r.x))}</span></label>`;
@@ -2960,6 +2962,7 @@
     box.querySelectorAll('label').forEach((lb) => {
       const r = rows[+lb.dataset.k];
       lb.querySelector('input').addEventListener('change', (ev) => {
+        QSWAP = null;
         if (r.on) { const x = st.el.splice(r.i, 1)[0]; qShift(r.i + 1, -1); QOFF.set(x, r.i); st.park.push(x); clearSel(); commit(); return; }
         const x = st.park[r.i]; if (!x) return;
         if (!canAdd(x[0])) { ev.target.checked = false; limitNotice(FULL_MSG(x[0]), true); return; }
@@ -2969,7 +2972,7 @@
         const at = Math.min(k, st.el.length);   // 元の重なりへ
         qShift(at, 1); st.el.splice(at, 0, x); setSel(at, false); commit();
       });
-      lb.querySelector('.nm').addEventListener('click', (ev) => { ev.preventDefault(); if (!r.on) return; setSel(r.i, false); QWHAT = 'part'; syncQWhat(); render(); });
+      lb.querySelector('.nm').addEventListener('click', (ev) => { ev.preventDefault(); if (!r.on) return; QSWAP = QSWAP === r.x ? null : r.x; setSel(r.i, false); QWHAT = 'part'; syncQWhat(); render(); });
     });
     const sw = box.querySelector('.qswap');
     if (sw) { const opts = swapOpts(st.el[one]); sw.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => swapPart(one, opts[+b.dataset.j]))); }

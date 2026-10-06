@@ -326,8 +326,8 @@
   /* 携帯の編集画面の上の切り替え (2026-10-06 ユーザー指示)。編集中は #phonebar が隠れて Collection へ戻れなかった */
   #pnav { display: none; }
   @media (max-width: 760px) {
-    body.full #pnav { display: flex; align-items: center; gap: 8px; position: sticky; top: 0; z-index: 60; order: 0;
-                      padding: 8px 10px; background: var(--panel); border-bottom: 1px solid var(--line); }
+    body.full #pnav { display: flex; align-items: center; gap: 8px; order: 0;   /* 上に貼り付けない (2026-10-07 ユーザー指示) */
+                      padding: 6px 10px; background: var(--panel); border-bottom: 1px solid var(--line); }
     /* ボタンは左端: Full editor は PC の画面そのままで携帯では幅が 900px を超えるので、右寄せだと画面の外に出る */
     body.full #pnav .btn { min-height: 40px; padding: 0 12px; font-size: 15px; }
     body.quick .dialbar .sub:has(#grid) { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
@@ -386,6 +386,10 @@
   .qpad button:active { background: var(--line-2); }
   .qpad [data-d="up"] { grid-area: 1 / 2; } .qpad [data-d="left"] { grid-area: 2 / 1; } .qpad [data-d="right"] { grid-area: 2 / 3; } .qpad [data-d="down"] { grid-area: 3 / 2; }
   #qparts { display: flex; flex-direction: column; gap: 6px; }
+  #qparts[hidden], #qpartsnote[hidden] { display: none; }
+  .qfold { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 10px 0 0; background: none; border: 0; color: var(--ink); cursor: pointer; }
+  .qfold .arr { display: inline-block; width: 1em; font-size: 16px; transition: transform .15s; }
+  .qfold[aria-expanded="false"] .arr { transform: rotate(-90deg); }
   #qparts label { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 16px; }
   #qparts label.sel { border-color: var(--accent); }
   #qparts input { width: 22px; height: 22px; flex: 0 0 auto; }
@@ -424,7 +428,23 @@
     /* 並び: 保存 → 文字盤 → 選んだ部品 (大きさ・色) → 矢印と部品の一覧 → 絵 */
     body.quick .dialbar { order: 1; } body.quick .stage-row { order: 2; } body.quick .stagebar { order: 3; }
     body.quick #qpanel { order: 4; } body.quick .imgbox { order: 5; }   /* 1fr だと中身の最小幅 (456px) まで広がり、携帯の画面からはみ出した */
-    body.quick .stagewrap { padding: 12px 10px 30px; min-width: 0; }
+    body.quick .stagewrap { padding: 4px 10px 14px; min-width: 0; gap: 10px; }
+    /* 上下の余白を詰める (2026-10-07 ユーザー指示)。指で押す物の大きさは変えない */
+    body.quick .dialbar { padding-top: 6px; margin-bottom: 0; }
+    body.quick .dialbar .ctl { row-gap: 8px; }
+    body.quick .dialbar .vsep { display: none; }   /* 隠した Clear dial などの区切り線だけが残っていた */
+    body.quick header { padding: 8px 14px; }
+    body.quick .dialbar .tier, body.quick .imgbox .tier { margin-top: 0; margin-bottom: 0; }
+    body.quick .status:empty { display: none; }
+    body.quick #qstat:empty { margin: 0; }
+    body.quick .stagebar { padding-top: 0; }
+    body.quick #qpanel { padding: 10px 12px; }
+    body.quick #qpanel .qhd { margin-bottom: 4px; }
+    body.quick #qpanel .qpartshd { margin-top: 6px; }
+    body.quick .qpad { margin: 2px 0 4px; }
+    body.quick .imgbox { padding-top: 8px; }
+    body.quick .imgbox .cols { gap: 10px; }
+    body.quick .imgbox .opts { gap: 12px; }
     body.quick .stagebar, body.quick #insp, body.quick .dialbar, body.quick .imgbox { min-width: 0; max-width: 100%; box-sizing: border-box; }
     body.quick .imgbox .cb, body.quick #insp .seg, body.quick #insp .swatches { flex-wrap: wrap; }
     body.quick .stage-row, body.quick .stage-col, body.quick .dialrow { width: 100%; justify-content: center; }
@@ -470,7 +490,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-06 20:38</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-07 03:14</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -545,7 +565,7 @@
       <div class="qhd"><span class="lbl">Move</span><span class="cb units" id="qwhat"><button type="button" data-v="part" class="on">Selected part</button><button type="button" data-v="photo">Photo</button></span></div>
       <div class="qpad" id="qpad"><button type="button" data-d="up" aria-label="Up">&#8593;</button><button type="button" data-d="left" aria-label="Left">&#8592;</button><button type="button" data-d="right" aria-label="Right">&#8594;</button><button type="button" data-d="down" aria-label="Down">&#8595;</button></div>
       <div class="muted qnote" id="qnote">Tap a part on the dial, then move it one step at a time.</div>
-      <div class="qhd" style="margin-top:14px"><span class="lbl">Parts on the dial</span><span class="muted">Off = taken off the dial, kept for later</span></div>
+      <div class="qhd qpartshd"><button type="button" class="qfold" id="qpartsfold" aria-expanded="true"><span class="arr">&#9662;</span> <span class="lbl">Parts on the dial</span></button><span class="muted" id="qpartsnote">Off = taken off the dial, kept for later</span></div>
       <div id="qparts"></div>
     </div>
     <div class="empty" id="empty" hidden>Empty dial. Drag a part from the left, or load a preset below.</div>
@@ -3017,6 +3037,12 @@
     if (qSnap() !== QSAVE.snap) return setStatus('shelfstatus', 'You changed the dial after saving — press Save to collection again, then To watch.', 'warn');
     sendShelfItem(QSAVE.n);
   });
+  // 部品の一覧は畳める (2026-10-07 ユーザー指示)。開け閉めはこのブラウザに覚えておく
+  { const KEY = 'faceComposer.qpartsOpen', b = $('qpartsfold');
+    const setOpen = (on) => { b.setAttribute('aria-expanded', on ? 'true' : 'false'); $('qparts').hidden = !on; $('qpartsnote').hidden = !on;
+      try { localStorage.setItem(KEY, on ? '1' : '0'); } catch (e) {} };
+    let open = true; try { open = localStorage.getItem(KEY) !== '0'; } catch (e) {}
+    setOpen(open); b.addEventListener('click', () => setOpen(b.getAttribute('aria-expanded') !== 'true')); }
   function syncQWhat() { document.querySelectorAll('#qwhat button').forEach((b) => b.classList.toggle('on', b.dataset.v === QWHAT)); }
   document.querySelectorAll('#qwhat button').forEach((b) => b.addEventListener('click', () => { QWHAT = b.dataset.v; syncQWhat(); renderQuick(); }));
   document.querySelectorAll('#qpad button').forEach((b) => b.addEventListener('click', () => {
@@ -3736,8 +3762,11 @@
     // Quick editor で残す欄の印 (大きさ・色・銘柄・試合・選手・Crew・文字)。見出しの文字で決める
     box.querySelectorAll('.field').forEach((f) => {
       const t = ((f.querySelector('span') || {}).textContent || '').trim();
-      if (/^(Size|Color|Symbol|Name|Team|State|Crew|Shows|Text)$|^Game \d|^Golfer \d/.test(t)) f.classList.add('qk');
+      if (/^(Size|Color|Symbol|Name|Team|State|Crew|Shows|Text|Thickness)$|^Game \d|^Golfer \d/.test(t)) f.classList.add('qk');
     });
+    // 線・四角形・丸は S/M/L ではなく Thickness (同じ値を別の名前で出している) だけ (2026-10-07 ユーザー指示)
+    if (!none && all.length && all.every((x) => x && (isLine(x[0]) || isRect(x[0]) || isCircle(x[0]))))
+      box.querySelectorAll('.field.qk').forEach((f) => { if (((f.querySelector('span') || {}).textContent || '').trim() === 'Size') f.classList.remove('qk'); });
   }
   function removeSelected() { selIdx().reverse().forEach((i) => st.el.splice(i, 1)); clearSel(); }
   const clamp = (v) => Math.max(0, Math.min(1000, Math.round(v)));

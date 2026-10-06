@@ -332,7 +332,10 @@
     body.full #pnav .btn { min-height: 40px; padding: 0 12px; font-size: 15px; }
     body.quick .dialbar .sub:has(#grid) { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
     body.quick #shelfsaverow { flex-wrap: wrap; }   /* 「1 of 30 saved」が画面の外へ出た */
-    body.quick #grid { height: 40px; font-size: 15px; }
+    body.quick #grid { height: 40px; font-size: 14px; width: 124px; }
+    /* Grid・show・Dim / Bright を 1 列に (2026-10-07 ユーザー指示) */
+    body.quick .dialbar .sub:has(#grid) { flex-wrap: nowrap; gap: 6px; }
+    body.quick #gridcol button { padding-left: 6px; padding-right: 6px; }
     body.quick #showgrid { width: 22px; height: 22px; }
   }
   .only-phone { display: none; }
@@ -442,6 +445,17 @@
     /* 文字盤が画面の一番上まで来たら止め、下の欄はその下へ潜る (2026-10-07 ユーザー指示)。写真を直す時も文字盤を見ながら */
     body.quick .stage-row { position: sticky; top: 0; z-index: 30; background: var(--ground); padding: 6px 0; margin: -6px 0;
                             box-shadow: 0 8px 10px -6px rgba(0, 0, 0, .6); }
+    /* 文字盤が止まる所でスクロールを一旦止める (2026-10-07 ユーザー指示)。上へ送る時は文字盤が上に着いた所、
+       戻す時は文字盤の下に潜っていた欄が全部見えた所 = どちらも同じ 1 か所。
+       #qsnap = その位置から下の端までの見えない帯。snap-stop: always で帯の入口 (= その位置) を 1 回の指の動きでは通り越さない。
+       mandatory だと上の部分 (保存の行まで) で少しだけ送っても 0 へ戻されたので proximity (近くで離した時だけ吸い付く) */
+    body.quick #qmark { order: 2; height: 0; margin-bottom: -10px; }
+    html.qsnap { scroll-snap-type: y proximity; }
+    html.qsnap header { scroll-snap-align: start; }   /* 上の端も止まる所 (少しだけ送った時は上へ戻る) */
+    html.qsnap body { position: relative; }
+    #qsnap { display: none; }
+    html.qsnap #qsnap { display: block; position: absolute; left: 0; width: 1px; bottom: 0; visibility: hidden; pointer-events: none;
+                        scroll-snap-align: start; scroll-snap-stop: always; }
     body.quick header { padding: 8px 14px; }
     body.quick .dialbar .tier, body.quick .imgbox .tier { margin-top: 0; margin-bottom: 0; }
     body.quick .status:empty { display: none; }
@@ -499,7 +513,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-07 03:34</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-07 03:47</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -559,7 +573,7 @@
         <div class="qonly" id="qsend"><div class="status" id="qstat"></div><div class="qsendrow" id="qsendrow" hidden><button class="btn primary" id="qtowatch">To watch</button><span class="muted" id="qsendwhat"></span></div></div>
       </div>
     </div>
-    <div class="stage-row">
+    <div class="qonly" id="qmark"></div><div class="stage-row">
       <div class="stage-col">
         <div class="dialrow">
           <div class="stage-outer"><div id="stage"></div></div>
@@ -3052,6 +3066,17 @@
       try { localStorage.setItem(KEY, on ? '1' : '0'); } catch (e) {} };
     let open = true; try { open = localStorage.getItem(KEY) !== '0'; } catch (e) {}
     setOpen(open); b.addEventListener('click', () => setOpen(b.getAttribute('aria-expanded') !== 'true')); }
+  // 文字盤が止まる位置 (= #qmark の位置 − stage-row の上の余白 6) から下の端までを #qsnap にする。上の欄の高さが変わったら置き直す
+  function qSnapPlace() {
+    const on = document.body.classList.contains('quick') && window.innerWidth <= 760;
+    document.documentElement.classList.toggle('qsnap', on);
+    if (!on) return;
+    let b = $('qsnap'); if (!b) { b = document.createElement('div'); b.id = 'qsnap'; document.body.appendChild(b); }
+    const m = $('qmark'); if (!m) return;
+    b.style.top = Math.max(0, Math.round(m.getBoundingClientRect().top + window.scrollY - document.body.getBoundingClientRect().top - window.scrollY - 6)) + 'px';
+  }
+  if (window.ResizeObserver) { const ro = new ResizeObserver(() => qSnapPlace()); document.querySelectorAll('header, #pnav, .dialbar').forEach((e) => ro.observe(e)); }
+  window.addEventListener('resize', () => qSnapPlace());
   function syncQWhat() { document.querySelectorAll('#qwhat button').forEach((b) => b.classList.toggle('on', b.dataset.v === QWHAT)); }
   document.querySelectorAll('#qwhat button').forEach((b) => b.addEventListener('click', () => { QWHAT = b.dataset.v; syncQWhat(); renderQuick(); }));
   document.querySelectorAll('#qpad button').forEach((b) => b.addEventListener('click', () => {
@@ -5808,7 +5833,7 @@
       $('tofulled').textContent = m === 'full' ? 'Collection' : 'Full editor';
       $('pnavwhat').textContent = m === 'quick' ? 'Quick editor' : 'Full editor';
       $('pnavswap').textContent = m === 'quick' ? 'Full editor' : 'Quick editor';
-      render();
+      render(); qSnapPlace();
     };
     const curMode = () => { const b = document.body.classList; return b.contains('quick') ? 'quick' : b.contains('full') ? 'full' : 'col'; };
     const phoneMode = (m) => setPhoneMode(curMode() === m ? 'col' : m);

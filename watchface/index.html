@@ -438,9 +438,14 @@
     body.quick .dialbar .vsep { display: none; }   /* 隠した Clear dial などの区切り線だけが残っていた */
     /* Undo / Redo / Background を 1 列に (2026-10-07 ユーザー指示)。その下に Grid、保存 */
     body.quick .dialbar .ctl { column-gap: 8px; }
-    body.quick #undo, body.quick #redo { padding-left: 10px; padding-right: 10px; }
+    body.quick #undo, body.quick #redo { padding-left: 8px; padding-right: 8px; }
     body.quick #undo { order: 1; } body.quick #redo { order: 2; }
-    body.quick .dialbar .sub:has(#bgpick) { order: 3; gap: 6px; }
+    body.quick .dialbar .sub:has(#bgpick) { order: 3; gap: 4px; flex-wrap: nowrap; }
+    /* 最近の色が 5 つ (BG_HIST_MAX) になると Background が次の行へ落ちた (2026-10-07 ユーザー指摘)。5 つでも 375px で Redo の隣に収める */
+    body.quick .dialbar .sub:has(#bgpick) > .muted { font-size: 13px; }
+    body.quick #bgpick { width: 30px; }
+    body.quick #bgsw { gap: 4px; flex-wrap: nowrap; }
+    body.quick #bgsw .sw { width: 20px; height: 20px; flex: 0 0 auto; }
     body.quick .dialbar .sub:has(#grid) { order: 4; } body.quick #shelfsaverow { order: 5; }
     /* 文字盤が画面の一番上まで来たら止め、下の欄はその下へ潜る (2026-10-07 ユーザー指示)。写真を直す時も文字盤を見ながら */
     /* 上下 14px = 文字盤の外の縁 (#stage の box-shadow 12px) が切れない余白 (6px では上が切れた、2026-10-07 ユーザー指摘)。
@@ -507,7 +512,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-07 04:50</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-07 05:08</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>

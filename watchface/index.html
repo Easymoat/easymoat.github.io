@@ -331,6 +331,7 @@
     /* ボタンは左端: Full editor は PC の画面そのままで携帯では幅が 900px を超えるので、右寄せだと画面の外に出る */
     body.full #pnav .btn { min-height: 40px; padding: 0 12px; font-size: 15px; }
     body.quick .dialbar .sub:has(#grid) { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+    body.quick #shelfsaverow { flex-wrap: wrap; }   /* 「1 of 30 saved」が画面の外へ出た */
     body.quick #grid { height: 40px; font-size: 15px; }
     body.quick #showgrid { width: 22px; height: 22px; }
   }
@@ -392,6 +393,10 @@
   #qparts .qswap { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: -2px 0 6px 34px; }
   #qparts .qswap .muted { flex: 0 0 100%; font-size: 13px; }
   #qparts .qswap .btn { min-height: 40px; padding: 0 12px; font-size: 15px; }
+  #qsend .status { white-space: normal; height: auto; line-height: 1.5; margin-top: 8px; }
+  #qsend .qsendrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+  #qsend .qsendrow[hidden] { display: none; }
+  #qsend .btn { min-height: 44px; padding: 0 18px; font-size: 16px; }
   @media (max-width: 760px) {
     body.quick .qonly { display: block; }
     body.quick aside.left, body.quick aside.right, body.quick .tray, body.quick .drawer, body.quick .shelfbox, body.quick #watchbox,
@@ -465,7 +470,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-06 17:13</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-06 20:38</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -522,6 +527,7 @@
       <div class="grp"><div class="tier"><span class="num">2</span><span class="name">Dial</span><span class="what">Move the parts and the picture here</span></div>
         <div class="ctl"><button class="btn" id="undo" disabled title="Undo the last change to the dial (⌘Z / Ctrl+Z). Parts, colors, sizes and the background — not the image.">Undo</button><button class="btn" id="redo" disabled title="Put back what Undo took away (⇧⌘Z / Ctrl+Y)">Redo</button><button class="btn danger" id="reset" title="Empty the dial: every part, the background and the text / icon sizes go back to the start. Units and the grid stay. Undo puts it back.">Clear dial</button><span class="vsep"></span><button class="btn" id="imgparts" title="Hide the parts on the dial while you frame the picture. Only this view — nothing is saved.">Hide parts</button><button class="btn" id="imghide" title="Hide the picture on the dial. Only this view — nothing is saved.">Hide image</button><span class="vsep"></span><span class="sub"><span class="muted">Grid</span><select id="grid" title="Also the step for the - / + buttons. Pick a fine grid to place thin double lines close together."><option value="5">200 × 200 (5)</option><option value="10">100 × 100 (10)</option><option value="25">40 × 40 (25)</option><option value="50" selected>20 × 20 (50)</option><option value="100">10 × 10 (100)</option></select><label><input type="checkbox" id="showgrid" checked> show</label><span class="cb units" id="gridcol" title="Grid color. Bright is easier to see on a black or dark dial."></span></span><span class="sub"><span class="muted">Background</span><input type="color" id="bgpick" title="Pick any background color (sent to the watch as bg)" value="#000000"><span class="swatches" id="bgsw" title="Recently used colors"></span></span><span class="sub"><span class="muted">Selected</span><span class="cb units" id="selcol" title="Color of the dashed frame around the part you picked. Bright is easier to see on a dark dial; Dim keeps it out of the way while you judge the design."></span></span><span class="sub" id="shelfsaverow" style="align-items:center;gap:10px"><input type="text" id="shelfname" placeholder="Name (optional)" style="width:150px"><button class="btn primary" id="shelfsave">Save to collection</button><span class="muted" id="shelfcount"></span></span></div>
         <div class="status" id="facestatus"></div>
+        <div class="qonly" id="qsend"><div class="status" id="qstat"></div><div class="qsendrow" id="qsendrow" hidden><button class="btn primary" id="qtowatch">To watch</button><span class="muted" id="qsendwhat"></span></div></div>
       </div>
     </div>
     <div class="stage-row">
@@ -2994,6 +3000,23 @@
     $('qnote').textContent = QWHAT === 'photo' ? (hasSource() ? 'Moves the photo inside its frame.' : 'No photo on this dial — add one below.')
       : (selIdx().length ? 'Moves the selected part one grid step.' : 'Tap a part on the dial, then move it one step at a time.');
   }
+  // 保存 → To watch (携帯の Quick editor、2026-10-06 ユーザー指示)。Collection の欄は Quick では隠れているので、
+  //   保存と送信の結果 (shelfstatus / syncstatus) をここに写し、保存した品をそのまま時計へ送れるようにする。
+  //   保存の後に直していたら古い方が送られるので、保存した時の姿 (layout + 写真の作り方) と比べて止める。
+  let QSAVE = null;   // { n, name, snap }
+  const qSnap = () => JSON.stringify([layoutObj(), currentRecipe()]);
+  function qSaved(n, name) {
+    QSAVE = { n, name, snap: qSnap() };
+    $('qsendwhat').textContent = `Sends “${name}” as saved.`;
+    $('qsendrow').hidden = false;
+  }
+  { const copy = (src) => { const q = $('qstat'), e = $(src); if (q && e) { q.textContent = e.textContent; q.className = e.className; } };
+    ['shelfstatus', 'syncstatus'].forEach((id) => { const e = $(id); if (e) new MutationObserver(() => copy(id)).observe(e, { childList: true, characterData: true, subtree: true, attributes: true }); }); }
+  $('qtowatch').addEventListener('click', () => {
+    if (!QSAVE) return;
+    if (qSnap() !== QSAVE.snap) return setStatus('shelfstatus', 'You changed the dial after saving — press Save to collection again, then To watch.', 'warn');
+    sendShelfItem(QSAVE.n);
+  });
   function syncQWhat() { document.querySelectorAll('#qwhat button').forEach((b) => b.classList.toggle('on', b.dataset.v === QWHAT)); }
   document.querySelectorAll('#qwhat button').forEach((b) => b.addEventListener('click', () => { QWHAT = b.dataset.v; syncQWhat(); renderQuick(); }));
   document.querySelectorAll('#qpad button').forEach((b) => b.addEventListener('click', () => {
@@ -4434,7 +4457,7 @@
         <div class="row"><button class="btn" data-a="load" title="Put this item back into the editors above">Edit</button><button class="btn primary" data-a="send" title="Make this the dial your watch shows">To watch</button></div>
         <div class="row"><button class="btn" data-a="share" title="Make a link you can send to anyone — they can add this dial to their own collection">Share…</button><button class="btn danger" data-a="del" title="Delete this item from the collection">Delete</button></div>
         <span class="cap onw"></span>`;
-      // 携帯の Collection では Edit で読み込んだあと編集画面を開く (前に使った方、初めては Full editor。2026-10-06 ユーザー指示)
+      // 携帯の Collection では Edit で読み込んだあと Quick editor を開く (2026-10-06 ユーザー指示)
       d.querySelector('[data-a="load"]').addEventListener('click', async () => { if (await loadShelfItem(it.n) === true && PHONE_EDIT) PHONE_EDIT(); });
       d.querySelector('[data-a="send"]').addEventListener('click', () => sendShelfItem(it.n));
       d.querySelector('[data-a="del"]').addEventListener('click', () => removeShelfItem(it.n, it.name));
@@ -4500,6 +4523,7 @@
       const parked = (st.park || []).length ? ` — ${st.park.length} parked ${st.park.length === 1 ? 'part is' : 'parts are'} not in it` : '';
       const note = (hasImg ? '' : (hasSource() ? ' (saved without the picture — Show is off)' : ' (no picture)')) + parked;
       EDIT_N = j.n; EDIT_ITEM_NAME = body.name || '';   // 保存したらその品を編集中あつかい
+      qSaved(j.n, body.name || 'item ' + j.n);
       setStatus('shelfstatus', `${j.replaced ? 'Saved over' : 'Saved as'} ${body.name || 'item ' + j.n}${note}${j.replaced ? ' — the watch still has the old copy: send this one to it again.' : ' — use "To watch…" on it to put it on the watch.'}`, hasImg ? 'ok' : 'warn');
       loadShelf(); }
     catch (e) { setStatus('shelfstatus', 'Save failed: ' + e.message, 'err'); }
@@ -4870,6 +4894,7 @@
     const full = await fetchShelfItem(n); if (!full) return setStatus('shelfstatus', 'Could not load that item.', 'err');
     const c = faceLayout(full.layout); if (!c) return setStatus('shelfstatus', 'That item has no usable layout.', 'err');
     EDIT_N = n; EDIT_ITEM_NAME = full.name || '';   // この品を編集中 (保存の時に上書きか新規かを聞く)
+    QSAVE = null; $('qsendrow').hidden = true;   // 前に保存した別の品の To watch は消す
     shelfName();
     setEditing('draft'); loadIntoEditor(c); commit();
     const rc = full.recipe || {};
@@ -5745,16 +5770,14 @@
       $('tofulled').textContent = m === 'full' ? 'Collection' : 'Full editor';
       $('pnavwhat').textContent = m === 'quick' ? 'Quick editor' : 'Full editor';
       $('pnavswap').textContent = m === 'quick' ? 'Full editor' : 'Quick editor';
-      if (m !== 'col') { try { localStorage.setItem('faceComposer.phoneEditor', m); } catch (e) {} }
       render();
     };
     const curMode = () => { const b = document.body.classList; return b.contains('quick') ? 'quick' : b.contains('full') ? 'full' : 'col'; };
     const phoneMode = (m) => setPhoneMode(curMode() === m ? 'col' : m);
-    const ED_KEY = 'faceComposer.phoneEditor';
+    // 携帯の Collection の Edit は Quick editor を開く (Edit → Quick で直す → Save → To watch を携帯だけで、2026-10-06 ユーザー指示)
     PHONE_EDIT = () => {
       if (window.innerWidth > 760 || curMode() !== 'col') return;
-      let m = 'full'; try { if (localStorage.getItem(ED_KEY) === 'quick') m = 'quick'; } catch (e) {}
-      setPhoneMode(m); window.scrollTo(0, 0);
+      setPhoneMode('quick'); window.scrollTo(0, 0);
     };
     $('tofulled').addEventListener('click', () => phoneMode('full'));
     $('toquick').addEventListener('click', () => phoneMode('quick'));

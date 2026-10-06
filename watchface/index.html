@@ -433,6 +433,15 @@
     body.quick .dialbar { padding-top: 6px; margin-bottom: 0; }
     body.quick .dialbar .ctl { row-gap: 8px; }
     body.quick .dialbar .vsep { display: none; }   /* 隠した Clear dial などの区切り線だけが残っていた */
+    /* Undo / Redo / Background を 1 列に (2026-10-07 ユーザー指示)。その下に Grid、保存 */
+    body.quick .dialbar .ctl { column-gap: 8px; }
+    body.quick #undo, body.quick #redo { padding-left: 10px; padding-right: 10px; }
+    body.quick #undo { order: 1; } body.quick #redo { order: 2; }
+    body.quick .dialbar .sub:has(#bgpick) { order: 3; gap: 6px; }
+    body.quick .dialbar .sub:has(#grid) { order: 4; } body.quick #shelfsaverow { order: 5; }
+    /* 文字盤が画面の一番上まで来たら止め、下の欄はその下へ潜る (2026-10-07 ユーザー指示)。写真を直す時も文字盤を見ながら */
+    body.quick .stage-row { position: sticky; top: 0; z-index: 30; background: var(--ground); padding: 6px 0; margin: -6px 0;
+                            box-shadow: 0 8px 10px -6px rgba(0, 0, 0, .6); }
     body.quick header { padding: 8px 14px; }
     body.quick .dialbar .tier, body.quick .imgbox .tier { margin-top: 0; margin-bottom: 0; }
     body.quick .status:empty { display: none; }
@@ -490,7 +499,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-07 03:14</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-07 03:34</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>

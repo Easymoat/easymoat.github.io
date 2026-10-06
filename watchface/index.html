@@ -447,9 +447,13 @@
        margin −10 = 上下の欄との隙間 (gap 10) の分だけ食い込む (それ以上は保存の行や Selected part に被る) */
     body.quick .stage-row { position: sticky; top: 0; z-index: 30; background: var(--ground); padding: 14px 0; margin: -10px 0;
                             box-shadow: 0 8px 10px -6px rgba(0, 0, 0, .6); }
-    /* 文字盤が止まる所 (#qmark の位置) で、指を離した後の惰性のスクロールを一旦止める (下の qStopAtDial)。
-       CSS の scroll snap は iPhone で惰性が消えたのでやめた (2026-10-07 ユーザー報告) */
-    body.quick #qmark { order: 2; height: 0; margin-bottom: -10px; }
+    /* 文字盤が上に着く位置に 1 か所だけ吸い付く (proximity = 流れの終わりがその近くの時だけ、Safari 自身の動きで)。2026-10-07 ユーザー指示。
+       経緯: 帯 (その位置〜下の端) + snap-stop は iPhone で惰性が消えた。JS で惰性を引き継いで止めるのは減速の始まりで引っ掛かって見えた。
+       #qmark = 文字盤の行 (margin −10) の上端から 10px 下 → scroll-margin-top で文字盤が上に着く位置に合わせる */
+    body.quick #qmark { order: 2; align-self: stretch; height: 1px; margin-bottom: -11px; scroll-margin-top: 10px; }   /* 幅 0 だと吸い付く所として扱われなかった */
+    html.qsnap { scroll-snap-type: y proximity; }
+    html.qsnap #qmark { scroll-snap-align: start; }
+    html.qsnap header { scroll-snap-align: start; }   /* 上の端も (少しだけ送った時は上へ戻る) */
     body.quick header { padding: 8px 14px; }
     body.quick .dialbar .tier, body.quick .imgbox .tier { margin-top: 0; margin-bottom: 0; }
     body.quick .status:empty { display: none; }
@@ -507,7 +511,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-07 04:19</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-07 04:46</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3060,39 +3064,6 @@
       try { localStorage.setItem(KEY, on ? '1' : '0'); } catch (e) {} };
     let open = true; try { open = localStorage.getItem(KEY) !== '0'; } catch (e) {}
     setOpen(open); b.addEventListener('click', () => setOpen(b.getAttribute('aria-expanded') !== 'true')); }
-  // 指を離した後の惰性のスクロールが文字盤の止まる位置 (= #qmark − 10。stage-row の margin) を通り越しそうなら、そこで止める
-  //   (上へ送る時は文字盤が上に着いた所、戻す時は潜っていた欄が全部見えた所。2026-10-07 ユーザー指示)。
-  //   いきなり止めず、その時の速さから滑らかに減速して止める (ease-out。最初の速さを惰性の速さに合わせる)。
-  //   止まる手前で引っ掛かって見えた (2026-10-07 ユーザー指摘) → 位置を整数に丸めない (減速の終わりが 1px ずつのコマ送りになっていた)、
-  //   速さは何コマかの平均 (1 コマだけだとばらつき、乗り換えた瞬間に速さが跳んだ)、減速の長さを速さに合わせる (下限 0.22 秒で合わなくなっていた)。
-  //   指で動かしている間は止めない。止めるのは 1 回の指の動きにつき 1 回 (次に触れば先へ進める)。
-  { let lastY = window.scrollY, lastT = performance.now(), v = 0, coasting = false, done = false, anim = 0;
-    const stopY = () => { const m = $('qmark'); return m ? Math.round(m.getBoundingClientRect().top + window.scrollY - 10) : -1; };
-    const glide = (to, speed) => {   // speed = px/ms (その時の惰性の速さ)
-      const from = window.scrollY, d = to - from; if (!d) return;
-      const dur = Math.max(120, Math.min(900, 3 * Math.abs(d) / Math.max(0.05, Math.abs(speed))));   // ease-out cubic の出だしの速さ = 3d/dur
-      const t0 = performance.now(); cancelAnimationFrame(anim);
-      const step = (now) => { const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3), rest = d * (1 - e);
-        const done = k >= 1 || Math.abs(rest) < 0.3;
-        window.scrollTo(0, done ? to : from + d * e); anim = done ? 0 : requestAnimationFrame(step); };
-      anim = requestAnimationFrame(step);
-    };
-    addEventListener('touchstart', () => { coasting = false; done = false; cancelAnimationFrame(anim); anim = 0; }, { passive: true });
-    addEventListener('touchend', () => { coasting = true; }, { passive: true });   // 指で動かしていた時の速さをそのまま引き継ぐ
-    addEventListener('scroll', () => {
-      const y = window.scrollY, now = performance.now();
-      if (anim) { lastY = y; lastT = now; return; }   // 自分で動かしている間
-      const dt = Math.max(1, now - lastT), vi = (y - lastY) / dt;
-      v = dt > 120 ? vi : v * 0.5 + vi * 0.5;   // 何コマかの平均 (間が空いた時はその 1 回)
-      if (coasting && !done && document.body.classList.contains('quick') && window.innerWidth <= 760) {
-        const T = stopY();
-        const crossed = T > 0 && ((lastY < T && y > T) || (lastY > T && y < T));
-        const near = T > 0 && v !== 0 && Math.sign(T - y) === Math.sign(v) && Math.abs(T - y) <= Math.abs(v) * 260;   // あと 0.26 秒で着く
-        if (crossed || near) { done = true; coasting = false; glide(T, v); }
-      }
-      lastY = y; lastT = now;
-    }, { passive: true });
-  }
   function syncQWhat() { document.querySelectorAll('#qwhat button').forEach((b) => b.classList.toggle('on', b.dataset.v === QWHAT)); }
   document.querySelectorAll('#qwhat button').forEach((b) => b.addEventListener('click', () => { QWHAT = b.dataset.v; syncQWhat(); renderQuick(); }));
   document.querySelectorAll('#qpad button').forEach((b) => b.addEventListener('click', () => {
@@ -5849,6 +5820,7 @@
       $('tofulled').textContent = m === 'full' ? 'Collection' : 'Full editor';
       $('pnavwhat').textContent = m === 'quick' ? 'Quick editor' : 'Full editor';
       $('pnavswap').textContent = m === 'quick' ? 'Full editor' : 'Quick editor';
+      document.documentElement.classList.toggle('qsnap', m === 'quick');
       render();
     };
     const curMode = () => { const b = document.body.classList; return b.contains('quick') ? 'quick' : b.contains('full') ? 'full' : 'col'; };

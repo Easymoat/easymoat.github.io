@@ -323,6 +323,17 @@
   /* ── 携帯 (細い画面): コレクションだけを出して、面の切り替えに専念する ──
      body.full を付ければ全部出る (Editor ボタン)。 */
   #phonebar { display: none; }
+  /* 携帯の編集画面の上の切り替え (2026-10-06 ユーザー指示)。編集中は #phonebar が隠れて Collection へ戻れなかった */
+  #pnav { display: none; }
+  @media (max-width: 760px) {
+    body.full #pnav { display: flex; align-items: center; gap: 8px; position: sticky; top: 0; z-index: 60; order: 0;
+                      padding: 8px 10px; background: var(--panel); border-bottom: 1px solid var(--line); }
+    /* ボタンは左端: Full editor は PC の画面そのままで携帯では幅が 900px を超えるので、右寄せだと画面の外に出る */
+    body.full #pnav .btn { min-height: 40px; padding: 0 12px; font-size: 15px; }
+    body.quick .dialbar .sub:has(#grid) { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+    body.quick #grid { height: 40px; font-size: 15px; }
+    body.quick #showgrid { width: 22px; height: 22px; }
+  }
   .only-phone { display: none; }
   /* 携帯のバー。行はすべて同じ高さで左端をそろえ、指で押せる大きさ (44px) にする。 */
   .prow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; width: 100%; }
@@ -386,7 +397,7 @@
     body.quick .qonly { display: block; }
     body.quick aside.left, body.quick aside.right, body.quick .tray, body.quick .drawer, body.quick .shelfbox, body.quick #watchbox,
     body.quick .stagewrap > .tier, body.quick .stagebar .devrow, body.quick #fixednote,
-    body.quick #reset, body.quick #imgparts, body.quick #imghide, body.quick .dialbar .sub:has(#grid), body.quick .dialbar .sub:has(#selcol),
+    body.quick #reset, body.quick #imgparts, body.quick #imghide, body.quick .dialbar .sub:has(#selcol),
     body.quick .dialbar .tier .what,
     body.quick #imgstage, body.quick #imgdragrow, body.quick .imgbox .ctl:has(#imgreset), body.quick #camgrp, body.quick #shapeselrow,
     body.quick .imgbox .ctl:has(#rotl), body.quick .imgbox .grp:has(#imgbg), body.quick #imgbgrow,
@@ -455,12 +466,13 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-06 12:23</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-06 12:41</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
 
 <main>
+  <div id="pnav"><button class="btn" id="pnavback">Collection</button><button class="btn" id="pnavswap">Full editor</button><span class="muted">Now: <b id="pnavwhat">Quick editor</b></span></div>
   <div id="phonebar" class="box">
     <div class="psign" id="psign">
       <div class="lbl">Your watch</div>
@@ -5723,16 +5735,22 @@
     mirror(); showSigned();
     // 携帯の編集は 2 種類 (2026-10-06 ユーザー指示): Full editor = PC と同じ全部 / Quick editor = 同じ編集画面から指で使う物だけ残す。
     //   どちらも同じ編集の状態 (st) を触るので、行き来しても中身は同じ。押している方のボタンは「Collection」(戻る) になる。
-    const phoneMode = (m) => {
+    //   編集画面の上の #pnav から、もう一方の編集画面と Collection へ切り替えられる (2026-10-06 ユーザー指示)。
+    const setPhoneMode = (m) => {   // m = 'col' | 'full' | 'quick'
       const b = document.body.classList;
-      if (m === 'quick') { const on = !b.contains('quick'); b.toggle('full', on); b.toggle('quick', on); }
-      else { const on = !(b.contains('full') && !b.contains('quick')); b.toggle('full', on); b.remove('quick'); }
-      $('toquick').textContent = b.contains('quick') ? 'Collection' : 'Quick editor';
-      $('tofulled').textContent = b.contains('full') && !b.contains('quick') ? 'Collection' : 'Full editor';
+      b.toggle('full', m !== 'col'); b.toggle('quick', m === 'quick');
+      $('toquick').textContent = m === 'quick' ? 'Collection' : 'Quick editor';
+      $('tofulled').textContent = m === 'full' ? 'Collection' : 'Full editor';
+      $('pnavwhat').textContent = m === 'quick' ? 'Quick editor' : 'Full editor';
+      $('pnavswap').textContent = m === 'quick' ? 'Full editor' : 'Quick editor';
       render();
     };
+    const curMode = () => { const b = document.body.classList; return b.contains('quick') ? 'quick' : b.contains('full') ? 'full' : 'col'; };
+    const phoneMode = (m) => setPhoneMode(curMode() === m ? 'col' : m);
     $('tofulled').addEventListener('click', () => phoneMode('full'));
     $('toquick').addEventListener('click', () => phoneMode('quick'));
+    $('pnavswap').addEventListener('click', () => { setPhoneMode(curMode() === 'quick' ? 'full' : 'quick'); window.scrollTo(0, 0); });
+    $('pnavback').addEventListener('click', () => { setPhoneMode('col'); window.scrollTo(0, 0); });
     // 携帯は開いた時 Dial が隠れている (display:none) ので、部品の大きさが 0 のまま位置を決めていた。
     // Editor を押して見えるようになっても位置がそのままで、大きくずれた (もう一度押すと直った、2026-10-03)。
     // 見えるようになった (幅が 0 から正になった) 時に描き直す。横向きにして広い画面になった時も同じ。

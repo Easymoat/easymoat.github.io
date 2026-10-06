@@ -443,7 +443,9 @@
     body.quick .dialbar .sub:has(#bgpick) { order: 3; gap: 6px; }
     body.quick .dialbar .sub:has(#grid) { order: 4; } body.quick #shelfsaverow { order: 5; }
     /* 文字盤が画面の一番上まで来たら止め、下の欄はその下へ潜る (2026-10-07 ユーザー指示)。写真を直す時も文字盤を見ながら */
-    body.quick .stage-row { position: sticky; top: 0; z-index: 30; background: var(--ground); padding: 6px 0; margin: -6px 0;
+    /* 上下 14px = 文字盤の外の縁 (#stage の box-shadow 12px) が切れない余白 (6px では上が切れた、2026-10-07 ユーザー指摘)。
+       margin −10 = 上下の欄との隙間 (gap 10) の分だけ食い込む (それ以上は保存の行や Selected part に被る) */
+    body.quick .stage-row { position: sticky; top: 0; z-index: 30; background: var(--ground); padding: 14px 0; margin: -10px 0;
                             box-shadow: 0 8px 10px -6px rgba(0, 0, 0, .6); }
     /* 文字盤が止まる所 (#qmark の位置) で、指を離した後の惰性のスクロールを一旦止める (下の qStopAtDial)。
        CSS の scroll snap は iPhone で惰性が消えたのでやめた (2026-10-07 ユーザー報告) */
@@ -505,7 +507,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-07 03:55</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-07 04:05</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3058,20 +3060,33 @@
       try { localStorage.setItem(KEY, on ? '1' : '0'); } catch (e) {} };
     let open = true; try { open = localStorage.getItem(KEY) !== '0'; } catch (e) {}
     setOpen(open); b.addEventListener('click', () => setOpen(b.getAttribute('aria-expanded') !== 'true')); }
-  // 指を離した後の惰性のスクロールが文字盤の止まる位置 (= #qmark − stage-row の上の余白 6) を通り越したら、そこで 1 回止める
+  // 指を離した後の惰性のスクロールが文字盤の止まる位置 (= #qmark − 10。stage-row の margin) を通り越しそうなら、そこで止める
   //   (上へ送る時は文字盤が上に着いた所、戻す時は潜っていた欄が全部見えた所。2026-10-07 ユーザー指示)。
+  //   いきなり止めず、その時の速さから滑らかに減速して止める (ease-out。最初の速さを惰性の速さに合わせる)。
   //   指で動かしている間は止めない。止めるのは 1 回の指の動きにつき 1 回 (次に触れば先へ進める)。
-  { let lastY = window.scrollY, coasting = false, done = false;
-    const stopY = () => { const m = $('qmark'); return m ? Math.round(m.getBoundingClientRect().top + window.scrollY - 6) : -1; };
-    addEventListener('touchstart', () => { coasting = false; done = false; }, { passive: true });
-    addEventListener('touchend', () => { coasting = true; lastY = window.scrollY; }, { passive: true });
+  { let lastY = window.scrollY, lastT = performance.now(), v = 0, coasting = false, done = false, anim = 0;
+    const stopY = () => { const m = $('qmark'); return m ? Math.round(m.getBoundingClientRect().top + window.scrollY - 10) : -1; };
+    const glide = (to, speed) => {   // speed = px/ms (その時の惰性の速さ)
+      const from = window.scrollY, d = to - from; if (!d) return;
+      const dur = Math.max(220, Math.min(700, 3 * Math.abs(d) / Math.max(0.05, Math.abs(speed))));   // ease-out cubic の出だしの速さ = 3d/dur
+      const t0 = performance.now(); cancelAnimationFrame(anim);
+      const step = (now) => { const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+        window.scrollTo(0, Math.round(from + d * e)); if (k < 1) anim = requestAnimationFrame(step); else anim = 0; };
+      anim = requestAnimationFrame(step);
+    };
+    addEventListener('touchstart', () => { coasting = false; done = false; cancelAnimationFrame(anim); anim = 0; }, { passive: true });
+    addEventListener('touchend', () => { coasting = true; lastY = window.scrollY; lastT = performance.now(); }, { passive: true });
     addEventListener('scroll', () => {
-      const y = window.scrollY;
+      const y = window.scrollY, now = performance.now();
+      if (anim) { lastY = y; lastT = now; return; }   // 自分で動かしている間
+      const dt = Math.max(1, now - lastT); v = (y - lastY) / dt;
       if (coasting && !done && document.body.classList.contains('quick') && window.innerWidth <= 760) {
         const T = stopY();
-        if (T > 0 && ((lastY < T && y > T) || (lastY > T && y < T))) { done = true; coasting = false; window.scrollTo(0, T); lastY = T; return; }
+        const crossed = T > 0 && ((lastY < T && y > T) || (lastY > T && y < T));
+        const near = T > 0 && v !== 0 && Math.sign(T - y) === Math.sign(v) && Math.abs(T - y) <= Math.abs(v) * 260;   // あと 0.26 秒で着く
+        if (crossed || near) { done = true; coasting = false; glide(T, v); }
       }
-      lastY = y;
+      lastY = y; lastT = now;
     }, { passive: true });
   }
   function syncQWhat() { document.querySelectorAll('#qwhat button').forEach((b) => b.classList.toggle('on', b.dataset.v === QWHAT)); }

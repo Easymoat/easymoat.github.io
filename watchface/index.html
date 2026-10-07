@@ -178,6 +178,7 @@
   .shelfbox { width: 100%; max-width: 1040px; gap: 14px; }
   .shelf { display: flex; flex-wrap: wrap; gap: 18px 22px; }
   .cap.onw { color: var(--accent); }
+  #onwatchnote { white-space: normal; height: auto; line-height: 1.5; margin: 2px 0 8px; }   /* どの品も Showing にならない理由 (折り返す) */
   .item { width: 250px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
   .item .mini { position: relative; width: 240px; height: 240px; border-radius: 50%; overflow: hidden; background: #000 center/cover no-repeat; border: 2px solid var(--line-2); }
   .item.onwatch .mini { border-color: var(--accent); }
@@ -512,7 +513,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-07 05:08</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-07 15:14</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -629,6 +630,7 @@
         <div class="status" id="syncstatus"></div>
         <div class="status" id="shelfstatus"></div>
       </div>
+      <div class="status" id="onwatchnote" hidden></div>
       <div class="shelf" id="shelf"></div>
       <details class="box" id="linksbox" style="margin-top:14px" hidden>
         <summary class="lbl" style="cursor:pointer">Links you shared (<span id="linkcount">0</span>)</summary>
@@ -4573,6 +4575,18 @@
       const el = d.querySelector('.onw'); if (el) el.textContent = '';
       d.classList.toggle('onwatch', on);
     });
+    // どの品も「Showing」にならない時は、その理由を Collection の上に出す (2026-10-07 ユーザー指摘: 携帯で使用中の印が無い)。
+    //   読めなかった (サインインが要る) / 時計の面が Collection に無い / 時計は同梱の面のまま
+    const note = $('onwatchnote'); if (!note) return;
+    const show = (msg, cls) => { note.textContent = msg; note.className = 'status' + (cls ? ' ' + cls : ''); note.hidden = !msg; };
+    const tgt = sendTarget();
+    if (!(SHELF.items || []).length || !/^[0-9a-zA-Z-]{4,40}$/.test(tgt)) return show('');
+    if (WSLOTS.err) return show(`Cannot tell which dial the watch ${tgt} is showing: ${WSLOTS.err}.`, 'warn');
+    if (!WSLOTS.loaded) return show('');
+    if (!cur) return show(`The watch ${tgt} is showing The Face's built-in dial — none of these yet.`);
+    if (!(SHELF.items || []).some((x) => Number(x.n) === Number(cur.shelf)))
+      return show(`The watch ${tgt} is showing ${cur.name ? '“' + cur.name + '”' : 'a dial'}, which is not in this collection${cur.shelf_of ? ' (it came from another collection)' : cur.shelf ? ' (that item was deleted or replaced)' : ''}.`);
+    show('');
   }
   async function fetchShelfItem(n) {
     const r = await fetch(`${$('api').value}/shelf-item?device_id=${encodeURIComponent(devId())}&n=${n}`); if (!r.ok) return null; return r.json();
@@ -5009,8 +5023,9 @@
     const id = sendTarget();
     if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { WSLOTS.active = 0; WSLOTS.faces = {}; markShelfOnWatch(); return; }
     try {
-      const r = await fetch($('api').value + '/watch?device_id=' + encodeURIComponent(id), { headers: authHeaders() }); if (!r.ok) return;
-      const j = await r.json(); WSLOTS.active = j.active || 0; WSLOTS.faces = j.faces || {};
+      const r = await fetch($('api').value + '/watch?device_id=' + encodeURIComponent(id), { headers: authHeaders() });
+      if (!r.ok) { const e = await r.json().catch(() => null); WSLOTS.err = r.status === 401 ? authMsg(e) : 'the server answered ' + r.status; WSLOTS.loaded = false; markShelfOnWatch(); return; }
+      const j = await r.json(); WSLOTS.active = j.active || 0; WSLOTS.faces = j.faces || {}; WSLOTS.err = ''; WSLOTS.loaded = true;
       WATCH.seenWatch = j.seen || null; renderWatchSeen();
     } catch (e) { return; }
     markShelfOnWatch();

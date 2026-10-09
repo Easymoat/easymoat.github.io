@@ -513,7 +513,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-07 15:14</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-09 12:24</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -702,7 +702,7 @@
   </aside>
 </main>
 <div id="limitToast" role="alert"></div>
-<footer class="credits">Icons: Material Design Icons by Pictogrammers and Material Symbols by Google (Apache 2.0) · Weather: Open-Meteo.com, CC BY 4.0</footer>
+<footer class="credits">Icons: Material Design Icons by Pictogrammers and Material Symbols by Google (Apache 2.0)</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/rgbquant@1.1.2/src/rgbquant.js"></script>
 <script>
@@ -863,6 +863,9 @@
     // ゴルフ選手 (2026-10-05)。選手は layout "gf" [{id, nm}]、6 = 1 人目 / 7 = 2 人目。中身はサーバが /api/wf/game に載せる 1 行。
     6:  { name: 'Golfer 1',       grp: 'bb',    sample: 'Matsuyama T5 -8 (13)', icon: null, iw: 0, gf: 0, noPal: true },
     7:  { name: 'Golfer 2',       grp: 'bb',    sample: 'Hataoka T9 -11 F', icon: null, iw: 0, gf: 1, noPal: true },
+    // 2026-10-09: 6/7 は 名前 = Icon・順位とスコア = Value (Show / Arrange / Gap が効く)。8/9 = その選手の状況 (Thru 13 / F / スタート時刻)
+    8:  { name: 'Golfer 1 status', grp: 'bb',   sample: 'Thru 13', icon: null, iw: 0, gf: 0, gfSt: true, noPal: true },
+    9:  { name: 'Golfer 2 status', grp: 'bb',   sample: 'F',       icon: null, iw: 0, gf: 1, gfSt: true, noPal: true },
     // 銘柄は面ごとに 2 つ持つ (layout の st)。部品は st[0] / st[1] を指すだけ。
     30: { name: 'Stock 1',   grp: 'mkt',   sample: '229.35', icon: 'stock',     iw: 0, stk: 0 },
     31: { name: 'Stock 2',   grp: 'mkt',   sample: '229.35', icon: 'stock',     iw: 0, stk: 1 },
@@ -1255,6 +1258,12 @@
   const GF_MAX = 2;
   const isGolf = (t) => !!(TYPES[t] && TYPES[t].gf != null);
   const gfSlot = (t) => (TYPES[t] || {}).gf || 0;
+  const isGolfSt = (t) => !!(TYPES[t] && TYPES[t].gfSt);      // 8/9 = 状況
+  const isGolfName = (t) => isGolf(t) && !isGolfSt(t);         // 6/7 = 名前 (Icon) + 順位とスコア (Value)
+  // 6/7 の Show: 1 名前+スコア / 3 名前だけ / 0 スコアだけ (他の部品の Icon + value と同じ並び)。
+  //   名前を隠す印は f の bit 4 (16)。昔の面 (bit 無し) は名前を出したまま。スコアを隠すのは他の部品と同じ bit 1 (2)
+  const golfShow = (e) => ((e[6] & 16) ? 0 : (e[6] & 2) ? 3 : 1);
+  const setGolfShow = (e, v) => { e[6] = (e[6] & ~18) | (v === 0 ? 16 : v === 3 ? 2 : 0); };
   const gfOf = (i) => (st.gf || [])[i] || null;
   const setGf = (i, v) => { const a = (st.gf || []).slice(0, GF_MAX); while (a.length < GF_MAX) a.push(null); a[i] = v; st.gf = a; };
   const gfClean = (g) => (g && /^[0-9]{1,10}$/.test(String(g.id)) ? { id: Number(g.id), nm: String(g.nm || '').replace(/[^\x20-\x7e]/g, '').slice(0, 12) || 'Golfer' } : null);
@@ -1286,6 +1295,18 @@
     if (GAMEQ.key !== gameKey() + '|' + golfKey() || !GAMEQ.gf) return `${g.nm} T5 -8 (13)`;
     const r = GAMEQ.gf[gfSlot(t)]; return r && r.t ? r.t : `${g.nm} --`;
   };   // undefined = まだ / null = 試合なし
+  // 2026-10-09: 6/7 は [名前 (Icon), 順位とスコア (Value)]、8/9 は状況。サーバの nm / sc / st (無い時は見本)。
+  //   今週出ていない選手は 名前 + 「--」、状況は「--」(実機と同じ)
+  const golfLive = (t) => (GAMEQ.key === gameKey() + '|' + golfKey() && GAMEQ.gf ? (GAMEQ.gf[gfSlot(t)] || null) : undefined);
+  const golfParts = (t) => {
+    const g = gfOf(gfSlot(t)); if (!g) return ['Golfer', 'Pick a golfer'];
+    const r = golfLive(t);
+    if (r === undefined) return [g.nm, 'T5 -8'];
+    if (!r) return [g.nm, '--'];
+    const sc = r.sc != null ? r.sc : String(r.t || '').replace(/^\S+\s*/, '').replace(/\s*(\(\d+\)|F|\S+ \d\d:\d\d|\d\d:\d\d)$/, '');   // 古いサーバ (t だけ) の時は 1 行から切り出す
+    return [r.nm || g.nm, sc || '--'];
+  };
+  const golfStatus = (t) => { const g = gfOf(gfSlot(t)); if (!g) return 'Pick a golfer'; const r = golfLive(t); return r === undefined ? 'Thru 13' : (r && r.st) || '--'; };
   function gameText(t) {
     const g = gameOf(bbSlot(t));
     if (g === undefined) return null;
@@ -2249,8 +2270,8 @@
     return `<svg width="26" height="26" viewBox="0 0 26 26" style="display:block">${o}</svg>`;
   };
   // Markets / USA Sports / Soccer の札は 1 種類 1 枚 (2026-10-04 ユーザー指示)。Stock 1・2 と Game 1-4 を並べず、置く時に空いている枠を選ぶ。
-  const PAL_HIDE = new Set([31, 34, 35, 36, 37, 38, 39, 7]);
-  const PAL_NAME = { 30: 'Stock', 32: 'Game score', 33: 'Game status', 6: 'Golfer' };
+  const PAL_HIDE = new Set([31, 34, 35, 36, 37, 38, 39, 7, 9]);
+  const PAL_NAME = { 30: 'Stock', 32: 'Game score', 33: 'Game status', 6: 'Golfer', 8: 'Golfer status' };
   for (const [t, d] of Object.entries(TYPES)) {
     if (d.hidden) continue;   // retired parts stay renderable but are not offered
     if (PAL_HIDE.has(+t)) continue;
@@ -2303,14 +2324,16 @@
   }
   { const tip = 'Shows one game: MLB, NFL, NBA, NHL or soccer (Premier League, LaLiga, Serie A, Bundesliga, Ligue 1, J1 League). After you place it, pick the league and team in Selected part. The watch follows 4 games.';
     ['32', '33'].forEach((t) => { const p = $('parts-bb').querySelector(`.part[data-t="${t}"]`); if (p) p.dataset.tip = tip; }); }
-  { const gs = $('parts-bb').querySelector('.part[data-t="33"]'), gl = $('parts-bb').querySelector('.part[data-t="6"]'); if (gs && gl) gs.after(gl);
-    if (gl) gl.dataset.tip = 'One golfer: position, score and holes played this week (PGA Tour, LPGA, DP World Tour, LIV, Champions, Korn Ferry). After you place it, search the player in Selected part. The watch follows 2 golfers.'; }
+  { const gs = $('parts-bb').querySelector('.part[data-t="33"]'), gl = $('parts-bb').querySelector('.part[data-t="6"]'), gt = $('parts-bb').querySelector('.part[data-t="8"]');
+    if (gs && gl) gs.after(gl); if (gl && gt) gl.after(gt);
+    if (gl) gl.dataset.tip = 'One golfer: the name (Icon) and position and score (Value) this week (PGA Tour, LPGA, DP World Tour, LIV, Champions, Korn Ferry). After you place it, search the player in Selected part. The watch follows 2 golfers.';
+    if (gt) gt.dataset.tip = 'The golfer\'s status: Thru 13 while playing, F after the round, the start time before it. It follows the same golfer as a Golfer part (it takes the golfer that has no status yet).'; }
   // Time + sec の札は「10:08:30」だと枠からはみ出して名前に重なる。時刻の下に小さく秒を置く 2 段にする (2026-10-04 ユーザー指示)
   { const ico = $('parts-clock').querySelector('.part[data-t="4"] .ico');
     if (ico) ico.innerHTML = '<span style="display:flex;flex-direction:column;align-items:center;line-height:1.05;font:500 12px var(--watch)">10:08<span style="font-size:10px;color:var(--ink-3)">:30</span></span>'; }
   // Markets / USA Sports / Soccer の札にも絵を付ける (2026-10-04 ユーザー指示)。札の見た目だけで、時計に出るアイコンは変えない
   //   (時計の Stock は今までどおり '$'、試合の部品はアイコンなし)。
-  [['mkt', 30, 'chart-line'], ['mkt', 90, 'percent-circle-outline'], ['bb', 32, 'scoreboard-outline'], ['bb', 33, 'timer-outline'], ['bb', 6, 'golf'],
+  [['mkt', 30, 'chart-line'], ['mkt', 90, 'percent-circle-outline'], ['bb', 32, 'scoreboard-outline'], ['bb', 33, 'timer-outline'], ['bb', 6, 'golf'], ['bb', 8, 'timer-outline'],
    ].forEach(([g, t, n]) => {
     const ico = $('parts-' + g).querySelector(`.part[data-t="${t}"] .ico`); if (ico) ico.innerHTML = mdiIcon(n, 22);
   });
@@ -2580,6 +2603,18 @@
       }
       div.style.gap = '0px';
       div.innerHTML = cells.join('') + '<span class="anchor"></span>';
+    } else if (isGolfName(t)) {
+      // ゴルフ選手 (6/7、2026-10-09 ユーザー指示): 名前 = Icon、順位とスコア = Value。Show / Arrange / Gap は他の部品と同じ意味 (Crew と同じ描き方)
+      const [nm, sc] = golfParts(t), sh = golfShow(e), showN = sh !== 0, showV = sh !== 3;
+      const arr = arrOf(e), al = e[3] === 1 ? 'flex-start' : e[3] === 2 ? 'flex-end' : 'center';
+      const gp = gapOf(e) * ki, vG = arr === 2 ? (gapOf(e) - DEF_IG) * ki : 0, nG = arr === 3 ? (gapOf(e) - DEF_IG) * ki : 0;
+      const top = `position:relative;top:${inkShift(px).toFixed(2)}px`;
+      const N = showN ? `<span class="ico"${nG ? ` style="margin-top:${nG.toFixed(1)}px"` : ''}>${nm}</span>` : '';
+      const V = showV ? `<span class="val"${vG ? ` style="margin-top:${vG.toFixed(1)}px"` : ''}>${sc}</span>` : '';
+      const row = isVert(arr) ? `<div style="display:flex;flex-direction:column;align-items:${al};line-height:${px}px;${top}">${arr === 3 ? V + N : N + V}</div>`
+        : `<div style="display:flex;gap:${gp.toFixed(1)}px;line-height:${px}px;${top}">${arr === 1 ? V + N : N + V}</div>`;
+      div.style.flexDirection = 'column'; div.style.alignItems = al; div.style.gap = '0px';
+      div.innerHTML = row + '<span class="anchor"></span>';
     } else if (isCrew(t)) {
       // Crew (47): 名前 = Icon、距離と経過分 = Value (2026-09-27 ユーザー指示)。Show / Arrange / Gap は他の部品と同じ意味。
       //   行の高さは :size の px そのまま (実機と同じ)。名前上 (Arrange = Icon above) は 1 人 2 行になる。
@@ -2598,7 +2633,7 @@
       div.innerHTML = rowsH.join('') + '<span class="anchor"></span>';
     } else {
       const showVal = !(f & 2);   // f の bit 1 = 値を出さない (アイコンだけ)
-      const sample = isText(t) ? (ttOf(e) || def.sample) : isStock(t) ? stkValue(t, f) : isBall(t) ? ballSample(t) : isGolf(t) ? golfSample(t) : (t === 2 && !splitDate) ? 'Fri Sep 4' : cityOf(e) ? citySample(t, cityOf(e)) : def.sample;
+      const sample = isText(t) ? (ttOf(e) || def.sample) : isStock(t) ? stkValue(t, f) : isBall(t) ? ballSample(t) : isGolfSt(t) ? golfStatus(t) : isGolf(t) ? golfSample(t) : (t === 2 && !splitDate) ? 'Fri Sep 4' : cityOf(e) ? citySample(t, cityOf(e)) : def.sample;
       const lay = arrOf(e);       // 0 アイコン左 / 1 アイコン右 / 2 アイコン上
       // 太字で右へ伸びた分 (bo) は値の幅に含める = 実機の「文字幅 + bo」。アイコン右 (arr 1) でもアイコンが bo だけ離れる。
       // 縦積み (アイコン上) の時の間隔。実機は「アイコンの箱 → 文字の行」を**隙間なしで積む**ので、
@@ -2968,8 +3003,9 @@
     if (isStock(t)) { out.push({ lb: x[6] & 4 ? 'Stock' : 'Stock %', t, how: 'pct' }); return out; }
     if (isBall(t) || isGolf(t)) {
       if (isBall(t)) out.push({ lb: t % 2 ? 'Game score' : 'Game status', t: t % 2 ? t - 1 : t + 1, how: 'same' });
-      else { out.push({ lb: 'Game score', t: 32, how: 'new' }, { lb: 'Game status', t: 33, how: 'new' }); }
-      if (!isGolf(t)) out.push({ lb: 'Golfer', t: 6, how: 'new' });
+      else { out.push(isGolfSt(t) ? { lb: 'Golfer', t: t - 2, how: 'same' } : { lb: 'Golfer status', t: t + 2, how: 'same' });   // 同じ選手のまま
+             out.push({ lb: 'Game score', t: 32, how: 'new' }, { lb: 'Game status', t: 33, how: 'new' }); }
+      if (!isGolf(t)) out.push({ lb: 'Golfer', t: 6, how: 'new' }, { lb: 'Golfer status', t: 8, how: 'new' });
       return out;
     }
     if (!['clock', 'body', 'wx', 'graph', 'hands', 'rim'].includes(d.grp)) return out;   // 文字・丸は取り替える相手が無い
@@ -2992,7 +3028,7 @@
     } else {
       let t = o.t;
       if (isBall(t) || isGolf(t)) {   // 空いている枠 (Game 1-4 / Golfer 1-2)。スコアと状況の入れ替えは同じ試合のまま
-        if (o.how === 'same') { if (st.el.some((y) => y[0] === t)) return limitNotice(`This game already has a ${t % 2 ? 'status' : 'score'} on the dial.`); }
+        if (o.how === 'same') { if (st.el.some((y) => y[0] === t)) return limitNotice(isGolf(t) ? `This golfer already has ${isGolfSt(t) ? 'a status' : 'a name and score'} on the dial.` : `This game already has a ${t % 2 ? 'status' : 'score'} on the dial.`); }
         else { const tg = palTarget(t); if (tg.err) return limitNotice(tg.err); t = tg.t; }
       }
       const rest = st.el.filter((y) => y !== x);
@@ -3295,7 +3331,8 @@
     const stepRow = (label, key, val, ttl) => `<div class="field" title="${ttl}"><span>${label}</span><span class="cb units step" data-step="${key}"><button type="button" data-d="-1">&minus;</button><b>${val == null ? '—' : val}</b><button type="button" data-d="1">+</button></span></div>`;
     const isOf = (x) => (Number.isInteger(x[7]) && x[7] >= 0 && x[7] <= SIZE_MAX) ? x[7] : -1;
     const sameIs = all.every((x) => isOf(x) === isOf(e));
-    const anyIcon = all.some((x) => TYPES[x[0]]?.icon || cityOf(x) || isCrew(x[0]));   // Crew の Icon = 名前
+    const anyIcon = all.some((x) => TYPES[x[0]]?.icon || cityOf(x) || isCrew(x[0]) || isGolfName(x[0]));   // Crew・ゴルフ選手の Icon = 名前
+    const allGolfName = !none && all.every((x) => isGolfName(x[0]));   // 名前は文字なので Icon size は使わない (Crew と同じ)
     const arcEl = none ? null : all.find((x) => ARCSET[x[0]]);   // Meters は弧の部品を選んだ時だけ出す (2026-09-19)
     const allLine = all.every((x) => isLine(x[0]));   // 線だけを選んでいる時は線の操作に差し替える
     const allStock = !none && all.every((x) => isStock(x[0])) && all.every((x) => x[0] === e[0]);   // 同じ銘柄の部品だけ
@@ -3324,11 +3361,11 @@
         ${seg('Anchor', ['Center', 'Left', 'Right'], same(3) ? e[3] : -1, 3, 0, allCirc || allRect || allAna)}
         ${allGraph ? seg('Size', ['Small', 'Large'], same(4) ? e[4] : -9, 4)
           : seg('Size', SIZES, (shapeOnly && !allRim) ? -9 : (same(4) ? e[4] : -9), 4, 0, shapeOnly && !allRim)}
-        ${seg('Icon size', ['Auto'].concat(SIZES), anyIcon && !shapeOnly && !allAna && !allCrew ? (sameIs ? isOf(e) : -9) : -9, 7, -1, shapeOnly || allAna || allCrew)}
+        ${seg('Icon size', ['Auto'].concat(SIZES), anyIcon && !shapeOnly && !allAna && !allCrew && !allGolfName ? (sameIs ? isOf(e) : -9) : -9, 7, -1, shapeOnly || allAna || allCrew || allGolfName)}
         <div class="brk"></div>
         <div class="field${shapeOnly || allAna ? ' off' : ''}" title="${anyIcon ? 'What this part draws' : 'This part has no icon'}"><span>Show</span><span class="cb units" id="fshow">${
           [['Icon + value', 1], ['Icon only', 3], ['Value only', 0]].map(([lbl, v]) =>
-            `<button type="button" data-v="${v}" class="${all.every((x) => (isCrew(x[0]) ? crewShow(x) : (x[6] & 3)) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none || shapeOnly || allAna ? 'disabled' : ''}>${lbl}</button>`).join('')
+            `<button type="button" data-v="${v}" class="${all.every((x) => (isCrew(x[0]) ? crewShow(x) : isGolfName(x[0]) ? golfShow(x) : (x[6] & 3)) === v) ? 'on' : ''}" ${(!anyIcon && v !== 0) || none || shapeOnly || allAna ? 'disabled' : ''}>${lbl}</button>`).join('')
         }</span></div>
         <div class="field${allText && !allAna ? '' : ' off'}" title="Where the icon sits relative to the value"><span>Arrange</span><span class="cb units" id="farr">${
           [['Icon left', 0], ['Icon right', 1], ['Icon above', 2], ['Icon below', 3]].map(([nm, v]) =>
@@ -3806,7 +3843,7 @@
     if (fl) fl.addEventListener('change', (ev) => { setBb(slot, { lg: ev.target.value, tm: 0 }); commit(); });   // リーグを変えたらチームは選び直し
     document.querySelectorAll('#fshow button').forEach((b) => b.addEventListener('click', () => {
       const v = Number(b.dataset.v);
-      each((x) => { if (isCrew(x[0])) crewNorm(x); if (TYPES[x[0]]?.icon || isCrew(x[0])) { x[6] = (x[6] & ~3) | v; } });
+      each((x) => { if (isGolfName(x[0])) { setGolfShow(x, v); return; } if (isCrew(x[0])) crewNorm(x); if (TYPES[x[0]]?.icon || isCrew(x[0])) { x[6] = (x[6] & ~3) | v; } });
     }));
     $('dup').addEventListener('click', () => {   // copies of every selected element, one grid step down, and the copies become the selection
       const add = loadOf(all);
@@ -3977,9 +4014,13 @@
       }
       return { err: `Both stocks already show ${want ? 'their change %' : 'their price'} on this dial — the watch holds ${STOCK_SLOTS} stocks. Take a Stock off first to add another.` };
     }
-    if (key === 6) {
-      for (let sl = 0; sl < GF_MAX; sl++) if (!st.el.some((e) => e[0] === 6 + sl)) return { t: 6 + sl };
-      return { err: `Both golfers are already on this dial — the watch follows ${GF_MAX} golfers. Take one off first to add another.` };
+    if (key === 6 || key === 8) {   // 名前とスコア (6/7) / 状況 (8/9)。相方が既にある選手の枠が先 (試合のスコアと状況と同じ)
+      const status = key === 8, lacking = [];
+      for (let sl = 0; sl < GF_MAX; sl++) if (!st.el.some((e) => e[0] === (status ? 8 : 6) + sl)) lacking.push(sl);
+      const used = (sl) => st.el.some((e) => isGolf(e[0]) && gfSlot(e[0]) === sl);
+      const sl = lacking.find(used) ?? lacking.find((x) => !used(x));
+      if (sl != null) return { t: (status ? 8 : 6) + sl };
+      return { err: `Both golfers already have ${status ? 'a status' : 'a name and score'} on this dial — the watch follows ${GF_MAX} golfers. Take one off first to add another.` };
     }
     if (key === 32 || key === 33 || key === 92 || key === 93) {
       const status = key === 33 || key === 93;

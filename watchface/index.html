@@ -513,7 +513,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-09 12:24</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-10 10:26</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -634,8 +634,16 @@
       <div class="shelf" id="shelf"></div>
       <details class="box" id="linksbox" style="margin-top:14px" hidden>
         <summary class="lbl" style="cursor:pointer">Links you shared (<span id="linkcount">0</span>)</summary>
-        <div class="ctl" style="flex-wrap:wrap;gap:10px;margin-top:8px"><span class="muted">Shared as</span><input type="text" id="authorname" placeholder="Your name" maxlength="20" style="width:150px"><button class="btn" id="authorsave" title="Shown to whoever opens your links">Save</button><span class="status" id="authorstatus"></span></div>
+        <div class="ctl" style="flex-wrap:wrap;gap:10px;margin-top:8px"><span class="muted">Shared as</span><input type="text" id="authorname" placeholder="A nickname — not someone else's name or contact details" maxlength="20" style="width:300px;max-width:100%"><button class="btn" id="authorsave" title="Shown to whoever opens your links">Save</button><span class="status" id="authorstatus"></span></div>
         <div id="links"></div>
+      </details>
+      <details class="box" id="marketbox" style="margin-top:14px">
+        <summary class="lbl" style="cursor:pointer">Marketplace — dials others made</summary>
+        <div class="ctl" style="flex-wrap:wrap;gap:10px;margin-top:8px"><span class="cb units" id="marketsort"><button type="button" data-v="new" class="on">New</button><button type="button" data-v="top">Popular</button></span>
+          <span class="muted" style="max-width:560px">Anyone can look. Adding one to your collection, and listing your own (Market… on an item above), come with the 1-Year Pass.</span></div>
+        <div class="status" id="marketstatus"></div>
+        <div class="shelf" id="market"></div>
+        <div class="ctl"><button class="btn" id="marketmore" hidden>More</button></div>
       </details>
     </div>
     <div class="shelfbox box" id="watchbox">
@@ -4582,13 +4590,14 @@
       const d = document.createElement('div'); d.className = 'item'; d.dataset.n = it.n;
       d.innerHTML = `<div class="mini"></div><span class="cap"><b>${(it.name || `Item ${it.n}`).replace(/</g, '&lt;')}</b></span><span class="cap">${it.kind === 'photo' ? 'photo' : it.kind === 'fill' ? 'color shape' : it.kind === 'camera' ? 'camera' : 'no image'} · ${fmtTime(it.ts * 1000)}</span>${it.from_by ? `<span class="cap">from ${String(it.from_by).replace(/</g, '&lt;')}${it.from_orig && it.from_orig !== it.from_by ? ' · originally by ' + String(it.from_orig).replace(/</g, '&lt;') : ''}${it.from_dev ? ' · made for ' + String(it.from_dev).replace(/</g, '&lt;') : ''}</span>` : ''}
         <div class="row"><button class="btn" data-a="load" title="Put this item back into the editors above">Edit</button><button class="btn primary" data-a="send" title="Make this the dial your watch shows">To watch</button></div>
-        <div class="row"><button class="btn" data-a="share" title="Make a link you can send to anyone — they can add this dial to their own collection">Share…</button><button class="btn danger" data-a="del" title="Delete this item from the collection">Delete</button></div>
+        <div class="row"><button class="btn" data-a="share" title="Make a link you can send to anyone — they can add this dial to their own collection">Share…</button><button class="btn" data-a="market" title="List this dial in the Marketplace — anyone can see it, and Pass holders can add it to their collection">Market…</button><button class="btn danger" data-a="del" title="Delete this item from the collection">Delete</button></div>
         <span class="cap onw"></span>`;
       // 携帯の Collection では Edit で読み込んだあと Quick editor を開く (2026-10-06 ユーザー指示)
       d.querySelector('[data-a="load"]').addEventListener('click', async () => { if (await loadShelfItem(it.n) === true && PHONE_EDIT) PHONE_EDIT(); });
       d.querySelector('[data-a="send"]').addEventListener('click', () => sendShelfItem(it.n));
       d.querySelector('[data-a="del"]').addEventListener('click', () => removeShelfItem(it.n, it.name));
       d.querySelector('[data-a="share"]').addEventListener('click', () => shareShelfItem(it.n, it.name));
+      d.querySelector('[data-a="market"]').addEventListener('click', () => shareShelfItem(it.n, it.name, true));
       wrap.appendChild(d);
       fetchShelfItem(it.n).then((full) => { if (full) itemMini(d.querySelector('.mini'), it, faceLayout(full.layout)); }).catch(swallow('thumb'));
     }
@@ -4911,9 +4920,9 @@
       const link = location.origin + location.pathname + '?s=' + it.code;
       const row = document.createElement('div'); row.className = 'ctl'; row.style.cssText = 'flex-wrap:wrap;gap:10px;padding:6px 0;border-top:1px solid var(--line)';
       row.innerHTML = `<b style="min-width:140px">${(it.name || 'Untitled').replace(/</g, '&lt;')}</b>
-        <span class="muted">${fmtTime(it.ts * 1000)} · opened ${it.opens || 0} · added ${it.adds} time${it.adds === 1 ? '' : 's'}${it.orig && it.orig !== it.by ? ' · originally by ' + String(it.orig).replace(/</g, '&lt;') : ''}${it.dev ? ' · made for ' + String(it.dev).replace(/</g, '&lt;') : ''}</span>
-        <button class="btn" data-a="copy">Copy link</button><button class="btn danger" data-a="rm">Remove</button>`;
-      row.querySelector('[data-a="copy"]').addEventListener('click', async () => {
+        <span class="muted">${fmtTime(it.ts * 1000)} · opened ${it.opens || 0} · added ${it.adds} time${it.adds === 1 ? '' : 's'}${it.orig && it.orig !== it.by ? ' · originally by ' + String(it.orig).replace(/</g, '&lt;') : ''}${it.dev ? ' · made for ' + String(it.dev).replace(/</g, '&lt;') : ''}${it.market ? ((it.hidden || it.removed) ? ` · <b style="color:var(--warn,#e0a040)">${it.removed ? 'removed from' : 'taken down from'} the Marketplace</b>${it.hidden_reason ? `<br><span style="white-space:pre-line">${escH(it.hidden_reason)}</span>` : ''}` : (it.locked ? ' · <b>in the Marketplace 🔒 secret word</b>' : ' · <b>in the Marketplace</b>')) : ''}</span>
+        ${it.removed ? '' : '<button class="btn" data-a="copy">Copy link</button>'}<button class="btn danger" data-a="rm">Remove</button>`;
+      if (row.querySelector('[data-a="copy"]')) row.querySelector('[data-a="copy"]').addEventListener('click', async () => {
         try { await navigator.clipboard.writeText(link); setStatus('shelfstatus', 'Link copied: ' + link, 'ok'); }
         catch (e) { setStatus('shelfstatus', 'Copy this link: ' + link, 'ok'); }
       });
@@ -4939,9 +4948,23 @@
     return out.length ? out.join('; ') + '. Check it after you add it.' : 'Everything scales to your watch — it should look the same.';
   }
   // 送る側: Collection の品からリンクを作る。相手の Device ID は要らない。
-  async function shareShelfItem(n, name) {
+  // market = true: Marketplace に出す (2026-10-10 ユーザー決定: 出すのも追加も有料ユーザーだけ・写真も可・出したらすぐ並び、通報で下ろす)
+  async function shareShelfItem(n, name, market) {
     const src = (SHELF.items || []).find((x) => x.n === n);
-    if (src && src.from_by) {
+    if (market) {
+      if (!AUTHOR) {
+        const box = $('linksbox'); if (box) { box.open = true; box.scrollIntoView({ block: 'center' }); }
+        const nb = $('authorname'); if (nb) nb.focus();
+        return setStatus('shelfstatus', 'Put your name in "Shared as" below first — it is shown with your dial in the Marketplace.', 'err');
+      }
+      // OK = 権利の確認と規約への同意 (サーバは agreed: true が無いと出さない、QC 2026-10-10)
+      if (!window.confirm(`List "${name || 'Untitled'}" in the Marketplace?\n\nAnyone can see it — its name, the picture and the layout — with your name "${AUTHOR}". Pass holders can add it to their own collection.\n\nBy pressing OK you confirm that you have the right to share this picture (no one else's photo or artwork without permission) and you agree to the Marketplace terms: easymoat.com/facecomposer/terms\n\nTake it down any time: Links you shared → Remove.`)) return;
+      // 合言葉 (secret word。password とは呼ばない = 法務、任意、2026-10-10 ユーザー決定)。付けると、合言葉を知っている人だけが追加できる (見本は誰でも見える)
+      var marketPw = window.prompt('Secret word (optional)\n\nOnly people you tell it to can add this dial. Everyone can still see it. Leave empty so any Pass holder can add it. 4 to 32 characters.', '');
+      if (marketPw == null) return;
+      marketPw = marketPw.trim();
+      if (marketPw && (marketPw.length < 4 || marketPw.length > 32)) return setStatus('shelfstatus', 'The secret word needs 4 to 32 characters.', 'err');
+    } else if (src && src.from_by) {
       const who = src.from_orig || src.from_by;
       if (!window.confirm(`This dial came from ${who}. Sharing it on is fine — your link will say it is from you, and "originally by ${who}" stays with it. Make a link?`)) return;
     }
@@ -4951,25 +4974,32 @@
       const nb = $('authorname'); if (nb) nb.focus();
       return setStatus('shelfstatus', 'Put your name in "Shared as" below first — it is shown to whoever opens your link.', 'err');
     }
-    setStatus('shelfstatus', 'Making a link…');
+    setStatus('shelfstatus', market ? 'Listing it…' : 'Making a link…');
     try {
       const r = await fetch($('api').value + '/share', { method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({ device_id: id, n, by: AUTHOR, dev: (DEVICES[st.dev] || {}).name || '', devk: st.dev }) });
+        body: JSON.stringify(Object.assign({ device_id: id, n, by: AUTHOR, dev: (DEVICES[st.dev] || {}).name || '', devk: st.dev }, market ? Object.assign({ market: true, agreed: true }, marketPw ? { word: marketPw } : {}) : {})) });
       const j = await r.json();
       if (r.status === 402) { loadAccess(); throw new Error(payMsg(j)); }
       // リンクを作れるのは Pass の持ち主だけ (受け取りはトライアル中も可、2026-09-22)
+      if (j.error === 'market_paid_only') { PASS.url = j.buy_url || PASS.url; throw new Error('listing in the Marketplace comes with the 1-Year Pass'); }
       if (j.error === 'login_required' || j.error === 'pass_required') { PASS.url = j.buy_url || PASS.url;
         const hasPass = PASS.st && PASS.st.pass && PASS.st.pass.active;
         throw new Error(j.error === 'pass_required' || !hasPass ? 'making links comes with the 1-Year Pass. Opening and adding links others send you works during the trial too'
           : SIGN.bound ? 'sign in with the Web code from the watch (5 Setup) to make links on this browser'
           : 'update The Face on the watch to the latest version, then sign in with its Web code (5 Setup). Links can be made after that'); }
       if (!r.ok || !j.ok) throw new Error(j.error === 'share_full' ? `you already have ${j.max} links — remove one first`
+        : j.error === 'market_full' ? `you already have ${j.max} dials in the Marketplace — take one down first (Links you shared → Remove)`
+        : j.error === 'no_urls' ? 'the name of the dial or "Shared as" has a web address in it — take it out and try again'
+        : j.error === 'need_agree' ? 'please confirm the picture rights and the terms'
+        : j.error === 'bad_word_length' ? 'the secret word needs 4 to 32 characters'
+        : j.error === 'market_banned' ? 'listing in the Marketplace is paused for this watch — see Links you shared for the reason, or email easymoat@gmail.com'
         : j.error === 'need_author' ? 'put your name in "Shared as" below first' : (j.error || r.status));
       const link = location.origin + location.pathname + '?s=' + j.code;
+      if (market) { setStatus('shelfstatus', `"${name || 'Untitled'}" is in the Marketplace now${marketPw ? ' — locked: only people with your secret word can add it' : ''}. Take it down any time in Links you shared.`, 'ok'); loadLinks(); MARKET.loaded = false; if ($('marketbox').open) loadMarket(true); return; }
       try { await navigator.clipboard.writeText(link); } catch (e) {}
       setStatus('shelfstatus', `Link copied: ${link} — anyone with it can add "${name || 'Untitled'}" to their own collection.`, 'ok');
       loadLinks();
-    } catch (e) { setStatus('shelfstatus', 'Could not make a link: ' + e.message, 'err'); }
+    } catch (e) { setStatus('shelfstatus', (market ? 'Could not list it: ' : 'Could not make a link: ') + e.message, 'err'); }
   }
   document.addEventListener('DOMContentLoaded', () => {
     const b0 = $('authorsave');
@@ -4981,8 +5011,78 @@
   });
   // PulseLink Cam の説明 (2026-10-04 ユーザー指示)。送り主のカメラは渡らない: 時計に出るのは受け取った人が見られるカメラ。
   // 自分の PulseLink Cam か、Crew の Leader が共有しているカメラ。手順は PulseLink の画面名のとおり (Share → Camera は Leader にだけ出る)。
+  // PulseLink が無くても、カメラのページに The Face の ID + Web code で入れば使える (2026-10-07 ユーザー決定)
+  const CAM_SETUP = 'link a PulseLink that has a Cam (5 Setup → Link PulseLink)';
   const CAM_HOW_SHORT = 'a PulseLink Cam of your own, or a Crew whose Leader turns on Share → Camera in PulseLink and invites you.';
   const CAM_HOW_SHARE = `<b>About the camera.</b> This dial shows a PulseLink Cam picture, but the sender's camera is not shared with you — your watch shows a camera you can see: <b>your own PulseLink Cam</b>, or <b>your Crew's camera</b>. To use a Crew's camera: (1) the Crew Leader turns on <b>Share → Camera</b> in PulseLink (it appears once their Cam has a picture) and invites your Device ID; (2) you accept the invite in PulseLink; (3) here, link that PulseLink once (5 Setup → Link PulseLink); (4) add this dial to your collection and press <b>To watch</b>. If you have a Cam of your own, your own picture is shown instead.`;
+  // ── Marketplace (2026-10-10) ── 誰でも見られる一覧。追加は有料ユーザーだけ、通報はサインイン不要
+  const MARKET = { sort: 'new', page: 0, loaded: false, seq: 0 };
+  function escH(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }   // 関数宣言 = 上の loadLinks からも使える
+  async function loadMarket(reset) {
+    const wrap = $('market'); if (!wrap) return;
+    if (reset) MARKET.page = 0;
+    const seq = ++MARKET.seq;   // 続けて呼ばれた時は最後の 1 回だけを並べる (開いた時と並べ替えが重なると二重に並んだ)
+    setStatus('marketstatus', 'Loading…');
+    let j = null;
+    try { const r = await fetch(`${$('api').value}/market?sort=${MARKET.sort}&page=${MARKET.page}`); j = await r.json(); if (!r.ok) throw new Error(j.error || r.status); }
+    catch (e) { if (seq === MARKET.seq) setStatus('marketstatus', 'Could not load the Marketplace: ' + e.message, 'err'); return; }
+    if (seq !== MARKET.seq) return;
+    if (reset) wrap.innerHTML = '';
+    MARKET.loaded = true;
+    setStatus('marketstatus', j.total ? '' : 'Nothing listed yet — be the first: Market… on an item in your collection.');
+    for (const it of j.items || []) {
+      const d = document.createElement('div'); d.className = 'item';
+      d.innerHTML = `<div class="mini"></div><span class="cap"><b>${escH(it.name || 'Untitled')}</b></span>
+        <span class="cap">by ${escH(it.by)}${it.orig && it.orig !== it.by ? ' · originally by ' + escH(it.orig) : ''}</span>
+        <span class="cap">${it.kind === 'none' ? 'no image' : it.kind === 'camera' ? 'camera' : it.kind === 'fill' ? 'color shape' : 'photo'} · added ${it.adds} time${it.adds === 1 ? '' : 's'}${it.dev ? ' · made for ' + escH(it.dev) : ''}</span>
+        ${it.locked ? '<span class="cap">🔒 Needs a secret word from the author to add</span>' : ''}
+        <div class="row"><button class="btn primary" data-a="add" title="Put a copy in your own collection (1-Year Pass)">Add to my collection</button></div>
+        <div class="row"><button class="btn" data-a="report" title="Tell us this dial should not be here">Report</button></div>
+        <span class="cap mst"></span>`;
+      const lay = faceLayout(it.layout); if (lay) itemMini(d.querySelector('.mini'), { kind: it.kind, url: it.url }, lay);
+      const note = (msg, cls) => { const el = d.querySelector('.mst'); el.textContent = msg; el.className = 'cap mst status ' + (cls || ''); };
+      d.querySelector('[data-a="add"]').addEventListener('click', async () => {
+        const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return note('Sign in with your watch first (Device ID and Web code).', 'err');
+        let pw = '';
+        if (it.locked) { pw = window.prompt('Secret word — ask the author of this dial for it.', ''); if (pw == null) return; pw = pw.trim(); if (!pw) return note('Type the secret word to add this dial.', 'err'); }
+        note('Adding…');
+        try {
+          const r = await fetch($('api').value + '/share-add', { method: 'POST', headers: authHeaders(), body: JSON.stringify(Object.assign({ code: it.code, device_id: id }, pw ? { word: pw } : {})) });
+          const k = await r.json();
+          if (r.status === 401) throw new Error(authMsg(k));
+          if (r.status === 402) throw new Error(payMsg(k));
+          if (!r.ok || !k.ok) throw new Error(k.error === 'market_paid_only' ? 'adding from the Marketplace comes with the 1-Year Pass'
+            : k.error === 'bad_word' ? 'the secret word is not right' : k.error === 'need_word' ? 'this dial needs a secret word'
+            : k.error === 'too_many_tries' ? 'too many wrong secret words — try again in an hour'
+            : k.error === 'shelf_full' ? `your collection is full (${k.max}) — delete one first`
+            : k.error === 'already_added' ? `you already have it — ${k.name ? '"' + k.name + '"' : 'item ' + k.n} in your collection`
+            : k.error === 'no_link' ? 'this dial was taken down' : (k.error || r.status));
+          note(`Added as item ${k.n} — find it in your collection.`, 'ok'); loadShelf();
+        } catch (e) { note('Could not add it: ' + e.message, 'err'); }
+      });
+      d.querySelector('[data-a="report"]').addEventListener('click', async () => {
+        const why = window.prompt('Why should this dial not be here? (for example: someone\'s photo without permission, offensive, copied) Please don\'t include more personal information than needed.', '');
+        if (why == null) return;
+        // メールは任意 (受け付けと結果を知らせる、法務 2026-10-10)。空なら送らない
+        const mail = (window.prompt('Your email (optional) — we will tell you that we received it and what we decided. Leave empty to skip.', '') || '').trim();
+        try { const r = await fetch($('api').value + '/market-report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ code: it.code, reason: why }, mail ? { email: mail } : {})) });
+          if (r.status === 400) throw new Error('that email address does not look right');
+          if (r.status === 429) throw new Error('too many reports from here — try again later'); if (!r.ok) throw new Error(r.status);
+          note('Thanks — we will look at it.', 'ok'); }
+        catch (e) { note('Could not send the report: ' + e.message, 'err'); }
+      });
+      wrap.appendChild(d);
+    }
+    $('marketmore').hidden = !j.more;
+  }
+  { const mb = $('marketbox');
+    if (mb) mb.addEventListener('toggle', () => { if (mb.open && !MARKET.loaded) loadMarket(true); });
+    document.querySelectorAll('#marketsort button').forEach((b) => b.addEventListener('click', () => {
+      MARKET.sort = b.dataset.v; document.querySelectorAll('#marketsort button').forEach((x) => x.classList.toggle('on', x === b)); loadMarket(true); }));
+    const more = $('marketmore'); if (more) more.addEventListener('click', () => { MARKET.page += 1; loadMarket(false); });
+    // 公開のリンク: ?market=1 で開いた時は Marketplace を開いて見せる
+    if (/[?&]market=1\b/.test(location.search) && mb) { mb.open = true; setTimeout(() => mb.scrollIntoView({ block: 'start' }), 300); }
+  }
   // 受け取る側: ?s=code で開いた時に中身を見せ、自分の Collection に入れられるようにする。
   async function openSharedLink(code) {
     const box = $('sharebox'), body = $('sharebody'); if (!box) return;
@@ -5004,7 +5104,7 @@
     body.innerHTML = `<div class="item" style="max-width:260px"><div class="mini"></div><span class="cap"><b>${(j.name || 'Untitled').replace(/</g, '&lt;')}</b></span>
         </div>
       ${j.by ? `<div class="ctl" style="font-size:17px;color:var(--ink)">Shared by <b>${String(j.by).replace(/</g, '&lt;')}</b>${j.orig && j.orig !== j.by ? ` <span class="muted" style="font-size:15px">· originally by ${String(j.orig).replace(/</g, '&lt;')}</span>` : ''}</div>` : ''}
-      <div class="ctl"><span class="muted">${j.kind === 'none' ? 'no image' : j.kind === 'camera' ? 'with a PulseLink Cam picture' : 'with a picture'} · added ${j.adds} time${j.adds === 1 ? '' : 's'}</span></div>
+      <div class="ctl"><span class="muted">${j.kind === 'none' ? 'no image' : j.kind === 'camera' ? 'with a PulseLink Cam picture' : 'with a picture'} · added ${j.adds} time${j.adds === 1 ? '' : 's'}${j.locked ? ' · 🔒 needs a secret word from the author' : ''}</span></div>
       ${j.kind === 'camera' ? `<div class="ctl"><span class="muted" style="max-width:640px">${CAM_HOW_SHARE}</span></div>` : ''}
       ${j.dev ? `<div class="ctl"><span class="muted">Made for ${String(j.dev).replace(/</g, '&lt;')}${other ? ' — ' + devNote(j.devk) : ''}</span></div>` : ''}
       <div class="ctl" style="flex-wrap:wrap;gap:10px"><span class="muted">Your Device ID</span><input type="text" id="shareid" placeholder="XXXX-XXXX" style="width:140px" value="${devId()}">
@@ -5015,13 +5115,18 @@
     $('shareadd').addEventListener('click', async () => {
       const id = ($('shareid').value || '').trim();
       if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return setStatus('sharestatus', 'Enter your Device ID (XXXX-XXXX).', 'err');
+      let pw = '';
+      if (j.locked) { pw = window.prompt('Secret word — ask the person who shared this dial for it.', ''); if (pw == null) return; pw = pw.trim(); if (!pw) return setStatus('sharestatus', 'Type the secret word to add this dial.', 'err'); }
       setStatus('sharestatus', 'Adding…');
       try {
-        const r = await fetch($('api').value + '/share-add', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ code, device_id: id }) });
+        const r = await fetch($('api').value + '/share-add', { method: 'POST', headers: authHeaders(), body: JSON.stringify(Object.assign({ code, device_id: id }, pw ? { word: pw } : {})) });
         const k = await r.json();
         if (r.status === 402) throw new Error(payMsg(k));
         if (!r.ok || !k.ok) throw new Error(k.error === 'shelf_full' ? `your collection is full (${k.max}) — delete one first`
           : k.error === 'already_added' ? `you already have this dial — it is ${k.name ? '"' + k.name + '"' : 'item ' + k.n} in your collection. Delete that one first if you want a fresh copy.`
+          : k.error === 'bad_word' ? 'the secret word is not right' : k.error === 'need_word' ? 'this dial needs a secret word'
+          : k.error === 'too_many_tries' ? 'too many wrong secret words — try again in an hour'
+          : k.error === 'market_paid_only' ? 'adding from the Marketplace comes with the 1-Year Pass'
           : (k.error || r.status));
         setStatus('sharestatus', `Added to ${id} as item ${k.n}. Open it below with Edit, or send it To watch.`, 'ok');
         $('devid').value = id; $('devid').dispatchEvent(new Event('change'));
@@ -5090,7 +5195,7 @@
       // PulseLink Cam の品: PL を結び付けていれば To watch の時点で最新のコマになり、あとは時計が自分で更新する。
       // 結び付けていないと更新できない (保存した時の 1 枚のまま) ので、その理由と手順を出す (2026-10-03 ユーザー指示)。
       if (j.camera === 'unlinked') {
-        setStatus('syncstatus', `Your watch now shows "${name}", but its PulseLink camera will not update: PulseLink is not linked here yet. Link it once (5 Setup → Link PulseLink; on a phone tap Editor first). After that the camera starts updating by itself at the watch's next check — there is no need to send this dial again.`, 'warn');
+        setStatus('syncstatus', `Your watch now shows "${name}", but its camera picture will not update: this watch has no camera yet. To fix it, ${CAM_SETUP}. After that the camera starts updating by itself at the watch's next check — there is no need to send this dial again.`, 'warn');
       } else if (j.camera === 'live' && j.camera_src === 'none') {
         // linked but nothing to show yet: no Cam of your own, and no Crew camera shared with you (2026-10-04)
         setStatus('syncstatus', `Your watch now shows "${name}", but there is no camera picture to show yet: the PulseLink you linked has no PulseLink Cam of its own, and no Crew is sharing its camera with you. The picture appears by itself at the watch's next check once either exists — ${CAM_HOW_SHORT}`, 'warn');
@@ -5824,7 +5929,7 @@
       const base = `${$('api').value}/cam-preview?device_id=${encodeURIComponent(id)}&full=1`;   // full=1: 角を切っていない四角も送ってもらう
       const r = await fetch(base + '&meta=1', { headers: authHeaders() }); const j = await r.json();
       if (r.status === 401) { camNote(authMsg(j) + '.', 'err'); return; }
-      if (r.status === 403) { camNote('Link PulseLink first (5 Setup → Link PulseLink) — the camera only shows a PulseLink you linked.', 'err'); return; }
+      if (r.status === 403) { if (CAM.on) setCamera(false); camNote(`No camera for this watch yet: ${CAM_SETUP}.`, 'err'); return; }   // OFF が案内を消すので先に OFF
       if (r.status === 402) { camNote(payMsg(j), 'err'); return; }
       if (!r.ok) throw new Error(j.error || r.status);
       const ov = String(j.version || '0');
@@ -5842,7 +5947,7 @@
       }
       if (!img) img = await load(`${$('api').value}/cam-preview?device_id=${encodeURIComponent(id)}&v=${encodeURIComponent(ov)}`);
       CAM.ver = ov; IMG.cur = img; IMG.src = 'camera'; IMG.k = 0; IMG.fill = null; IMG.fromSlot = 0;
-      renderPhotos(); $('imgfilename').textContent = 'Live camera (framed in PulseLink)'; redrawImg();
+      renderPhotos(); $('imgfilename').textContent = 'Live camera'; redrawImg();
       camNote(`Live camera · frame ${fmtTime(Number(ov))}`, 'ok');
     } catch (e) { camNote('Camera: ' + e.message, 'err'); }
   }
@@ -5856,7 +5961,7 @@
     $('imgzoom').value = '1'; renderShapeSel();
   }
   function setCamera(on) {
-    if (on && !PLL.valid) { camNote('Link PulseLink first (5 Setup → Link PulseLink), then turn the camera on.', 'err'); return; }   // stays OFF
+    // PulseLink の結び付きは条件にしない (The Face の ID で入ったカメラもある)。カメラが無ければ fetchCam の 403 で OFF に戻して案内する
     CAM.on = on; $('camon').classList.toggle('on', on); $('camon').textContent = 'Camera: ' + (on ? 'ON' : 'OFF');
     renderCamLock();
     if (on) { CAM.prev = { cur: IMG.cur, src: IMG.src, k: IMG.k, fill: IMG.fill }; CAM.ver = ''; if (!hasSource()) camSquare(); fetchCam(); CAM.timer = setInterval(fetchCam, 60000); }

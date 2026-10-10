@@ -178,6 +178,20 @@
   .shelfbox { width: 100%; max-width: 1040px; gap: 14px; }
   .shelf { display: flex; flex-wrap: wrap; gap: 18px 22px; }
   .cap.onw { color: var(--accent); }
+  /* ?admin=1 = Marketplace の運営画面 (2026-10-10 ユーザー指示)。鍵 (ADMIN_TOKEN) はこのタブだけに置く */
+  body.adminonly main { display: none !important; }
+  body.adminonly header .kbd, body.adminonly header .sub:not(#pubstamp) { display: none; }
+  #adminpage { max-width: 1100px; margin: 0 auto; padding: 16px; box-sizing: border-box; }
+  #adminpage .mphead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 8px; }
+  #adminpage .mphead h2 { margin: 0; font-size: 22px; }
+  .admrow { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 14px; padding: 14px 0; border-top: 1px solid var(--line); }
+  .admrow .mini { width: 120px; height: 120px; border-radius: 50%; overflow: hidden; position: relative; background: #000 center/cover no-repeat; border: 2px solid var(--line-2); }
+  .admrow .meta { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .admrow .acts { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+  .admrow .acts input[type=text] { flex: 1 1 260px; min-width: 0; }
+  .admrow .rep { font-size: 13px; color: var(--ink-2, #aab); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .admrow .why { white-space: pre-line; font-size: 13px; }
+  @media (max-width: 600px) { .admrow { grid-template-columns: 1fr; } }
   /* ?market=1 = Marketplace だけのページ (2026-10-10 ユーザー指摘: 公開のリンクが編集画面になっていた) */
   body.marketonly main { display: none !important; }
   body.marketonly header .kbd, body.marketonly header .sub:not(#pubstamp) { display: none; }
@@ -522,10 +536,19 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-10 10:45</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-10 12:44</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
+<div id="adminpage" hidden>
+  <div class="mphead"><h2>Marketplace — operator</h2>
+    <input type="password" id="admkey" placeholder="Marketplace key" autocomplete="off" style="width:220px">
+    <button class="btn primary" id="admload">Load</button>
+    <span class="cb units" id="admfilter"><button type="button" data-v="reported" class="on">Reported</button><button type="button" data-v="hidden">Hidden</button><button type="button" data-v="all">All</button></span>
+    <span class="status" id="admstatus"></span></div>
+  <div class="muted" style="margin-bottom:10px">Use the Marketplace key (it opens only this screen). The key stays in this tab only. Hide / Remove need a terms section and what is wrong — the author sees both. Reporters who left an email get the result.</div>
+  <div id="admlist"></div>
+</div>
 <div id="marketpage" hidden>
   <div class="mphead"><h2>Marketplace</h2><span class="muted">Watch faces people made with Face Composer, for <b>The Face</b> on Garmin watches. Anyone can look; adding one to your collection comes with the 1-Year Pass.</span>
     <a class="btn" href="./">Open Face Composer</a></div>
@@ -5099,6 +5122,62 @@
       document.body.classList.add('marketonly');
       const pg = $('marketpage'); pg.hidden = false; pg.appendChild(mb); mb.open = true;
     }
+  }
+  // ── Marketplace の運営画面 (?admin=1、2026-10-10 ユーザー指示) ──
+  //   鍵は Marketplace だけの鍵 (MARKET_ADMIN_TOKEN、全権の ADMIN_TOKEN をここに入れさせない = QC)。sessionStorage (このタブだけ)。理由の条は規約 §5.1〜5.5 (保証)・§6.1〜6.5 (禁止)。下げる / 消す時は条と事実が必須 (作者に 4 段の定型で届く)
+  const ADM = { items: [], filter: 'reported' };
+  const ADM_SECTIONS = ['5.1', '5.2', '5.3', '5.4', '5.5', '6.1', '6.2', '6.3', '6.4', '6.5'];
+  const admKey = () => { try { return sessionStorage.getItem('faceComposer.adminKey') || ''; } catch (e) { return ''; } };
+  async function admFetch(path, body) {
+    const r = await fetch($('api').value + path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': admKey() }, body: JSON.stringify(body) } : { headers: { 'X-Admin-Token': admKey() } });
+    if (r.status === 429) throw new Error('too many wrong keys from here — try again in an hour');
+    if (r.status === 401 || r.status === 403) throw new Error('the Marketplace key is not right');
+    const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || r.status); return j;
+  }
+  async function admLoad() {
+    setStatus('admstatus', 'Loading…');
+    try { ADM.items = (await admFetch('/admin/market')).items || []; setStatus('admstatus', `${ADM.items.length} listed in total`, 'ok'); admRender(); }
+    catch (e) { setStatus('admstatus', 'Could not load: ' + e.message, 'err'); }
+  }
+  function admRender() {
+    const wrap = $('admlist'); wrap.innerHTML = '';
+    const list = ADM.items.filter((it) => ADM.filter === 'all' ? true : ADM.filter === 'hidden' ? (it.hidden || it.removed) : (it.report_count > 0 && !it.removed));
+    if (!list.length) { wrap.innerHTML = '<span class="muted">Nothing here.</span>'; return; }
+    const opts = ADM_SECTIONS.map((c) => `<option value="${c}">§${c}</option>`).join('');
+    for (const it of list) {
+      const state = it.removed ? 'removed' : it.hidden ? `hidden (${it.hidden_by || '?'})` : 'listed';
+      const row = document.createElement('div'); row.className = 'admrow';
+      row.innerHTML = `<div class="mini"></div><div class="meta">
+        <div><b>${escH(it.name || 'Untitled')}</b> <span class="muted">by ${escH(it.by)} · ${escH(it.from)} · ${it.code} · ${fmtTime(it.ts * 1000)} · added ${it.adds}${it.locked ? ' · 🔒' : ''}</span></div>
+        <div><b>${state}</b> · ${it.report_count || 0} report${it.report_count === 1 ? '' : 's'}</div>
+        ${it.hidden_reason ? `<div class="why muted">${escH(it.hidden_reason)}</div>` : ''}
+        ${(it.reports || []).slice().reverse().map((r) => `<div class="rep"><span>${fmtTime(r.at * 1000)}</span><span>${escH(r.reason || '(no reason)')}</span>${r.email ? '<span>✉︎</span>' : ''}<span class="muted">${r.ip}</span><button class="btn" data-ban="${r.ip}">Ban reporter 30 days</button></div>`).join('')}
+        ${it.removed ? '' : `<div class="acts"><select data-f="rc">${opts}</select><input type="text" data-f="fact" maxlength="200" placeholder="What is wrong (the author sees this)">
+          <button class="btn danger" data-a="hide" ${it.hidden ? 'disabled' : ''}>Hide</button><button class="btn danger" data-a="remove">Remove</button><button class="btn" data-a="restore" ${it.hidden ? '' : 'disabled'}>Restore</button></div>`}
+        <div class="acts"><button class="btn" data-a="banauthor">Stop this author listing for 30 days</button><span class="status" data-f="st"></span></div></div>`;
+      const st = (m, c) => { const e = row.querySelector('[data-f="st"]'); e.textContent = m; e.className = 'status ' + (c || ''); };
+      if (it.layout) { const lay = faceLayout(it.layout); if (lay) itemMini(row.querySelector('.mini'), { kind: 'none', url: null }, lay); }
+      if (it.image) fetch(`${$('api').value}/admin/market-image/${it.code}.png`, { headers: { 'X-Admin-Token': admKey() } })
+        .then((r) => (r.ok ? r.blob() : null)).then((b) => { if (b) row.querySelector('.mini').style.backgroundImage = `url("${URL.createObjectURL(b)}")`; }).catch(() => {});
+      const act = async (body, ask) => { if (ask && !window.confirm(ask)) return; st('Working…'); try { await admFetch('/admin/market', body); st('Done.', 'ok'); await admLoad(); } catch (e) { st('Failed: ' + e.message, 'err'); } };
+      const reasonOf = () => ({ reason_code: row.querySelector('[data-f="rc"]').value, fact: (row.querySelector('[data-f="fact"]').value || '').trim() });
+      const need = () => { const r = reasonOf(); if (!r.fact) { st('Write what is wrong first — the author sees it.', 'err'); return null; } return r; };
+      const b = (a) => row.querySelector(`[data-a="${a}"]`);
+      if (b('hide')) b('hide').addEventListener('click', () => { const r = need(); if (r) act(Object.assign({ code: it.code, hide: true }, r), `Hide "${it.name}"?`); });
+      if (b('remove')) b('remove').addEventListener('click', () => { const r = need(); if (r) act(Object.assign({ code: it.code, remove: true }, r), `Remove "${it.name}" for good? The picture and layout are deleted; the author keeps the reason for 6 months.`); });
+      if (b('restore')) b('restore').addEventListener('click', () => act({ code: it.code, hide: false }, `Put "${it.name}" back in the Marketplace? Earlier reporters will not hide it again.`));
+      b('banauthor').addEventListener('click', () => act({ ban_author: it.from, days: 30 }, `Stop ${it.by} (${it.from}) from listing for 30 days?`));
+      row.querySelectorAll('[data-ban]').forEach((x) => x.addEventListener('click', () => act({ ban_reporter: x.dataset.ban, days: 30 }, 'Ignore reports from this reporter for 30 days?')));
+      wrap.appendChild(row);
+    }
+  }
+  if (/[?&]admin=1\b/.test(location.search)) {
+    document.body.classList.add('adminonly'); $('adminpage').hidden = false;
+    $('admkey').value = admKey();
+    $('admload').addEventListener('click', () => { try { sessionStorage.setItem('faceComposer.adminKey', $('admkey').value.trim()); } catch (e) {} admLoad(); });
+    document.querySelectorAll('#admfilter button').forEach((b) => b.addEventListener('click', () => {
+      ADM.filter = b.dataset.v; document.querySelectorAll('#admfilter button').forEach((x) => x.classList.toggle('on', x === b)); admRender(); }));
+    if (admKey()) admLoad();
   }
   // 受け取る側: ?s=code で開いた時に中身を見せ、自分の Collection に入れられるようにする。
   async function openSharedLink(code) {

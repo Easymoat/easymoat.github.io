@@ -536,7 +536,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-10 12:44</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-10 15:18</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -640,7 +640,7 @@
           <div class="ctl"><button class="btn" id="imgreset" title="Put the frame back to the middle at 100 % (the picture stays)">Reset frame</button><button class="btn danger" id="imgclear" title="Take the picture (or the color) out of this editor and start over. Nothing is deleted from the server or from the collection.">Reset image</button></div>
           <details class="box camdet" id="camgrp"><summary class="lbl" style="cursor:pointer">PulseLink camera</summary>
             <div class="ctl"><button class="btn toggle" id="camon">Camera: OFF</button><span class="status" id="camnote" style="flex:1 1 auto"></span></div>
-            <div class="ctl"><span class="muted" style="max-width:640px">Shows the latest picture from the PulseLink Cam of the PulseLink you linked in 5 Setup → Link PulseLink. If that PulseLink has no Cam of its own, the camera your Crew shares with you is used. Nothing to type here.</span></div>
+            <div class="ctl"><span class="muted" style="max-width:640px">Shows the latest picture from your camera. No PulseLink? Open <b>easymoat.com/camera</b> on a spare phone and sign in with this watch's Device ID and Web code (Pass holders). With PulseLink: the PulseLink Cam of the PulseLink you linked in 5 Setup → Link PulseLink, or, if it has no Cam, the camera your Crew shares with you. A camera signed in with this watch's ID comes first. Nothing to type here.</span></div>
           </details>
         </div>
         <div class="opts">
@@ -5048,9 +5048,9 @@
   // PulseLink Cam の説明 (2026-10-04 ユーザー指示)。送り主のカメラは渡らない: 時計に出るのは受け取った人が見られるカメラ。
   // 自分の PulseLink Cam か、Crew の Leader が共有しているカメラ。手順は PulseLink の画面名のとおり (Share → Camera は Leader にだけ出る)。
   // PulseLink が無くても、カメラのページに The Face の ID + Web code で入れば使える (2026-10-07 ユーザー決定)
-  const CAM_SETUP = 'link a PulseLink that has a Cam (5 Setup → Link PulseLink)';
-  const CAM_HOW_SHORT = 'a PulseLink Cam of your own, or a Crew whose Leader turns on Share → Camera in PulseLink and invites you.';
-  const CAM_HOW_SHARE = `<b>About the camera.</b> This dial shows a PulseLink Cam picture, but the sender's camera is not shared with you — your watch shows a camera you can see: <b>your own PulseLink Cam</b>, or <b>your Crew's camera</b>. To use a Crew's camera: (1) the Crew Leader turns on <b>Share → Camera</b> in PulseLink (it appears once their Cam has a picture) and invites your Device ID; (2) you accept the invite in PulseLink; (3) here, link that PulseLink once (5 Setup → Link PulseLink); (4) add this dial to your collection and press <b>To watch</b>. If you have a Cam of your own, your own picture is shown instead.`;
+  const CAM_SETUP = 'open easymoat.com/camera on a spare phone and sign in with this watch\'s Device ID and Web code (Pass holders), or link a PulseLink that has a Cam (5 Setup → Link PulseLink)';
+  const CAM_HOW_SHORT = 'a camera of your own (easymoat.com/camera, signed in with this watch\'s Device ID — no PulseLink needed), a PulseLink Cam, or a Crew whose Leader turns on Share → Camera in PulseLink and invites you.';
+  const CAM_HOW_SHARE = `<b>About the camera.</b> This dial shows a PulseLink Cam picture, but the sender's camera is not shared with you — your watch shows a camera you can see: <b>your own camera</b> (easymoat.com/camera, signed in with your watch's Device ID — no PulseLink needed), <b>your own PulseLink Cam</b>, or <b>your Crew's camera</b>. To use a Crew's camera: (1) the Crew Leader turns on <b>Share → Camera</b> in PulseLink (it appears once their Cam has a picture) and invites your Device ID; (2) you accept the invite in PulseLink; (3) here, link that PulseLink once (5 Setup → Link PulseLink); (4) add this dial to your collection and press <b>To watch</b>. If you have a Cam of your own, your own picture is shown instead.`;
   // ── Marketplace (2026-10-10) ── 誰でも見られる一覧。追加は有料ユーザーだけ、通報はサインイン不要
   const MARKET = { sort: 'new', page: 0, loaded: false, seq: 0 };
   function escH(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }   // 関数宣言 = 上の loadLinks からも使える

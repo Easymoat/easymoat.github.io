@@ -536,7 +536,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-10 15:18</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-10 15:43</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -638,7 +638,7 @@
           <div class="ctl" title="Only the cut-out changes — the stored photo is never touched."><span class="tone">Brightness <input id="imgbr" type="range" min="20" max="180" step="1" value="100"><span class="muted" id="imgbrv">100%</span></span> <span class="tone">Saturation <input id="imgsa" type="range" min="0" max="200" step="1" value="100"><span class="muted" id="imgsav">100%</span></span><button class="btn" id="imgtone" title="Brightness and saturation back to 100 %">Reset tone</button></div>
           <div class="ctl" id="imgdragrow" title="What dragging the empty part of the dial does. Dragging a part always moves that part.">Dragging the dial moves <span class="cb" id="imgdrag"><button type="button" data-m="image" class="on">Picture</button><button type="button" data-m="frame">Frame</button></span><span class="vsep"></span><span class="muted">Nudge</span><span class="cb units dpad" id="imgnudge" title="Move it one step at a time. Hold Shift for a bigger step."><button type="button" data-d="up">&#8593;</button><button type="button" data-d="left">&#8592;</button><button type="button" data-d="down">&#8595;</button><button type="button" data-d="right">&#8594;</button></span></div>
           <div class="ctl"><button class="btn" id="imgreset" title="Put the frame back to the middle at 100 % (the picture stays)">Reset frame</button><button class="btn danger" id="imgclear" title="Take the picture (or the color) out of this editor and start over. Nothing is deleted from the server or from the collection.">Reset image</button></div>
-          <details class="box camdet" id="camgrp"><summary class="lbl" style="cursor:pointer">PulseLink camera</summary>
+          <details class="box camdet" id="camgrp"><summary class="lbl" style="cursor:pointer">Camera</summary>
             <div class="ctl"><button class="btn toggle" id="camon">Camera: OFF</button><span class="status" id="camnote" style="flex:1 1 auto"></span></div>
             <div class="ctl"><span class="muted" style="max-width:640px">Shows the latest picture from your camera. No PulseLink? Open <b>easymoat.com/camera</b> on a spare phone and sign in with this watch's Device ID and Web code (Pass holders). With PulseLink: the PulseLink Cam of the PulseLink you linked in 5 Setup → Link PulseLink, or, if it has no Cam, the camera your Crew shares with you. A camera signed in with this watch's ID comes first. Nothing to type here.</span></div>
           </details>
@@ -5050,7 +5050,7 @@
   // PulseLink が無くても、カメラのページに The Face の ID + Web code で入れば使える (2026-10-07 ユーザー決定)
   const CAM_SETUP = 'open easymoat.com/camera on a spare phone and sign in with this watch\'s Device ID and Web code (Pass holders), or link a PulseLink that has a Cam (5 Setup → Link PulseLink)';
   const CAM_HOW_SHORT = 'a camera of your own (easymoat.com/camera, signed in with this watch\'s Device ID — no PulseLink needed), a PulseLink Cam, or a Crew whose Leader turns on Share → Camera in PulseLink and invites you.';
-  const CAM_HOW_SHARE = `<b>About the camera.</b> This dial shows a PulseLink Cam picture, but the sender's camera is not shared with you — your watch shows a camera you can see: <b>your own camera</b> (easymoat.com/camera, signed in with your watch's Device ID — no PulseLink needed), <b>your own PulseLink Cam</b>, or <b>your Crew's camera</b>. To use a Crew's camera: (1) the Crew Leader turns on <b>Share → Camera</b> in PulseLink (it appears once their Cam has a picture) and invites your Device ID; (2) you accept the invite in PulseLink; (3) here, link that PulseLink once (5 Setup → Link PulseLink); (4) add this dial to your collection and press <b>To watch</b>. If you have a Cam of your own, your own picture is shown instead.`;
+  const CAM_HOW_SHARE = `<b>About the camera.</b> This dial shows a camera picture, but the sender's camera is not shared with you — your watch shows a camera you can see: <b>your own camera</b> (easymoat.com/camera, signed in with your watch's Device ID — no PulseLink needed), <b>your own PulseLink Cam</b>, or <b>your Crew's camera</b>. To use a Crew's camera: (1) the Crew Leader turns on <b>Share → Camera</b> in PulseLink (it appears once their Cam has a picture) and invites your Device ID; (2) you accept the invite in PulseLink; (3) here, link that PulseLink once (5 Setup → Link PulseLink); (4) add this dial to your collection and press <b>To watch</b>. If you have a Cam of your own, your own picture is shown instead.`;
   // ── Marketplace (2026-10-10) ── 誰でも見られる一覧。追加は有料ユーザーだけ、通報はサインイン不要
   const MARKET = { sort: 'new', page: 0, loaded: false, seq: 0 };
   function escH(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }   // 関数宣言 = 上の loadLinks からも使える
@@ -5200,7 +5200,7 @@
     body.innerHTML = `<div class="item" style="max-width:260px"><div class="mini"></div><span class="cap"><b>${(j.name || 'Untitled').replace(/</g, '&lt;')}</b></span>
         </div>
       ${j.by ? `<div class="ctl" style="font-size:17px;color:var(--ink)">Shared by <b>${String(j.by).replace(/</g, '&lt;')}</b>${j.orig && j.orig !== j.by ? ` <span class="muted" style="font-size:15px">· originally by ${String(j.orig).replace(/</g, '&lt;')}</span>` : ''}</div>` : ''}
-      <div class="ctl"><span class="muted">${j.kind === 'none' ? 'no image' : j.kind === 'camera' ? 'with a PulseLink Cam picture' : 'with a picture'} · added ${j.adds} time${j.adds === 1 ? '' : 's'}${j.locked ? ' · 🔒 needs a secret word from the author' : ''}</span></div>
+      <div class="ctl"><span class="muted">${j.kind === 'none' ? 'no image' : j.kind === 'camera' ? 'with a camera picture' : 'with a picture'} · added ${j.adds} time${j.adds === 1 ? '' : 's'}${j.locked ? ' · 🔒 needs a secret word from the author' : ''}</span></div>
       ${j.kind === 'camera' ? `<div class="ctl"><span class="muted" style="max-width:640px">${CAM_HOW_SHARE}</span></div>` : ''}
       ${j.dev ? `<div class="ctl"><span class="muted">Made for ${String(j.dev).replace(/</g, '&lt;')}${other ? ' — ' + devNote(j.devk) : ''}</span></div>` : ''}
       <div class="ctl" style="flex-wrap:wrap;gap:10px"><span class="muted">Your Device ID</span><input type="text" id="shareid" placeholder="XXXX-XXXX" style="width:140px" value="${devId()}">
@@ -5294,12 +5294,12 @@
         setStatus('syncstatus', `Your watch now shows "${name}", but its camera picture will not update: this watch has no camera yet. To fix it, ${CAM_SETUP}. After that the camera starts updating by itself at the watch's next check — there is no need to send this dial again.`, 'warn');
       } else if (j.camera === 'live' && j.camera_src === 'none') {
         // linked but nothing to show yet: no Cam of your own, and no Crew camera shared with you (2026-10-04)
-        setStatus('syncstatus', `Your watch now shows "${name}", but there is no camera picture to show yet: the PulseLink you linked has no PulseLink Cam of its own, and no Crew is sharing its camera with you. The picture appears by itself at the watch's next check once either exists — ${CAM_HOW_SHORT}`, 'warn');
+        setStatus('syncstatus', `Your watch now shows "${name}", but there is no camera picture to show yet: neither this watch's camera nor the PulseLink you linked has sent a picture, and no Crew is sharing its camera with you. The picture appears by itself at the watch's next check once either exists — ${CAM_HOW_SHORT}`, 'warn');
       } else {
         setStatus('syncstatus', j.camera === 'live'
           ? (j.camera_src === 'crew'
             ? `Your watch now shows "${name}" with your Crew's shared camera picture (the Crew Leader's PulseLink Cam). It arrives within 5 minutes, and the picture refreshes by itself after that.`
-            : `Your watch now shows "${name}" with the latest PulseLink camera picture. It arrives within 5 minutes, and the picture refreshes by itself after that.`)
+            : `Your watch now shows "${name}" with the latest camera picture. It arrives within 5 minutes, and the picture refreshes by itself after that.`)
           : `Your watch now shows "${name}". It arrives within 5 minutes.`, 'ok');
       }
       WSLOTS.active = 1; WSLOTS.faces = { '1': { v: j.v, shelf: n, kind: it.kind || 'none', sts: it.ts || 0 } }; markShelfOnWatch();

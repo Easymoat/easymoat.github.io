@@ -178,6 +178,15 @@
   .shelfbox { width: 100%; max-width: 1040px; gap: 14px; }
   .shelf { display: flex; flex-wrap: wrap; gap: 18px 22px; }
   .cap.onw { color: var(--accent); }
+  /* ?market=1 = Marketplace だけのページ (2026-10-10 ユーザー指摘: 公開のリンクが編集画面になっていた) */
+  body.marketonly main { display: none !important; }
+  body.marketonly header .kbd, body.marketonly header .sub:not(#pubstamp) { display: none; }
+  #marketpage { max-width: 1040px; margin: 0 auto; padding: 16px; box-sizing: border-box; }
+  #marketpage .mphead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-bottom: 12px; }
+  #marketpage .mphead h2 { margin: 0; font-size: 22px; }
+  #marketpage .mphead .muted { flex: 1 1 320px; }
+  body.marketonly #marketbox > summary, body.marketonly #marketbox .mkinfo { display: none; }
+  body.marketonly #marketbox { margin-top: 0; }
   #onwatchnote { white-space: normal; height: auto; line-height: 1.5; margin: 2px 0 8px; }   /* どの品も Showing にならない理由 (折り返す) */
   .item { width: 250px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
   .item .mini { position: relative; width: 240px; height: 240px; border-radius: 50%; overflow: hidden; background: #000 center/cover no-repeat; border: 2px solid var(--line-2); }
@@ -513,10 +522,14 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-10 10:26</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-10 10:45</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
+<div id="marketpage" hidden>
+  <div class="mphead"><h2>Marketplace</h2><span class="muted">Watch faces people made with Face Composer, for <b>The Face</b> on Garmin watches. Anyone can look; adding one to your collection comes with the 1-Year Pass.</span>
+    <a class="btn" href="./">Open Face Composer</a></div>
+</div>
 
 <main>
   <div id="pnav"><button class="btn" id="pnavback">Collection</button><button class="btn" id="pnavswap">Full editor</button><span class="muted">Now: <b id="pnavwhat">Quick editor</b></span></div>
@@ -640,7 +653,7 @@
       <details class="box" id="marketbox" style="margin-top:14px">
         <summary class="lbl" style="cursor:pointer">Marketplace — dials others made</summary>
         <div class="ctl" style="flex-wrap:wrap;gap:10px;margin-top:8px"><span class="cb units" id="marketsort"><button type="button" data-v="new" class="on">New</button><button type="button" data-v="top">Popular</button></span>
-          <span class="muted" style="max-width:560px">Anyone can look. Adding one to your collection, and listing your own (Market… on an item above), come with the 1-Year Pass.</span></div>
+          <span class="muted mkinfo" style="max-width:560px">Anyone can look. Adding one to your collection, and listing your own (Market… on an item above), come with the 1-Year Pass.</span></div>
         <div class="status" id="marketstatus"></div>
         <div class="shelf" id="market"></div>
         <div class="ctl"><button class="btn" id="marketmore" hidden>More</button></div>
@@ -5042,6 +5055,7 @@
       const lay = faceLayout(it.layout); if (lay) itemMini(d.querySelector('.mini'), { kind: it.kind, url: it.url }, lay);
       const note = (msg, cls) => { const el = d.querySelector('.mst'); el.textContent = msg; el.className = 'cap mst status ' + (cls || ''); };
       d.querySelector('[data-a="add"]').addEventListener('click', async () => {
+        if (document.body.classList.contains('marketonly')) { location.href = `./?s=${encodeURIComponent(it.code)}`; return; }   // Marketplace だけのページ → 共有リンクの画面で追加
         const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) return note('Sign in with your watch first (Device ID and Web code).', 'err');
         let pw = '';
         if (it.locked) { pw = window.prompt('Secret word — ask the author of this dial for it.', ''); if (pw == null) return; pw = pw.trim(); if (!pw) return note('Type the secret word to add this dial.', 'err'); }
@@ -5080,8 +5094,11 @@
     document.querySelectorAll('#marketsort button').forEach((b) => b.addEventListener('click', () => {
       MARKET.sort = b.dataset.v; document.querySelectorAll('#marketsort button').forEach((x) => x.classList.toggle('on', x === b)); loadMarket(true); }));
     const more = $('marketmore'); if (more) more.addEventListener('click', () => { MARKET.page += 1; loadMarket(false); });
-    // 公開のリンク: ?market=1 で開いた時は Marketplace を開いて見せる
-    if (/[?&]market=1\b/.test(location.search) && mb) { mb.open = true; setTimeout(() => mb.scrollIntoView({ block: 'start' }), 300); }
+    // 公開のリンク: ?market=1 は Marketplace だけのページ (編集画面は隠す)。追加は共有リンクの画面 (?s=) へ (サインインと合言葉はそこで)
+    if (/[?&]market=1\b/.test(location.search) && mb) {
+      document.body.classList.add('marketonly');
+      const pg = $('marketpage'); pg.hidden = false; pg.appendChild(mb); mb.open = true;
+    }
   }
   // 受け取る側: ?s=code で開いた時に中身を見せ、自分の Collection に入れられるようにする。
   async function openSharedLink(code) {

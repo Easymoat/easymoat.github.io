@@ -536,7 +536,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-17 23:43</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-18 00:13</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3425,6 +3425,15 @@
   }
   window.addEventListener('resize', () => { INSP_MIN = 0; const el = $('insp'); if (el) el.style.minHeight = ''; });
   let PICK_OPEN = 0;        // 開いている OS のカラーパネルの数
+  // 潮汐の駅の一覧 (気象庁、サーバ GET /tide-stations)。初めて要った時に 1 回取る
+  let TIDE_ST = null;
+  function tideStations() {
+    if (TIDE_ST) return TIDE_ST;
+    TIDE_ST = [];
+    fetch(`${$('api').value}/tide-stations`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (j && Array.isArray(j.st)) { TIDE_ST = j.st; renderInspector(); } else { throw new Error('no list'); } })
+      .catch((e) => { swallow('tide')(e); setTimeout(() => { if (TIDE_ST && !TIDE_ST.length) TIDE_ST = null; }, 60000); });   // 取れなかったら 1 分後にもう一度
+    return TIDE_ST;
+  }
   // サーバ部品の設定欄 (種類ごと)。凍結機 (extendedCode 非対応の 6 機種) では出ない旨も出す
   function svFields(e) {
     const k = svKind(e), v = svOf(e) || { p: {} }, p = v.p || {}, esc = (x) => String(x || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
@@ -3432,7 +3441,8 @@
     if (k.cd) h += `<div class="field" title="The day you count down to."><span>Date</span><input type="date" id="fsvd" value="${esc(p.d)}"></div>`
       + `<div class="field" title="A short label, up to 8 letters. Use a nickname — no personal details."><span>Label</span><input type="text" id="fsvn" maxlength="8" placeholder="Race" style="width:110px" value="${esc(p.n)}"></div>`;
     if (k.cc) h += `<div class="field" title="Only events of this country, or any country."><span>Country</span><select id="fsvcc">${[['', 'Any'], ['US', 'USA'], ['JP', 'Japan'], ['EU', 'Euro area'], ['GB', 'UK'], ['DE', 'Germany'], ['CN', 'China'], ['AU', 'Australia'], ['CA', 'Canada'], ['CH', 'Switzerland'], ['NZ', 'New Zealand']].map(([c, n]) => `<option value="${c}"${(p.cc || '') === c ? ' selected' : ''}>${n}</option>`).join('')}</select></div>`;
-    if (k.st) h += `<div class="field" title="The tide station whose times are shown."><span>Station</span><span class="muted">${p.st ? esc(p.st) : 'Pick a station — coming soon'}</span></div>`;
+    if (k.st) { const list = tideStations();
+      h += `<div class="field" title="The tide station whose times are shown (Japan Meteorological Agency stations). Not included when you share the dial."><span>Station</span><select id="fsvst" style="max-width:190px"><option value="">${list.length ? 'Pick a station' : 'Loading…'}</option>${list.map(([c, n]) => `<option value="${c}"${p.st === c ? ' selected' : ''}>${esc(n)} (${c})</option>`).join('')}</select></div>`; }
     if ((DEVICES[st.dev] || {}).frozen) h += `<div class="field"><span></span><span class="muted">Not shown on ${esc((DEVICES[st.dev] || {}).name)}: this watch keeps its current parts.</span></div>`;
     return h;
   }
@@ -3835,6 +3845,8 @@
     if (svN) { svN.addEventListener('input', () => { const v = svN.value.replace(/[^\x20-\x7E]/g, '').slice(0, 8); if (v !== svN.value) svN.value = v; all.forEach((x) => { if (isSv(x[0])) svSetP(x, { n: v }); }); render(); });
       svN.addEventListener('change', () => { commit(); syncGames(true); }); }
     if (svCC) svCC.addEventListener('change', () => { all.forEach((x) => { if (isSv(x[0])) svSetP(x, { cc: svCC.value }); }); commit(); syncGames(true); });
+    const svST = $('fsvst');
+    if (svST) svST.addEventListener('change', () => { all.forEach((x) => { if (isSv(x[0])) svSetP(x, { st: svST.value }); }); commit(); syncGames(true); });
     const rimBar = $('frimpos');
     if (rimBar) {
       // バーを動かしている間は編集欄を作り直さない (作り直すとつまみが手から離れる)。

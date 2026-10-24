@@ -536,7 +536,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-24 23:09</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-25 08:31</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -640,7 +640,7 @@
           <div class="ctl"><button class="btn" id="imgreset" title="Put the frame back to the middle at 100 % (the picture stays)">Reset frame</button><button class="btn danger" id="imgclear" title="Take the picture (or the color) out of this editor and start over. Nothing is deleted from the server or from the collection.">Reset image</button></div>
           <details class="box camdet" id="camgrp"><summary class="lbl" style="cursor:pointer">Camera</summary>
             <div class="ctl"><button class="btn toggle" id="camon">Camera: OFF</button><span class="status" id="camnote" style="flex:1 1 auto"></span></div>
-            <div class="ctl"><span class="muted" style="max-width:640px">Shows the latest picture from your camera. No PulseLink? Open <b>easymoat.com/camera</b> on a spare phone and sign in with this watch's Device ID and Web code (Pass holders). With PulseLink: the PulseLink Cam of the PulseLink you linked in 5 Setup → Link PulseLink, or, if it has no Cam, the camera your Crew shares with you. A camera signed in with this watch's ID comes first. Nothing to type here.</span></div>
+            <div class="ctl"><span class="muted" style="max-width:640px">Shows the latest picture from your camera. No PulseLink? Open <b>easymoat.com/camera</b> on a spare phone and sign in with this watch's Device ID and Web code (Pass holders). With PulseLink: the PulseLink Cam of the PulseLink you linked in 5 Setup → c · Camera (Link PulseLink), or, if it has no Cam, the camera your Crew shares with you. A camera signed in with this watch's ID comes first. Nothing to type here.</span></div>
           </details>
         </div>
         <div class="opts">
@@ -703,11 +703,17 @@
           <span class="lbl">b · Where the weather parts get their forecast</span>
           <div class="status" id="locnote" title="Which of the three below is in use right now">Not set yet — pick one of the three below.</div>
           <div class="opt"><button class="btn" id="locset">Use this computer's place</button><span class="muted">Asks this browser where you are and sends that. Opening this page updates it, so it follows you when you travel.</span></div>
-          <div class="opt"><button class="btn" id="locplset">Follow PulseLink</button><span class="muted">PulseLink is another Easymoat app. If it runs on this watch, the forecast follows the watch wherever it goes — no need to open this page. Uses the PulseLink you linked below.</span></div>
+          <div class="opt"><button class="btn" id="locplset">Follow PulseLink</button><span class="muted">PulseLink is another Easymoat app. If it runs on this watch, the forecast follows the watch wherever it goes — no need to open this page. Uses the PulseLink you link in c below (the same link the camera uses).</span></div>
+          <div class="opt"><button class="btn danger" id="locclear">Use the watch's own GPS</button><span class="muted">Stops sending a place from here. The watch then has to find its own position, which can be slow or fail indoors.</span></div>
+      </div>
+      <div class="grp" id="camsrcbox">
+          <span class="lbl">c · Camera on your dials, and the PulseLink link</span>
+          <div class="status" id="camsrcnote" title="Which camera the dials with a camera show right now">Camera: checking…</div>
+          <div class="opt"><button class="btn" id="camsrcswitch" disabled>Switch camera</button><span class="muted" id="camsrchint" style="max-width:560px"></span></div>
+          <div class="opt"><span class="muted" style="max-width:640px">A dial with a camera shows one of these, in this order: <b>(1) this watch's own camera</b> — on a spare phone open <b>easymoat.com/camera</b> and sign in with this watch's Device ID and Web code; <b>(2) the PulseLink Cam</b> of the PulseLink you link below; <b>(3) your PulseLink Crew's shared camera</b>. When two are available, the button above switches between them.</span></div>
           <div class="opt" id="pllinkrow" title="Proves you hold that PulseLink watch. The code is shown on the watch for 10 minutes and works once."><span class="lbl">Link PulseLink</span><span class="status" id="pllinkst" style="flex:1 1 auto"></span></div>
           <div class="opt"><input type="text" id="plidnew" placeholder="PulseLink ID XXXX-XXXX" style="width:170px" autocomplete="off"><input type="text" id="plcode" inputmode="numeric" placeholder="6-digit Web code" maxlength="8" style="width:140px" autocomplete="off"><button class="btn primary" id="pllink">Link</button><button class="btn" id="plunlink">Unlink</button></div>
-          <div class="opt"><span class="muted" style="max-width:640px">On the PulseLink watch, open You → Device ID → Web code: it shows a 6-digit code (valid 10 minutes, one use). Type that code and PulseLink's Device ID above. Once linked, the forecast can follow that watch and the PulseLink Cam can appear on a dial. Unlink here any time; signing out of the web in PulseLink also ends it.</span></div>
-          <div class="opt"><button class="btn danger" id="locclear">Use the watch's own GPS</button><span class="muted">Stops sending a place from here. The watch then has to find its own position, which can be slow or fail indoors.</span></div>
+          <div class="opt"><span class="muted" style="max-width:640px">On the PulseLink watch, open You → Device ID → Web code: it shows a 6-digit code (valid 10 minutes, one use). Type that code and PulseLink's Device ID above. Once linked, the PulseLink Cam can appear on a dial (above) and the forecast can follow that watch (b above). One link serves both. Unlink here any time; signing out of the web in PulseLink also ends it.</span></div>
       </div>
     </div>
     <div class="drawer">
@@ -5226,9 +5232,9 @@
   // PulseLink Cam の説明 (2026-10-04 ユーザー指示)。送り主のカメラは渡らない: 時計に出るのは受け取った人が見られるカメラ。
   // 自分の PulseLink Cam か、Crew の Leader が共有しているカメラ。手順は PulseLink の画面名のとおり (Share → Camera は Leader にだけ出る)。
   // PulseLink が無くても、カメラのページに The Face の ID + Web code で入れば使える (2026-10-07 ユーザー決定)
-  const CAM_SETUP = 'open easymoat.com/camera on a spare phone and sign in with this watch\'s Device ID and Web code (Pass holders), or link a PulseLink that has a Cam (5 Setup → Link PulseLink)';
+  const CAM_SETUP = 'open easymoat.com/camera on a spare phone and sign in with this watch\'s Device ID and Web code (Pass holders), or link a PulseLink that has a Cam (5 Setup → c · Camera (Link PulseLink))';
   const CAM_HOW_SHORT = 'a camera of your own (easymoat.com/camera, signed in with this watch\'s Device ID — no PulseLink needed), a PulseLink Cam, or a Crew whose Leader turns on Share → Camera in PulseLink and invites you.';
-  const CAM_HOW_SHARE = `<b>About the camera.</b> This dial shows a camera picture, but the sender's camera is not shared with you — your watch shows a camera you can see: <b>your own camera</b> (easymoat.com/camera, signed in with your watch's Device ID — no PulseLink needed), <b>your own PulseLink Cam</b>, or <b>your Crew's camera</b>. To use a Crew's camera: (1) the Crew Leader turns on <b>Share → Camera</b> in PulseLink (it appears once their Cam has a picture) and invites your Device ID; (2) you accept the invite in PulseLink; (3) here, link that PulseLink once (5 Setup → Link PulseLink); (4) add this dial to your collection and press <b>To watch</b>. If you have a Cam of your own, your own picture is shown instead.`;
+  const CAM_HOW_SHARE = `<b>About the camera.</b> This dial shows a camera picture, but the sender's camera is not shared with you — your watch shows a camera you can see: <b>your own camera</b> (easymoat.com/camera, signed in with your watch's Device ID — no PulseLink needed), <b>your own PulseLink Cam</b>, or <b>your Crew's camera</b>. To use a Crew's camera: (1) the Crew Leader turns on <b>Share → Camera</b> in PulseLink (it appears once their Cam has a picture) and invites your Device ID; (2) you accept the invite in PulseLink; (3) here, link that PulseLink once (5 Setup → c · Camera (Link PulseLink)); (4) add this dial to your collection and press <b>To watch</b>. If you have a Cam of your own, your own picture is shown instead.`;
   // ── Marketplace (2026-10-10) ── 誰でも見られる一覧。追加は有料ユーザーだけ、通報はサインイン不要
   const MARKET = { sort: 'new', page: 0, loaded: false, seq: 0 };
   function escH(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }   // 関数宣言 = 上の loadLinks からも使える
@@ -6161,8 +6167,48 @@
     const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { PLL.linked = false; PLL.valid = false; PLL.pl = null; renderPlLink(); return; }
     try { const r = await fetch($('api').value + '/pl-link?device_id=' + encodeURIComponent(id)); const j = await r.json();
       PLL.linked = !!j.linked; PLL.valid = !!j.valid; PLL.pl = j.pl || null; } catch (e) { swallow('pllink')(e); }
-    renderPlLink();
+    renderPlLink(); loadCamSource();
   }
+  // ── 使うカメラ (2026-10-25、Setup の c · Camera) ──
+  //   サーバ GET /cam-source = 今映るカメラ (active: own / pl / crew / none) と選べるもの。POST で own | pl を選ぶ。ボタン 1 つで切り替える。
+  const CAMSRC = { pref: 'auto', active: 'none', own: false, pl: false, pl_frame: false, ok: false };
+  const CAMSRC_NAME = { own: "this watch's own camera", pl: 'the PulseLink Cam of the linked PulseLink', crew: "your PulseLink Crew's shared camera", none: 'no camera picture yet' };
+  function renderCamSource() {
+    const note = $('camsrcnote'), btn = $('camsrcswitch'), hint = $('camsrchint'); if (!note || !btn || !hint) return;
+    if (!CAMSRC.ok) { note.textContent = 'Camera: fill in the Device ID above (and sign in) to see which camera your dials use.'; note.className = 'status'; btn.disabled = true; btn.textContent = 'Switch camera'; hint.textContent = ''; return; }
+    note.textContent = `Dials with a camera show: ${CAMSRC_NAME[CAMSRC.active]}${CAMSRC.pref !== 'auto' && CAMSRC.active !== 'none' ? ' (your choice)' : ''}.`;
+    note.className = 'status' + (CAMSRC.active === 'none' ? '' : ' ok');
+    let target = null, label = 'Switch camera', why = '';
+    if (CAMSRC.active === 'own') {
+      label = 'Use the PulseLink camera instead';
+      if (CAMSRC.pl) target = 'pl'; else why = 'Link a PulseLink below first — then you can switch to its camera.';
+    } else if (CAMSRC.active === 'pl' || CAMSRC.active === 'crew') {
+      label = "Use this watch's own camera instead";
+      if (CAMSRC.own) target = 'own'; else why = "This watch has no camera picture yet. On a spare phone open easymoat.com/camera and sign in with this watch's Device ID and Web code.";
+    } else if (CAMSRC.own) { label = "Use this watch's own camera"; target = 'own'; }
+    else if (CAMSRC.pl) { label = 'Use the PulseLink camera'; why = 'The linked PulseLink has no camera picture yet (start its Cam, or have a Crew Leader share a camera).'; }
+    else why = "No camera yet: open easymoat.com/camera and sign in with this watch's Device ID, or link a PulseLink that has a Cam below.";
+    btn.textContent = label; btn.dataset.target = target || ''; btn.disabled = !target; hint.textContent = why;
+  }
+  async function loadCamSource() {
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { CAMSRC.ok = false; renderCamSource(); return; }
+    try { const r = await fetch($('api').value + '/cam-source?device_id=' + encodeURIComponent(id), { headers: authHeaders() }); const j = await r.json();
+      if (r.ok && j.active) { Object.assign(CAMSRC, j, { ok: true }); } else { CAMSRC.ok = false; }
+    } catch (e) { swallow('camsrc')(e); CAMSRC.ok = false; }
+    renderCamSource();
+  }
+  $('camsrcswitch')?.addEventListener('click', async () => {
+    const btn = $('camsrcswitch'), id = devId(), target = btn.dataset.target; if (!target || !/^[0-9a-zA-Z-]{4,40}$/.test(id)) return;
+    btn.disabled = true; setStatus('camsrcnote', 'Switching…');
+    try {
+      const r = await fetch($('api').value + '/cam-source', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ device_id: id, source: target }) });
+      const j = await r.json();
+      if (r.status === 402) { loadAccess(); throw new Error(payMsg(j)); }
+      if (!r.ok || !j.active) throw new Error(authMsg(j) || j.error || r.status);
+      Object.assign(CAMSRC, j, { ok: true }); renderCamSource();
+      if (CAM.on) fetchCam();   // 盤面のカメラのプレビューも新しい方に
+    } catch (e) { await loadCamSource(); setStatus('camsrcnote', 'Could not switch: ' + e.message, 'err'); }
+  });
   // Web code: 全角数字を半角に (日本語入力 ON のまま入れる人がいる)。変換中 (composition) は触らない。
   const normCode = (v) => String(v || '').replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/\D/g, '').slice(0, 6);
   (() => { const el = $('plcode'); if (!el) return; let composing = false;
@@ -6184,7 +6230,7 @@
         : j.error === 'bad_pl_id' ? 'that PulseLink ID does not look right' : (j.error || r.status));
       $('plcode').value = '';
       await loadPlLink(); loadLoc();
-      setStatus('pllinkst', `Linked to PulseLink ${j.pl}. The forecast can follow it (Follow PulseLink above) and its camera can go on a dial.`, 'ok');
+      setStatus('pllinkst', `Linked to PulseLink ${j.pl}. Its camera can go on a dial (above) and the forecast can follow it (Follow PulseLink in b).`, 'ok');
     } catch (e) { setStatus('pllinkst', 'Could not link: ' + e.message, 'err'); }
   });
   $('plunlink')?.addEventListener('click', async () => {

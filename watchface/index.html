@@ -536,7 +536,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-24 22:10</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-24 22:32</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -4047,7 +4047,11 @@
     if (!none && all.length && all.every((x) => x && (isLine(x[0]) || isRect(x[0]) || isCircle(x[0]))))
       box.querySelectorAll('.field.qk').forEach((f) => { if (((f.querySelector('span') || {}).textContent || '').trim() === 'Size') f.classList.remove('qk'); });
   }
-  function removeSelected() { selIdx().reverse().forEach((i) => st.el.splice(i, 1)); clearSel(); }
+  // 外した縁 (Rim) の色・太さ・数字・寄せ・メーターの組を覚えておき、次に置く縁へ引き継ぐ (2026-10-24、針と同じく入れ替えで色が白に戻る不具合。縁は 2 枚重ねられるので「外して別の縁を置く」流れで効く)
+  let RIM_MEM = null;
+  const rimRemember = (e) => { if (e && TYPES[e[0]] && TYPES[e[0]].dial && TYPES[e[0]].grp === 'rim') RIM_MEM = { at: Date.now(), e: e.slice() }; };
+  const rimClearMem = () => { RIM_MEM = null; };
+  function removeSelected() { selIdx().reverse().forEach((i) => { rimRemember(st.el[i]); st.el.splice(i, 1); }); clearSel(); }
   const clamp = (v) => Math.max(0, Math.min(1000, Math.round(v)));
   // 線はグリッドに乗せる (グリッドに沿って引くための吸着)。
   const snapGrid = (v) => clamp(Math.round(v / st.grid) * st.grid);
@@ -4170,7 +4174,7 @@
   function toggleDialPart(t) {
     if (!canAdd(t) && !st.el.some((x) => x[0] === t)) { limitNotice(FULL_MSG(t), true); return; }
     const grp = TYPES[t].grp, was = st.el.findIndex((e) => e[0] === t);
-    if (was >= 0) { st.el.splice(was, 1); clearSel(); commit(); return; }   // もう一度押したら外す
+    if (was >= 0) { rimRemember(st.el[was]); st.el.splice(was, 1); clearSel(); commit(); return; }   // もう一度押したら外す
     const same = st.el.filter((e) => TYPES[e[0]] && TYPES[e[0]].dial && TYPES[e[0]].grp === grp);
     const max = DIAL_MAX[grp] || 1;
     let was0 = null;   // 入れ替える前の針 (色・太さ・長さを新しい針へ引き継ぐ、2026-10-24)
@@ -4181,6 +4185,10 @@
     // 縁は一番奥へ。針は数字の下に隠れないよう今までどおり一番手前 (2026-10-03)
     const dial = [t, 500, 500, 0, 1, 0, 0, -1];
     if (was0) { dial[4] = was0[4]; dial[5] = was0[5]; if (was0.length > 8) dial[8] = was0[8]; }   // 針を替えても色 (白に戻っていた)・太さ・長さは変えない
+    if (grp === 'rim' && RIM_MEM && Date.now() - RIM_MEM.at < 120000) {   // 縁: 直前 (2 分以内) に外した縁の見た目を引き継ぐ。1 回だけ
+      const m = RIM_MEM.e; dial[4] = m[4]; dial[5] = m[5]; for (let q = 8; q < Math.min(m.length, 11); q++) dial.push(m[q]);
+    }
+    if (grp === 'rim') rimClearMem();
     if (grp === 'hands') { st.el.push(dial); setSel(st.el.length - 1, false); } else placeBack(dial);
     commit();
   }
@@ -4437,7 +4445,7 @@
     clearSel(); commit();
   });
   $('preset-min').addEventListener('click', () => { st.el = migrateDate(PRESET_MIN.map(e => e.slice())); clearSel(); commit(); });
-  $('clear').addEventListener('click', () => { st.el = []; clearSel(); commit(); });
+  $('clear').addEventListener('click', () => { st.el = []; rimClearMem(); clearSel(); commit(); });
   $('undo').addEventListener('click', () => { if (!undo()) setStatus('jsonstatus', 'Nothing left to undo.', ''); });
   $('redo').addEventListener('click', () => { if (!redo()) setStatus('jsonstatus', 'Nothing to redo.', ''); });
   // 盤面を最初の状態へ。単位やグリッドは好みなので残す。Undo で戻せる。
@@ -4627,7 +4635,7 @@
       try { insertJoints(inner, '', arcs, d, d.w / 454); } finally { st = hold; }
     }
   }
-  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, BB_MAX); st.gf = (c.gf || []).slice(0, GF_MAX).map(gfClean); st.sv = (c.sv || []).slice(0, SV_MAX).map(svClean); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.ms = msRead(c.ms); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); st.hr = (c.hr || []).slice(); st.sc = (c.sc || []).slice(); st.hc = (c.hc || []).slice(); st.tt = (c.tt || []).slice(); clearSel(); pushBgHist(st.bg); renderHr(); }
+  function loadIntoEditor(c) { st.bg = c.bg; st.el = c.el; st.pc = (c.pc || DEF_PC).slice(); st.mc = (c.mc || [-1, -1, -1, -1]).slice(); st.stk = (c.stk || ['', '']).slice(); st.stn = (c.stn || ['', '']).slice(); st.uc = c.uc === 1 ? 1 : 0; st.stk.forEach(loadStock); st.bb = (c.bb || []).slice(0, BB_MAX); st.gf = (c.gf || []).slice(0, GF_MAX).map(gfClean); st.sv = (c.sv || []).slice(0, SV_MAX).map(svClean); st.tx = c.tx; st.tm = c.tm; st.ic = c.ic; st.io = c.io; st.b = c.b; st.wu = c.wu || 0; st.tu = c.tu || 0; st.pu = c.pu || 0; st.du = c.du || 0; st.hf = c.hf || 0; st.wd = c.wd || 0; st.mt = (c.mt || [0, 0, 0, 0]).slice(); st.ms = msRead(c.ms); st.mk = (c.mk || [-1, -1, -1, -1]).slice(); st.mv = (c.mv || [1, 1, 1, 1]).slice(); st.hr = (c.hr || []).slice(); st.sc = (c.sc || []).slice(); st.hc = (c.hc || []).slice(); st.tt = (c.tt || []).slice(); rimClearMem(); clearSel(); pushBgHist(st.bg); renderHr(); }
   // "Watch: last checked 2 min ago · up to date ✓" — from the server's record of the watch's last poll.
   // ウォッチが最後に来た時刻は 2 か所から来る: 従来経路 (/layouts) と実機が今使う経路 (/watch)。
   // 実機はもう従来経路を見に来ないので、そちらの値は何日も古いまま。新しい方だけを使う

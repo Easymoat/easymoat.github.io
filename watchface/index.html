@@ -536,7 +536,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-24 22:32</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-24 22:42</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3547,8 +3547,8 @@
         ${/* Gap と Bold は常に出す (文字以外では薄く無効)。出したり消したりすると行数が変わり Dial が上下に動いた (2026-09-22) */''}
         ${allText && !allAna ? stepRow('Gap', 10, all.every((x) => gapOf(x) === gapOf(e)) ? gapOf(e) : null, 'Space between the icon and the value (px on a 454 dial)')
           : `<div class="field off"><span>Gap</span><span class="cb units step"><button type="button" disabled>&minus;</button><b>—</b><button type="button" disabled>+</button></span></div>`}
-        <div class="field${allText && !allAna ? '' : ' off'}" title="Bold for this part. Style follows the Bold setting on the right for the whole dial."><span>Bold</span><span class="cb units" id="fbold">${
-          [[-1, 'Style'], [0, 'Off'], [1, 'Bold'], [2, 'Bold 2']].map(([v, lb]) => `<button type="button" data-v="${v}" class="${allText && !allAna && all.every((x) => boldOwn(x) === v) ? 'on' : ''}" ${allText && !allAna ? '' : 'disabled'}>${lb}</button>`).join('')
+        <div class="field${allText && !allAna ? '' : ' off'}"><span>Bold</span><span class="cb units" id="fbold">${
+          [[-1, 'Style', 'Follow the Bold setting on the right, which applies to the whole dial'], [0, 'Off', 'Never bold for this part'], [1, 'Bold', 'Bold for this part'], [2, 'Bold 2', 'Extra bold for this part']].map(([v, lb, tp]) => `<button type="button" data-v="${v}" title="${tp}" class="${allText && !allAna && all.every((x) => boldOwn(x) === v) ? 'on' : ''}" ${allText && !allAna ? '' : 'disabled'}>${lb}</button>`).join('')
         }</span></div>
         <div class="brk"></div>
         <div class="field"><span>Color</span><span class="swatches simple"><input type="color" class="pick" id="fpick" value="${colOf(e[5])}" title="Pick any color — recent ones stay next to it">${
@@ -3651,7 +3651,7 @@
         }</select></div>` : ''}
         ${oneGolf ? `<div class="field" title="The golfer this part follows. Type at least 2 letters of the name, then pick the player."><span>Golfer ${gfSlot(e[0]) + 1}</span><b id="fgfnow">${gfOf(gfSlot(e[0])) ? String(gfOf(gfSlot(e[0])).nm).replace(/</g, '&lt;') : '— none —'}</b>
           <input type="text" id="fgfq" placeholder="Search a name" autocomplete="off" style="width:150px"><span id="fgfres" class="cb units" style="flex-wrap:wrap"></span></div>
-        <div class="field" title="Green while the golfer is on the course, orange when the round or the event is over — instead of the color below"><span>State</span><span class="cb units" id="fbbc"><button type="button" data-v="0" class="${!(e[6] & 8) ? 'on' : ''}">Keep color</button><button type="button" data-v="8" class="${(e[6] & 8) ? 'on' : ''}">By state</button></span></div>` : ''}
+        <div class="field"><span>State</span><span class="cb units" id="fbbc"><button type="button" data-v="0" title="Always use the color below" class="${!(e[6] & 8) ? 'on' : ''}">Keep color</button><button type="button" data-v="8" title="Green while the golfer is on the course, orange when the round or the event is over — instead of the color below" class="${(e[6] & 8) ? 'on' : ''}">By state</button></span></div>` : ''}
         ${allBall ? `<div class="field" title="Which league and team this slot follows"><span>Game ${bbSlot(e[0]) + 1}</span><select id="fleague">${
           [['USA Sports', LEAGUES], ['Soccer', SOC_LEAGUES]].map(([gp, list]) => `<optgroup label="${gp}">` + list.map(([k, nm]) =>
             `<option value="${k}" ${bbLg(bbSlot(e[0])) === k ? 'selected' : ''}>${nm}</option>`).join('') + '</optgroup>').join('')
@@ -3659,7 +3659,7 @@
         <div class="field" title="The team whose game is shown"><span>Team</span><select id="fteam">${
           ['<option value="">— pick a team —</option>'].concat(leagueTeams(bbLg(bbSlot(e[0]))).map(([id, nm]) => `<option value="${id}" ${String(bbTm(bbSlot(e[0]))) === String(id) ? 'selected' : ''}>${nm}</option>`)).join('')
         }</select></div>
-        <div class="field" title="Green while the game is on, orange when it is over — instead of the color below"><span>State</span><span class="cb units" id="fbbc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep color</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By state</button></span></div>` : ''}
+        <div class="field"><span>State</span><span class="cb units" id="fbbc"><button type="button" data-v="0" title="Always use the color below" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep color</button><button type="button" data-v="8" title="Green while the game is on, orange when it is over — instead of the color below" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By state</button></span></div>` : ''}
         ${allCrew ? `<div class="field" title="How many lines this part shows. Who is in each line is set in PulseLink (You &gt; Watch face &gt; Complications)."><span>Lines</span><span class="cb units" id="fcrewn">${
           [1, 2, 3].map((v) => `<button type="button" data-v="${v}" class="${all.every((x) => crewRows(x) === v) ? 'on' : ''}">${v}</button>`).join('')
         }</span></div>` : ''}
@@ -3681,7 +3681,7 @@
         <div class="field" title="The name shown when Label is Name. Leave it empty to use the one that comes with the price. ASCII only, 12 characters."><span>Name</span><input type="text" id="fstkname" value="${stkOwn(e[0])}" placeholder="${(STKQ[stkOf(e[0])] || {}).n || 'Apple Inc.'}" style="width:140px" maxlength="12"></div>
         <div class="field" title="What the number shows"><span>Value</span><span class="cb units" id="fstkv"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 4)) ? 'on' : ''}">Price</button><button type="button" data-v="4" class="${all.every((x) => (x[6] & 4)) ? 'on' : ''}">Change %</button></span></div>
         <div class="field" title="Ticker (AAPL) or the company name as the data provider writes it"><span>Label</span><span class="cb units" id="fstkn"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 16)) ? 'on' : ''}">Symbol</button><button type="button" data-v="16" class="${all.every((x) => (x[6] & 16)) ? 'on' : ''}">Name</button></span></div>
-        <div class="field" title="The price turns green when it is up and red when it is down. The symbol or name keeps the color below."><span>Up / down</span><span class="cb units" id="fstkc"><button type="button" data-v="0" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep color</button><button type="button" data-v="8" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By move</button></span></div>` : ''}
+        <div class="field"><span>Up / down</span><span class="cb units" id="fstkc"><button type="button" data-v="0" title="The price keeps the color below, whether it is up or down" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep color</button><button type="button" data-v="8" title="The price turns green when it is up and red when it is down. The symbol or name keeps the color below." class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By move</button></span></div>` : ''}
         ${arcEl ? `<div class="field" title="Each arc can be a meter. Pick what it measures; none = plain arc."><span>Meters</span><span class="mts">${
           ARCSET[arcEl[0]].lbl.map((pos, i) => { const on = msOf(arcEl).mv[i] !== 0; return `<label class="mt${on ? '' : ' off'}"><button type="button" class="mvb${on ? ' on' : ''}" data-i="${i}" title="Show or hide this arc">${pos}</button><select data-i="${i}" ${on ? '' : 'disabled'}>${
             METERS.map(([id, nm]) => `<option value="${id}" ${msOf(arcEl).mt[i] === id ? 'selected' : ''}>${nm}</option>`).join('')

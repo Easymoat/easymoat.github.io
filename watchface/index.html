@@ -536,7 +536,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-18 21:51</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-24 22:10</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -4173,12 +4173,14 @@
     if (was >= 0) { st.el.splice(was, 1); clearSel(); commit(); return; }   // もう一度押したら外す
     const same = st.el.filter((e) => TYPES[e[0]] && TYPES[e[0]].dial && TYPES[e[0]].grp === grp);
     const max = DIAL_MAX[grp] || 1;
+    let was0 = null;   // 入れ替える前の針 (色・太さ・長さを新しい針へ引き継ぐ、2026-10-24)
     if (same.length >= max) {
-      if (max === 1) { st.el = st.el.filter((e) => same.indexOf(e) < 0); }   // 針は 1 つ = 入れ替え
+      if (max === 1) { was0 = same[0]; st.el = st.el.filter((e) => same.indexOf(e) < 0); }   // 針は 1 つ = 入れ替え
       else { limitNotice(`${grp === 'rim' ? 'Rim' : 'Hands'} can be stacked ${max} deep — take one off first.`); return; }
     }
     // 縁は一番奥へ。針は数字の下に隠れないよう今までどおり一番手前 (2026-10-03)
     const dial = [t, 500, 500, 0, 1, 0, 0, -1];
+    if (was0) { dial[4] = was0[4]; dial[5] = was0[5]; if (was0.length > 8) dial[8] = was0[8]; }   // 針を替えても色 (白に戻っていた)・太さ・長さは変えない
     if (grp === 'hands') { st.el.push(dial); setSel(st.el.length - 1, false); } else placeBack(dial);
     commit();
   }

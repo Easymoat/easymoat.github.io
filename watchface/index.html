@@ -536,7 +536,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-24 22:42</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-24 23:09</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1349,10 +1349,13 @@
   const svKind = (e) => SV_KINDS[(svOf(e) || {}).k] || { nm: 'Server part', sm: '--', ic: null, tip: 'This part has lost its setting. Delete it and pick the part again from Sun, Tides & Dates.' };   // 設定が無い = 勝手に別の種類にしない (QC)
   const svClean = (v) => (v && SV_KINDS[Number(v.k)]) ? { k: Number(v.k), p: Object.assign({}, (v.p && typeof v.p === 'object') ? v.p : {}) } : null;
   const svUsed = () => new Set(st.el.filter((x) => isSv(x[0])).map(svIdx));
-  const svNew = (k) => { const a = (st.sv || []).slice(0, SV_MAX); while (a.length < SV_MAX) a.push(null); const used = svUsed();
+  const svUsedAll = () => new Set(st.el.concat(st.park || []).filter((x) => isSv(x[0])).map(svIdx));   // 置き場 (park) の部品の番号も取られない
+  const svNew = (k) => { const a = (st.sv || []).slice(0, SV_MAX); while (a.length < SV_MAX) a.push(null); const used = svUsedAll();
     const i = a.findIndex((v, j) => !used.has(j)); if (i < 0) return -1; a[i] = { k: SV_KINDS[k] ? k : 3, p: {} }; st.sv = a; return i; };
   const svSetP = (e, patch) => { const a = (st.sv || []).slice(0, SV_MAX); while (a.length < SV_MAX) a.push(null); const i = svIdx(e);
     const v = a[i] || { k: 3, p: {} }; a[i] = { k: v.k, p: Object.assign({}, v.p || {}, patch) }; st.sv = a; };
+  // 部品が絵 (Icon) を描くか: 部品の定義の icon・世界時計の都市の略号・Crew / ゴルフ選手の Icon (名前)・サーバ部品の種類ごとの絵。Show / Icon size の有効・無効と書き込みはこれで決める
+  const hasIconOf = (x) => !!((TYPES[x[0]] && TYPES[x[0]].icon) || cityOf(x) || isCrew(x[0]) || isGolfName(x[0]) || (isSv(x[0]) && svKind(x).ic));
   const svDef = (e) => Object.assign({}, TYPES[80], { name: svKind(e).nm, sample: svKind(e).sm, icon: svKind(e).ic, iw: svKind(e).ic ? 26 : 0 });
   // 見本の問い合わせ (サーバの wf_svpart.parseQuery と同じ形 "k:a=b;c=d,k,…")。置いていない番号は空
   const svKey = () => { const used = svUsed(); return (st.sv || []).slice(0, SV_MAX).map((v, i) => (v && used.has(i))
@@ -1830,7 +1833,7 @@
   const UNDO_MAX = 60;
   let UNDO = [], REDO = [], UNDO_SNAP = null, UNDO_BUSY = false;
   // ★ 色に関わる控え (pc) とメーターの組 (ms) を入れ忘れると、元に戻した時に色が化ける (2026-09-26)。
-  const UNDO_KEYS = ['bg', 'el', 'park', 'pc', 'tt', 'tx', 'tm', 'ic', 'io', 'b', 'mt', 'mc', 'mk', 'mv', 'ms', 'sc', 'hc', 'hr', 'stk', 'stn', 'bb', 'gf', 'uc'];
+  const UNDO_KEYS = ['bg', 'el', 'park', 'pc', 'tt', 'tx', 'tm', 'ic', 'io', 'b', 'mt', 'mc', 'mk', 'mv', 'ms', 'sc', 'hc', 'hr', 'stk', 'stn', 'bb', 'gf', 'sv', 'uc'];   // sv = サーバ部品の設定 (抜けると、消した Countdown を Undo で戻した時に別の種類を表示する、2026-10-24 QC)
   const undoSnap = () => JSON.stringify(UNDO_KEYS.map((k) => st[k]));
   function undoPush() {
     const cur = undoSnap();
@@ -3468,7 +3471,7 @@
   function svFields(e) {
     const k = svKind(e), v = svOf(e) || { p: {} }, p = v.p || {}, esc = (x) => String(x || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
     let h = `<div class="field" title="${esc(k.tip)}"><span>Shows</span><span class="muted">${esc(k.nm)}</span></div>`;
-    if (k.cd) h += `<div class="field" title="The day you count down to."><span>Date</span><input type="date" id="fsvd" value="${esc(p.d)}"></div>`
+    if (k.cd) h += `<div class="field" title="The day you count down to."><span>Date</span><input type="date" id="fsvd" value="${esc(p.d)}">${p.d ? '' : '<span class="muted" style="margin-left:8px">Pick a date</span>'}</div>`
       + `<div class="field" title="A short label, up to 8 letters. Use a nickname — no personal details."><span>Label</span><input type="text" id="fsvn" maxlength="8" placeholder="Race" style="width:110px" value="${esc(p.n)}"></div>`;
     if (k.cc) h += `<div class="field" title="Only events of this country, or any country."><span>Country</span><select id="fsvcc">${[['', 'Any'], ['US', 'USA'], ['JP', 'Japan'], ['EU', 'Euro area'], ['GB', 'UK'], ['DE', 'Germany'], ['CN', 'China'], ['AU', 'Australia'], ['CA', 'Canada'], ['CH', 'Switzerland'], ['NZ', 'New Zealand']].map(([c, n]) => `<option value="${c}"${(p.cc || '') === c ? ' selected' : ''}>${n}</option>`).join('')}</select></div>`;
     if (k.st) {
@@ -3503,7 +3506,7 @@
     const stepRow = (label, key, val, ttl) => `<div class="field" title="${ttl}"><span>${label}</span><span class="cb units step" data-step="${key}"><button type="button" data-d="-1">&minus;</button><b>${val == null ? '—' : val}</b><button type="button" data-d="1">+</button></span></div>`;
     const isOf = (x) => (Number.isInteger(x[7]) && x[7] >= 0 && x[7] <= SIZE_MAX) ? x[7] : -1;
     const sameIs = all.every((x) => isOf(x) === isOf(e));
-    const anyIcon = all.some((x) => TYPES[x[0]]?.icon || cityOf(x) || isCrew(x[0]) || isGolfName(x[0]) || isSv(x[0]));   // Crew・ゴルフ選手の Icon = 名前
+    const anyIcon = all.some(hasIconOf);   // Crew・ゴルフ選手の Icon = 名前、サーバ部品は種類ごとの絵、世界時計は都市の略号
     const allGolfName = !none && all.every((x) => isGolfName(x[0]));   // 名前は文字なので Icon size は使わない (Crew と同じ)
     const arcEl = none ? null : all.find((x) => ARCSET[x[0]]);   // Meters は弧の部品を選んだ時だけ出す (2026-09-19)
     const allLine = all.every((x) => isLine(x[0]));   // 線だけを選んでいる時は線の操作に差し替える
@@ -3534,7 +3537,7 @@
         ${seg('Anchor', ['Center', 'Left', 'Right'], same(3) ? e[3] : -1, 3, 0, allCirc || allRect || allAna)}
         ${allGraph ? seg('Size', ['Small', 'Large'], same(4) ? e[4] : -9, 4)
           : seg('Size', SIZES, (shapeOnly && !allRim) ? -9 : (same(4) ? e[4] : -9), 4, 0, shapeOnly && !allRim)}
-        ${seg('Icon size', ['Auto'].concat(SIZES), anyIcon && !shapeOnly && !allAna && !allCrew && !allGolfName ? (sameIs ? isOf(e) : -9) : -9, 7, -1, shapeOnly || allAna || allCrew || allGolfName)}
+        ${seg('Icon size', ['Auto'].concat(SIZES), anyIcon && !shapeOnly && !allAna && !allCrew && !allGolfName ? (sameIs ? isOf(e) : -9) : -9, 7, -1, shapeOnly || allAna || allCrew || allGolfName || !anyIcon)}
         <div class="brk"></div>
         <div class="field${shapeOnly || allAna ? ' off' : ''}" title="${anyIcon ? 'What this part draws' : 'This part has no icon'}"><span>Show</span><span class="cb units" id="fshow">${
           [['Icon + value', 1], ['Icon only', 3], ['Value only', 0]].map(([lbl, v]) =>
@@ -3884,15 +3887,16 @@
       txtBox.addEventListener('change', () => { if (raf) { cancelAnimationFrame(raf); raf = 0; } commit(); });
     }
     const svD = $('fsvd'), svN = $('fsvn'), svCC = $('fsvcc');
-    if (svD) svD.addEventListener('change', () => { all.forEach((x) => { if (isSv(x[0])) svSetP(x, { d: svD.value }); }); commit(); syncGames(true); });
-    if (svN) { svN.addEventListener('input', () => { const v = svN.value.replace(/[^\x20-\x7E]/g, '').slice(0, 8); if (v !== svN.value) svN.value = v; all.forEach((x) => { if (isSv(x[0])) svSetP(x, { n: v }); }); render(); });
+    const svHas = (x, f) => isSv(x[0]) && !!(svKind(x) || {})[f];   // 設定欄は、その欄を持つ種類の部品にだけ書く (複数選択でも)
+    if (svD) svD.addEventListener('change', () => { all.forEach((x) => { if (svHas(x, 'cd')) svSetP(x, { d: svD.value }); }); commit(); syncGames(true); });
+    if (svN) { svN.addEventListener('input', () => { const v = svN.value.normalize('NFKC').replace(/[^\x20-\x7E]/g, '').slice(0, 8); if (v !== svN.value) svN.value = v; all.forEach((x) => { if (svHas(x, 'cd')) svSetP(x, { n: v }); }); render(); });   // 全角は半角に直してから (５Ｋ が消えていた)
       svN.addEventListener('change', () => { commit(); syncGames(true); }); }
-    if (svCC) svCC.addEventListener('change', () => { all.forEach((x) => { if (isSv(x[0])) svSetP(x, { cc: svCC.value }); }); commit(); syncGames(true); });
+    if (svCC) svCC.addEventListener('change', () => { all.forEach((x) => { if (svHas(x, 'cc')) svSetP(x, { cc: svCC.value }); }); commit(); syncGames(true); });
     const svRG = $('fsvrg'), svSS = $('fsvss');
     if (svRG) svRG.addEventListener('change', () => { TIDE.ui.region = svRG.value; TIDE.ui.state = ''; renderInspector(); });
     if (svSS) svSS.addEventListener('change', () => { TIDE.ui.state = svSS.value; renderInspector(); });
     const svST = $('fsvst');
-    if (svST) svST.addEventListener('change', () => { all.forEach((x) => { if (isSv(x[0])) svSetP(x, { st: svST.value }); }); commit(); syncGames(true); });
+    if (svST) svST.addEventListener('change', () => { all.forEach((x) => { if (svHas(x, 'st')) svSetP(x, { st: svST.value }); }); commit(); syncGames(true); });
     const rimBar = $('frimpos');
     if (rimBar) {
       // バーを動かしている間は編集欄を作り直さない (作り直すとつまみが手から離れる)。
@@ -4028,14 +4032,25 @@
     if (fl) fl.addEventListener('change', (ev) => { setBb(slot, { lg: ev.target.value, tm: 0 }); commit(); });   // リーグを変えたらチームは選び直し
     document.querySelectorAll('#fshow button').forEach((b) => b.addEventListener('click', () => {
       const v = Number(b.dataset.v);
-      each((x) => { if (isGolfName(x[0])) { setGolfShow(x, v); return; } if (isCrew(x[0])) crewNorm(x); if (TYPES[x[0]]?.icon || isCrew(x[0])) { x[6] = (x[6] & ~3) | v; } });
+      each((x) => { if (isGolfName(x[0])) { setGolfShow(x, v); return; } if (isCrew(x[0])) crewNorm(x); if (hasIconOf(x)) { x[6] = (x[6] & ~3) | v; } });   // 絵があるかの判定は 1 か所 (hasIconOf)。以前は TYPES の icon だけで、サーバ部品と世界時計の Icon only / Value only が効かなかった (2026-10-24)
     }));
     $('dup').addEventListener('click', () => {   // copies of every selected element, one grid step down, and the copies become the selection
       const add = loadOf(all);
       if (loadOf(st.el) + add > LOAD_MAX) {
         return setStatus('shelfstatus', `That would be load ${fmtLoad(loadOf(st.el) + add)} — the watch holds ${LOAD_MAX}. Remove some parts first (lines and shapes cost almost nothing).`, 'err');
       }
-      const start = st.el.length; all.forEach((x) => { const c = x.slice(); c[2] = clamp(c[2] + st.grid); st.el.push(c); });
+      const start = st.el.length; let svFull = 0;
+      all.forEach((x) => {
+        const c = x.slice(); c[2] = clamp(c[2] + st.grid);
+        const src = isSv(x[0]) ? svOf(x) : null;
+        if (src) {   // サーバ部品の写しは設定も複製して別の番号にする (写しを変えても元は変わらない、ユーザー決定 2026-10-24)。設定を失った部品はそのまま写す
+          const i = svNew(src.k);
+          if (i < 0) { svFull++; return; }
+          const a = st.sv.slice(); a[i] = { k: a[i].k, p: Object.assign({}, src.p) }; st.sv = a; c[12] = i;
+        }
+        st.el.push(c);
+      });
+      if (svFull) limitNotice(`A dial holds ${SV_MAX} Sun, Tides & Dates parts, so ${svFull === 1 ? 'one' : svFull} could not be copied.`);
       selSet.clear(); for (let i = start; i < st.el.length; i++) selSet.add(i); sel = st.el.length - 1; commit(); });
     $('del').addEventListener('click', () => { removeSelected(); commit(); });
     // Quick editor で残す欄の印 (大きさ・色・銘柄・試合・選手・Crew・文字)。見出しの文字で決める

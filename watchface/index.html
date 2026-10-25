@@ -548,7 +548,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-25 21:25</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-25 23:00</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1197,6 +1197,10 @@
   const GRAPH_MIN = { w: 120, h: 40 };
   const graphW = (e) => { const v = Number(e[8]); return (Number.isFinite(v) && v >= GRAPH_MIN.w) ? Math.min(1000, Math.round(v)) : graphBox(e)[0]; };
   const graphH = (e) => { const v = Number(e[9]); return (Number.isFinite(v) && v >= GRAPH_MIN.h) ? Math.min(1000, Math.round(v)) : graphBox(e)[1]; };
+  // 折れ線のグラフ (心拍 41・潮 49) の線の太さ = 12 番目 (e[11])。0 Thin / 1 Medium / 2 Thick、無ければ Medium (今までの太さ)。2026-10-25 ユーザー指示
+  const GRAPH_LW = [1, 2, 4];
+  const isLineGraph = (t) => t === 41 || t === 49;
+  const graphLw = (e) => { const v = Number(e && e[11]); return (e && isLineGraph(e[0]) && Number.isInteger(v) && v >= 0 && v <= 2) ? v : 1; };
   const graphGrow = (e) => { const b = graphBox(e); while (e.length < 10) e.push(e.length === 8 ? b[0] : b[1]); };
   // 見本のデータ。心拍 = 5 分ごと 72 点 (6 時間)、ストレス = 10 分ごと 36 本、歩数 = 7 日 (右端が今日)
   // 心拍の見本: 実機と同じ 5 分平均 72 点。安静時も毎点 ±5 ほど揺れ、歩いた枠は 10-25 跳ね、運動の山も上が凸凹する (2026-09-27)
@@ -1211,21 +1215,22 @@
   //   心拍: 72 点の折れ線、縦は窓の中の最小〜最大、上下 2px の余白、線幅 2
   //   ストレス: 36 本の棒、ピッチ = 幅/36、棒の幅 = ピッチ×0.7、高さ = 値/100
   //   歩数: 7 本の棒、ピッチ = 幅/7、棒の幅 = ピッチ×0.6、高さ = 値/7 日の最大
-  // 潮のグラフの見本 (取れるまで): 今日 0〜24 時に満潮 2 回・干潮 2 回の 25 点
+  // 潮のグラフの見本 (取れるまで): 満潮 2 回・干潮 2 回の 25 点。横軸は今の 2 時間前〜22 時間後 (2026-10-25 ユーザー決定)
   const TIDE_SAMPLE = Array.from({ length: 25 }, (_, i) => Math.round(110 + 50 * Math.cos((i - 10.5) / 12.4 * 2 * Math.PI)));
+  const TIDE_PAST_H = 2;
   function graphArt(kind, w, h, k, level, e) {   // level = 棒をストレスのレベルの色で塗る (2026-09-20)、e = 部品 (潮のグラフは本物の g を使う)
     let o = '';
     if (kind === 'tide') {   // 実機と同じ決め方: 25 点の折れ線、縦は最小〜最大、上下 2px の余白、線幅 2。今の時刻に縦線 1px
-      const live = e ? svLiveG(e) : null, d = live || TIDE_SAMPLE, lo = Math.min(...d), hi = Math.max(...d), pad = 2 * k, pen = Math.max(1, 2 * k);
+      const live = e ? svLiveG(e) : null, d = live || TIDE_SAMPLE, lo = Math.min(...d), hi = Math.max(...d), pad = 2 * k, pen = Math.max(1, GRAPH_LW[graphLw(e)] * k);
       const X = (i) => pen / 2 + i * (w - pen) / (d.length - 1);
       const pts = d.map((v, i) => `${X(i).toFixed(1)},${(pad + (1 - (v - lo) / Math.max(1, hi - lo)) * (h - 2 * pad)).toFixed(1)}`);
-      const nowD = new Date(), hr = nowD.getHours() + nowD.getMinutes() / 60, nx = X(hr);
+      const nx = X(TIDE_PAST_H);   // 今 = 左端から 2 時間 (サーバは今の 2 時間前から 25 点を作る)
       o = `<polyline points="${pts.join(' ')}" fill="none" stroke="currentColor" stroke-width="${pen.toFixed(1)}" stroke-linejoin="round" stroke-linecap="round"/>`
         + `<line x1="${nx.toFixed(1)}" y1="0" x2="${nx.toFixed(1)}" y2="${h.toFixed(1)}" stroke="currentColor" stroke-width="${Math.max(1, k).toFixed(1)}"/>`;
       return `<svg width="${w.toFixed(1)}" height="${h.toFixed(1)}" style="display:block;overflow:visible">${o}</svg>`;
     }
     if (kind === 'hr') {
-      const d = HR_SAMPLE, lo = Math.min(...d), hi = Math.max(...d), pad = 2 * k, pen = Math.max(1, 2 * k);
+      const d = HR_SAMPLE, lo = Math.min(...d), hi = Math.max(...d), pad = 2 * k, pen = Math.max(1, GRAPH_LW[graphLw(e)] * k);
       const pts = d.map((v, i) => `${(pen / 2 + i * (w - pen) / (d.length - 1)).toFixed(1)},${(pad + (1 - (v - lo) / Math.max(1, hi - lo)) * (h - 2 * pad)).toFixed(1)}`);
       o = `<polyline points="${pts.join(' ')}" fill="none" stroke="currentColor" stroke-width="${pen.toFixed(1)}" stroke-linejoin="round" stroke-linecap="round"/>`;
     } else {
@@ -1349,8 +1354,9 @@
    [[47], { arr: 9, gap: 10, bold: 11, own: { 8: '行数' } }],
    [[48], { arr: 9, gap: 10, bold: 11, own: { 8: '誰 (Crew 1-3)' } }],
    [[44], { arr: null, gap: null, bold: null, own: { 8: '直径', 9: 'モード', 10: '針の形', 11: '目盛り', 12: '都市' } }],
-   [[41, 42, 43], { arr: null, gap: null, bold: null, own: { 8: '幅', 9: '高さ' } }],
-   [[49], { arr: null, gap: null, bold: null, own: { 8: '幅', 9: '高さ', 10: 'sv の番号 (観測点)' } }],
+   [[41], { arr: null, gap: null, bold: null, own: { 8: '幅', 9: '高さ', 10: '空き (0)', 11: '線の太さ' } }],
+   [[42, 43], { arr: null, gap: null, bold: null, own: { 8: '幅', 9: '高さ' } }],
+   [[49], { arr: null, gap: null, bold: null, own: { 8: '幅', 9: '高さ', 10: 'sv の番号 (観測点)', 11: '線の太さ' } }],
    [[70, 71, 72, 73], { arr: null, gap: null, bold: null, own: { 8: '長さ' } }],
    [[75], { arr: null, gap: null, bold: null, own: { 8: '直径', 9: '線幅', 10: '中の色', 11: '指標', 12: '向き' } }],
    [[76], { arr: null, gap: null, bold: null, own: { 8: '幅', 9: '高さ', 10: '角' } }],
@@ -1366,13 +1372,13 @@
     3: { nm: 'Sunrise / Sunset', sm: '06:12 17:30', ic: 'sun', tip: 'Both sunrise and sunset today.' },
     4: { nm: 'Day length', sm: '11h18m', ic: 'daylen', tip: 'Hours of daylight today.' },
     5: { nm: 'Next tide', sm: 'H 14:05 1.6m', ic: 'wave', st: true, tip: 'The next high (H) or low (L) tide at the station you pick. Japan and USA stations.' },
-    6: { nm: "Today's tides", sm: 'H14:05 L20:12', ic: 'wave', st: true, tip: "Today's high and low tides at the station you pick." },
+    6: { nm: "Today's tides", sm: 'H14:05 L20:12', ic: 'wave', st: true, tip: 'The high and low tides from 2 hours ago to 22 hours ahead at the station you pick, in time order — at night it already shows tomorrow\'s.' },
     7: { nm: 'Air quality', sm: 'AQI 42 Good', ic: 'leaf', tip: 'Air quality index (US AQI) at the place your watch last reported. Yellow above 50, red above 150.' },
     8: { nm: 'UV index', sm: 'UV 6 High', ic: 'uv', tip: 'UV index now. Yellow from 3, red from 8.' },
     9: { nm: 'Next economic event', sm: 'FOMC 14:00', ic: 'calendar', cc: true, tip: 'The next high-impact economic event (rate decisions, jobs, CPI) within 3 days, in your local time. Pick a country or any.' },
     10: { nm: 'Countdown', sm: 'Race 12d', ic: 'flag', cd: true, tip: 'Days until a date you set, with a short label.' },
     11: { nm: 'Week number', sm: 'W42', ic: 'week', tip: 'ISO week number of the year.' },
-    13: { nm: 'Tide graph', sm: '', ic: 'wave', st: true, graph: true, tip: "Today's tide from 0 to 24 h at the station you pick, with a line at the current time." },
+    13: { nm: 'Tide graph', sm: '', ic: 'wave', st: true, graph: true, tip: 'The tide from 2 hours ago to 22 hours ahead at the station you pick. The line near the left is now.' },
     12: { nm: 'Day of year', sm: 'Day 290', ic: 'month', tip: 'Day of the year, 1 to 366.' },
   };
   const PAL_SV = {}; for (const k of Object.keys(SV_KINDS)) if (!SV_KINDS[k].graph) PAL_SV[800 + Number(k)] = { t: 80, k: Number(k) };   // グラフの種類 (13) は Graphs の札 (部品 49) から   // 札の番号 801..812 → 部品 80 + 種類
@@ -3120,7 +3126,8 @@
     ? (() => { const b = [e[0], e[1], e[2], 0, e[4], e[5], e[6], -1, circDiaOut(circDia(e)), circPen(e[4]), circFill(e), circMet(e), circDir(e)];
                  return (circSpan(e) !== 360 || circFrom(e)) ? b.concat([circSpan(e), circFrom(e)]) : b; })()
     : isGraph(e[0])
-    ? (e[0] === 49 ? [e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7], graphW(e), graphH(e), svIdx(e)]   // 潮のグラフは 11 番目に観測点 (sv) の番号 (台帳)
+    ? (e[0] === 49 ? [e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7], graphW(e), graphH(e), svIdx(e)].concat(e.length > 11 ? [graphLw(e)] : [])   // 潮のグラフは 11 番目に観測点 (sv) の番号、12 番目に線の太さ (台帳)
+       : (e[0] === 41 && e.length > 11) ? [e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7], graphW(e), graphH(e), 0, graphLw(e)]   // 心拍は 11 番目が空き (潮と枠をそろえる)
        : e.length > 9 ? [e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7], graphW(e), graphH(e)] : e)
     : isLine(e[0])
     ? (() => { const g = lineGeom(e, joins, i); const b = [e[0], g.x, g.y, e[3], e[4], e[5], e[6], -1, g.len, linePen(e[4], true)];
@@ -3674,6 +3681,8 @@
         ${allGraph ? `
         ${stepRow('Width', 8, all.every((x) => graphW(x) === graphW(e)) ? graphW(e) : null, 'How wide the graph is, in grid steps. Drag the corner handle to change both at once.')}
         ${stepRow('Height', 9, all.every((x) => graphH(x) === graphH(e)) ? graphH(e) : null, 'How tall the graph is, in grid steps')}
+        ${all.every((x) => isLineGraph(x[0])) ? `<div class="field" title="How thick the graph's line is"><span>Thickness</span><span class="cb units" id="fglw">${
+          [[0, 'Thin'], [1, 'Medium'], [2, 'Thick']].map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => graphLw(x) === v) ? 'on' : ''}">${lb}</button>`).join('')}</span></div>` : ''}
         ` : ''}
         ${allLine ? `
         <div class="field" title="Which way the line runs"><span>Direction</span><span class="cb units" id="fdir">${
@@ -4016,6 +4025,8 @@
         else { x[k] = clamp(snapGrid(x[k]) + d); }
       });
     })));
+    document.querySelectorAll('#fglw button').forEach((b) => b.addEventListener('click', () => each((x) => {
+      if (!isLineGraph(x[0])) return; graphGrow(x); while (x.length < 11) x.push(0); x[11] = +b.dataset.v; })));   // 心拍は 11 番目を空き (0) で埋める
     document.querySelectorAll('#fdir button').forEach((b) => b.addEventListener('click', () => each((x) => { if (isLine(x[0])) x[0] = +b.dataset.t; })));
     document.querySelectorAll('#fjoint button').forEach((b) => b.addEventListener('click', () => each((x) => {
       if (isLine(x[0]) || isRect(x[0])) x[6] = (+b.dataset.v) ? (x[6] | F_SHARP) : (x[6] & ~F_SHARP);
@@ -4570,7 +4581,8 @@
       if (n[1] < 0 || n[1] > 1000 || n[2] < 0 || n[2] > 1000 || n[3] < 0 || n[3] > 2 || n[4] < 0 || n[4] > SIZE_MAX || n[5] < 0 || n[5] > PC_BASE + PC_MAX || n[6] < 0 || n[6] > F_MAX || n[7] < -1 || n[7] > SIZE_MAX) return null;
       if (isLine(n[0])) { const L = Number(e[8]); n.push(Number.isFinite(L) && L >= LINE_LEN_MIN && L <= 1000 ? Math.round(L) : LINE_LEN_DEF); }   // 線は 9 番目の長さを落とさない
       else if (isRect(n[0])) { n.push(rectW(e), rectH(e), rectFill(e)); }   // 四角形は 9・10 番目に幅と高さ、11 番目に中の色
-      else if (isGraph(n[0])) { n.push(graphW(e), graphH(e)); if (n[0] === 49) { const ix = Number(e[10]); n.push((Number.isInteger(ix) && ix >= 0 && ix < SV_MAX) ? ix : 0); } }   // グラフも 9・10 番目に幅と高さ
+      else if (isGraph(n[0])) { n.push(graphW(e), graphH(e)); if (n[0] === 49) { const ix = Number(e[10]); n.push((Number.isInteger(ix) && ix >= 0 && ix < SV_MAX) ? ix : 0); }
+        const lw = Number(e[11]); if (isLineGraph(n[0]) && Number.isInteger(lw) && lw >= 0 && lw <= 2) { if (n.length < 11) n.push(0); n.push(lw); } }   // 12 番目 = 線の太さ   // グラフも 9・10 番目に幅と高さ
       else if (hasCity(n[0]) && TZ_CITIES.some((c) => c[0] === Number(e[9]))) { n.push((Number(e[8]) === 1 || Number(e[8]) === 2 || Number(e[8]) === 3) ? Number(e[8]) : 0, Number(e[9])); }   // 世界時計の都市
       else if (isHands(n[0])) {   // 9 番目 = 針の長さ %、Rim marks は 10 番目 = 縁からの引っ込み
         const v = Number(e[8]); n.push((Number.isFinite(v) && v >= 40 && v <= 120) ? Math.round(v) : 100);

@@ -404,6 +404,18 @@
   @media (min-width: 561px) and (max-width: 760px) {
     body:not(.full) .shelf { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
   }
+  /* 携帯の Collection | Marketplace の切り替え (2026-10-25 ユーザー指示: 携帯は Collection の画面になり、Marketplace は一番下に埋もれていた) */
+  #ptabs { display: none; }
+  @media (max-width: 760px) {
+    body:not(.full) #ptabs { display: flex; margin-bottom: 12px; }
+    #ptabs .cb.units { display: flex; width: 100%; gap: 8px; }
+    #ptabs .cb.units button { flex: 1 1 0; height: 44px; font-family: var(--sans); font-size: 16px; font-weight: 600; }
+    body:not(.full) #marketstatus { white-space: normal; height: auto; line-height: 1.5; }   /* 長い文が 1 行のままだと画面が横に広がった */
+    body:not(.full):not(.pmarket):not(.marketonly) #marketbox { display: none; }   /* ?market=1 のページは携帯でも出す */
+    body.pmarket:not(.full) .shelfbox:not(#watchbox) > :not(#marketbox) { display: none; }
+    body.pmarket:not(.full) #marketbox { margin-top: 0; border: 0; padding: 0; background: none; }
+    body.pmarket:not(.full) #marketbox > summary { display: none; }
+  }
   /* ── 携帯の Quick editor (2026-10-06): Full editor と同じ画面から、指で使う物だけを残す ── */
   .qonly { display: none; }
   #qpanel .qhd { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
@@ -536,7 +548,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-25 14:36</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-25 16:09</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -557,6 +569,7 @@
 <main>
   <div id="pnav"><button class="btn" id="pnavback">Collection</button><button class="btn" id="pnavswap">Full editor</button><span class="muted">Now: <b id="pnavwhat">Quick editor</b></span></div>
   <div id="phonebar" class="box">
+    <div class="prow" id="ptabs"><span class="cb units"><button type="button" data-v="col" class="on">Collection</button><button type="button" data-v="market">Marketplace</button></span></div>
     <div class="psign" id="psign">
       <div class="lbl">Your watch</div>
       <p class="pnote">Type your watch's Device ID — on the watch: settings → Watch Face → Customize → Device ID. Four characters, a dash, four more (like <b>a1b2-3456</b>). It stays on this phone.</p>
@@ -676,7 +689,7 @@
       <details class="box" id="marketbox" style="margin-top:14px">
         <summary class="lbl" style="cursor:pointer">Marketplace — dials others made</summary>
         <div class="ctl" style="flex-wrap:wrap;gap:10px;margin-top:8px"><span class="cb units" id="marketsort"><button type="button" data-v="new" class="on">New</button><button type="button" data-v="top">Popular</button></span>
-          <span class="muted mkinfo" style="max-width:560px">Anyone can look. Adding one to your collection, and listing your own (Market… on an item above), come with the 1-Year Pass.</span></div>
+          <span class="muted mkinfo" style="max-width:560px">Anyone can look. Adding one to your collection, and listing your own (Market… on an item in your collection), come with the 1-Year Pass.</span></div>
         <div class="status" id="marketstatus"></div>
         <div class="shelf" id="market"></div>
         <div class="ctl"><button class="btn" id="marketmore" hidden>More</button></div>
@@ -5321,6 +5334,13 @@
     document.querySelectorAll('#marketsort button').forEach((b) => b.addEventListener('click', () => {
       MARKET.sort = b.dataset.v; document.querySelectorAll('#marketsort button').forEach((x) => x.classList.toggle('on', x === b)); loadMarket(true); }));
     const more = $('marketmore'); if (more) more.addEventListener('click', () => { MARKET.page += 1; loadMarket(false); });
+    // 携帯の Collection | Marketplace (2026-10-25)。Marketplace は欄を開いた形で出す (開くと初回だけ読み込む = toggle)
+    document.querySelectorAll('#ptabs button').forEach((b) => b.addEventListener('click', () => {
+      const mk = b.dataset.v === 'market';
+      document.body.classList.toggle('pmarket', mk);
+      document.querySelectorAll('#ptabs button').forEach((x) => x.classList.toggle('on', x === b));
+      if (mk && mb && !mb.open) mb.open = true;
+    }));
     // 公開のリンク: ?market=1 は Marketplace だけのページ (編集画面は隠す)。追加は共有リンクの画面 (?s=) へ (サインインと合言葉はそこで)
     if (/[?&]market=1\b/.test(location.search) && mb) {
       document.body.classList.add('marketonly');

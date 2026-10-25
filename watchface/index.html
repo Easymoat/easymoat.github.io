@@ -548,7 +548,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-25 17:34</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-25 17:50</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1110,7 +1110,7 @@
   const F_MAX = 127;   // bit5 (32) = 日付の曜日、bit6 (64) = 値のレベルで色分け (サーバと揃えること)
   const LOAD_HEAVY = 24;   // ここから先は実機のメモリの余裕が小さい (注意色にする)
   // 線 (70-73)。太さは 454 の盤面での px、長さは幅の千分率 (x/y と同じ物差し)。
-  const LINE_W = [3, 5, 7], LINE_LEN_DEF = 200, LINE_LEN_MIN = 20;   // 奇数 = 実機で端の丸めがぴったり合う
+  const LINE_W = [3, 5, 7], LINE_HAIR = 3, LINE_LEN_DEF = 200, LINE_LEN_MIN = 20;   // 奇数 = 実機で端の丸めがぴったり合う
   const isLine = (t) => !!(TYPES[t] && TYPES[t].line != null);
   const isCircle = (t) => !!(TYPES[t] && TYPES[t].circle);
   const isAnalog = (t) => !!(TYPES[t] && TYPES[t].analog);
@@ -1557,8 +1557,10 @@
   const stkValue = (t, f) => { const i = STKQ[stkOf(t)];
     return (f & 4) ? ((i && i.c) || '+1.15%') : ((i && i.p) || TYPES[t].sample); };
   // 線の太さ (454 基準)。実機で奇数 px になる値に直して送る = 端の丸めがぴったり合う。
-  const linePen = (sz) => {
-    const w = dev().w, sc = w / 454, base = LINE_W[Math.min(Math.max(sz, 0), 2)];
+  // line = true は線 (70-73) の太さ: s = 3 は Hairline (1px、2026-10-25 ユーザー指示)。四角形・丸の s = 3 は None なので、
+  //   線以外 (四角形の角の R など) は従来どおり 3 を Thick として読む (保存済みの面の見た目を変えない)
+  const linePen = (sz, line) => {
+    const w = dev().w, sc = w / 454, base = (line && sz === LINE_HAIR) ? 1 : LINE_W[Math.min(Math.max(sz, 0), 2)];
     const px = Math.max(1, Math.round((base * sc - 1) / 2) * 2 + 1);
     return Math.round((px + 0.15) / sc * 10) / 10;
   };
@@ -2714,7 +2716,7 @@
     }
     if (def.line != null) {   // 線: 外接矩形の箱に引く。当たり判定は線の上だけ (下の部品を隠さない)
       const dv = dev(), g = lineGeom(e, JOINS, i);
-      const art = lineArt(def.line, g.len * dv.w / 1000, linePen(s) * k, g.m0 * dv.w / 1000, g.m1 * dv.w / 1000);
+      const art = lineArt(def.line, g.len * dv.w / 1000, linePen(s, true) * k, g.m0 * dv.w / 1000, g.m1 * dv.w / 1000);
       div.dataset.lx = g.x; div.dataset.ly = g.y;   // 位置も伸ばしたあとの値で置く
       div.classList.add('linepart', 'rawline');     // rawline = 種別 70-73 の線そのもの (角の R を入れる位置の目印)
       div.style.width = art.w + 'px'; div.style.height = art.h + 'px';
@@ -2965,7 +2967,7 @@
             if (Math.abs(cross) < 1e-6) continue;                          // 平行 / 一直線
             const t = ((pb[0] - pa[0]) * qy - (pb[1] - pa[1]) * qx) / cross;   // a の端から交点まで (+ = 外側)
             const u = ((pb[0] - pa[0]) * oy - (pb[1] - pa[1]) * ox) / cross;   // b の端から交点まで
-            const wpm0 = linePen(a.e[4]) * 1000 / 454, wpmB = linePen(b.e[4]) * 1000 / 454;
+            const wpm0 = linePen(a.e[4], true) * 1000 / 454, wpmB = linePen(b.e[4], true) * 1000 / 454;
             // 交点は「両方の端の少し先」にあること。ずっと手前 (線が交点を大きく通り越している) は
             // 角ではなく十字や T なので触らない — 触ると別の線に釣られて短くなる。
             // ただし留め継ぎのぶん (線幅の 2 倍まで) の行き過ぎは角として扱う: 保存した面の線は
@@ -3001,7 +3003,7 @@
                 const sweep = ((a1 - a0) + 360) % 360;
                 // arc[2] = 始まり側の線の色、arc[3] = 終わり側の線の色
                 const arc = sweep <= 180 ? [a0, a0 + sweep, a.e[5], b.e[5]] : [a1, a1 + (360 - sweep), b.e[5], a.e[5]];
-                fil = { d, r, cx, cy, a0: arc[0], a1: arc[1], pen: Math.min(linePen(a.e[4]), linePen(b.e[4])), col: arc[2], col2: arc[3],
+                fil = { d, r, cx, cy, a0: arc[0], a1: arc[1], pen: Math.min(linePen(a.e[4], true), linePen(b.e[4], true)), col: arc[2], col2: arc[3],
                         after: Math.max(a.i, b.i),   // 角は「後から描く方の線」の直後に描く (手前の部品の上に出ないように)
                         key: [Math.min(a.i, b.i), Math.max(a.i, b.i), Math.round(px), Math.round(py)].join(':') };
               }
@@ -3121,7 +3123,7 @@
     ? (e[0] === 49 ? [e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7], graphW(e), graphH(e), svIdx(e)]   // 潮のグラフは 11 番目に観測点 (sv) の番号 (台帳)
        : e.length > 9 ? [e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7], graphW(e), graphH(e)] : e)
     : isLine(e[0])
-    ? (() => { const g = lineGeom(e, joins, i); const b = [e[0], g.x, g.y, e[3], e[4], e[5], e[6], -1, g.len, linePen(e[4])];
+    ? (() => { const g = lineGeom(e, joins, i); const b = [e[0], g.x, g.y, e[3], e[4], e[5], e[6], -1, g.len, linePen(e[4], true)];
                  return (g.m0 || g.m1) ? b.concat([g.m0, g.m1]) : b; })()
     : e)).filter(Boolean); };
   // 心拍メーターの両端と色分け。st.hr = [安静時, 高い時, 色分け]。0 = 実機まかせ。
@@ -3661,7 +3663,8 @@
             `<button type="button" data-t="${tt}" class="${all.every((x) => x[0] === tt) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>
         ${stepRow('Length', 8, sameLen ? lineLen(e) : null, 'How far the line reaches, in grid steps — a diagonal goes this far across and this far down')}
-        ${seg('Thickness', ['Thin', 'Medium', 'Thick'], same(4) ? e[4] : -9, 4)}
+        <div class="field"><span>Thickness</span><span class="seg" data-key="4">${[[LINE_HAIR, 'Hairline'], [0, 'Thin'], [1, 'Medium'], [2, 'Thick']].map(([v, lb]) =>
+          `<button class="${same(4) && e[4] === v ? 'on' : ''}" data-v="${v}">${lb}</button>`).join('')}</span></div>
         <div class="field" title="Round the corner where this line meets another one. Both lines have to be set to R."><span>Joint</span><span class="cb units" id="fjoint">${
           [[0, 'R'], [1, 'Sharp']].map(([v, lb]) =>
             `<button type="button" data-v="${v}" class="${all.every((x) => (lineSharp(x) ? 1 : 0) === v) ? 'on' : ''}">${lb}</button>`).join('')
@@ -4183,7 +4186,7 @@
       const i = +div.dataset.i, e = st.el[i];
       if (!e || !isLine(e[0])) return;
       const g = lineGeom(e, JOINS, i);
-      const art = lineArt(TYPES[e[0]].line, g.len * d.w / 1000, linePen(e[4]) * k, g.m0 * d.w / 1000, g.m1 * d.w / 1000);
+      const art = lineArt(TYPES[e[0]].line, g.len * d.w / 1000, linePen(e[4], true) * k, g.m0 * d.w / 1000, g.m1 * d.w / 1000);
       div.dataset.lx = g.x; div.dataset.ly = g.y; div.dataset.lw = art.w; div.dataset.lh = art.h;
       div.style.width = art.w + 'px'; div.style.height = art.h + 'px';
       div.innerHTML = art.svg + '<span class="anchor"></span>';

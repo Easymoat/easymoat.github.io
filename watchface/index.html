@@ -548,7 +548,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-25 17:50</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-25 21:25</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -3509,11 +3509,18 @@
   const TIDE = { jp: null, states: null, byState: {}, stateOf: {}, ui: {} };
   const US_STATES = { AK: 'Alaska', AL: 'Alabama', AS: 'American Samoa', CA: 'California', CT: 'Connecticut', DC: 'District of Columbia', DE: 'Delaware', FL: 'Florida', FM: 'Micronesia', GA: 'Georgia',
     GU: 'Guam', HI: 'Hawaii', LA: 'Louisiana', MA: 'Massachusetts', MD: 'Maryland', ME: 'Maine', MS: 'Mississippi', NC: 'North Carolina', NH: 'New Hampshire', NJ: 'New Jersey', NY: 'New York',
-    OR: 'Oregon', PA: 'Pennsylvania', PR: 'Puerto Rico', RI: 'Rhode Island', SC: 'South Carolina', TX: 'Texas', VA: 'Virginia', VI: 'US Virgin Islands', WA: 'Washington', ZZ: 'Pacific islands & other' };
+    OR: 'Oregon', PA: 'Pennsylvania', PR: 'Puerto Rico', RI: 'Rhode Island', SC: 'South Carolina', TX: 'Texas', VA: 'Virginia', VI: 'US Virgin Islands', WA: 'Washington', ZZ: 'Outside the US states' };
+  // 都道府県 (JIS コード → 表示名)。観測点の名前が日本語なので県も日本語 + ローマ字 (2026-10-25)
+  const JP_PREFS = { '01': '北海道 Hokkaido', '02': '青森 Aomori', '03': '岩手 Iwate', '04': '宮城 Miyagi', '05': '秋田 Akita', '06': '山形 Yamagata', '07': '福島 Fukushima', '08': '茨城 Ibaraki', '09': '栃木 Tochigi', '10': '群馬 Gunma',
+    '11': '埼玉 Saitama', '12': '千葉 Chiba', '13': '東京 Tokyo', '14': '神奈川 Kanagawa', '15': '新潟 Niigata', '16': '富山 Toyama', '17': '石川 Ishikawa', '18': '福井 Fukui', '19': '山梨 Yamanashi', '20': '長野 Nagano',
+    '21': '岐阜 Gifu', '22': '静岡 Shizuoka', '23': '愛知 Aichi', '24': '三重 Mie', '25': '滋賀 Shiga', '26': '京都 Kyoto', '27': '大阪 Osaka', '28': '兵庫 Hyogo', '29': '奈良 Nara', '30': '和歌山 Wakayama',
+    '31': '鳥取 Tottori', '32': '島根 Shimane', '33': '岡山 Okayama', '34': '広島 Hiroshima', '35': '山口 Yamaguchi', '36': '徳島 Tokushima', '37': '香川 Kagawa', '38': '愛媛 Ehime', '39': '高知 Kochi', '40': '福岡 Fukuoka',
+    '41': '佐賀 Saga', '42': '長崎 Nagasaki', '43': '熊本 Kumamoto', '44': '大分 Oita', '45': '宮崎 Miyazaki', '46': '鹿児島 Kagoshima', '47': '沖縄 Okinawa' };
   const TIDE_ASKED = new Set();
-  const tideAsk = (q, then) => {
+  window.__fcTideReset = () => { TIDE.jp = null; TIDE.states = null; TIDE.byState = {}; TIDE.stateOf = {}; TIDE.ui = {}; TIDE_ASKED.clear(); };   // 回帰試験 tide picker が一覧を差し替える
+  const tideAsk = (q, then) => {   // lv = 一覧の版 (県・地方の入る前の一覧はブラウザに 1 日残るので、版を変えて取り直す、2026-10-25)
     if (TIDE_ASKED.has(q)) return; TIDE_ASKED.add(q);
-    fetch(`${$('api').value}/tide-stations${q}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || !Array.isArray(j.st)) throw new Error('no list'); then(j); renderInspector(); })
+    fetch(`${$('api').value}/tide-stations${q}${q ? '&' : '?'}lv=2`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || !Array.isArray(j.st)) throw new Error('no list'); then(j); renderInspector(); })
       .catch((e) => { swallow('tide')(e); setTimeout(() => { TIDE_ASKED.delete(q); }, 60000); });   // 取れなかったら 1 分後にもう一度
   };
   const tideJp = () => { if (!TIDE.jp) tideAsk('', (j) => { TIDE.jp = j.st; TIDE.states = j.us || []; }); return TIDE.jp || []; };
@@ -3528,17 +3535,28 @@
       + `<div class="field" title="A short label, up to 8 letters. Use a nickname — no personal details."><span>Label</span><input type="text" id="fsvn" maxlength="8" placeholder="Race" style="width:110px" value="${esc(p.n)}"></div>`;
     if (k.cc) h += `<div class="field" title="Only events of this country, or any country."><span>Country</span><select id="fsvcc">${[['', 'Any'], ['US', 'USA'], ['JP', 'Japan'], ['EU', 'Euro area'], ['GB', 'UK'], ['DE', 'Germany'], ['CN', 'China'], ['AU', 'Australia'], ['CA', 'Canada'], ['CH', 'Switzerland'], ['NZ', 'New Zealand']].map(([c, n]) => `<option value="${c}"${(p.cc || '') === c ? ' selected' : ''}>${n}</option>`).join('')}</select></div>`;
     if (k.st) {
-      const sel = p.st || '', us = sel.length === 7, region = (TIDE.ui.region || (us ? 'us' : 'jp'));
+      // 日本 = 県 → 観測点、米国 = 州 → (観測点が 100 以上の州は) 地方 → 観測点 (2026-10-25 ユーザー指示)。
+      //   選び途中の県・州・地方は部品ごと (別の部品を選んだら、その部品の観測点から引き直す)
+      const sel = p.st || '', key = svIdx(e) + ':' + sel; if (TIDE.ui.key !== key) TIDE.ui = { key };   // 部品か観測点が替わったら、観測点から引き直す
+      const us = sel.length === 7, region = (TIDE.ui.region || (us ? 'us' : 'jp'));
       const tip = 'The tide station whose times are shown. Japan = Japan Meteorological Agency stations, USA = NOAA stations. The station is not included when you share the dial.';
+      const pick = (id, lab, ph, list, cur) => `<div class="field" title="${tip}"><span>${lab}</span><select id="${id}" style="max-width:190px"><option value="">${list.length ? ph : 'Loading…'}</option>${list.map(([v, n]) => `<option value="${esc(v)}"${cur === v ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></div>`;
+      const groups = (rows, at) => { const c = {}; rows.forEach((r) => { if (r[at]) c[r[at]] = (c[r[at]] || 0) + 1; }); return c; };
       h += `<div class="field" title="${tip}"><span>Region</span><select id="fsvrg"><option value="jp"${region === 'jp' ? ' selected' : ''}>Japan</option><option value="us"${region === 'us' ? ' selected' : ''}>USA</option></select></div>`;
-      if (region === 'jp') { const list = tideJp();
-        h += `<div class="field" title="${tip}"><span>Station</span><select id="fsvst" style="max-width:190px"><option value="">${list.length ? 'Pick a station' : 'Loading…'}</option>${list.map(([c, n]) => `<option value="${c}"${sel === c ? ' selected' : ''}>${esc(n)} (${c})</option>`).join('')}</select></div>`;
+      if (region === 'jp') { const list = tideJp(), cnt = groups(list, 4), mine = list.find((r) => r[0] === sel);
+        const pf = TIDE.ui.pf || (mine && mine[4]) || '';
+        h += pick('fsvpf', 'Prefecture', 'Pick a prefecture', Object.keys(cnt).sort().map((c) => [c, `${JP_PREFS[c] || c} (${cnt[c]})`]), pf);
+        if (pf) h += pick('fsvst', 'Station', 'Pick a station', list.filter((r) => r[4] === pf).map((r) => [r[0], `${r[1]} (${r[0]})`]), sel);
       } else { tideJp();
         const stOf = (us && tideStateOfId(sel)) || '', state = TIDE.ui.state || (stOf && stOf !== '-' ? stOf : '');
         const states = TIDE.states || [];
-        h += `<div class="field" title="${tip}"><span>State</span><select id="fsvss" style="max-width:190px"><option value="">${states.length ? 'Pick a state' : 'Loading…'}</option>${states.map(([c, n]) => `<option value="${c}"${state === c ? ' selected' : ''}>${esc(US_STATES[c] || c)} (${n})</option>`).join('')}</select></div>`;
-        if (state) { const list = tideState(state);
-          h += `<div class="field" title="${tip}"><span>Station</span><select id="fsvst" style="max-width:190px"><option value="">${list.length ? 'Pick a station' : 'Loading…'}</option>${list.map(([c, n]) => `<option value="${c}"${sel === c ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></div>`; }
+        h += pick('fsvss', 'State', 'Pick a state', states.map(([c, n]) => [c, `${US_STATES[c] || c} (${n})`]), state);
+        if (state) { const list = tideState(state), cnt = groups(list, 4), areas = Object.keys(cnt).sort();
+          if (areas.length) { const mine = list.find((r) => r[0] === sel), area = TIDE.ui.area || (mine && mine[4]) || '';
+            h += pick('fsvar', 'Area', 'Pick an area', areas.map((a) => [a, `${a} (${cnt[a]})`]), area);
+            if (area) h += pick('fsvst', 'Station', 'Pick a station', list.filter((r) => r[4] === area).map((r) => [r[0], r[1]]), sel);
+          } else h += pick('fsvst', 'Station', 'Pick a station', list.map((r) => [r[0], r[1]]), sel);
+        }
       }
     }
     if (k.st && !p.st) h += `<div class="field"><span></span><span style="color:var(--accent);max-width:260px;white-space:normal;line-height:1.4">No station yet — the watch leaves this blank until you pick one. Dials from a shared link or the Marketplace come without stations.</span></div>`;
@@ -3948,8 +3966,11 @@
       svN.addEventListener('change', () => { commit(); syncGames(true); }); }
     if (svCC) svCC.addEventListener('change', () => { all.forEach((x) => { if (svHas(x, 'cc')) svSetP(x, { cc: svCC.value }); }); commit(); syncGames(true); });
     const svRG = $('fsvrg'), svSS = $('fsvss');
-    if (svRG) svRG.addEventListener('change', () => { TIDE.ui.region = svRG.value; TIDE.ui.state = ''; renderInspector(); });
-    if (svSS) svSS.addEventListener('change', () => { TIDE.ui.state = svSS.value; renderInspector(); });
+    if (svRG) svRG.addEventListener('change', () => { TIDE.ui.region = svRG.value; TIDE.ui.state = ''; TIDE.ui.pf = ''; TIDE.ui.area = ''; renderInspector(); });
+    if (svSS) svSS.addEventListener('change', () => { TIDE.ui.state = svSS.value; TIDE.ui.area = ''; renderInspector(); });
+    const svPF = $('fsvpf'), svAR = $('fsvar');
+    if (svPF) svPF.addEventListener('change', () => { TIDE.ui.pf = svPF.value; renderInspector(); });
+    if (svAR) svAR.addEventListener('change', () => { TIDE.ui.area = svAR.value; renderInspector(); });
     const svST = $('fsvst');
     if (svST) svST.addEventListener('change', () => { all.forEach((x) => { if (svHas(x, 'st')) svSetP(x, { st: svST.value }); }); commit(); syncGames(true); });
     const rimBar = $('frimpos');

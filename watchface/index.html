@@ -548,7 +548,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-25 16:09</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-25 17:34</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1384,6 +1384,19 @@
   const svKind = (e) => SV_KINDS[(svOf(e) || {}).k] || { nm: 'Server part', sm: '--', ic: null, tip: 'This part has lost its setting. Delete it and pick the part again from Sun, Tides & Dates.' };   // 設定が無い = 勝手に別の種類にしない (QC)
   const svClean = (v) => (v && SV_KINDS[Number(v.k)]) ? { k: Number(v.k), p: Object.assign({}, (v.p && typeof v.p === 'object') ? v.p : {}) } : null;
   const svUsed = () => new Set(st.el.filter((x) => isSvUser(x[0])).map(svIdx));
+  // 共有・Marketplace の面は潮の駅を落として届く (publicSv)。取り込んだ人に知らせる (2026-10-25 ユーザー決定)
+  const noStation = (lay) => { const sv = (lay && lay.sv) || [], out = [];
+    for (const e of (lay && lay.el) || []) { if (!isSvUser(e[0])) continue; const v = sv[svIdx(e)];
+      if (v && SV_KINDS[v.k] && SV_KINDS[v.k].st && !(v.p && v.p.st) && out.indexOf(SV_KINDS[v.k].nm) < 0) out.push(SV_KINDS[v.k].nm); }
+    return out; };
+  window.__fcNoStation = noStation;   // 回帰試験 phone tabs の隣 (station note) が使う
+  function stationNote(anchor, lay) {   // 取り込みが通った時だけ、anchor の後ろに折り返す 1 行を出す
+    if (!anchor) return; const old = anchor.parentNode.querySelector('.stnote'); if (old) old.remove();
+    const n = noStation(lay); if (!n.length) return;
+    const el = document.createElement('div'); el.className = 'stnote';
+    el.style.cssText = 'color:var(--accent);font-size:14px;line-height:1.5;white-space:normal;max-width:560px;margin-top:4px;flex:0 0 100%';
+    el.textContent = `${n.join(' / ')}: pick a station again — stations are not included in shared dials. Open it with Edit, select the part and choose one; until then the watch leaves it blank.`;
+    anchor.insertAdjacentElement('afterend', el); }
   const svUsedAll = () => new Set(st.el.concat(st.park || []).filter((x) => isSvUser(x[0])).map(svIdx));   // 置き場 (park) の部品の番号も取られない
   const svNew = (k) => { const a = (st.sv || []).slice(0, SV_MAX); while (a.length < SV_MAX) a.push(null); const used = svUsedAll();
     const i = a.findIndex((v, j) => !used.has(j)); if (i < 0) return -1; a[i] = { k: SV_KINDS[k] ? k : 3, p: {} }; st.sv = a; return i; };
@@ -3526,6 +3539,7 @@
           h += `<div class="field" title="${tip}"><span>Station</span><select id="fsvst" style="max-width:190px"><option value="">${list.length ? 'Pick a station' : 'Loading…'}</option>${list.map(([c, n]) => `<option value="${c}"${sel === c ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></div>`; }
       }
     }
+    if (k.st && !p.st) h += `<div class="field"><span></span><span style="color:var(--accent);max-width:260px;white-space:normal;line-height:1.4">No station yet — the watch leaves this blank until you pick one. Dials from a shared link or the Marketplace come without stations.</span></div>`;
     if ((DEVICES[st.dev] || {}).frozen) h += `<div class="field"><span></span><span class="muted">Not shown on ${esc((DEVICES[st.dev] || {}).name)}: this watch keeps its current parts.</span></div>`;
     return h;
   }
@@ -5311,7 +5325,7 @@
             : k.error === 'shelf_full' ? `your collection is full (${k.max}) — delete one first`
             : k.error === 'already_added' ? `you already have it — ${k.name ? '"' + k.name + '"' : 'item ' + k.n} in your collection`
             : k.error === 'no_link' ? 'this dial was taken down' : (k.error || r.status));
-          note(`Added as item ${k.n} — find it in your collection.`, 'ok'); loadShelf();
+          note(`Added as item ${k.n} — find it in your collection.`, 'ok'); stationNote(d.querySelector('.mst'), lay); loadShelf();
         } catch (e) { note('Could not add it: ' + e.message, 'err'); }
       });
       d.querySelector('[data-a="report"]').addEventListener('click', async () => {
@@ -5448,7 +5462,7 @@
           : k.error === 'too_many_tries' ? 'too many wrong secret words — try again in an hour'
           : k.error === 'market_paid_only' ? 'adding from the Marketplace comes with the 1-Year Pass'
           : (k.error || r.status));
-        setStatus('sharestatus', `Added to ${id} as item ${k.n}. Open it below with Edit, or send it To watch.`, 'ok');
+        setStatus('sharestatus', `Added to ${id} as item ${k.n}. Open it below with Edit, or send it To watch.`, 'ok'); stationNote($('sharestatus'), lay);
         $('devid').value = id; $('devid').dispatchEvent(new Event('change'));
       } catch (e) { setStatus('sharestatus', 'Could not add it: ' + e.message, 'err'); }
     });

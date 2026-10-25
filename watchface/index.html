@@ -536,7 +536,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-25 09:06</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-25 12:57</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -2873,7 +2873,7 @@
       if (h && !out.hd) { out.hd = h; if (e[1] !== 500 || e[2] !== 500) out.hp = [e[1], e[2]]; continue; }
       const ms0 = msOf(e);
       const r = DIAL.rim(e[0], k, ms0.mt, ms0.mc, ms0.mk, ms0.mv, rimInset(e), rimNum(e), ms0.md);
-      // 縁は 2 つまで重ねられるので、原型ごとにその部品の色 (rc) と「何番目の縁の行のものか」(ro) を添える。
+      // 縁は 4 つまで重ねられるので、原型ごとにその部品の色 (rc) と「何番目の縁の行のものか」(ro) を添える。
       // ro があると、実機は i 番目の縁の行でその番号の原型だけを描く = 縁ごとに前後を変えられる (2026-09-21)。
       if (r) { out.rm = (out.rm || []).concat(r); out.rc = (out.rc || []).concat(r.map(() => e[5]));
                out.ro = (out.ro || []).concat(r.map(() => rimN)); rimN++; }
@@ -4191,7 +4191,7 @@
     try { ev.target.closest('.el')?.setPointerCapture?.(ev.pointerId); } catch (e) {}   // 掴めなくてもドラッグは続ける
   }
   // 針と縁は入 / 切。同じ組の中では 1 つだけ (針を 2 種類同時には置かない)。
-  const DIAL_MAX = { rim: 2, hands: 1 };   // 縁は 2 つまで重ねられる (針は 1 つ)
+  const DIAL_MAX = { rim: 4, hands: 1 };   // 縁は 4 つまで重ねられる (針は 1 つ)。2026-10-25 ユーザー指示で 2 → 4。原型 (rm) は 1 つの縁で最大 4 個 (Meter 2-4) なので最大 16 個、サーバの上限も 16
   function toggleDialPart(t) {
     if (!canAdd(t) && !st.el.some((x) => x[0] === t)) { limitNotice(FULL_MSG(t), true); return; }
     const grp = TYPES[t].grp, was = st.el.findIndex((e) => e[0] === t);

@@ -536,7 +536,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-25 08:31</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-25 09:06</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -6164,7 +6164,7 @@
     const un = $('plunlink'); if (un) un.disabled = !PLL.linked;
   }
   async function loadPlLink() {
-    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { PLL.linked = false; PLL.valid = false; PLL.pl = null; renderPlLink(); return; }
+    const id = devId(); if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { PLL.linked = false; PLL.valid = false; PLL.pl = null; renderPlLink(); loadCamSource(); return; }
     try { const r = await fetch($('api').value + '/pl-link?device_id=' + encodeURIComponent(id)); const j = await r.json();
       PLL.linked = !!j.linked; PLL.valid = !!j.valid; PLL.pl = j.pl || null; } catch (e) { swallow('pllink')(e); }
     renderPlLink(); loadCamSource();

@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex">
 <style>html,body{margin:0;background:#0E1116;color-scheme:dark}</style>
 <title>Face Composer</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Roboto:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Roboto:wght@400;500&family=Roboto+Condensed:wght@400;700&display=swap">
 <style>
   :root {
     --ground: #0E1116; --panel: #161A21; --panel-2: #1D222B; --line: #2A3140; --line-2: #3A4356;
@@ -120,6 +120,8 @@
   #stage { position: relative; overflow: hidden; background: #000; box-shadow: 0 0 0 10px #05070A, 0 0 0 12px var(--line-2), 0 30px 60px rgba(0,0,0,.6); touch-action: none; user-select: none; }
   #stage.round { border-radius: 50%; }
   #stage svg.grid { position: absolute; inset: 0; pointer-events: none; }
+  /* Roboto の無い機種で時計が Roboto Condensed を使う時 (COND_LIVE、2026-10-27) は、部品と幅の測りも同じ書体で */
+  body.fcond .el, body.fcond .twm { --watch: "Roboto Condensed", "Roboto", "Helvetica Neue", Arial, sans-serif; }
   .el { position: absolute; display: flex; align-items: center; gap: 4px; white-space: nowrap; cursor: grab; padding: 2px; margin: -2px; border-radius: 3px; touch-action: none; font-family: var(--watch); font-weight: 400; line-height: 1; }
   .el:active { cursor: grabbing; }
   .el .ico { display: flex; align-items: center; }
@@ -548,7 +550,7 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-25 23:00</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-27 00:49</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -1717,6 +1719,7 @@
       if (!twSpan) {
         twSpan = document.createElement('span');
         twSpan.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;left:-9999px;top:0;font-family:var(--watch);font-weight:400';
+        twSpan.className = 'twm';
         document.body.appendChild(twSpan);
       }
       twSpan.style.fontSize = (px / FONT_EM) + 'px';
@@ -1982,17 +1985,31 @@
   };
   const dev = () => DEVICES[st.dev] || DEVICES.fr965;
   const prof = () => DEVPROF[st.dev] || DEVPROF.fr965;
-  const isVector = () => prof()[2] === 1;
+  // Roboto の無い 24 機種は時計が Roboto Condensed で描く (The Face の FACE に Condensed を足した版から、2026-10-27 ユーザー指示)。
+  //   一覧は SDK の simulator.json の system_ttf に RobotoCondensedRegular があり RobotoRegular が無い機種。
+  //   COND_LIVE = その版がストアに出たら true (それまでは時計が固定の文字で描くので、プレビューも今のまま)
+  const COND_FACE = new Set(['approachs7042mm', 'approachs7047mm', 'd2mach1', 'descentmk343mm', 'descentmk351mm', 'enduro3', 'epix2', 'epix2pro42mm', 'epix2pro47mm', 'epix2pro51mm',
+    'fenix7', 'fenix7pro', 'fenix7pronowifi', 'fenix7s', 'fenix7spro', 'fenix7x', 'fenix7xpro', 'fenix7xpronowifi', 'fenix8solar47mm', 'fenix8solar51mm', 'fenix9prosolar47mm', 'fr955', 'marq2', 'marq2aviator']);
+  const COND_LIVE = false;
+  const isCond = () => COND_LIVE && COND_FACE.has(st.dev);
+  const isVector = () => prof()[2] === 1 || isCond();
   // The px this device really draws for (type, size): vector-font devices use the value you typed
   // (scaled by screen height, ×TEXT_BOOST for body text); the rest use their fixed system fonts.
   function effPx(t, sz) {
     const p = prof(), s = (sz < 0 || sz > SIZE_MAX) ? 1 : sz;
-    if (p[2] === 1) {
+    if (isVector()) {
       const px = Math.round((isClock(t) ? st.tm : st.tx)[s] * p[1] / 454);
       return isClock(t) ? px : Math.round(px * TEXT_BOOST);
     }
     const f = Math.min(s, 2);   // fixed system fonts come in three steps: XL draws as L
     return isClock(t) ? p[6 + f] : p[3 + f];
+  }
+  // 縁の数字 (12 3 6 9 など) の行高 (454 基準)。ベクター書体の無い機種の時計は WfLayout.fontPx で
+  //   機種の px が 44 以上 = FONT_MEDIUM、34 以上 = FONT_SMALL、それ未満 = FONT_XTINY に置き換える (2026-10-27 ユーザー指示で合わせる)
+  function rimNumH(hgt) {
+    if (isVector()) return hgt;
+    const p = prof(), dpx = Math.floor((hgt * p[1] + 227) / 454);
+    return (dpx >= 44 ? p[5] : dpx >= 34 ? p[4] : p[3]) * 454 / p[1];
   }
 
   // ── 画像の文字 (2026-09-21) ─────────────────────────────────────────────
@@ -2319,7 +2336,7 @@
             const rad = (a - 90) * Math.PI / 180;
             // 実機は getVectorFont({:size => hgt}) = **行高** が hgt。Web の font-size は hgt / 1.17 で一致する。
             // 太字にもしない (実機はそのまま描く)。2026-09-21: ここだけ 600 と等倍だったため太く大きく見えていた。
-            o += `<text x="${r1(R + rr * Math.cos(rad))}" y="${r1(R + rr * Math.sin(rad))}" text-anchor="middle" dominant-baseline="central" font-family="var(--watch)" font-size="${r1(hgt / FONT_EM)}" fill="currentColor">${num}</text>`;
+            o += `<text x="${r1(R + rr * Math.cos(rad))}" y="${r1(R + rr * Math.sin(rad))}" text-anchor="middle" dominant-baseline="central" font-family="var(--watch)" font-size="${r1(rimNumH(hgt) / FONT_EM)}" fill="currentColor">${num}</text>`;
           });
         }
       }
@@ -2604,6 +2621,7 @@
 
   // ── Render ─────────────────────────────────────────────────────────────────
   function render() {
+    document.body.classList.toggle('fcond', isCond());
     stage.classList.toggle('selbright', st.selBright !== false);
     if (st.el.some((e) => isBall(e[0]) || isGolf(e[0]))) syncGames(false);
     const d = dev(), k = d.w / 454;

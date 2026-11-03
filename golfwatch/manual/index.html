@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GolfWatch — User Manual</title>
+<link rel="icon" type="image/png" href="../../favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FC; --white: #FFFFFF; --border: #E2E6EF;
+    --accent: #2F7D32; --accent-light: #E6F2E6; --accent-dark: #1F5C23;
+    --accent2: #E5483B;
+    --text: #111827; --text2: #374151; --muted: #6B7280; --muted2: #9CA3AF;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+    --warn-bg: #FEF3C7; --warn-border: #F59E0B; --warn-text: #92400E;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.7; }
+
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 24px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); position: sticky; top: 0; z-index: 200; }
+  .lang-bar a.home { color: var(--accent-dark); text-decoration: none; font-weight: 600; }
+  .lang-bar a.home:hover { text-decoration: underline; }
+  .lang-bar .toggle { display: flex; gap: 8px; }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: inherit; cursor: pointer; color: var(--muted); }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; display: grid; grid-template-columns: 240px 1fr; gap: 48px; }
+  @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; padding: 24px 16px 60px; gap: 24px; } }
+
+  /* ─── Sidebar ─── */
+  aside { position: sticky; top: 60px; align-self: start; max-height: calc(100vh - 80px); overflow-y: auto; }
+  aside h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 12px; }
+  aside ol { list-style: none; counter-reset: chnum; }
+  aside ol li { counter-increment: chnum; }
+  aside ol li a {
+    display: block; padding: 6px 0 6px 28px; color: var(--text2); text-decoration: none;
+    font-size: 14px; border-left: 2px solid transparent; position: relative;
+  }
+  aside ol li a::before { content: counter(chnum); position: absolute; left: 6px; color: var(--muted2); font-size: 12px; font-weight: 600; }
+  aside ol li a:hover { color: var(--accent-dark); border-left-color: var(--accent); }
+  @media (max-width: 900px) { aside { position: static; max-height: none; border: 1px solid var(--border); border-radius: 8px; padding: 16px; background: var(--white); } }
+
+  /* ─── Article ─── */
+  article > h1 { font-size: 36px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; }
+  article > .subtitle { color: var(--muted); margin-bottom: 40px; font-size: 16px; }
+
+  section.chapter { margin-bottom: 60px; scroll-margin-top: 60px; }
+  section.chapter > h2 { font-size: 24px; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-light); color: var(--accent-dark); }
+  section.chapter > h3 { font-size: 17px; font-weight: 600; margin: 28px 0 10px; color: var(--text); }
+  section.chapter > p { color: var(--text2); margin-bottom: 12px; }
+  section.chapter > ul, section.chapter > ol { margin: 8px 0 16px 24px; color: var(--text2); }
+  section.chapter > ul li, section.chapter > ol li { margin-bottom: 6px; }
+  section.chapter strong { color: var(--text); font-weight: 600; }
+  section.chapter code { background: var(--accent-light); color: var(--accent-dark); padding: 1px 6px; border-radius: 3px; font-size: 13px; font-family: 'SF Mono', monospace; }
+  .op-tap  { background: #BFDBFE; color: #1E40AF; padding: 2px 7px; border-radius: 4px; font-weight: 600; white-space: nowrap; }
+  .op-hold { background: #FECDD3; color: #9F1239; padding: 2px 7px; border-radius: 4px; font-weight: 600; white-space: nowrap; }
+
+  table.ops { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 14px; background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  table.ops th { background: var(--accent-light); color: var(--accent-dark); text-align: left; padding: 8px 12px; font-weight: 600; }
+  table.ops td { padding: 8px 12px; border-top: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+  table.ops td:first-child { white-space: nowrap; font-weight: 600; color: var(--text); }
+  table.ops.pitchcode td:nth-child(3) { white-space: nowrap; font-weight: 600; color: var(--text); }
+
+  /* ─── Annotated figure (SVG overlay) ─── */
+  figure.annotated {
+    background: var(--white); border: 1px solid var(--border); border-radius: 12px;
+    padding: 24px 80px; margin: 16px 0 24px; box-shadow: var(--shadow);
+  }
+  @media (max-width: 700px) { figure.annotated { padding: 16px 32px; } }
+  figure.annotated .stage {
+    position: relative; max-width: 480px; margin: 0 auto;
+  }
+  figure.annotated .stage::before {
+    content: ''; display: block; padding-bottom: 100%;
+  }
+  figure.annotated .stage img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; border-radius: 50%; background: #111;
+  }
+  figure.annotated .stage .placeholder {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; height: 100%; border-radius: 50%;
+    background: #111; color: #555; font-size: 13px;
+  }
+  /* オーバーレイを画像と完全一致 (inset:0) させ、viewBox 0-500 を画像に 1:1 対応。
+     ブラウザ・画面幅に依存せず注釈が常に画像と揃う。円外/枠外のラベルは overflow:visible で余白へ。 */
+  figure.annotated .stage svg.overlay {
+    position: absolute; inset: 0;
+    overflow: visible; pointer-events: none;
+  }
+  figure.annotated .stage svg.overlay line { stroke: var(--accent); stroke-width: 1.5; }
+  figure.annotated .stage svg.overlay circle.dot { fill: var(--accent); }
+  figure.annotated .stage svg.overlay rect.box,
+  figure.annotated .stage svg.overlay circle.ring {
+    fill: none; stroke: var(--accent2); stroke-width: 2; stroke-dasharray: 4 3;
+  }
+  figure.annotated .stage svg.overlay text {
+    fill: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+    paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round;
+  }
+  figure.annotated figcaption { text-align: center; margin-top: 12px; color: var(--muted); font-size: 13px; }
+
+  /* ─── Callout boxes ─── */
+  .callout {
+    border-radius: 8px; padding: 12px 16px; margin: 12px 0; font-size: 14px;
+    background: var(--accent-light); border-left: 3px solid var(--accent); color: var(--accent-dark);
+  }
+  .callout.warn { background: var(--warn-bg); border-left-color: var(--warn-border); color: var(--warn-text); }
+  .callout strong { color: inherit; }
+
+  /* ─── Step list ─── */
+  ol.steps { counter-reset: step; list-style: none !important; margin-left: 0 !important; }
+  ol.steps li { counter-increment: step; position: relative; padding-left: 40px; margin-bottom: 14px !important; }
+  ol.steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 2px;
+    width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<div class="lang-bar">
+  <a href="../" class="home">← GolfWatch</a>
+  <div class="toggle">
+    <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+    <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <aside>
+    <h3 data-en="Contents" data-ja="目次">Contents</h3>
+    <ol>
+      <li><a href="#getting-started" data-en="Getting Started" data-ja="はじめに">Getting Started</a></li>
+      <li><a href="#moving" data-en="Moving Around" data-ja="画面の移動">Moving Around</a></li>
+      <li><a href="#clock" data-en="Clock Screen" data-ja="時計の画面">Clock Screen</a></li>
+      <li><a href="#map" data-en="Course Map" data-ja="コースマップ">Course Map</a></li>
+      <li><a href="#home" data-en="Home and Your Players" data-ja="Home と登録選手">Home and Your Players</a></li>
+      <li><a href="#board" data-en="Leaderboard and Field" data-ja="Leaderboard と FIELD">Leaderboard and Field</a></li>
+      <li><a href="#course" data-en="Course" data-ja="Course">Course</a></li>
+      <li><a href="#hole" data-en="Hole Screen" data-ja="ホールの画面">Hole Screen</a></li>
+      <li><a href="#alerts" data-en="Alerts" data-ja="知らせ">Alerts</a></li>
+      <li><a href="#event" data-en="Event Overview" data-ja="大会の概要">Event Overview</a></li>
+      <li><a href="#weather" data-en="Weather" data-ja="天気">Weather</a></li>
+      <li><a href="#glance" data-en="Glance and Watch Face" data-ja="Glance と文字盤">Glance and Watch Face</a></li>
+      <li><a href="#settings" data-en="Settings" data-ja="設定">Settings</a></li>
+      <li><a href="#troubleshooting" data-en="Troubleshooting" data-ja="トラブルシューティング">Troubleshooting</a></li>
+      <li><a href="#credits" data-en="Credits" data-ja="クレジット">Credits</a></li>
+    </ol>
+  </aside>
+
+  <article>
+    <h1 data-en="GolfWatch — User Manual" data-ja="GolfWatch ユーザーマニュアル">GolfWatch — User Manual</h1>
+    <p class="subtitle" data-en="Every screen, gesture and setting." data-ja="すべての画面、操作、設定のガイドです。">Every screen, gesture and setting.</p>
+
+<section class="chapter" id="getting-started">
+<h2 data-en="1. Getting Started" data-ja="1. はじめに">1. Getting Started</h2>
+<p data-en="GolfWatch follows the week&#x27;s PGA Tour event on your Garmin. Pick up to five players, and your wrist shows where each one is on the course, the hole they are playing, and every shot as it comes in." data-ja="GolfWatch は、その週の PGA ツアーの大会を Garmin で追いかけるアプリです。選手を 5 人まで選ぶと、コースのどこにいるか、今どのホールを回っているか、1 打ごとの様子が手首で見られます。">GolfWatch follows the week&#x27;s PGA Tour event on your Garmin. Pick up to five players, and your wrist shows where each one is on the course, the hole they are playing, and every shot as it comes in.</p>
+<ol class="steps">
+<li data-en="Install GolfWatch on your watch from the Connect IQ Store." data-ja="Connect IQ ストアからウォッチに GolfWatch をインストールします。">Install GolfWatch on your watch from the Connect IQ Store.</li>
+<li data-en="Open the app. The clock screen comes first, with the event&#x27;s name and the weather at the course." data-ja="アプリを開きます。最初に時計の画面が出ます。大会名と会場の天気が並びます。">Open the app. The clock screen comes first, with the event&#x27;s name and the weather at the course.</li>
+<li data-en="Press DOWN (or swipe), or tap the bottom of the screen, to see the list of players this week." data-ja="DOWN (またはスワイプ) を押すか、画面の下をタップすると、今週の選手の一覧が出ます。">Press DOWN (or swipe), or tap the bottom of the screen, to see the list of players this week.</li>
+<li data-en="Hold a player&#x27;s row and choose a slot. They are now on your Home screen." data-ja="選手の行を長押しして、スロットを選びます。これで Home に並びます。">Hold a player&#x27;s row and choose a slot. They are now on your Home screen.</li>
+</ol>
+<div class="callout" data-en="Scores, shots and maps reach your watch through your phone. Keep the watch paired with Garmin Connect Mobile and the phone online." data-ja="スコア、ショット、地図はスマホを通して届きます。ウォッチを Garmin Connect Mobile とペアリングし、スマホをオンラインにしておいてください。">Scores, shots and maps reach your watch through your phone. Keep the watch paired with Garmin Connect Mobile and the phone online.</div>
+</section>
+<section class="chapter" id="moving">
+<h2 data-en="2. Moving Around" data-ja="2. 画面の移動">2. Moving Around</h2>
+<p data-en="Everything starts from the clock screen. BACK returns the way you came." data-ja="すべて時計の画面から始まります。BACK を押すと、来た道を戻ります。">Everything starts from the clock screen. BACK returns the way you came.</p>
+<table class="ops">
+<tr><th data-en="From" data-ja="どこから">From</th><th data-en="Do this" data-ja="操作">Do this</th><th data-en="Opens" data-ja="開く画面">Opens</th></tr>
+<tr><td data-en="Clock" data-ja="時計">Clock</td><td data-en="START" data-ja="START">START</td><td data-en="Home, your players" data-ja="Home (登録した選手)">Home, your players</td></tr>
+<tr><td data-en="Clock" data-ja="時計">Clock</td><td data-en="Tap the time" data-ja="時刻をタップ">Tap the time</td><td data-en="Course map" data-ja="コースマップ">Course map</td></tr>
+<tr><td data-en="Clock" data-ja="時計">Clock</td><td data-en="DOWN (or swipe), or tap the bottom" data-ja="DOWN (またはスワイプ)、または下をタップ">DOWN (or swipe), or tap the bottom</td><td data-en="Leaderboard" data-ja="Leaderboard">Leaderboard</td></tr>
+<tr><td data-en="Clock" data-ja="時計">Clock</td><td data-en="Tap the weather or wind" data-ja="天気か風をタップ">Tap the weather or wind</td><td data-en="Weather at the course" data-ja="会場の天気">Weather at the course</td></tr>
+<tr><td data-en="Home" data-ja="Home">Home</td><td data-en="Tap a player, or START" data-ja="選手をタップ、または START">Tap a player, or START</td><td data-en="That player&#x27;s Course" data-ja="その選手の Course">That player&#x27;s Course</td></tr>
+<tr><td data-en="Home" data-ja="Home">Home</td><td data-en="Tap the event name" data-ja="大会名をタップ">Tap the event name</td><td data-en="Event overview" data-ja="大会の概要">Event overview</td></tr>
+<tr><td data-en="Home" data-ja="Home">Home</td><td data-en="Tap the clock at the top" data-ja="上の時計をタップ">Tap the clock at the top</td><td data-en="Settings" data-ja="Settings">Settings</td></tr>
+<tr><td data-en="Course" data-ja="Course">Course</td><td data-en="Tap a hole, or START" data-ja="ホールをタップ、または START">Tap a hole, or START</td><td data-en="The hole screen" data-ja="ホールの画面">The hole screen</td></tr>
+</table>
+</section>
+<section class="chapter" id="clock">
+<h2 data-en="3. Clock Screen" data-ja="3. 時計の画面">3. Clock Screen</h2>
+<p data-en="The rim is the course: 18 equal parts, with hole 1 at 12 o&#x27;clock, the front nine on the right and the back nine on the left. Each of your players is a colored dot on the hole they are playing, with their score and shot beside it (tee, 1st, 2nd, putt). The dot flashes when a new shot comes in." data-ja="外周がコースです。18 等分され、12 時が 1 番、右半分が前半、左半分が後半です。登録した選手は、今いるホールに色の点で出ます。横に通算と何打目か (tee / 1st / 2nd / putt) が付きます。新しいショットが届くと点が光ります。">The rim is the course: 18 equal parts, with hole 1 at 12 o&#x27;clock, the front nine on the right and the back nine on the left. Each of your players is a colored dot on the hole they are playing, with their score and shot beside it (tee, 1st, 2nd, putt). The dot flashes when a new shot comes in.</p>
+<p data-en="Players who have not started wait to the right of hole 1, and players who have finished sit to the left of hole 18. They appear as dots only. Playing partners share one dot." data-ja="スタート前の選手は 1 番の右に、回り終えた選手は 18 番の左に、点だけで並びます。同じ組の選手は 1 つの点にまとまります。">Players who have not started wait to the right of hole 1, and players who have finished sit to the left of hole 18. They appear as dots only. Playing partners share one dot.</p>
+<p data-en="Above the event name are the weather and wind at the course. Below the time are the date, then your own battery and steps. Clock style in Settings switches the time between Digital and Hands." data-ja="大会名の上には会場の天気と風、時刻の下には日付、さらに下に自分の電池と歩数が出ます。Settings の Clock style で、時刻を Digital と Hands から選べます。">Above the event name are the weather and wind at the course. Below the time are the date, then your own battery and steps. Clock style in Settings switches the time between Digital and Hands.</p>
+<p data-en="To start on Home instead, turn off Clock screen in Settings." data-ja="時計の画面を飛ばして Home から始めたい時は、Settings の Clock screen をオフにします。">To start on Home instead, turn off Clock screen in Settings.</p>
+</section>
+<section class="chapter" id="map">
+<h2 data-en="4. Course Map" data-ja="4. コースマップ">4. Course Map</h2>
+<p data-en="Tap the time on the clock screen to see the whole course, north up. Each player has a dot and a label with their hole, shot and score." data-ja="時計の画面で時刻をタップすると、コース全体が出ます。北が上です。選手ごとに点が出て、ホール、何打目、通算が札で付きます。">Tap the time on the clock screen to see the whole course, north up. Each player has a dot and a label with their hole, shot and score.</p>
+<table class="ops">
+<tr><th data-en="Do this" data-ja="操作">Do this</th><th data-en="What happens" data-ja="動き">What happens</th></tr>
+<tr><td data-en="Tap" data-ja="タップ">Tap</td><td data-en="Zoom in on that spot, x2 then x3. At x3 a tap moves the center." data-ja="その場所を中心に拡大します (x2、x3)。x3 ではタップで中心を移します。">Zoom in on that spot, x2 then x3. At x3 a tap moves the center.</td></tr>
+<tr><td data-en="UP / DOWN (or swipe)" data-ja="UP / DOWN (またはスワイプ)">UP / DOWN (or swipe)</td><td data-en="Zoom in / out." data-ja="拡大 / 縮小。">Zoom in / out.</td></tr>
+<tr><td data-en="START" data-ja="START">START</td><td data-en="Zoom in one step. After x3, back to the whole course." data-ja="1 段拡大します。x3 の次は全体に戻ります。">Zoom in one step. After x3, back to the whole course.</td></tr>
+<tr><td data-en="BACK" data-ja="BACK">BACK</td><td data-en="Zoom out one step. From the whole course, back to the clock." data-ja="1 段縮小します。全体からは時計へ戻ります。">Zoom out one step. From the whole course, back to the clock.</td></tr>
+</table>
+<h3 data-en="Following a player around the course" data-ja="コースで選手を追いかける">Following a player around the course</h3>
+<p data-en="The player dots are about 1–2 minutes behind." data-ja="マップの選手の点は、だいたい 1〜2 分前の位置です。">The player dots are about 1–2 minutes behind.</p>
+<ul>
+<li data-en="A dot is where the player&#x27;s last shot landed." data-ja="点は、選手が最後に打ったボールのある所です。">A dot is where the player&#x27;s last shot landed.</li>
+<li data-en="On the green a dot may pause for a few minutes. By then the player is finishing the hole and walking to the next tee." data-ja="グリーンの上では、点が数分止まって見えることがあります。その間に選手はホールを終えて、次のティーへ向かっています。">On the green a dot may pause for a few minutes. By then the player is finishing the hole and walking to the next tee.</li>
+<li data-en="A hole takes about 10–20 minutes, so to catch a player, wait at the next hole." data-ja="1 ホールはおよそ 10〜20 分です。追いかけるなら、点のあるホールの 1 つ先のホールで待つと会えます。">A hole takes about 10–20 minutes, so to catch a player, wait at the next hole.</li>
+</ul>
+<h3 data-en="Your own position" data-ja="自分の位置">Your own position</h3>
+<p data-en="Turn on My position in Settings to see yourself on the map, with the nearest hole and the distance to your first playing player, for example YOU H12 - Matsuyama 140y. GPS runs only while the map is on screen. Your position stays on the watch." data-ja="Settings の My position をオンにすると、自分がマップに出ます。一番近いホールと、最初の登録選手までの距離も出ます (例 YOU H12 - Matsuyama 140y)。GPS が動くのはマップを見ている間だけです。位置はウォッチの外へ送りません。">Turn on My position in Settings to see yourself on the map, with the nearest hole and the distance to your first playing player, for example YOU H12 - Matsuyama 140y. GPS runs only while the map is on screen. Your position stays on the watch.</p>
+<h3 data-en="About the maps" data-ja="コース図について">About the maps</h3>
+<p data-en="We draw the course maps ourselves, and they are simplified. A map marked Being confirmed is still being checked and may change during the event. A course without a map shows No course map; scores and the leaderboard still work." data-ja="コース図は当方で描いたもので、形は簡略です。Being confirmed と出ている図は確認中で、大会の間に変わることがあります。図のないコースは No course map と出ます。スコアと Leaderboard はそのまま使えます。">We draw the course maps ourselves, and they are simplified. A map marked Being confirmed is still being checked and may change during the event. A course without a map shows No course map; scores and the leaderboard still work.</p>
+</section>
+<section class="chapter" id="home">
+<h2 data-en="5. Home and Your Players" data-ja="5. Home と登録選手">5. Home and Your Players</h2>
+<p data-en="Home lists your players in slots 1 to 5, in the order you set. Each row shows position, the player&#x27;s color, name, score to par, and on the right where they are: the last hole finished, today&#x27;s strokes once they are done, or their tee time in your watch&#x27;s local time." data-ja="Home には、登録した選手がスロット 1〜5 の順に並びます。順位は入れ替わっても並びは変わりません。行には順位、選手の色、名前、通算、右端に状況が出ます。状況は、終えたホール、回り終えたら今日の打数、スタート前はスタート時刻 (ウォッチの現地時刻) です。">Home lists your players in slots 1 to 5, in the order you set. Each row shows position, the player&#x27;s color, name, score to par, and on the right where they are: the last hole finished, today&#x27;s strokes once they are done, or their tee time in your watch&#x27;s local time.</p>
+<table class="ops">
+<tr><th data-en="Do this" data-ja="操作">Do this</th><th data-en="What happens" data-ja="動き">What happens</th></tr>
+<tr><td data-en="Tap a player, or START" data-ja="選手をタップ、または START">Tap a player, or START</td><td data-en="Open that player&#x27;s Course." data-ja="その選手の Course を開きます。">Open that player&#x27;s Course.</td></tr>
+<tr><td data-en="Hold a player, or MENU" data-ja="選手を長押し、または MENU">Hold a player, or MENU</td><td data-en="Move up, Move down or Remove." data-ja="Move up、Move down、Remove を選びます。">Move up, Move down or Remove.</td></tr>
+<tr><td data-en="UP / DOWN (or swipe)" data-ja="UP / DOWN (またはスワイプ)">UP / DOWN (or swipe)</td><td data-en="Move between rows. UP from the first row goes to the clock." data-ja="行を移ります。一番上の行で UP を押すと時計へ戻ります。">Move between rows. UP from the first row goes to the clock.</td></tr>
+<tr><td data-en="Tap the event name" data-ja="大会名をタップ">Tap the event name</td><td data-en="Open the event overview." data-ja="大会の概要を開きます。">Open the event overview.</td></tr>
+<tr><td data-en="Tap the date at the bottom" data-ja="下の日付をタップ">Tap the date at the bottom</td><td data-en="Open the Leaderboard." data-ja="Leaderboard を開きます。">Open the Leaderboard.</td></tr>
+<tr><td data-en="Tap the clock at the top" data-ja="上の時計をタップ">Tap the clock at the top</td><td data-en="Open Settings." data-ja="Settings を開きます。">Open Settings.</td></tr>
+</table>
+<h3 data-en="Adding a player" data-ja="選手を登録する">Adding a player</h3>
+<p data-en="On the watch: hold a row on the Leaderboard or Field and choose a slot. MENU does the same for the players on screen." data-ja="ウォッチで: Leaderboard か FIELD の行を長押しして、スロットを選びます。MENU を押すと、見えている選手から選べます。">On the watch: hold a row on the Leaderboard or Field and choose a slot. MENU does the same for the players on screen.</p>
+<p data-en="On your phone: open GolfWatch&#x27;s settings in Connect IQ and enter the player&#x27;s ESPN ID in Player slot 1 to 5. The ID is the number in the player&#x27;s page address on espn.com." data-ja="スマホで: Connect IQ の GolfWatch の設定を開き、Player slot 1〜5 に選手の ESPN ID を入れます。ID は espn.com の選手のページのアドレスにある数字です。">On your phone: open GolfWatch&#x27;s settings in Connect IQ and enter the player&#x27;s ESPN ID in Player slot 1 to 5. The ID is the number in the player&#x27;s page address on espn.com.</p>
+<p data-en="A player who is not in this week&#x27;s event simply does not appear. They come back the next time they play." data-ja="今週の大会に出ていない選手は出ません。次に出場すると、また並びます。">A player who is not in this week&#x27;s event simply does not appear. They come back the next time they play.</p>
+</section>
+<section class="chapter" id="board">
+<h2 data-en="6. Leaderboard and Field" data-ja="6. Leaderboard と FIELD">6. Leaderboard and Field</h2>
+<p data-en="Before the event the list is headed FIELD and shows who is playing. Once play starts it becomes the LEADERBOARD: position, flag, name, score, and the hole they have reached, today&#x27;s strokes when finished, or their tee time. Your players are highlighted." data-ja="大会の前は見出しが FIELD で、出場選手が並びます。始まると LEADERBOARD に変わり、順位、国旗、名前、通算、右端に今のホール (回り終えたら今日の打数、スタート前はスタート時刻) が並びます。登録した選手には色が付きます。">Before the event the list is headed FIELD and shows who is playing. Once play starts it becomes the LEADERBOARD: position, flag, name, score, and the hole they have reached, today&#x27;s strokes when finished, or their tee time. Your players are highlighted.</p>
+<table class="ops">
+<tr><th data-en="Do this" data-ja="操作">Do this</th><th data-en="What happens" data-ja="動き">What happens</th></tr>
+<tr><td data-en="Tap a player" data-ja="選手をタップ">Tap a player</td><td data-en="During the event: that player&#x27;s Course, registered or not. Before it: their season stats and recent events." data-ja="大会中: その選手の Course を開きます。登録していない選手も開けます。大会前: 今季の成績と最近の大会を開きます。">During the event: that player&#x27;s Course, registered or not. Before it: their season stats and recent events.</td></tr>
+<tr><td data-en="Hold a player" data-ja="選手を長押し">Hold a player</td><td data-en="Put them in a slot." data-ja="スロットに入れます。">Put them in a slot.</td></tr>
+<tr><td data-en="MENU" data-ja="MENU">MENU</td><td data-en="Choose from the players on screen, then a slot." data-ja="見えている選手から選び、スロットに入れます。">Choose from the players on screen, then a slot.</td></tr>
+<tr><td data-en="UP / DOWN (or swipe)" data-ja="UP / DOWN (またはスワイプ)">UP / DOWN (or swipe)</td><td data-en="Scroll. The list wraps around at the ends." data-ja="スクロールします。端まで行くと反対の端へ回ります。">Scroll. The list wraps around at the ends.</td></tr>
+<tr><td data-en="BACK" data-ja="BACK">BACK</td><td data-en="Back to where you opened it." data-ja="開いた元の画面へ戻ります。">Back to where you opened it.</td></tr>
+</table>
+<p data-en="In a playoff the status shows PO. The Course then lists the playoff holes in the order played." data-ja="プレーオフでは、状況に PO と出ます。Course には、回った順のホールと打数が出ます。">In a playoff the status shows PO. The Course then lists the playoff holes in the order played.</p>
+</section>
+<section class="chapter" id="course">
+<h2 data-en="7. Course: the Scorecard" data-ja="7. Course (スコアカード)">7. Course: the Scorecard</h2>
+<p data-en="A player&#x27;s round on one screen: a small picture of all 18 holes, the strokes under each, and the totals below. A yellow frame marks the hole they are on." data-ja="選手のラウンドを 1 画面で見られます。18 ホールの小さな絵の下に打数が並び、一番下に合計が出ます。黄色の枠が、今いるホールです。">A player&#x27;s round on one screen: a small picture of all 18 holes, the strokes under each, and the totals below. A yellow frame marks the hole they are on.</p>
+<ul>
+<li data-en="A circle is a birdie, a double circle an eagle or better." data-ja="丸はバーディー、二重丸はイーグル以上です。">A circle is a birdie, a double circle an eagle or better.</li>
+<li data-en="A square is a bogey, a double square a double bogey or worse." data-ja="四角はボギー、二重の四角はダブルボギー以上です。">A square is a bogey, a double square a double bogey or worse.</li>
+</ul>
+<table class="ops">
+<tr><th data-en="Do this" data-ja="操作">Do this</th><th data-en="What happens" data-ja="動き">What happens</th></tr>
+<tr><td data-en="Tap a hole" data-ja="ホールをタップ">Tap a hole</td><td data-en="Open that hole." data-ja="そのホールを開きます。">Open that hole.</td></tr>
+<tr><td data-en="START" data-ja="START">START</td><td data-en="Open the hole they are on." data-ja="今いるホールを開きます。">Open the hole they are on.</td></tr>
+<tr><td data-en="UP / DOWN (or swipe)" data-ja="UP / DOWN (またはスワイプ)">UP / DOWN (or swipe)</td><td data-en="Previous / next player, in the order of the list you came from." data-ja="前 / 次の選手へ移ります。開いた元の一覧の順です。">Previous / next player, in the order of the list you came from.</td></tr>
+<tr><td data-en="Tap the heading, or MENU" data-ja="見出しをタップ、または MENU">Tap the heading, or MENU</td><td data-en="Next round." data-ja="次のラウンドへ。">Next round.</td></tr>
+<tr><td data-en="Tap the bottom" data-ja="下をタップ">Tap the bottom</td><td data-en="Open the Leaderboard." data-ja="Leaderboard を開きます。">Open the Leaderboard.</td></tr>
+</table>
+</section>
+<section class="chapter" id="hole">
+<h2 data-en="8. Hole Screen" data-ja="8. ホールの画面">8. Hole Screen</h2>
+<p data-en="The hole&#x27;s shape fills the screen: fairway, bunkers, water, trees and green. On the left are the hole number, par and yards; on the right, the wind, turned to the direction of play and marked INTO, DOWN or CROSS." data-ja="ホールの形が画面いっぱいに出ます。フェアウェイ、バンカー、池、木、グリーンが分かります。左にホール番号、パー、ヤード、右に風が出ます。風の矢印はプレーする向きに合わせて回り、INTO、DOWN、CROSS と出ます。">The hole&#x27;s shape fills the screen: fairway, bunkers, water, trees and green. On the left are the hole number, par and yards; on the right, the wind, turned to the direction of play and marked INTO, DOWN or CROSS.</p>
+<p data-en="New shots play as they come in: the ball flies in an arc, putts roll, and each shot is described at the bottom. The view moves in to the green for the short game. When the ball drops, the result appears: BIRDIE, PAR, BOGEY and so on. If a player you follow is in the same group, their shots are drawn too, in their own color." data-ja="新しいショットが届くと再生されます。ボールが弧を描いて飛び、パットは転がり、一番下に 1 打ごとの実況が出ます。グリーンが近づくと、絵がグリーン周りに寄ります。カップインすると BIRDIE、PAR、BOGEY などの結果が出ます。同じ組に登録した選手がいれば、そのショットも別の色で描きます。">New shots play as they come in: the ball flies in an arc, putts roll, and each shot is described at the bottom. The view moves in to the green for the short game. When the ball drops, the result appears: BIRDIE, PAR, BOGEY and so on. If a player you follow is in the same group, their shots are drawn too, in their own color.</p>
+<table class="ops">
+<tr><th data-en="Do this" data-ja="操作">Do this</th><th data-en="What happens" data-ja="動き">What happens</th></tr>
+<tr><td data-en="Tap" data-ja="タップ">Tap</td><td data-en="Whole hole, then the second shot (par 4 and 5), then around the green." data-ja="ホール全体、2 打目 (パー 4 と 5)、グリーン周りの順に切り替えます。">Whole hole, then the second shot (par 4 and 5), then around the green.</td></tr>
+<tr><td data-en="START" data-ja="START">START</td><td data-en="Replay the hole&#x27;s shots. During a replay, pause and resume." data-ja="そのホールのショットを再生します。再生中は一時停止と再開です。">Replay the hole&#x27;s shots. During a replay, pause and resume.</td></tr>
+<tr><td data-en="UP / DOWN (or swipe)" data-ja="UP / DOWN (またはスワイプ)">UP / DOWN (or swipe)</td><td data-en="Previous / next hole." data-ja="前 / 次のホールへ。">Previous / next hole.</td></tr>
+<tr><td data-en="MENU" data-ja="MENU">MENU</td><td data-en="Next round." data-ja="次のラウンドへ。">Next round.</td></tr>
+<tr><td data-en="Tap the bottom edge" data-ja="下の端をタップ">Tap the bottom edge</td><td data-en="Open the Leaderboard." data-ja="Leaderboard を開きます。">Open the Leaderboard.</td></tr>
+<tr><td data-en="BACK" data-ja="BACK">BACK</td><td data-en="Back to Course." data-ja="Course へ戻ります。">Back to Course.</td></tr>
+</table>
+<h3 data-en="The pin" data-ja="カップの位置">The pin</h3>
+<p data-en="Around the green, the top line tells you about the pin: PIN R2 means it is that round&#x27;s position, PIN R2 EST means it is estimated and may be a few meters off, and NO PIN means it is not known yet." data-ja="グリーン周りでは、一番上にカップの情報が出ます。PIN R2 はそのラウンドの位置、PIN R2 EST は推定で数 m ずれることがあり、NO PIN はまだ分からないことを示します。">Around the green, the top line tells you about the pin: PIN R2 means it is that round&#x27;s position, PIN R2 EST means it is estimated and may be a few meters off, and NO PIN means it is not known yet.</p>
+<p data-en="Shot data not ready means the shots for this hole have not arrived. Some events do not provide shots at all; scores still work." data-ja="Shot data not ready は、このホールのショットがまだ届いていないことを示します。ショットのない大会もあります。スコアはそのまま見られます。">Shot data not ready means the shots for this hole have not arrived. Some events do not provide shots at all; scores still work.</p>
+</section>
+<section class="chapter" id="alerts">
+<h2 data-en="9. Alerts" data-ja="9. 知らせ">9. Alerts</h2>
+<h3 data-en="Shot alert" data-ja="Shot alert">Shot alert</h3>
+<p data-en="While you have a player open, your watch tells you each time they hit a shot on the hole they are playing. Choose Sound and vibrate, Vibrate only (the default) or Off in Settings. Alerts come while the app is open." data-ja="選手を開いている間、今のホールで 1 打打つごとにウォッチが知らせます。Settings で Sound and vibrate、Vibrate only (既定)、Off から選べます。知らせが来るのはアプリを開いている間です。">While you have a player open, your watch tells you each time they hit a shot on the hole they are playing. Choose Sound and vibrate, Vibrate only (the default) or Off in Settings. Alerts come while the app is open.</p>
+<h3 data-en="Your other players" data-ja="ほかの登録選手">Your other players</h3>
+<p data-en="When another of your players finishes a hole, a pop-up appears for 5 seconds, for example TANAKA #7 BIRDIE -4. Tap it to open their Course, or ignore it and it goes away. Players in the same group as the one you are watching do not pop up, because you can already see them." data-ja="ほかの登録選手が 1 ホール終えると、ポップアップが 5 秒出ます (例 TANAKA #7 BIRDIE -4)。タップするとその選手の Course が開きます。触らなければ消えます。見ている選手と同じ組の選手は、同じ画面で見えているので出ません。">When another of your players finishes a hole, a pop-up appears for 5 seconds, for example TANAKA #7 BIRDIE -4. Tap it to open their Course, or ignore it and it goes away. Players in the same group as the one you are watching do not pop up, because you can already see them.</p>
+</section>
+<section class="chapter" id="event">
+<h2 data-en="10. Event Overview and Past Events" data-ja="10. 大会の概要と過去の大会">10. Event Overview and Past Events</h2>
+<p data-en="Tap the event name on Home to see the course, location, dates, par and yards, purse, defending champion, current round and weather." data-ja="Home の大会名をタップすると、コース、開催地、日程、パーとヤード、賞金、前年の優勝者、今のラウンド、天気が出ます。">Tap the event name on Home to see the course, location, dates, par and yards, purse, defending champion, current round and weather.</p>
+<p data-en="Tap PAST EVENTS at the bottom, or press MENU, to choose an event that has finished. Home then shows that event, with PAST beside the course name, and you can open your players&#x27; rounds and replay their shots. Choose Current event to come back." data-ja="下の PAST EVENTS をタップするか MENU を押すと、終わった大会を選べます。Home がその大会に変わり、コース名の横に PAST と出ます。登録選手のラウンドを開いて、ショットを再生できます。Current event を選ぶと今の大会に戻ります。">Tap PAST EVENTS at the bottom, or press MENU, to choose an event that has finished. Home then shows that event, with PAST beside the course name, and you can open your players&#x27; rounds and replay their shots. Choose Current event to come back.</p>
+</section>
+<section class="chapter" id="weather">
+<h2 data-en="11. Weather at the Course" data-ja="11. 会場の天気">11. Weather at the Course</h2>
+<p data-en="Tap or hold the weather or wind on the clock screen. There are three pages: now, hourly and daily. UP / DOWN (or swipe) changes the page." data-ja="時計の画面で天気か風をタップまたは長押しします。現在、1 時間ごと、日別の 3 ページがあります。UP / DOWN (またはスワイプ) でページを変えます。">Tap or hold the weather or wind on the clock screen. There are three pages: now, hourly and daily. UP / DOWN (or swipe) changes the page.</p>
+<ul>
+<li data-en="Now: temperature, chance of rain, high and low, wind and gusts." data-ja="現在: 気温、降水確率、最高と最低、風と突風。">Now: temperature, chance of rain, high and low, wind and gusts.</li>
+<li data-en="Hourly: four hours at a time, up to 12 hours. Tap for the next four." data-ja="1 時間ごと: 4 時間ずつ、12 時間まで。タップで次の 4 時間へ。">Hourly: four hours at a time, up to 12 hours. Tap for the next four.</li>
+<li data-en="Daily: four days at a time, up to 7 days." data-ja="日別: 4 日ずつ、7 日まで。">Daily: four days at a time, up to 7 days.</li>
+</ul>
+</section>
+<section class="chapter" id="glance">
+<h2 data-en="12. Glance and Watch Face" data-ja="12. Glance と文字盤">12. Glance and Watch Face</h2>
+<h3 data-en="Glance" data-ja="Glance">Glance</h3>
+<p data-en="The glance shows one player on two lines: name, then position, score and status. It shows what the app last loaded, so open the app to refresh it. Choose the player with Glance player in Settings. If they are not playing this week, the next slot takes over. Opening from the glance goes straight to that player&#x27;s Course." data-ja="Glance には選手 1 人を 2 行で出します。上が名前、下が順位、通算、状況です。アプリが最後に取った値を出すので、アプリを開くと新しくなります。選手は Settings の Glance player で選びます。今週出ていなければ次のスロットの選手が出ます。Glance から開くと、その選手の Course へ直接進みます。">The glance shows one player on two lines: name, then position, score and status. It shows what the app last loaded, so open the app to refresh it. Choose the player with Glance player in Settings. If they are not playing this week, the next slot takes over. Opening from the glance goes straight to that player&#x27;s Course.</p>
+<h3 data-en="Complication" data-ja="コンプリケーション">Complication</h3>
+<p data-en="Add GolfWatch player to a data field on your watch face to see a player&#x27;s position and score. It keeps updating about every 5 minutes, even with GolfWatch closed. Hold the field to open that player&#x27;s Course. Choose the player with Complication in Settings." data-ja="文字盤のデータ項目に GolfWatch player を入れると、選手の順位と通算が出ます。GolfWatch を閉じていても約 5 分ごとに更新されます。長押しで、その選手の Course が開きます。選手は Settings の Complication で選びます。">Add GolfWatch player to a data field on your watch face to see a player&#x27;s position and score. It keeps updating about every 5 minutes, even with GolfWatch closed. Hold the field to open that player&#x27;s Course. Choose the player with Complication in Settings.</p>
+</section>
+<section class="chapter" id="settings">
+<h2 data-en="13. Settings" data-ja="13. 設定">13. Settings</h2>
+<h3 data-en="On the watch" data-ja="ウォッチで">On the watch</h3>
+<p data-en="Tap the clock at the top of Home." data-ja="Home の上の時計をタップします。">Tap the clock at the top of Home.</p>
+<table class="ops">
+<tr><th data-en="Item" data-ja="項目">Item</th><th data-en="What it does" data-ja="内容">What it does</th></tr>
+<tr><td data-en="Clock screen" data-ja="Clock screen">Clock screen</td><td data-en="On: start on the clock. Off: start on Home." data-ja="On: 時計の画面から始めます。Off: Home から始めます。">On: start on the clock. Off: start on Home.</td></tr>
+<tr><td data-en="My position" data-ja="My position">My position</td><td data-en="Show yourself on the course map." data-ja="コースマップに自分を出します。">Show yourself on the course map.</td></tr>
+<tr><td data-en="Clock style" data-ja="Clock style">Clock style</td><td data-en="Digital or Hands." data-ja="Digital か Hands。">Digital or Hands.</td></tr>
+<tr><td data-en="Shot alert" data-ja="Shot alert">Shot alert</td><td data-en="Sound and vibrate, Vibrate only or Off." data-ja="Sound and vibrate、Vibrate only、Off。">Sound and vibrate, Vibrate only or Off.</td></tr>
+<tr><td data-en="Glance player" data-ja="Glance player">Glance player</td><td data-en="The slot shown on the glance." data-ja="Glance に出すスロット。">The slot shown on the glance.</td></tr>
+<tr><td data-en="Complication" data-ja="Complication">Complication</td><td data-en="The slot shown on the watch face." data-ja="文字盤に出すスロット。">The slot shown on the watch face.</td></tr>
+<tr><td data-en="Build" data-ja="Build">Build</td><td data-en="The app&#x27;s build number. Please include it when you contact us." data-ja="アプリのビルド番号です。お問い合わせの時に添えてください。">The app&#x27;s build number. Please include it when you contact us.</td></tr>
+</table>
+<h3 data-en="On your phone" data-ja="スマホで">On your phone</h3>
+<p data-en="Connect IQ → GolfWatch → Settings." data-ja="Connect IQ → GolfWatch → 設定。">Connect IQ → GolfWatch → Settings.</p>
+<table class="ops">
+<tr><th data-en="Item" data-ja="項目">Item</th><th data-en="What it does" data-ja="内容">What it does</th></tr>
+<tr><td data-en="Player slot 1–5" data-ja="Player slot 1〜5">Player slot 1–5</td><td data-en="The player&#x27;s ESPN ID." data-ja="選手の ESPN ID。">The player&#x27;s ESPN ID.</td></tr>
+<tr><td data-en="Shot alert" data-ja="Shot alert">Shot alert</td><td data-en="Same as on the watch." data-ja="ウォッチと同じです。">Same as on the watch.</td></tr>
+<tr><td data-en="Putt and approach distance" data-ja="Putt and approach distance">Putt and approach distance</td><td data-en="Feet or Meters, for the shot descriptions." data-ja="実況の距離を Feet か Meters で。">Feet or Meters, for the shot descriptions.</td></tr>
+</table>
+</section>
+<section class="chapter" id="troubleshooting">
+<h2 data-en="14. Troubleshooting" data-ja="14. トラブルシューティング">14. Troubleshooting</h2>
+<h3 data-en="No tournament" data-ja="No tournament と出る">No tournament</h3>
+<p data-en="There is no event this week." data-ja="今週は大会がありません。">There is no event this week.</p>
+<h3 data-en="No players this week" data-ja="No players this week と出る">No players this week</h3>
+<p data-en="None of your players are in this week&#x27;s event. Add someone from the Leaderboard." data-ja="登録した選手が今週の大会に出ていません。Leaderboard から選手を登録してください。">None of your players are in this week&#x27;s event. Add someone from the Leaderboard.</p>
+<h3 data-en="Field not announced yet" data-ja="Field not announced yet と出る">Field not announced yet</h3>
+<p data-en="The list of players for the event has not been published yet." data-ja="大会の出場選手がまだ発表されていません。">The list of players for the event has not been published yet.</p>
+<h3 data-en="No data, with a number" data-ja="No data と番号が出る">No data, with a number</h3>
+<p data-en="The data did not arrive. Check that your phone is online and paired with the watch, then open the screen again." data-ja="データが届いていません。スマホがオンラインで、ウォッチとペアリングされているか確かめて、画面を開き直してください。">The data did not arrive. Check that your phone is online and paired with the watch, then open the screen again.</p>
+<h3 data-en="A dot does not move" data-ja="点が動かない">A dot does not move</h3>
+<p data-en="It may be on the green: see Following a player around the course in chapter 4. Dots are also about 1–2 minutes behind." data-ja="グリーンの上かもしれません。第 4 章の「コースで選手を追いかける」を見てください。点はだいたい 1〜2 分前の位置です。">It may be on the green: see Following a player around the course in chapter 4. Dots are also about 1–2 minutes behind.</p>
+<h3 data-en="The glance shows an old score" data-ja="Glance のスコアが古い">The glance shows an old score</h3>
+<p data-en="The glance shows what the app last loaded. Open the app once." data-ja="Glance はアプリが最後に取った値を出します。アプリを 1 度開いてください。">The glance shows what the app last loaded. Open the app once.</p>
+</section>
+<section class="chapter" id="credits">
+<h2 data-en="Credits" data-ja="クレジット">Credits</h2>
+<p data-en="Weather icons: Meteocons by Bas Milius (MIT). Icons: Material Design Icons by Pictogrammers (Apache 2.0). Weather: Open-Meteo.com (CC BY 4.0)." data-ja="天気の絵: Meteocons by Bas Milius (MIT)。アイコン: Material Design Icons by Pictogrammers (Apache 2.0)。気象データ: Open-Meteo.com (CC BY 4.0)。">Weather icons: Meteocons by Bas Milius (MIT). Icons: Material Design Icons by Pictogrammers (Apache 2.0). Weather: Open-Meteo.com (CC BY 4.0).</p>
+<p data-en="GolfWatch is an independent app. It is not affiliated with or endorsed by the PGA TOUR, ESPN or Garmin." data-ja="GolfWatch は独立したアプリです。PGA TOUR、ESPN、Garmin との提携や公認はありません。">GolfWatch is an independent app. It is not affiliated with or endorsed by the PGA TOUR, ESPN or Garmin.</p>
+</section>
+
+  </article>
+</div>
+
+<script>
+function setLang(lang) {
+  document.documentElement.lang = lang === 'ja' ? 'ja' : 'en';
+  document.querySelectorAll('[data-en]').forEach(el => {
+    if (el.children.length > 0) return;
+    const text = el.getAttribute('data-' + lang);
+    if (text) el.textContent = text;
+  });
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+  try { localStorage.setItem('em_lang', lang); } catch(e) {}
+}
+try {
+  if (localStorage.getItem('em_lang') === 'ja') { setLang('ja'); }
+} catch(e) {}
+</script>
+
+</body>
+</html>

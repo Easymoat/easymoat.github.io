@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GolfWatch for Garmin | Easymoat</title>
+<link rel="icon" type="image/png" href="../favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FC;
+    --white: #FFFFFF;
+    --border: #E2E6EF;
+    --accent: #2F7D32;
+    --accent-light: #E6F2E6;
+    --accent2: #E5483B;
+    --accent3: #117A3A;
+    --text: #111827;
+    --text2: #374151;
+    --muted: #6B7280;
+    --muted2: #9CA3AF;
+    --yellow: #D97706;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.6; overflow-x: hidden; }
+
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 40px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); position: sticky; top: 0; z-index: 200; }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; color: var(--muted); transition: all 0.15s; }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+
+  nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 40px; display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: var(--accent); letter-spacing: -0.01em; }
+  .logo span { color: var(--muted2); font-weight: 700; }
+  .nav-badge { background: var(--accent-light); color: var(--accent); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; padding: 4px 10px; border-radius: 20px; text-decoration: none; display: inline-block; white-space: nowrap; transition: background 0.15s, color 0.15s; }
+  @media (max-width: 480px) { .logo { font-size: 18px; } .logo a > span:last-child { display: none; } .logo img { height: 30px !important; width: 30px !important; } }
+  a.nav-badge:hover { background: var(--accent); color: var(--white); }
+
+  main { max-width: 960px; margin: 0 auto; padding: 0 40px 80px; }
+
+  .hero { padding: 64px 0 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+  @media (max-width: 720px) { .hero { grid-template-columns: 1fr; gap: 32px; } }
+
+  .screenshots { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .screenshot { border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid var(--border); background: var(--white); }
+  .screenshot img { width: 100%; height: auto; display: block; }
+  .screenshot-label { padding: 10px 14px; font-size: 12px; font-weight: 500; color: var(--muted); border-top: 1px solid var(--border); text-align: center; }
+  .hero-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; padding: 5px 12px; border-radius: 20px; margin-bottom: 20px; }
+  .hero-tag::before { content: ''; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
+  h1 { font-family: 'Syne', sans-serif; font-size: clamp(36px, 5vw, 56px); font-weight: 800; line-height: 1.05; letter-spacing: -0.02em; color: var(--text); margin-bottom: 16px; }
+  h1 em { font-style: normal; color: var(--accent); }
+  .hero-desc { font-size: 16px; line-height: 1.7; color: var(--muted); margin-bottom: 32px; max-width: 680px; }
+  .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  .btn-primary { display: inline-flex; align-items: center; gap: 8px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 8px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(47,125,50,0.3); }
+  .btn-primary:hover { background: #1F5C23; transform: translateY(-1px); }
+  .btn-secondary { display: inline-flex; align-items: center; gap: 8px; background: var(--white); color: var(--text); font-size: 14px; font-weight: 500; text-decoration: none; padding: 12px 24px; border-radius: 8px; border: 1px solid var(--border); transition: all 0.2s; }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-secondary.disabled { color: var(--muted2); cursor: not-allowed; pointer-events: none; }
+
+  .section { padding: 64px 0; border-top: 1px solid var(--border); }
+  .section-header { margin-bottom: 32px; }
+  .section-tag { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  h2 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.01em; color: var(--text); margin-bottom: 8px; }
+  .section-desc { font-size: 15px; color: var(--muted); max-width: 680px; }
+
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .feature { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: box-shadow 0.2s, border-color 0.2s; }
+  .feature:hover { box-shadow: var(--shadow); border-color: #B7E0C7; }
+  .feature-icon { font-size: 28px; margin-bottom: 12px; }
+  .feature h3 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .feature p { font-size: 13px; line-height: 1.6; color: var(--muted); }
+
+  .events-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .event-item { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 8px; }
+  .event-item::before { content: '✓'; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+
+  .pricing-grid { display: grid; grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; }
+  .plan { background: var(--white); border: 2px solid var(--accent); border-radius: 16px; padding: 32px; position: relative; box-shadow: 0 0 0 4px rgba(47,125,50,0.08); }
+  .plan.secondary { border-color: var(--border); box-shadow: none; }
+  .plan.secondary .plan-badge { background: var(--muted); }
+  .btn-plan.outline { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); box-shadow: none; }
+  .btn-plan.outline:hover { background: var(--accent-light); transform: translateY(-1px); }
+  .plan-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; padding: 4px 16px; border-radius: 20px; white-space: nowrap; }
+  .plan-name { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .plan-price { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 800; color: var(--text); line-height: 1; margin-bottom: 4px; }
+  .plan-price-unit { font-size: 18px; color: var(--muted); font-weight: 500; }
+  .plan-note { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+  .plan-features { list-style: none; margin-bottom: 28px; }
+  .plan-features li { font-size: 14px; color: var(--text2); padding: 7px 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .plan-features li.included::before { content: '✓'; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+  .btn-plan { display: block; text-align: center; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px; border-radius: 8px; transition: all 0.2s; background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(47,125,50,0.3); }
+  .btn-plan:hover { background: #1F5C23; transform: translateY(-1px); }
+  .plan-sub { font-size: 11px; color: var(--muted2); text-align: center; margin-top: 10px; }
+
+  .data-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .data-item { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
+  .data-type { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted2); margin-bottom: 6px; }
+  .data-example { font-size: 13px; font-weight: 600; color: var(--accent); }
+
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .step { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .step-num { width: 32px; height: 32px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+  .step h4 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .step p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  /* Player ID Lookup */
+  .lookup-box { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 32px; }
+  .search-box { position: relative; margin-bottom: 12px; }
+  .search-box input { width: 100%; padding: 14px 18px 14px 44px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 15px; font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.3s; }
+  .search-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(47,125,50,0.12); }
+  .search-box input::placeholder { color: var(--muted2); }
+  .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; color: var(--muted2); }
+  .lookup-hint { color: var(--muted); font-size: 12px; margin-bottom: 20px; }
+  .status { text-align: center; padding: 16px; color: var(--muted); font-size: 13px; }
+  .results { display: flex; flex-direction: column; gap: 8px; }
+  .player-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; transition: border-color 0.2s; }
+  .player-card:hover { border-color: var(--accent); }
+  .player-info { flex: 1; min-width: 0; }
+  .player-name { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .player-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+  .meta-tag { font-size: 11px; color: var(--muted); background: var(--white); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); }
+  .meta-tag.pos { color: var(--accent); font-weight: 600; border-color: var(--accent-light); background: var(--accent-light); }
+  .player-id-section { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .player-id { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent); }
+  .copy-btn { background: var(--white); border: 1px solid var(--border); color: var(--text2); padding: 6px 14px; border-radius: 6px; font-size: 12px; font-family: 'Inter', sans-serif; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+  .copy-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .copy-btn.copied { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .privacy-box { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; }
+  .privacy-box h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+  .privacy-box p { font-size: 13px; color: var(--muted); line-height: 1.8; margin-bottom: 10px; }
+  .privacy-box a { color: var(--accent); text-decoration: none; }
+
+  footer { background: var(--white); border-top: 1px solid var(--border); padding: 32px 40px; text-align: center; font-size: 13px; color: var(--muted); }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer .footer-links { margin-top: 8px; display: flex; justify-content: center; align-items: center; gap: 16px; flex-wrap: wrap; }
+  footer .footer-links a { color: var(--muted); font-size: 12px; }
+  footer .footer-links a:hover { color: var(--accent); }
+
+  @media (max-width: 768px) {
+    nav, .lang-bar { padding: 12px 20px; }
+    main { padding: 0 20px 60px; }
+    .features { grid-template-columns: 1fr 1fr; }
+    .events-grid { grid-template-columns: repeat(2, 1fr); }
+    .data-grid { grid-template-columns: repeat(2, 1fr); }
+    .steps { grid-template-columns: 1fr 1fr; }
+    .player-card { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .player-id-section { width: 100%; justify-content: space-between; }
+  }
+  @media (max-width: 480px) {
+    .features { grid-template-columns: 1fr; }
+    .events-grid { grid-template-columns: 1fr; }
+    .data-grid { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr; }
+    .lookup-box { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="lang-bar">
+  <span>🌐</span>
+  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+  <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+</div>
+
+<nav>
+  <div class="logo" style="display:flex; align-items:center; gap:10px;">
+    <a href="../" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;">
+      <img src="../easymoat_logo.png" alt="Easymoat" style="height:36px; width:36px; border-radius:8px; object-fit:cover;">
+      <span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:800;">Easymoat</span><span>.com</span>
+    </a>
+  </div>
+  <a class="nav-badge" href="manual/" data-en="User Manual" data-ja="ユーザーマニュアル">User Manual</a>
+</nav>
+
+<main>
+
+  <div class="hero">
+    <div>
+      <div class="hero-tag" data-en="Coming soon" data-ja="近日公開">Coming soon</div>
+      <h1><em>Golf</em><br>Watch</h1>
+      <p class="hero-desc" data-en="Follow the week&#x27;s PGA Tour event on your Garmin. Pick up to five players and see where each one is on the course, the hole they are playing, and every shot as it comes in, without picking up your phone." data-ja="その週の PGA ツアーの大会を Garmin で追いかけるアプリです。選手を 5 人まで選ぶと、コースのどこにいるか、今どのホールを回っているか、1 打ごとの様子が、スマホを出さずに手首で見られます。">Follow the week&#x27;s PGA Tour event on your Garmin. Pick up to five players and see where each one is on the course, the hole they are playing, and every shot as it comes in, without picking up your phone.</p>
+      <div class="hero-cta">
+        <a href="manual/" class="btn-primary" data-en="Read the manual" data-ja="マニュアルを読む">Read the manual</a>
+      </div>
+    </div>
+    <div class="screenshots">
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Concept" data-ja="コンセプト">Concept</div>
+      <h2 data-en="See the hole, not just the score" data-ja="スコアだけでなく、ホールが見える">See the hole, not just the score</h2>
+      <p class="section-desc" data-en="A leaderboard tells you the number. GolfWatch shows you the fairway, the bunkers and the water your player is facing, and where the ball went." data-ja="リーダーボードが教えてくれるのは数字です。GolfWatch なら、選手の前にあるフェアウェイ、バンカー、池と、ボールの行き先まで見えます。">A leaderboard tells you the number. GolfWatch shows you the fairway, the bunkers and the water your player is facing, and where the ball went.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">⛳</div>
+        <h3 data-en="The hole, on your wrist" data-ja="手首にホールの形">The hole, on your wrist</h3>
+        <p data-en="Each hole&#x27;s shape fills the screen, with par, yards and the wind turned to the direction of play: INTO, DOWN or CROSS." data-ja="ホールの形が画面いっぱいに出ます。パー、ヤード、プレーする向きに合わせた風 (INTO、DOWN、CROSS) も一緒に。">Each hole&#x27;s shape fills the screen, with par, yards and the wind turned to the direction of play: INTO, DOWN or CROSS.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🏌️</div>
+        <h3 data-en="Every shot" data-ja="1 打ずつ">Every shot</h3>
+        <p data-en="New shots play as they come in. The ball flies in an arc, putts roll toward the cup, and each shot is described in a line of text. Replay a hole any time with START." data-ja="新しいショットが届くと再生されます。ボールが弧を描いて飛び、パットはカップへ転がり、1 打ごとの実況が出ます。START でいつでも再生できます。">New shots play as they come in. The ball flies in an arc, putts roll toward the cup, and each shot is described in a line of text. Replay a hole any time with START.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🎯</div>
+        <h3 data-en="Around the green" data-ja="グリーン周り">Around the green</h3>
+        <p data-en="The view moves in as the ball gets close, with the pin marked. Tap to switch between the whole hole, the second shot and the green." data-ja="ボールが近づくと、絵がグリーン周りに寄ります。カップの位置も出ます。タップで、ホール全体、2 打目、グリーン周りを切り替えられます。">The view moves in as the ball gets close, with the pin marked. Tap to switch between the whole hole, the second shot and the green.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Features" data-ja="機能">Features</div>
+      <h2 data-en="From the first tee to the last putt" data-ja="ティーショットから最後のパットまで">From the first tee to the last putt</h2>
+      <p class="section-desc" data-en="Your players stay in your order, and the whole field is one tap away." data-ja="登録した選手はいつも同じ順に並びます。出場選手の全員も、タップ 1 つで見られます。">Your players stay in your order, and the whole field is one tap away.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">⭐</div>
+        <h3 data-en="Your five players" data-ja="5 人の登録選手">Your five players</h3>
+        <p data-en="Home lists your players in the order you choose, with position, score and where they are on the course. Add anyone from the Leaderboard with a long press." data-ja="Home には、選手が自分の決めた順に並びます。順位、通算、コースのどこにいるかがひと目で分かります。Leaderboard の長押しで誰でも登録できます。">Home lists your players in the order you choose, with position, score and where they are on the course. Add anyone from the Leaderboard with a long press.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🕐</div>
+        <h3 data-en="18 holes around the clock" data-ja="時計のまわりに 18 ホール">18 holes around the clock</h3>
+        <p data-en="The clock screen turns the rim into the course. Your players are colored dots on the hole they are playing, with their score and shot, and the dot flashes when a new shot comes in." data-ja="時計の画面は、外周がコースです。登録した選手は今いるホールに色の点で出て、通算と何打目かも分かります。新しいショットが届くと点が光ります。">The clock screen turns the rim into the course. Your players are colored dots on the hole they are playing, with their score and shot, and the dot flashes when a new shot comes in.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🗺️</div>
+        <h3 data-en="Course map" data-ja="コースマップ">Course map</h3>
+        <p data-en="Tap the time to see the whole course, with your players on it. Zoom in up to x3 with a tap." data-ja="時刻をタップすると、コース全体に選手が載った図が出ます。タップで x3 まで拡大できます。">Tap the time to see the whole course, with your players on it. Zoom in up to x3 with a tap.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📋</div>
+        <h3 data-en="Course scorecard" data-ja="Course (スコアカード)">Course scorecard</h3>
+        <p data-en="All 18 holes on one screen, with strokes under each, birdies circled and bogeys boxed. Tap any hole to open it." data-ja="18 ホールを 1 画面に。打数が並び、バーディーは丸、ボギーは四角で囲みます。ホールをタップすれば、そのホールが開きます。">All 18 holes on one screen, with strokes under each, birdies circled and bogeys boxed. Tap any hole to open it.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🏆</div>
+        <h3 data-en="Leaderboard and field" data-ja="Leaderboard と出場選手">Leaderboard and field</h3>
+        <p data-en="The whole leaderboard with flags and your players highlighted. Before the event, the field, with each player&#x27;s season stats and recent results." data-ja="国旗つきの Leaderboard で、登録した選手には色が付きます。大会前は出場選手の一覧で、今季の成績と最近の大会も見られます。">The whole leaderboard with flags and your players highlighted. Before the event, the field, with each player&#x27;s season stats and recent results.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📳</div>
+        <h3 data-en="Shot alerts" data-ja="1 打ごとの知らせ">Shot alerts</h3>
+        <p data-en="Feel each shot of the player you have open: sound and vibration, vibration only, or off. When another of your players finishes a hole, a pop-up tells you the result." data-ja="開いている選手が打つたびに知らせます。音と振動、振動だけ、オフから選べます。ほかの登録選手がホールを終えると、結果がポップアップで出ます。">Feel each shot of the player you have open: sound and vibration, vibration only, or off. When another of your players finishes a hole, a pop-up tells you the result.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🌤️</div>
+        <h3 data-en="Weather at the course" data-ja="会場の天気">Weather at the course</h3>
+        <p data-en="Now, hourly and daily at the course, not where you are, including wind and gusts." data-ja="自分のいる場所ではなく、会場の天気です。現在、1 時間ごと、日別で、風と突風も分かります。">Now, hourly and daily at the course, not where you are, including wind and gusts.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">⌚</div>
+        <h3 data-en="Glance and watch face" data-ja="Glance と文字盤">Glance and watch face</h3>
+        <p data-en="A two-line glance shows one player. Put a player&#x27;s position and score in a data field of your watch face; it keeps updating about every 5 minutes, even with GolfWatch closed." data-ja="2 行の Glance に選手 1 人を表示。文字盤のデータ項目には順位と通算を出せます。GolfWatch を閉じていても約 5 分ごとに更新されます。">A two-line glance shows one player. Put a player&#x27;s position and score in a data field of your watch face; it keeps updating about every 5 minutes, even with GolfWatch closed.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">⏪</div>
+        <h3 data-en="Past events" data-ja="過去の大会">Past events</h3>
+        <p data-en="Open an event that has finished and go back through your players&#x27; rounds, shot by shot." data-ja="終わった大会を開いて、登録選手のラウンドを 1 打ずつ振り返れます。">Open an event that has finished and go back through your players&#x27; rounds, shot by shot.</p>
+      </div>
+    </div>
+    <div style="text-align:center; margin-top:28px;">
+      <a href="manual/" style="display: inline-block; padding: 14px 28px; background: var(--white); border: 1.5px solid var(--accent); color: var(--accent); border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
+        <span data-en="📖 Read the full user manual →" data-ja="📖 ユーザーマニュアルを読む →">📖 Read the full user manual →</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="At the Course" data-ja="コースで">At the Course</div>
+      <h2 data-en="In the gallery, know where to walk" data-ja="ギャラリーなら、歩く先が分かる">In the gallery, know where to walk</h2>
+      <p class="section-desc" data-en="Turn on My position to see yourself on the course map, the nearest hole and how far away your first player is. The dots run about 1–2 minutes behind, and a hole takes about 10–20 minutes, so to catch a player, wait at the next hole." data-ja="My position をオンにすると、コースマップに自分が出ます。一番近いホールと、最初の登録選手までの距離も分かります。点はだいたい 1〜2 分前の位置で、1 ホールはおよそ 10〜20 分です。追いかけるなら、点のあるホールの 1 つ先で待つと会えます。">Turn on My position to see yourself on the course map, the nearest hole and how far away your first player is. The dots run about 1–2 minutes behind, and a hole takes about 10–20 minutes, so to catch a player, wait at the next hole.</p>
+    </div>
+
+  </div>
+
+  <div class="section" id="privacy">
+    <div class="section-header">
+      <div class="section-tag" data-en="Privacy" data-ja="プライバシー">Privacy</div>
+      <h2 data-en="Privacy" data-ja="プライバシー">Privacy</h2>
+    </div>
+    <div class="privacy-box">
+      <p data-en="The players you register are stored on your watch. Their IDs are sent to our server to fetch their scores. If you turn on My position, your location is used on the watch and is not sent anywhere." data-ja="登録した選手はウォッチの中に保存します。スコアを取るために、その ID を当方のサーバーへ送ります。My position をオンにしても、位置はウォッチの中で使うだけで、外へは送りません。">The players you register are stored on your watch. Their IDs are sent to our server to fetch their scores. If you turn on My position, your location is used on the watch and is not sent anywhere.</p>
+      <p data-en="Course maps are simplified drawings of our own and are for following the event. A map marked Being confirmed is still being checked. GolfWatch is an independent app, not affiliated with or endorsed by the PGA TOUR, ESPN or Garmin." data-ja="コース図は当方で描いた簡略な図で、大会を追うためのものです。Being confirmed と出ている図は確認中です。GolfWatch は独立したアプリで、PGA TOUR、ESPN、Garmin との提携や公認はありません。">Course maps are simplified drawings of our own and are for following the event. A map marked Being confirmed is still being checked. GolfWatch is an independent app, not affiliated with or endorsed by the PGA TOUR, ESPN or Garmin.</p>
+      <p><span data-en="Support: " data-ja="お問い合わせ：">Support: </span><span class="em"></span></p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>© 2026 Easymoat. All rights reserved.</p>
+  <div class="footer-links">
+    <span class="em-footer"></span>
+    <span style="color:var(--border)">|</span>
+    <a href="#privacy" data-en="Privacy" data-ja="プライバシー">Privacy</a>
+    <span style="color:var(--border)">|</span>
+    <a href="../" data-en="← Back to Easymoat" data-ja="← Easymoatに戻る">← Back to Easymoat</a>
+  </div>
+</footer>
+
+<script>
+var _e = 'easymoat' + '@' + 'gmail.com';
+function injectEmails() {
+  document.querySelectorAll('.em').forEach(function(el) {
+    el.innerHTML = '<a href="mailto:' + _e + '">' + _e + '</a>';
+  });
+  document.querySelectorAll('.em-footer').forEach(function(el) { el.textContent = _e; });
+}
+function setLang(lang) {
+  document.documentElement.lang = lang === 'ja' ? 'ja' : 'en';
+  document.querySelectorAll('[data-en]').forEach(el => {
+    if (el.children.length > 0) return;
+    const text = el.getAttribute('data-' + lang);
+    if (text) el.textContent = text;
+  });
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+  try { localStorage.setItem('em_lang', lang); } catch (e) {}
+}
+injectEmails();
+(function () {
+  var saved = null;
+  try { saved = localStorage.getItem('em_lang'); } catch (e) {}
+  var nav = (navigator.language || 'en').toLowerCase();
+  if (saved === 'ja' || (!saved && nav.indexOf('ja') === 0)) { setLang('ja'); }
+})();
+</script>
+</body>
+</html>

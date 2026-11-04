@@ -15,6 +15,7 @@
     --pl: #0891B2; --pl-light: #CFFAFE;
     --wm: #4F46E5; --wm-light: #EEF2FF;
     --fc: #B7791F; --fc-light: #FEF3C7;
+    --gw: #2F7D32; --gw-light: #E6F2E6;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.75; }
@@ -43,6 +44,7 @@
   .card.pl:hover { border-color: var(--pl); } .card.pl .card-tag { color: var(--pl); }
   .card.wm:hover { border-color: var(--wm); } .card.wm .card-tag { color: var(--wm); }
   .card.fc:hover { border-color: var(--fc); } .card.fc .card-tag { color: var(--fc); }
+  .card.gw:hover { border-color: var(--gw); } .card.gw .card-tag { color: var(--gw); }
   .common { margin-top: 40px; background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 22px 24px; }
   .common h2 { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 800; margin-bottom: 10px; }
   .common ul { margin: 0 0 0 20px; }
@@ -84,6 +86,15 @@
         <div class="card-tag" data-en="Garmin app" data-ja="Garmin アプリ">Garmin app</div>
         <div class="card-name">BaseballWatch</div>
         <div class="card-desc" data-en="Watch app: Device ID for activation. Registered players stay on the watch." data-ja="ウォッチアプリ: 有効化に Device ID を使用。登録選手はウォッチ内に保存。">Watch app: Device ID for activation. Registered players stay on the watch.</div>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+    <a class="card gw" href="../golfwatch/#privacy">
+      <img src="../golfwatch_icon.png" alt="GolfWatch">
+      <div class="card-body">
+        <div class="card-tag" data-en="Garmin app" data-ja="Garmin アプリ">Garmin app</div>
+        <div class="card-name">GolfWatch</div>
+        <div class="card-desc" data-en="Watch app: Device ID for the trial and pass, and the ESPN IDs of your players to fetch scores. My position stays on the watch." data-ja="ウォッチアプリ: お試しと年間パスに Device ID、スコアの取得に登録選手の ESPN ID を使用。My position の位置はウォッチの中だけで使用。">Watch app: Device ID for the trial and pass, and the ESPN IDs of your players to fetch scores. My position stays on the watch.</div>
       </div>
       <span class="card-arrow">→</span>
     </a>

@@ -353,6 +353,23 @@
 
   <div class="section">
     <div class="section-header">
+      <div class="section-tag" data-en="Player ID Lookup" data-ja="選手 ID 検索">Player ID Lookup</div>
+      <h2 data-en="Find your players" data-ja="選手を探す">Find your players</h2>
+      <p class="section-desc" data-en="Enter a name, copy the ID, and paste it into Player slot 1 to 5 in the GolfWatch settings in Connect IQ. This works without the pass. Picking players from the list on the watch is for the trial and the pass." data-ja="選手の名前を入れて ID をコピーし、Connect IQ の GolfWatch の設定の Player slot 1〜5 に入れます。年間パスがなくても使えます。ウォッチの一覧から選べるのは、お試し中と購入後です。">Enter a name, copy the ID, and paste it into Player slot 1 to 5 in the GolfWatch settings in Connect IQ. This works without the pass. Picking players from the list on the watch is for the trial and the pass.</p>
+    </div>
+    <div class="lookup-box">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" data-en-placeholder="Player name in English (e.g. Scheffler, Matsuyama)" data-ja-placeholder="選手名を英語で (例: Scheffler, Matsuyama)" placeholder="Player name in English (e.g. Scheffler, Matsuyama)">
+      </div>
+      <p class="lookup-hint" data-en="Enter at least 2 letters, in English. Results come from ESPN, and what you type is sent to ESPN." data-ja="英語で 2 文字以上入れてください。結果は ESPN から取ります。入れた文字は ESPN へ送られます。">Enter at least 2 letters, in English. Results come from ESPN, and what you type is sent to ESPN.</p>
+      <div id="results" class="results"></div>
+      <div id="status" class="status"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
       <div class="section-tag" data-en="Activation" data-ja="アクティベーション">Activation</div>
       <h2 data-en="How to activate" data-ja="アクティベーション方法">How to activate</h2>
       
@@ -437,11 +454,71 @@ function setLang(lang) {
     const text = el.getAttribute('data-' + lang);
     if (text) el.textContent = text;
   });
+  var si = document.getElementById('searchInput');
+  if (si) { var ph = si.getAttribute('data-' + lang + '-placeholder'); if (ph) { si.placeholder = ph; } }
   document.getElementById('btn-en').classList.toggle('active', lang === 'en');
   document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
   try { localStorage.setItem('em_lang', lang); } catch (e) {}
 }
 injectEmails();
+
+function lookupInit() {
+  var input = document.getElementById('searchInput');
+  var resultsDiv = document.getElementById('results');
+  var statusDiv = document.getElementById('status');
+  var timer, seq = 0;
+  function ja() { return document.documentElement.lang === 'ja'; }
+  function esc(str) { return String(str).replace(/[&<>"']/g, function (m) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }); }
+  input.addEventListener('input', function () {
+    clearTimeout(timer);
+    seq++;
+    var q = input.value.trim();
+    resultsDiv.innerHTML = '';
+    if (q.length < 2) { statusDiv.textContent = ''; return; }
+    statusDiv.textContent = ja() ? '検索中...' : 'Searching...';
+    timer = setTimeout(function () { search(q, seq); }, 400);
+  });
+  function search(q, mine) {
+    fetch('https://site.web.api.espn.com/apis/search/v2?query=' + encodeURIComponent(q) + '&limit=10')
+      .then(function (r) { if (!r.ok) { throw new Error('http'); } return r.json(); })
+      .then(function (data) {
+        if (mine !== seq) { return; }
+        var list = [];
+        (data.results || []).forEach(function (g) {
+          if (g.type !== 'player') { return; }
+          (g.contents || []).forEach(function (c) {
+            var m = /a:(\d+)/.exec(c.uid || '');
+            if (c.sport === 'golf' && m && (c.displayName || '').indexOf('/') < 0) { list.push({ name: c.displayName, id: m[1] }); }
+          });
+        });
+        if (list.length === 0) {
+          statusDiv.textContent = ja() ? '見つかりません。名前を英語で入れてください (例: Matsuyama)。' : 'No players found. Try the name in English (e.g. Matsuyama).';
+          return;
+        }
+        statusDiv.textContent = '';
+        var copy = ja() ? 'コピー' : 'Copy';
+        resultsDiv.innerHTML = list.map(function (p) {
+          return '<div class="player-card"><div class="player-info"><div class="player-name">' + esc(p.name) + '</div></div>'
+            + '<div class="player-id-section"><span class="player-id">' + esc(p.id) + '</span><button class="copy-btn" data-id="' + esc(p.id) + '">' + copy + '</button></div></div>';
+        }).join('');
+      })
+      .catch(function () {
+        if (mine !== seq) { return; }
+        statusDiv.textContent = ja() ? '検索できません' : 'Search is not available';
+      });
+  }
+  resultsDiv.addEventListener('click', function (ev) {
+    var btn = ev.target;
+    if (!btn.classList || !btn.classList.contains('copy-btn')) { return; }
+    navigator.clipboard.writeText(btn.getAttribute('data-id')).then(function () {
+      btn.textContent = ja() ? 'コピー済み' : 'Copied';
+      btn.classList.add('copied');
+      setTimeout(function () { btn.textContent = ja() ? 'コピー' : 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  });
+}
+lookupInit();
+
 (function () {
   var saved = null;
   try { saved = localStorage.getItem('em_lang'); } catch (e) {}

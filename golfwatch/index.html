@@ -182,11 +182,12 @@
 
   <div class="hero">
     <div>
-      <div class="hero-tag" data-en="Coming soon" data-ja="近日公開">Coming soon</div>
+      <div class="hero-tag" data-en="Available Now — $4.99 for 1 year (14-day trial)" data-ja="販売中 — $4.99 買い切り1年（14日トライアル）">Available Now — $4.99 for 1 year (14-day trial)</div>
       <h1><em>Golf</em><br>Watch</h1>
       <p class="hero-desc" data-en="Follow the week&#x27;s PGA Tour event on your Garmin. Pick up to five players and see where each one is on the course, the hole they are playing, and every shot as it comes in, without picking up your phone." data-ja="その週の PGA ツアーの大会を Garmin で追いかけるアプリです。選手を 5 人まで選ぶと、コースのどこにいるか、今どのホールを回っているか、1 打ごとの様子が、スマホを出さずに手首で見られます。">Follow the week&#x27;s PGA Tour event on your Garmin. Pick up to five players and see where each one is on the course, the hole they are playing, and every shot as it comes in, without picking up your phone.</p>
       <div class="hero-cta">
-        <a href="manual/" class="btn-primary" data-en="Read the manual" data-ja="マニュアルを読む">Read the manual</a>
+        <a href="https://apps.garmin.com/en-US/apps/d9a276e7-e1f1-4547-b4be-ef2b40a53170" data-en-href="https://apps.garmin.com/en-US/apps/d9a276e7-e1f1-4547-b4be-ef2b40a53170" data-ja-href="https://apps.garmin.com/ja-JP/apps/d9a276e7-e1f1-4547-b4be-ef2b40a53170" class="btn-primary" data-en="Start 14-Day Free Trial" data-ja="14日間の無料トライアルを開始">Start 14-Day Free Trial</a>
+        <a href="manual/" class="btn-secondary" data-en="Read the manual" data-ja="マニュアルを読む">Read the manual</a>
         <a href="https://buy.stripe.com/14A3co2KB4Fm0q5dzW9sk06" class="btn-secondary" data-en="Get the 1-Year Pass — $4.99" data-ja="年間パスを購入 — $4.99">Get the 1-Year Pass — $4.99</a>
       </div>
       <p style="font-size:13px; color:var(--muted); margin-top:10px;" data-en="All features free for 14 days, with no payment to start. After that, one purchase: $4.99 for a full year from the day you buy. No subscription." data-ja="14 日間はすべての機能を無料で使えます。始めるのに支払いは要りません。その後は 1 回の購入で、購入日から 1 年間 $4.99 です。サブスクではありません。">All features free for 14 days, with no payment to start. After that, one purchase: $4.99 for a full year from the day you buy. No subscription.</p>
@@ -480,6 +481,7 @@ function setLang(lang) {
   if (si) { var ph = si.getAttribute('data-' + lang + '-placeholder'); if (ph) { si.placeholder = ph; } }
   document.getElementById('btn-en').classList.toggle('active', lang === 'en');
   document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+  document.querySelectorAll('[data-en-href]').forEach(el => { var href = el.getAttribute('data-' + lang + '-href'); if (href) { el.setAttribute('href', href); } });
   try { localStorage.setItem('em_lang', lang); } catch (e) {}
 }
 injectEmails();

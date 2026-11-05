@@ -158,6 +158,9 @@
     .steps { grid-template-columns: 1fr; }
     .lookup-box { padding: 20px; }
   }
+  .pricing-grid { grid-template-columns: minmax(0, 1fr); }
+  .plan-price { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 6px; }
+  @media (max-width: 480px) { .plan { padding: 32px 20px; } }
 </style>
 </head>
 <body>

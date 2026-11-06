@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SeaWatch for Garmin | Easymoat</title>
+<link rel="icon" type="image/png" href="../favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FC;
+    --white: #FFFFFF;
+    --border: #E2E6EF;
+    --accent: #1E5BA8;
+    --accent-light: #E4EDF8;
+    --accent2: #E8801E;
+    --accent3: #117A3A;
+    --text: #111827;
+    --text2: #374151;
+    --muted: #6B7280;
+    --muted2: #9CA3AF;
+    --yellow: #D97706;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.6; overflow-x: hidden; }
+
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 40px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); position: sticky; top: 0; z-index: 200; }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; color: var(--muted); transition: all 0.15s; }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+
+  nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 40px; display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: var(--accent); letter-spacing: -0.01em; }
+  .logo span { color: var(--muted2); font-weight: 700; }
+  .nav-badge { background: var(--accent-light); color: var(--accent); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; padding: 4px 10px; border-radius: 20px; text-decoration: none; display: inline-block; white-space: nowrap; transition: background 0.15s, color 0.15s; }
+  @media (max-width: 480px) { .logo { font-size: 18px; } .logo a > span:last-child { display: none; } .logo img { height: 30px !important; width: 30px !important; } }
+  a.nav-badge:hover { background: var(--accent); color: var(--white); }
+
+  main { max-width: 960px; margin: 0 auto; padding: 0 40px 80px; }
+
+  .hero { padding: 64px 0 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+  @media (max-width: 720px) { .hero { grid-template-columns: 1fr; gap: 32px; } }
+
+  .screenshots { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .screenshot { border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid var(--border); background: var(--white); }
+  .screenshot img { width: 100%; height: auto; display: block; }
+  .screenshot-label { padding: 10px 14px; font-size: 12px; font-weight: 500; color: var(--muted); border-top: 1px solid var(--border); text-align: center; }
+  .hero-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; padding: 5px 12px; border-radius: 20px; margin-bottom: 20px; }
+  .hero-tag::before { content: ''; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
+  h1 { font-family: 'Syne', sans-serif; font-size: clamp(36px, 5vw, 56px); font-weight: 800; line-height: 1.05; letter-spacing: -0.02em; color: var(--text); margin-bottom: 16px; }
+  h1 em { font-style: normal; color: var(--accent); }
+  .hero-desc { font-size: 16px; line-height: 1.7; color: var(--muted); margin-bottom: 32px; max-width: 680px; }
+  .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  .btn-primary { display: inline-flex; align-items: center; gap: 8px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 8px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(30,91,168,0.3); }
+  .btn-primary:hover { background: #163F75; transform: translateY(-1px); }
+  .btn-secondary { display: inline-flex; align-items: center; gap: 8px; background: var(--white); color: var(--text); font-size: 14px; font-weight: 500; text-decoration: none; padding: 12px 24px; border-radius: 8px; border: 1px solid var(--border); transition: all 0.2s; }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-secondary.disabled { color: var(--muted2); cursor: not-allowed; pointer-events: none; }
+
+  .section { padding: 64px 0; border-top: 1px solid var(--border); }
+  .section-header { margin-bottom: 32px; }
+  .section-tag { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  h2 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.01em; color: var(--text); margin-bottom: 8px; }
+  .section-desc { font-size: 15px; color: var(--muted); max-width: 680px; }
+
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .feature { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: box-shadow 0.2s, border-color 0.2s; }
+  .feature:hover { box-shadow: var(--shadow); border-color: #B7E0C7; }
+  .feature-icon { font-size: 28px; margin-bottom: 12px; }
+  .feature h3 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .feature p { font-size: 13px; line-height: 1.6; color: var(--muted); }
+
+  .events-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .event-item { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 8px; }
+  .event-item::before { content: '✓'; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+
+  .pricing-grid { display: grid; grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; }
+  .plan { background: var(--white); border: 2px solid var(--accent); border-radius: 16px; padding: 32px; position: relative; box-shadow: 0 0 0 4px rgba(30,91,168,0.08); }
+  .plan.secondary { border-color: var(--border); box-shadow: none; }
+  .plan.secondary .plan-badge { background: var(--muted); }
+  .btn-plan.outline { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); box-shadow: none; }
+  .btn-plan.outline:hover { background: var(--accent-light); transform: translateY(-1px); }
+  .plan-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; padding: 4px 16px; border-radius: 20px; white-space: nowrap; }
+  .plan-name { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .plan-price { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 800; color: var(--text); line-height: 1; margin-bottom: 4px; }
+  .plan-price-unit { font-size: 18px; color: var(--muted); font-weight: 500; }
+  .plan-note { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+  .plan-features { list-style: none; margin-bottom: 28px; }
+  .plan-features li { font-size: 14px; color: var(--text2); padding: 7px 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .plan-features li.included::before { content: '✓'; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+  .btn-plan { display: block; text-align: center; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px; border-radius: 8px; transition: all 0.2s; background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(30,91,168,0.3); }
+  .btn-plan:hover { background: #163F75; transform: translateY(-1px); }
+  .plan-sub { font-size: 11px; color: var(--muted2); text-align: center; margin-top: 10px; }
+
+  .data-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .data-item { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
+  .data-type { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted2); margin-bottom: 6px; }
+  .data-example { font-size: 13px; font-weight: 600; color: var(--accent); }
+
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .step { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .step-num { width: 32px; height: 32px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+  .step h4 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .step p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  /* Player ID Lookup */
+  .lookup-box { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 32px; }
+  .search-box { position: relative; margin-bottom: 12px; }
+  .search-box input { width: 100%; padding: 14px 18px 14px 44px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 15px; font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.3s; }
+  .search-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(30,91,168,0.12); }
+  .search-box input::placeholder { color: var(--muted2); }
+  .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; color: var(--muted2); }
+  .lookup-hint { color: var(--muted); font-size: 12px; margin-bottom: 20px; }
+  .status { text-align: center; padding: 16px; color: var(--muted); font-size: 13px; }
+  .results { display: flex; flex-direction: column; gap: 8px; }
+  .player-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; transition: border-color 0.2s; }
+  .player-card:hover { border-color: var(--accent); }
+  .player-info { flex: 1; min-width: 0; }
+  .player-name { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .player-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+  .meta-tag { font-size: 11px; color: var(--muted); background: var(--white); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); }
+  .meta-tag.pos { color: var(--accent); font-weight: 600; border-color: var(--accent-light); background: var(--accent-light); }
+  .player-id-section { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .player-id { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent); }
+  .copy-btn { background: var(--white); border: 1px solid var(--border); color: var(--text2); padding: 6px 14px; border-radius: 6px; font-size: 12px; font-family: 'Inter', sans-serif; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+  .copy-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .copy-btn.copied { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .privacy-box { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; }
+  .privacy-box h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+  .privacy-box p { font-size: 13px; color: var(--muted); line-height: 1.8; margin-bottom: 10px; }
+  .privacy-box a { color: var(--accent); text-decoration: none; }
+
+  footer { background: var(--white); border-top: 1px solid var(--border); padding: 32px 40px; text-align: center; font-size: 13px; color: var(--muted); }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer .footer-links { margin-top: 8px; display: flex; justify-content: center; align-items: center; gap: 16px; flex-wrap: wrap; }
+  footer .footer-links a { color: var(--muted); font-size: 12px; }
+  footer .footer-links a:hover { color: var(--accent); }
+
+  @media (max-width: 768px) {
+    nav, .lang-bar { padding: 12px 20px; }
+    main { padding: 0 20px 60px; }
+    .features { grid-template-columns: 1fr 1fr; }
+    .events-grid { grid-template-columns: repeat(2, 1fr); }
+    .data-grid { grid-template-columns: repeat(2, 1fr); }
+    .steps { grid-template-columns: 1fr 1fr; }
+    .player-card { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .player-id-section { width: 100%; justify-content: space-between; }
+  }
+  @media (max-width: 480px) {
+    .features { grid-template-columns: 1fr; }
+    .events-grid { grid-template-columns: 1fr; }
+    .data-grid { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr; }
+    .lookup-box { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="lang-bar">
+  <span>🌐</span>
+  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+  <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+</div>
+
+<nav>
+  <div class="logo" style="display:flex; align-items:center; gap:10px;">
+    <a href="../" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;">
+      <img src="../easymoat_logo.png" alt="Easymoat" style="height:36px; width:36px; border-radius:8px; object-fit:cover;">
+      <span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:800;">Easymoat</span><span>.com</span>
+    </a>
+  </div>
+  <span class="nav-badge" data-en="Coming soon" data-ja="近日公開">Coming soon</span>
+</nav>
+
+<main>
+
+  <div class="hero">
+    <div>
+      <div class="hero-tag" data-en="Coming soon" data-ja="近日公開">Coming soon</div>
+      <h1><em>Sea</em><br>Watch</h1>
+      <p class="hero-desc" data-en="Tides, swell, wind and water temperature for the spot you are heading to, on your Garmin. Pick a fishing pier or a surf break on the map of the US Pacific coast and Hawaii, and see what the sea is doing without taking out your phone." data-ja="行き先の海の潮、うねり、風、水温を Garmin で。アメリカ太平洋岸とハワイの地図から、釣りの桟橋やサーフポイントを選ぶだけ。スマホを出さずに、手首で海の様子が分かります。">Tides, swell, wind and water temperature for the spot you are heading to, on your Garmin. Pick a fishing pier or a surf break on the map of the US Pacific coast and Hawaii, and see what the sea is doing without taking out your phone.</p>
+      <p style="font-size:13px; color:var(--muted); margin-top:-16px;" data-en="Price and supported watches will be announced at launch." data-ja="価格と対応機種は、公開の時にお知らせします。">Price and supported watches will be announced at launch.</p>
+    </div>
+    <div style="display:flex; justify-content:center;">
+      <img src="../seawatch_icon.png" alt="SeaWatch" style="width:min(300px, 70vw); height:auto; display:block; border-radius:50%; box-shadow:var(--shadow-lg);">
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Concept" data-ja="コンセプト">Concept</div>
+      <h2 data-en="From the whole coast to your spot" data-ja="海岸全体から、自分のポイントまで">From the whole coast to your spot</h2>
+      <p class="section-desc" data-en="Start from the map of the US, open your region, and zoom in step by step until you are looking at the pier or the break itself." data-ja="アメリカの地図から地域を開き、1 段ずつ拡大していくと、桟橋やサーフポイントそのものまで見えます。">Start from the map of the US, open your region, and zoom in step by step until you are looking at the pier or the break itself.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🗺️</div>
+        <h3 data-en="Zoom in to the spot" data-ja="ポイントまで拡大">Zoom in to the spot</h3>
+        <p data-en="Each step brings you closer: the region, the stretch of coast with wind arrows over the sea, then aerial photos of the spot." data-ja="地域、海の上に風の矢印が出る海岸、そしてポイントの航空写真へと、1 段ごとに近づきます。">Each step brings you closer: the region, the stretch of coast with wind arrows over the sea, then aerial photos of the spot.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🎣</div>
+        <h3 data-en="Fishing and surf spots" data-ja="釣りとサーフのポイント">Fishing and surf spots</h3>
+        <p data-en="Piers, jetties, rocks and beaches for fishing, and surf breaks, chosen from published lists. Pick fishing or surf, and the map shows the alerts that matter for it." data-ja="釣りの桟橋、突堤、磯、浜と、サーフポイントを、公開されている一覧から選んでいます。釣りかサーフかを選ぶと、それに合った警報が地図に出ます。">Piers, jetties, rocks and beaches for fishing, and surf breaks, chosen from published lists. Pick fishing or surf, and the map shows the alerts that matter for it.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📍</div>
+        <h3 data-en="Where you are" data-ja="自分の位置">Where you are</h3>
+        <p data-en="Turn on My location to see yourself on the map and how far it is to the spot. Your position stays on the watch." data-ja="My location をオンにすると、地図に自分が出て、ポイントまでの距離も分かります。位置はウォッチの外へ送りません。">Turn on My location to see yourself on the map and how far it is to the spot. Your position stays on the watch.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Features" data-ja="機能">Features</div>
+      <h2 data-en="Everything you check before heading out" data-ja="出かける前に見たいことを、ひと通り">Everything you check before heading out</h2>
+      <p class="section-desc" data-en="Open a spot and the tide, the swell and the wind are on one screen." data-ja="ポイントを開けば、潮もうねりも風も 1 画面で分かります。">Open a spot and the tide, the swell and the wind are on one screen.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🌊</div>
+        <h3 data-en="Tides for two weeks" data-ja="2 週間の潮">Tides for two weeks</h3>
+        <p data-en="The next high or low, the tide now and whether it is rising, today&#x27;s tide curve, and the highs and lows for the next 14 days." data-ja="次の満潮・干潮、今の潮位と上げ潮か下げ潮か、今日の潮の曲線、この先 14 日の満干が分かります。">The next high or low, the tide now and whether it is rising, today&#x27;s tide curve, and the highs and lows for the next 14 days.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🏄</div>
+        <h3 data-en="Swell, wind and water" data-ja="うねり、風、水温">Swell, wind and water</h3>
+        <p data-en="Swell height and period, wind, water temperature and the weather at the spot." data-ja="うねりの高さと周期、風、水温、ポイントの天気が分かります。">Swell height and period, wind, water temperature and the weather at the spot.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🌅</div>
+        <h3 data-en="Sun and moon" data-ja="日の出入りと月">Sun and moon</h3>
+        <p data-en="Sunrise and sunset, the moon phase and the tide range for the day." data-ja="日の出と日の入り、月齢、その日の潮回りが分かります。">Sunrise and sunset, the moon phase and the tide range for the day.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🕐</div>
+        <h3 data-en="Spot time or your time" data-ja="ポイントの時刻と自分の時刻">Spot time or your time</h3>
+        <p data-en="Times are shown in the spot&#x27;s local time. Tap the time to switch to your watch&#x27;s time, handy when you are planning from another time zone." data-ja="時刻はポイントの現地時刻で出ます。時刻をタップすると、ウォッチの時刻に切り替わります。別の時間帯から予定を立てる時に便利です。">Times are shown in the spot&#x27;s local time. Tap the time to switch to your watch&#x27;s time, handy when you are planning from another time zone.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">⚠️</div>
+        <h3 data-en="Alerts on the map" data-ja="地図に警報">Alerts on the map</h3>
+        <p data-en="National Weather Service alerts are marked on the map: high surf, beach hazards such as rip currents, small craft, gale and storm, coastal flood and marine information. Tsunami alerts always show." data-ja="米国気象局 (NWS) の警報を地図に出します。高波、離岸流などの浜の危険、小型船、強風と嵐、高潮、海の情報です。津波の警報はいつも出ます。">National Weather Service alerts are marked on the map: high surf, beach hazards such as rip currents, small craft, gale and storm, coastal flood and marine information. Tsunami alerts always show.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🦠</div>
+        <h3 data-en="Red tide forecast" data-ja="赤潮の予報">Red tide forecast</h3>
+        <p data-en="Along the California coast, the map can show NOAA&#x27;s harmful algal bloom forecast as a band of color." data-ja="カリフォルニアの海岸では、NOAA の有害藻類の予報を、色の帯で地図に出せます。">Along the California coast, the map can show NOAA&#x27;s harmful algal bloom forecast as a band of color.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">☁️</div>
+        <h3 data-en="Clouds and currents" data-ja="雲と潮流">Clouds and currents</h3>
+        <p data-en="See the cloud cover over your region, and tidal current arrows where they are available." data-ja="地域の上の雲の様子と、ある所では潮流の矢印も見られます。">See the cloud cover over your region, and tidal current arrows where they are available.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">⌚</div>
+        <h3 data-en="Glance and watch face" data-ja="Glance と文字盤">Glance and watch face</h3>
+        <p data-en="The glance lists the coming highs and lows. Put the next high or low, swell, water temperature or wind in a data field on your watch face. Both show the last spot you opened." data-ja="Glance には、この先の満干が並びます。文字盤のデータ項目には、次の満干、うねり、水温、風を出せます。どちらも最後に開いたポイントの値です。">The glance lists the coming highs and lows. Put the next high or low, swell, water temperature or wind in a data field on your watch face. Both show the last spot you opened.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">⬇️</div>
+        <h3 data-en="One region at a time" data-ja="地域は 1 つずつ">One region at a time</h3>
+        <p data-en="Download the region you go to, through your phone. The watch keeps one region at a time; choosing another one replaces it." data-ja="使う地域を、スマホ経由でウォッチに入れます。ウォッチに入るのは 1 地域ずつで、別の地域を選ぶと入れ替わります。">Download the region you go to, through your phone. The watch keeps one region at a time; choosing another one replaces it.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag" data-en="Regions" data-ja="地域">Regions</div>
+      <h2 data-en="Where SeaWatch works" data-ja="使える地域">Where SeaWatch works</h2>
+      <p class="section-desc" data-en="At launch, SeaWatch covers the US Pacific coast and Hawaii." data-ja="公開の時点で、アメリカ太平洋岸とハワイで使えます。">At launch, SeaWatch covers the US Pacific coast and Hawaii.</p>
+    </div>
+    <div class="data-grid">
+      <div class="data-item">
+        <div class="data-type" data-en="Pacific Northwest" data-ja="Pacific Northwest">Pacific Northwest</div>
+        <div class="data-example" style="font-size:12px;" data-en="Oregon and Washington" data-ja="オレゴンとワシントン">Oregon and Washington</div>
+      </div>
+      <div class="data-item">
+        <div class="data-type" data-en="Northern California" data-ja="北カリフォルニア">Northern California</div>
+        <div class="data-example" style="font-size:12px;" data-en="Point Arena to Crescent City" data-ja="ポイントアリーナからクレセントシティまで">Point Arena to Crescent City</div>
+      </div>
+      <div class="data-item">
+        <div class="data-type" data-en="Central California" data-ja="中部カリフォルニア">Central California</div>
+        <div class="data-example" style="font-size:12px;" data-en="Bodega Bay to Point Conception, including San Francisco, Monterey and Big Sur" data-ja="ボデガベイからポイントコンセプションまで。サンフランシスコ、モントレー、ビッグサーを含みます">Bodega Bay to Point Conception, including San Francisco, Monterey and Big Sur</div>
+      </div>
+      <div class="data-item">
+        <div class="data-type" data-en="Southern California" data-ja="南カリフォルニア">Southern California</div>
+        <div class="data-example" style="font-size:12px;" data-en="Santa Barbara to the Mexican border" data-ja="サンタバーバラからメキシコ国境まで">Santa Barbara to the Mexican border</div>
+      </div>
+      <div class="data-item">
+        <div class="data-type" data-en="Hawaii" data-ja="ハワイ">Hawaii</div>
+        <div class="data-example" style="font-size:12px;" data-en="Kauai to the Island of Hawaii" data-ja="カウアイ島からハワイ島まで">Kauai to the Island of Hawaii</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="about">
+    <div class="section-header">
+      <div class="section-tag" data-en="Before you go" data-ja="お出かけの前に">Before you go</div>
+      <h2 data-en="Please note" data-ja="ご注意">Please note</h2>
+    </div>
+    <div class="privacy-box">
+      <p data-en="Forecasts and alerts in SeaWatch are for reference. Always check official forecasts and warnings and the conditions on site before you go out. SeaWatch is not for navigation." data-ja="SeaWatch の予報と警報は参考のためのものです。出かける前に、公式の予報と警報、現地の様子を必ず確かめてください。航海には使えません。">Forecasts and alerts in SeaWatch are for reference. Always check official forecasts and warnings and the conditions on site before you go out. SeaWatch is not for navigation.</p>
+      <p data-en="SeaWatch is an independent app, not affiliated with or endorsed by NOAA, the National Weather Service or Garmin." data-ja="SeaWatch は独立したアプリで、NOAA、米国気象局 (NWS)、Garmin との提携や公認はありません。">SeaWatch is an independent app, not affiliated with or endorsed by NOAA, the National Weather Service or Garmin.</p>
+      <p><span data-en="Questions: " data-ja="お問い合わせ：">Questions: </span><span class="em"></span></p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>© 2026 Easymoat. All rights reserved.</p>
+  <div class="footer-links">
+    <span class="em-footer"></span>
+    <span style="color:var(--border)">|</span>
+    <a href="../" data-en="← Back to Easymoat" data-ja="← Easymoatに戻る">← Back to Easymoat</a>
+  </div>
+</footer>
+
+<script>
+var _e = 'easymoat' + '@' + 'gmail.com';
+function injectEmails() {
+  document.querySelectorAll('.em').forEach(function(el) {
+    el.innerHTML = '<a href="mailto:' + _e + '">' + _e + '</a>';
+  });
+  document.querySelectorAll('.em-footer').forEach(function(el) { el.textContent = _e; });
+}
+function setLang(lang) {
+  document.documentElement.lang = lang === 'ja' ? 'ja' : 'en';
+  document.querySelectorAll('[data-en]').forEach(el => {
+    if (el.children.length > 0) return;
+    const text = el.getAttribute('data-' + lang);
+    if (text) el.textContent = text;
+  });
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+  try { localStorage.setItem('em_lang', lang); } catch (e) {}
+}
+injectEmails();
+(function () {
+  var saved = null;
+  try { saved = localStorage.getItem('em_lang'); } catch (e) {}
+  var nav = (navigator.language || 'en').toLowerCase();
+  if (saved === 'ja' || (!saved && nav.indexOf('ja') === 0)) { setLang('ja'); }
+})();
+</script>
+</body>
+</html>

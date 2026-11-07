@@ -72,7 +72,7 @@
       <li><strong>Identity data</strong> — your watch's Device ID (an identifier the watch already carries) and a nickname you choose. This is the whole of what identifies you to us: we hold no email address, no password, and no real name. To confirm that a reinstalled app belongs to the same watch, we also keep a one-way fingerprint derived from the watch's own device identifier. The identifier itself is not stored and cannot be recovered from the fingerprint. We also keep the date (not the time) of your watch's most recent connection, only to operate the service; it is deleted together with your other data.</li>
       <li><strong>Activity &amp; health data</strong> — heart rate, step count, and distance, read from your Garmin device. These are shared in real time with the people you are connected with, within the level of each connection (see Section 4).</li>
       <li><strong>Location data (optional)</strong> — only within a connection or group at the "+ Location" level: your current position is read from your Garmin device and shown to those people on the radar and the map. It is used for that purpose only. Your watch sends your position only while at least one such connection exists. Lowering the level or ending the connection stops it.</li>
-      <li><strong>Connection data</strong> — who you are connected with, the level of each connection, the groups you create and their members, pending invitations, and the template messages you send.</li>
+      <li><strong>Connection data</strong> — who you are connected with, the level of each connection, the groups you create and their members, pending invitations, and the template messages you send. If you share your phone camera, we also keep whether camera sharing is on, which connected people you share it with, and whose camera you have chosen to view.</li>
       <li><strong>Payment data</strong> — handled entirely by Stripe. We never see, receive, or store your card number. We only receive a purchase status from Stripe.</li>
       <li><strong>Map area (map home only)</strong> — to draw the map, the watch sends its approximate position rounded to the map's grid — about 25 m at the closest range, coarser at wider ranges. We keep the map tiles we build, but not which watch asked for which area.</li>
     </ul>
@@ -94,7 +94,7 @@
     <ul>
       <li><strong>People you are connected with.</strong> A connection is made when one person invites and the other accepts, choosing a level: <strong>Activity</strong> (nickname, online status, steps, distance, weather), <strong>+ Heart</strong> (adds heart rate), or <strong>+ Location</strong> (adds your current position). Both people have the same level. Either can lower it at any time without the other's approval; raising it needs the other's acceptance. The server decides what each person receives, so nobody receives more than the level allows.</li>
       <li><strong>Groups.</strong> A group has a level chosen by the person who creates it. Joining a group connects you with every member of that group at that level (you see the invitation's one line and accept or decline). Any member can lower a group's level at any time; it then applies to everyone at once. A group's level cannot be raised — create a new group instead. Leaving a group ends those connections.</li>
-      <li><strong>Images and camera.</strong> Images you upload and your phone camera are shown only on your own watch. They are never sent to other people.</li>
+      <li><strong>Images and camera.</strong> Images you upload are shown only on your own watch and are never sent to other people. Your phone camera is private too, unless you choose to share it: you can turn camera sharing on and pick, one by one, which connected people may view it, at any level. A person you share with can view your camera picture on their watch (and on a linked The Face dial) only while camera sharing is on, you have selected that person, and the connection is active. Nobody else can view it. Choosing a person is your consent to share the camera with that person; the people you share with do not see your images, and you do not see theirs.</li>
       <li><strong>The Face (Face Composer), if you link it.</strong> When you link a Face Composer dial to this watch with your Web code, that dial receives your approximate position as the place for its weather and the picture from PulseLink Cam. Sign out web on the watch removes the link.</li>
       <li><strong>Stripe</strong> — our payment processor, for full-version purchases only.</li>
       <li><strong>Garmin</strong> — your data travels over the Garmin Connect IQ platform between your watch and your phone.</li>
@@ -108,6 +108,7 @@
       <li><strong>Location</strong> — treated the same way: held only in server memory as your latest position, overwritten by your next update and lost if the server restarts. Lowering your last + Location connection, or ending it, clears your stored position immediately.</li>
       <li><strong>Messages</strong> — deleted automatically after 24 hours (at most 200 per conversation).</li>
       <li><strong>Invitations</strong> — expire after 24 hours if not accepted.</li>
+      <li><strong>Camera sharing settings</strong> — the on/off switch, the people you share with, and the camera you chose to view are kept until you change them, end the connection, or erase your data. Camera pictures themselves are stored as before (see the camera page); sharing adds no new copies.</li>
       <li><strong>Connections and groups</strong> — kept while your trial or full version is active. When the trial ends without purchase, or a previously paid period ends without a new purchase, they are excluded <strong>immediately</strong>, together with pending invitations, and physically removed by an hourly cleanup; the other people no longer see you. Your identity data remains until you erase it.</li>
       <li><strong>Identity data (Device ID, nickname, device fingerprint)</strong> — kept until you erase it on the Delete my data page. The fingerprint and any web sign-in are erased together with your data.</li>
       <li><strong>On data deletion</strong> — your record, your uploaded images, your connections, your groups, and your messages are <strong>permanently and immediately erased</strong>.</li>
@@ -118,6 +119,7 @@
     <h2>6. Your privacy controls</h2>
     <p>PulseLink gives you these in-app controls:</p>
     <ul>
+      <li><strong>Stop sharing your camera</strong> — turn camera sharing off, or deselect a person; they stop seeing your camera immediately. Ending the connection has the same effect.</li>
       <li><strong>Lower a level</strong> — open the connection and lower the level at any time; it applies to both of you at once and needs no approval. To stop sharing your position with someone, lower that connection below + Location.</li>
       <li><strong>End a connection</strong> — removes you from that person's view immediately.</li>
       <li><strong>Leave a group</strong> — ends the connections made through that group.</li>
@@ -180,7 +182,7 @@
       <li><strong>本人識別情報</strong> — ウォッチが元々持っている Device ID と、お客様が設定するニックネーム。当社がお客様を識別する情報はこれで全てです。メールアドレス・パスワード・お名前は保持していません。アプリを入れ直した時に同じウォッチであることを確認するため、ウォッチ固有の識別子から作った一方向の照合値も保持します。識別子そのものは保存せず、照合値から元に戻すこともできません。また、サービスの運用のため、ウォッチが最後に接続した日付 (時刻は含みません) も保持します。この記録は他のデータと同時に削除されます。</li>
       <li><strong>アクティビティ・健康データ</strong> — Garmin デバイスから読み取る心拍数・歩数・距離。つながっている人と、つながりごとのレベルの範囲で（第 4 項参照）リアルタイムで共有されます。</li>
       <li><strong>位置情報（任意）</strong> — 「+ Location」のレベルのつながりまたはグループの中だけで、現在地を Garmin デバイスから読み取り、その相手のレーダーと地図に表示します。用途はこれに限られます。ウォッチが位置を送るのは、そのようなつながりが 1 つ以上ある間だけです。レベルを下げるか、つながりを解消すると止まります。</li>
-      <li><strong>つながりのデータ</strong> — つながっている相手、つながりごとのレベル、作成したグループとそのメンバー、保留中の招待、送った定型メッセージ。</li>
+      <li><strong>つながりのデータ</strong> — つながっている相手、つながりごとのレベル、作成したグループとそのメンバー、保留中の招待、送った定型メッセージ。スマートフォンのカメラを共有する場合は、共有の ON/OFF、共有している相手、見るカメラとして選んだ相手も保持します。</li>
       <li><strong>決済情報</strong> — すべて Stripe が処理します。当社はカード番号を一切閲覧・受領・保存しません。Stripe からは購入の状態のみを受け取ります。</li>
       <li><strong>地図の範囲（地図のホームを選んだ場合のみ）</strong> — 地図を描くために、ウォッチはおおよその位置を地図のマス目に丸めて送ります（いちばん狭い範囲で約 25 m、広い範囲ではより粗くなります）。作成した地図のタイルは保持しますが、どのウォッチがどの範囲を求めたかは記録しません。</li>
     </ul>
@@ -202,7 +204,7 @@
     <ul>
       <li><strong>つながっている人。</strong> 一方が招待し、他方がレベルを選んで承認した時につながりができます: <strong>Activity</strong>（ニックネーム・オンライン・歩数・距離・天気）、<strong>+ Heart</strong>（心拍を追加）、<strong>+ Location</strong>（現在地を追加）。レベルは 2 人で同じです。どちらからでも、相手の承認なしにいつでも下げられます。上げるには相手の承認が要ります。誰に何を渡すかはサーバーが判定するので、レベルを超えるデータが相手に届くことはありません。</li>
       <li><strong>グループ。</strong> グループには、作った人が選んだレベルがあります。グループに参加すると、そのグループの全員とそのレベルでつながります（招待の 1 行を見て、承認するか断るかを選びます）。グループのレベルは、どのメンバーでもいつでも下げられ、全員に同時に効きます。グループのレベルは上げられません。上げたい時は新しいグループを作ってください。グループから抜けると、それらのつながりは解消されます。</li>
-      <li><strong>画像とカメラ。</strong> アップロードした画像とスマートフォンのカメラは、自分のウォッチにだけ表示されます。他の人には送られません。</li>
+      <li><strong>画像とカメラ。</strong> アップロードした画像は自分のウォッチにだけ表示され、他の人には送られません。スマートフォンのカメラも、あなたが共有を選ばない限り自分だけのものです。カメラの共有を ON にし、つながっている相手の中から見せる人を 1 人ずつ選べます（レベルは問いません）。選ばれた相手は、カメラの共有が ON で、あなたがその人を選んでいて、つながりが有効な間だけ、自分のウォッチ（と接続している The Face の文字盤）であなたのカメラの画像を見られます。それ以外の人は見られません。相手を選ぶことが、その人へカメラを共有する同意になります。共有した相手にあなたの画像は見えず、あなたにも相手の画像は見えません。</li>
       <li><strong>The Face（Face Composer）に接続した場合。</strong> Web code を使って Face Composer の文字盤をこのウォッチに接続すると、その文字盤に天気の場所としてのおおよその位置と、PulseLink Cam の映像を渡します。ウォッチの Sign out web で接続を解除できます。</li>
       <li><strong>Stripe</strong> — 決済代行（有料版の購入のみ）。</li>
       <li><strong>Garmin</strong> — データはウォッチとスマートフォン間で Garmin Connect IQ プラットフォームを経由します。</li>
@@ -216,6 +218,7 @@
       <li><strong>位置情報</strong> — 上記と同様に、最新の現在地としてサーバーのメモリ上にのみ保持し、次回の更新で上書き、サーバー再起動時に失われます。最後の + Location のつながりのレベルを下げるか解消すると、保存済みの位置は即座に削除されます。</li>
       <li><strong>メッセージ</strong> — 24 時間後に自動で削除されます（1 つの会話に最大 200 件）。</li>
       <li><strong>招待</strong> — 承認されないまま 24 時間たつと失効します。</li>
+      <li><strong>カメラの共有の設定</strong> — 共有の ON/OFF、共有している相手、見るカメラとして選んだ相手は、変更するか、つながりを解消するか、データを消去するまで保持します。カメラの画像そのものの保存はこれまでと同じで、共有によって新しい写しは増えません。</li>
       <li><strong>つながりとグループ</strong> — 試用または有料版が有効な間だけ保持します。購入なく試用が終わった時、または以前にお支払い済みの期間が新たな購入なく終わった時に、保留中の招待とともに<strong>すぐに</strong>対象から外れ、1 時間ごとの整理で物理的に削除されます。相手からもあなたは見えなくなります。本人識別情報は、消去するまで残ります。</li>
       <li><strong>本人識別情報（Device ID・ニックネーム・照合値）</strong> — データ削除ページで消されるまで保持します。照合値と Web のサインイン情報も、データと同時に削除されます。</li>
       <li><strong>データ削除の実行時</strong> — 記録、アップロードした画像、つながり、グループ、メッセージを<strong>恒久的かつ即時に消去</strong>します。</li>
@@ -226,6 +229,7 @@
     <h2>6. プライバシー制御</h2>
     <p>PulseLink はアプリ内に以下の制御を備えています:</p>
     <ul>
+      <li><strong>カメラの共有をやめる</strong> — カメラの共有を OFF にするか、相手の選択を外すと、その人はすぐにあなたのカメラを見られなくなります。つながりの解消でも同じです。</li>
       <li><strong>レベルを下げる</strong> — つながりを開いていつでも下げられます。2 人に同時に効き、承認は要りません。位置を見せたくない相手とは、そのつながりを + Location より下に下げます。</li>
       <li><strong>つながりを解消する</strong> — すぐに相手からあなたが見えなくなります。</li>
       <li><strong>グループから抜ける</strong> — そのグループを通じたつながりが解消されます。</li>

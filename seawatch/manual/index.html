@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SeaWatch — User Manual</title>
+<link rel="icon" type="image/png" href="../../favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FC; --white: #FFFFFF; --border: #E2E6EF;
+    --accent: #1E5BA8; --accent-light: #E4EDF8; --accent-dark: #174A8C;
+    --accent2: #E8801E;
+    --text: #111827; --text2: #374151; --muted: #6B7280; --muted2: #9CA3AF;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+    --warn-bg: #FEF3C7; --warn-border: #F59E0B; --warn-text: #92400E;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.7; }
+
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 24px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); position: sticky; top: 0; z-index: 200; }
+  .lang-bar a.home { color: var(--accent-dark); text-decoration: none; font-weight: 600; }
+  .lang-bar a.home:hover { text-decoration: underline; }
+  .lang-bar .toggle { display: flex; gap: 8px; }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: inherit; cursor: pointer; color: var(--muted); }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; display: grid; grid-template-columns: 240px 1fr; gap: 48px; }
+  @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; padding: 24px 16px 60px; gap: 24px; } }
+
+  /* ─── Sidebar ─── */
+  aside { position: sticky; top: 60px; align-self: start; max-height: calc(100vh - 80px); overflow-y: auto; }
+  aside h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 12px; }
+  aside ol { list-style: none; counter-reset: chnum; }
+  aside ol li { counter-increment: chnum; }
+  aside ol li a {
+    display: block; padding: 6px 0 6px 28px; color: var(--text2); text-decoration: none;
+    font-size: 14px; border-left: 2px solid transparent; position: relative;
+  }
+  aside ol li a::before { content: counter(chnum); position: absolute; left: 6px; color: var(--muted2); font-size: 12px; font-weight: 600; }
+  aside ol li a:hover { color: var(--accent-dark); border-left-color: var(--accent); }
+  @media (max-width: 900px) { aside { position: static; max-height: none; border: 1px solid var(--border); border-radius: 8px; padding: 16px; background: var(--white); } }
+
+  /* ─── Article ─── */
+  article > h1 { font-size: 36px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; }
+  article > .subtitle { color: var(--muted); margin-bottom: 40px; font-size: 16px; }
+
+  section.chapter { margin-bottom: 60px; scroll-margin-top: 60px; }
+  section.chapter > h2 { font-size: 24px; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-light); color: var(--accent-dark); }
+  section.chapter > h3 { font-size: 17px; font-weight: 600; margin: 28px 0 10px; color: var(--text); }
+  section.chapter > p { color: var(--text2); margin-bottom: 12px; }
+  section.chapter > ul, section.chapter > ol { margin: 8px 0 16px 24px; color: var(--text2); }
+  section.chapter > ul li, section.chapter > ol li { margin-bottom: 6px; }
+  section.chapter strong { color: var(--text); font-weight: 600; }
+  section.chapter code { background: var(--accent-light); color: var(--accent-dark); padding: 1px 6px; border-radius: 3px; font-size: 13px; font-family: 'SF Mono', monospace; }
+  .op-tap  { background: #BFDBFE; color: #1E40AF; padding: 2px 7px; border-radius: 4px; font-weight: 600; white-space: nowrap; }
+  .op-hold { background: #FECDD3; color: #9F1239; padding: 2px 7px; border-radius: 4px; font-weight: 600; white-space: nowrap; }
+
+  table.ops { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 14px; background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  table.ops th { background: var(--accent-light); color: var(--accent-dark); text-align: left; padding: 8px 12px; font-weight: 600; }
+  table.ops td { padding: 8px 12px; border-top: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+  table.ops td:first-child { white-space: nowrap; font-weight: 600; color: var(--text); }
+  table.ops.pitchcode td:nth-child(3) { white-space: nowrap; font-weight: 600; color: var(--text); }
+
+  /* ─── Annotated figure (SVG overlay) ─── */
+  figure.annotated {
+    background: var(--white); border: 1px solid var(--border); border-radius: 12px;
+    padding: 24px 80px; margin: 16px 0 24px; box-shadow: var(--shadow);
+  }
+  @media (max-width: 700px) { figure.annotated { padding: 16px 32px; } }
+  figure.annotated .stage {
+    position: relative; max-width: 480px; margin: 0 auto;
+  }
+  figure.annotated .stage::before {
+    content: ''; display: block; padding-bottom: 100%;
+  }
+  figure.annotated .stage img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; border-radius: 50%; background: #111;
+  }
+  figure.annotated .stage .placeholder {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; height: 100%; border-radius: 50%;
+    background: #111; color: #555; font-size: 13px;
+  }
+  /* オーバーレイを画像と完全一致 (inset:0) させ、viewBox 0-500 を画像に 1:1 対応。
+     ブラウザ・画面幅に依存せず注釈が常に画像と揃う。円外/枠外のラベルは overflow:visible で余白へ。 */
+  figure.annotated .stage svg.overlay {
+    position: absolute; inset: 0;
+    overflow: visible; pointer-events: none;
+  }
+  figure.annotated .stage svg.overlay line { stroke: var(--accent); stroke-width: 1.5; }
+  figure.annotated .stage svg.overlay circle.dot { fill: var(--accent); }
+  figure.annotated .stage svg.overlay rect.box,
+  figure.annotated .stage svg.overlay circle.ring {
+    fill: none; stroke: var(--accent2); stroke-width: 2; stroke-dasharray: 4 3;
+  }
+  figure.annotated .stage svg.overlay text {
+    fill: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+    paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round;
+  }
+  figure.annotated figcaption { text-align: center; margin-top: 12px; color: var(--muted); font-size: 13px; }
+
+  /* ─── Callout boxes ─── */
+  .callout {
+    border-radius: 8px; padding: 12px 16px; margin: 12px 0; font-size: 14px;
+    background: var(--accent-light); border-left: 3px solid var(--accent); color: var(--accent-dark);
+  }
+  .callout.warn { background: var(--warn-bg); border-left-color: var(--warn-border); color: var(--warn-text); }
+  .callout strong { color: inherit; }
+
+  /* ─── Step list ─── */
+  ol.steps { counter-reset: step; list-style: none !important; margin-left: 0 !important; }
+  ol.steps li { counter-increment: step; position: relative; padding-left: 40px; margin-bottom: 14px !important; }
+  ol.steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 2px;
+    width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
+  }
+  table.ops td:first-child { white-space: normal; min-width: 7em; }
+</style>
+</head>
+<body>
+
+<div class="lang-bar">
+  <a href="../" class="home">← SeaWatch</a>
+  <div class="toggle">
+    <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+    <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <aside>
+    <h3 data-en="Contents" data-ja="目次">Contents</h3>
+    <ol>
+      <li><a href="#getting-started" data-en="Getting Started" data-ja="はじめに">Getting Started</a></li>
+      <li><a href="#region" data-en="Choosing a Region" data-ja="地域を選ぶ">Choosing a Region</a></li>
+      <li><a href="#map" data-en="Moving Around the Map" data-ja="地図の動かし方">Moving Around the Map</a></li>
+      <li><a href="#levels" data-en="What Each Level Shows" data-ja="各段の内容">What Each Level Shows</a></li>
+      <li><a href="#spot" data-en="Spot Screen: Tides and Conditions" data-ja="ポイントの画面 (潮と海の様子)">Spot Screen: Tides and Conditions</a></li>
+      <li><a href="#tides" data-en="Tides for 14 Days" data-ja="14 日の潮">Tides for 14 Days</a></li>
+      <li><a href="#weather" data-en="Weather" data-ja="天気">Weather</a></li>
+      <li><a href="#glance" data-en="Glance" data-ja="Glance">Glance</a></li>
+      <li><a href="#settings" data-en="Settings" data-ja="設定">Settings</a></li>
+      <li><a href="#troubleshooting" data-en="Troubleshooting" data-ja="トラブルシューティング">Troubleshooting</a></li>
+      <li><a href="#credits" data-en="Credits" data-ja="クレジット">Credits</a></li>
+    </ol>
+  </aside>
+
+  <article>
+    <h1 data-en="SeaWatch — User Manual" data-ja="SeaWatch ユーザーマニュアル">SeaWatch — User Manual</h1>
+    <p class="subtitle" data-en="Every screen, gesture and setting." data-ja="すべての画面、操作、設定のガイドです。">Every screen, gesture and setting.</p>
+
+<section class="chapter" id="getting-started">
+<h2 data-en="1. Getting Started" data-ja="1. はじめに">1. Getting Started</h2>
+<p data-en="SeaWatch puts the coast on your Garmin. Zoom from a map of the whole region down to an aerial photo of one spot, then open its tides, swell, wind, water temperature, alerts and weather. It is made for surfing and fishing." data-ja="SeaWatch は、海岸を Garmin に入れるアプリです。地域全体の地図から 1 つのポイントの航空写真まで拡大し、そのポイントの潮、うねり、風、水温、警報、天気を開けます。サーフィンと釣りのためのアプリです。">SeaWatch puts the coast on your Garmin. Zoom from a map of the whole region down to an aerial photo of one spot, then open its tides, swell, wind, water temperature, alerts and weather. It is made for surfing and fishing.</p>
+<ol class="steps">
+<li data-en="Install SeaWatch on your watch from the Connect IQ Store." data-ja="Connect IQ ストアからウォッチに SeaWatch をインストールします。">Install SeaWatch on your watch from the Connect IQ Store.</li>
+<li data-en="Open the app. A map of the USA comes first." data-ja="アプリを開きます。最初に米国の地図が出ます。">Open the app. A map of the USA comes first.</li>
+<li data-en="Tap a blue dot to choose a region, then tap it again and press OK. The maps for that region download to your watch." data-ja="青い印をタップして地域を選び、もう一度タップして OK を押します。その地域の地図がウォッチに入ります。">Tap a blue dot to choose a region, then tap it again and press OK. The maps for that region download to your watch.</li>
+<li data-en="When the download ends, the region map opens. Tap the coast to zoom in, and keep going until you reach a spot." data-ja="取り終えると地域の地図が開きます。海岸をタップして拡大し、ポイントまで進みます。">When the download ends, the region map opens. Tap the coast to zoom in, and keep going until you reach a spot.</li>
+<li data-en="Tap OPEN&gt; at the bottom to see the spot&#x27;s tides and conditions." data-ja="下の OPEN&gt; をタップすると、そのポイントの潮と海の様子が出ます。">Tap OPEN&gt; at the bottom to see the spot&#x27;s tides and conditions.</li>
+</ol>
+<div class="callout" data-en="Maps, tides and conditions reach your watch through your phone. Keep the watch paired with Garmin Connect Mobile and the phone online." data-ja="地図、潮、海の様子はスマホを通して届きます。ウォッチを Garmin Connect Mobile とペアリングし、スマホをオンラインにしておいてください。">Maps, tides and conditions reach your watch through your phone. Keep the watch paired with Garmin Connect Mobile and the phone online.</div>
+<h3 data-en="Regions and spots" data-ja="地域とポイント">Regions and spots</h3>
+<p data-en="Seven regions, 272 spots in all. Every spot is marked SURF, FISH or both." data-ja="地域は 7 つ、ポイントは全部で 272 か所です。ポイントには SURF、FISH、またはその両方の印が付いています。">Seven regions, 272 spots in all. Every spot is marked SURF, FISH or both.</p>
+<table class="ops">
+<tr><th data-en="Region" data-ja="地域">Region</th><th data-en="Spots" data-ja="ポイント">Spots</th><th data-en="Coast" data-ja="海岸">Coast</th></tr>
+<tr><td data-en="WASHINGTON" data-ja="WASHINGTON">WASHINGTON</td><td data-en="24" data-ja="24">24</td><td data-en="Outer coast (north) and Puget Sound" data-ja="外海の北側と Puget Sound">Outer coast (north) and Puget Sound</td></tr>
+<tr><td data-en="OREGON" data-ja="OREGON">OREGON</td><td data-en="46" data-ja="46">46</td><td data-en="The Oregon coast" data-ja="オレゴンの海岸">The Oregon coast</td></tr>
+<tr><td data-en="NORTH CAL" data-ja="NORTH CAL">NORTH CAL</td><td data-en="13" data-ja="13">13</td><td data-en="Northern California" data-ja="北カリフォルニア">Northern California</td></tr>
+<tr><td data-en="CENTRAL CAL" data-ja="CENTRAL CAL">CENTRAL CAL</td><td data-en="37" data-ja="37">37</td><td data-en="Central California" data-ja="中部カリフォルニア">Central California</td></tr>
+<tr><td data-en="SOCAL" data-ja="SOCAL">SOCAL</td><td data-en="53" data-ja="53">53</td><td data-en="Southern California, down to the border" data-ja="南カリフォルニア (国境まで)">Southern California, down to the border</td></tr>
+<tr><td data-en="KAUAI &amp; OAHU" data-ja="KAUAI &amp; OAHU">KAUAI &amp; OAHU</td><td data-en="46" data-ja="46">46</td><td data-en="Kauai and Oahu" data-ja="カウアイ島とオアフ島">Kauai and Oahu</td></tr>
+<tr><td data-en="MAUI &amp; BIG IS." data-ja="MAUI &amp; BIG IS.">MAUI &amp; BIG IS.</td><td data-en="53" data-ja="53">53</td><td data-en="Maui, Molokai, Lanai and the Big Island" data-ja="マウイ島、モロカイ島、ラナイ島、ハワイ島">Maui, Molokai, Lanai and the Big Island</td></tr>
+</table>
+<p data-en="Gray dots on the USA map are regions that are coming later." data-ja="米国の地図の灰色の印は、これから増える地域です。">Gray dots on the USA map are regions that are coming later.</p>
+<h3 data-en="Supported watches" data-ja="対応機種">Supported watches</h3>
+<p data-en="Forerunner 965." data-ja="Forerunner 965。">Forerunner 965.</p>
+</section>
+<section class="chapter" id="region">
+<h2 data-en="2. Choosing a Region" data-ja="2. 地域を選ぶ">2. Choosing a Region</h2>
+<figure class="annotated"><div class="stage"><img src="screens/usa.png?v=1" alt="SeaWatch USA map"></div><figcaption data-en="The USA map. Blue dots are regions you can download. Hawaii is in the small circle." data-ja="米国の地図。青い印がダウンロードできる地域です。ハワイは小さな丸の中にあります。">The USA map. Blue dots are regions you can download. Hawaii is in the small circle.</figcaption></figure>
+<p data-en="Your watch holds one region at a time. Choosing another region replaces the one on the watch." data-ja="ウォッチに入れておける地域は 1 つです。別の地域を選ぶと、入っている地域と入れ替わります。">Your watch holds one region at a time. Choosing another region replaces the one on the watch.</p>
+<table class="ops">
+<tr><th data-en="Do this" data-ja="操作">Do this</th><th data-en="What happens" data-ja="動き">What happens</th></tr>
+<tr><td data-en="Tap a dot, or UP / DOWN (or swipe)" data-ja="印をタップ、または UP / DOWN (またはスワイプ)">Tap a dot, or UP / DOWN (or swipe)</td><td data-en="Selects a region. Its name appears at the bottom." data-ja="地域を選びます。下に名前が出ます。">Selects a region. Its name appears at the bottom.</td></tr>
+<tr><td data-en="Tap the selected dot again, tap the bottom row, or START" data-ja="選んだ印をもう一度タップ、下の行をタップ、または START">Tap the selected dot again, tap the bottom row, or START</td><td data-en="Opens the region, or asks before downloading it." data-ja="地域を開きます。まだ入っていなければ、ダウンロードの確認が出ます。">Opens the region, or asks before downloading it.</td></tr>
+<tr><td data-en="BACK" data-ja="BACK">BACK</td><td data-en="Closes the confirmation, or closes the app." data-ja="確認を閉じます。確認が出ていなければアプリを閉じます。">Closes the confirmation, or closes the app.</td></tr>
+</table>
+<h3 data-en="The bottom row" data-ja="下の行">The bottom row</h3>
+<table class="ops">
+<tr><th data-en="Shows" data-ja="表示">Shows</th><th data-en="Means" data-ja="意味">Means</th></tr>
+<tr><td data-en="OPEN&gt;" data-ja="OPEN&gt;">OPEN&gt;</td><td data-en="This region is on your watch. Opens its map." data-ja="この地域はウォッチに入っています。地図を開きます。">This region is on your watch. Opens its map.</td></tr>
+<tr><td data-en="GET&gt;" data-ja="GET&gt;">GET&gt;</td><td data-en="Not on your watch yet." data-ja="まだ入っていません。">Not on your watch yet.</td></tr>
+<tr><td data-en="CONTINUE 7/19&gt;" data-ja="CONTINUE 7/19&gt;">CONTINUE 7/19&gt;</td><td data-en="The download stopped part way. It picks up where it left off." data-ja="ダウンロードが途中で止まっています。続きから取ります。">The download stopped part way. It picks up where it left off.</td></tr>
+<tr><td data-en="COMING SOON" data-ja="COMING SOON">COMING SOON</td><td data-en="This region is not ready yet." data-ja="この地域はまだ準備中です。">This region is not ready yet.</td></tr>
+</table>
+<h3 data-en="Downloading" data-ja="ダウンロード">Downloading</h3>
+<p data-en="The confirmation shows how many maps the region has and about how long it takes, usually about a minute. If another region is on your watch, it also shows REPLACES and that region&#x27;s name. Press OK to start." data-ja="確認の画面には、地図の枚数とかかる時間の目安が出ます。たいてい 1 分ほどです。別の地域が入っている時は、REPLACES とその地域の名前も出ます。OK を押すと始まります。">The confirmation shows how many maps the region has and about how long it takes, usually about a minute. If another region is on your watch, it also shows REPLACES and that region&#x27;s name. Press OK to start.</p>
+<ul>
+<li data-en="BACK during the download pauses it. Next time, choose the region again and it continues." data-ja="ダウンロード中に BACK を押すと一時停止します。次に同じ地域を選ぶと、続きから取ります。">BACK during the download pauses it. Next time, choose the region again and it continues.</li>
+<li data-en="If the phone loses its connection, the watch tries again by itself. If it still cannot connect, NO CONNECTION and RETRY appear." data-ja="スマホの接続が切れると、ウォッチは自動で取り直します。それでもつながらない時は NO CONNECTION と RETRY が出ます。">If the phone loses its connection, the watch tries again by itself. If it still cannot connect, NO CONNECTION and RETRY appear.</li>
+<li data-en="The region on your watch stays until the new one starts arriving, so a failed download does not leave you with nothing." data-ja="新しい地域が届き始めるまで、入っている地域は消えません。ダウンロードに失敗しても、地図が空になることはありません。">The region on your watch stays until the new one starts arriving, so a failed download does not leave you with nothing.</li>
+</ul>
+<h3 data-en="Updates" data-ja="更新">Updates</h3>
+<p data-en="When the maps or spots for your region are updated, UPDATE AVAILABLE appears and the watch downloads the new version." data-ja="地域の地図やポイントが新しくなると、UPDATE AVAILABLE と出て、ウォッチが新しい版を取り直します。">When the maps or spots for your region are updated, UPDATE AVAILABLE appears and the watch downloads the new version.</p>
+</section>
+<section class="chapter" id="map">
+<h2 data-en="3. Moving Around the Map" data-ja="3. 地図の動かし方">3. Moving Around the Map</h2>
+<p data-en="The map has five levels. Each step zooms in, and the scale bar at the edge tells you which level you are on." data-ja="地図は 5 段です。1 段ごとに拡大し、端の縮尺の目盛りで今の段が分かります。">The map has five levels. Each step zooms in, and the scale bar at the edge tells you which level you are on.</p>
+<table class="ops">
+<tr><th data-en="Level" data-ja="段">Level</th><th data-en="Scale bar" data-ja="縮尺">Scale bar</th><th data-en="Shows" data-ja="内容">Shows</th></tr>
+<tr><td data-en="Region map" data-ja="地域の地図">Region map</td><td data-en="50 km or 100 km" data-ja="50 km か 100 km">50 km or 100 km</td><td data-en="The whole region, red tide and clouds. No spots yet." data-ja="地域全体、赤潮、雲。ポイントはまだ出ません。">The whole region, red tide and clouds. No spots yet.</td></tr>
+<tr><td data-en="Coast map" data-ja="海岸の地図">Coast map</td><td data-en="20 km" data-ja="20 km">20 km</td><td data-en="A stretch of coast with its spots and the red tide along the shore." data-ja="海岸の一部とそのポイント、海岸沿いの赤潮。">A stretch of coast with its spots and the red tide along the shore.</td></tr>
+<tr><td data-en="Close-up map" data-ja="拡大の地図">Close-up map</td><td data-en="5 km" data-ja="5 km">5 km</td><td data-en="Spots, wind arrows and current arrows." data-ja="ポイント、風の矢印、潮流の矢印。">Spots, wind arrows and current arrows.</td></tr>
+<tr><td data-en="Aerial map" data-ja="写真の地図">Aerial map</td><td data-en="1 km" data-ja="1 km">1 km</td><td data-en="An aerial photo around the spot, with its weather, alerts, harmful algae and currents." data-ja="ポイントの周りの航空写真。天気、警報、有害藻類、潮流。">An aerial photo around the spot, with its weather, alerts, harmful algae and currents.</td></tr>
+<tr><td data-en="Spot photo" data-ja="ポイントの写真">Spot photo</td><td data-en="" data-ja=""></td><td data-en="A close aerial photo of the spot itself." data-ja="ポイントそのものを写した近い航空写真。">A close aerial photo of the spot itself.</td></tr>
+</table>
+<table class="ops">
+<tr><th data-en="Do this" data-ja="操作">Do this</th><th data-en="What happens" data-ja="動き">What happens</th></tr>
+<tr><td data-en="Tap the coast (region map)" data-ja="海岸をタップ (地域の地図)">Tap the coast (region map)</td><td data-en="Zooms in to the coast map and selects the nearest spot." data-ja="海岸の地図へ拡大し、近いポイントを選びます。">Zooms in to the coast map and selects the nearest spot.</td></tr>
+<tr><td data-en="Tap a marker" data-ja="印をタップ">Tap a marker</td><td data-en="Selects that spot. Its name and type appear at the bottom." data-ja="そのポイントを選びます。下に名前と種類が出ます。">Selects that spot. Its name and type appear at the bottom.</td></tr>
+<tr><td data-en="Tap the selected marker again, or START" data-ja="選んだ印をもう一度タップ、または START">Tap the selected marker again, or START</td><td data-en="Zooms in one level." data-ja="1 段拡大します。">Zooms in one level.</td></tr>
+<tr><td data-en="UP / DOWN (or swipe)" data-ja="UP / DOWN (またはスワイプ)">UP / DOWN (or swipe)</td><td data-en="Moves to the next spot along the coast. The map follows. It stops at the ends of the region." data-ja="海岸沿いに隣のポイントへ移ります。地図もついて動きます。地域の端で止まります。">Moves to the next spot along the coast. The map follows. It stops at the ends of the region.</td></tr>
+<tr><td data-en="Tap OPEN&gt; at the bottom" data-ja="下の OPEN&gt; をタップ">Tap OPEN&gt; at the bottom</td><td data-en="Opens the spot screen with tides and conditions (chapter 5)." data-ja="ポイントの画面 (潮と海の様子) を開きます (第 5 章)。">Opens the spot screen with tides and conditions (chapter 5).</td></tr>
+<tr><td data-en="BACK" data-ja="BACK">BACK</td><td data-en="Goes back one level. From the region map, goes to the USA map." data-ja="1 段戻ります。地域の地図からは米国の地図へ戻ります。">Goes back one level. From the region map, goes to the USA map.</td></tr>
+<tr><td data-en="Hold the bottom of the screen, or hold UP (MENU)" data-ja="画面の下を長押し、または UP を長押し (MENU)">Hold the bottom of the screen, or hold UP (MENU)</td><td data-en="Opens the settings (chapter 9)." data-ja="設定を開きます (第 9 章)。">Opens the settings (chapter 9).</td></tr>
+</table>
+<p data-en="Markers that sit under the name at the top can be tapped too." data-ja="上の名前の下に描かれた印も、タップで選べます。">Markers that sit under the name at the top can be tapped too.</p>
+<h3 data-en="Markers" data-ja="印">Markers</h3>
+<table class="ops">
+<tr><th data-en="Marker" data-ja="印">Marker</th><th data-en="Means" data-ja="意味">Means</th></tr>
+<tr><td data-en="Blue circle" data-ja="水色の丸">Blue circle</td><td data-en="SURF" data-ja="SURF">SURF</td></tr>
+<tr><td data-en="Amber diamond" data-ja="琥珀色のひし形">Amber diamond</td><td data-en="FISH" data-ja="FISH">FISH</td></tr>
+<tr><td data-en="Blue circle with an amber ring" data-ja="水色の丸に琥珀色の輪">Blue circle with an amber ring</td><td data-en="SURF+FISH" data-ja="SURF+FISH">SURF+FISH</td></tr>
+<tr><td data-en="Crosshair" data-ja="照準">Crosshair</td><td data-en="The selected spot" data-ja="選んでいるポイント">The selected spot</td></tr>
+<tr><td data-en="Red ring" data-ja="赤い輪">Red ring</td><td data-en="A National Weather Service warning" data-ja="米国気象局 (NWS) の警報 (WARNING)">A National Weather Service warning</td></tr>
+<tr><td data-en="Orange ring" data-ja="橙の輪">Orange ring</td><td data-en="An advisory" data-ja="注意報 (ADVISORY など)">An advisory</td></tr>
+<tr><td data-en="Yellow ring" data-ja="黄色の輪">Yellow ring</td><td data-en="A marine statement or other information" data-ja="海上気象情報などのお知らせ">A marine statement or other information</td></tr>
+<tr><td data-en="Blue dot with a white edge" data-ja="白い縁の青い丸">Blue dot with a white edge</td><td data-en="You, when My location is on (chapter 9)" data-ja="現在地 (設定の My location が ON の時、第 9 章)">You, when My location is on (chapter 9)</td></tr>
+</table>
+</section>
+<section class="chapter" id="levels">
+<h2 data-en="4. What Each Level Shows" data-ja="4. 各段の内容">4. What Each Level Shows</h2>
+<h3 data-en="Region map" data-ja="地域の地図">Region map</h3>
+<figure class="annotated"><div class="stage"><img src="screens/region.png?v=1" alt="SeaWatch region map"></div><figcaption data-en="The region map with red tide and clouds. The two buttons at the bottom turn them on and off." data-ja="赤潮と雲を重ねた地域の地図。下の 2 つのボタンで入り切りします。">The region map with red tide and clouds. The two buttons at the bottom turn them on and off.</figcaption></figure>
+<p data-en="The colors on the sea show the chance of toxic red tide, from purple (0%) to red (100%). The TOXIN bar at the bottom is the key. Clouds come from the latest satellite image." data-ja="海の色は、毒性のある赤潮の確率です。紫 (0%) から赤 (100%) まであり、下の TOXIN の帯が凡例です。雲は最新の衛星画像です。">The colors on the sea show the chance of toxic red tide, from purple (0%) to red (100%). The TOXIN bar at the bottom is the key. Clouds come from the latest satellite image.</p>
+<ul>
+<li data-en="Tap the left button for red tide and the right button for clouds. Each turns on and off, and the watch remembers your choice." data-ja="左のボタンで赤潮、右のボタンで雲を入り切りします。選んだ状態は次に開いた時も同じです。">Tap the left button for red tide and the right button for clouds. Each turns on and off, and the watch remembers your choice.</li>
+<li data-en="The row above the buttons shows the time at the coast and your watch&#x27;s time (YOU)." data-ja="ボタンの上の行には、海岸の現地時刻とウォッチの時刻 (YOU) が出ます。">The row above the buttons shows the time at the coast and your watch&#x27;s time (YOU).</li>
+<li data-en="START jumps to the spot nearest you when My location is on." data-ja="My location が ON なら、START で現在地に近いポイントへ進みます。">START jumps to the spot nearest you when My location is on.</li>
+<li data-en="Where there is no red tide data (Hawaii, for example), only the clouds button appears." data-ja="赤潮のデータが無い地域 (ハワイなど) では、雲のボタンだけが出ます。">Where there is no red tide data (Hawaii, for example), only the clouds button appears.</li>
+</ul>
+<h3 data-en="Coast map (20 km)" data-ja="海岸の地図 (20 km)">Coast map (20 km)</h3>
+<figure class="annotated"><div class="stage"><img src="screens/l160.png?v=1" alt="SeaWatch coast map"></div><figcaption data-en="The coast map. The bottom shows the spot&#x27;s name, its type and OPEN&gt;." data-ja="海岸の地図。下にポイントの名前、種類、OPEN&gt; が出ます。">The coast map. The bottom shows the spot&#x27;s name, its type and OPEN&gt;.</figcaption></figure>
+<p data-en="Spots appear from this level on. The red tide colors run along the shore, and the same two buttons turn red tide and clouds on and off." data-ja="この段からポイントが出ます。海岸沿いに赤潮の色が付き、同じ 2 つのボタンで赤潮と雲を入り切りします。">Spots appear from this level on. The red tide colors run along the shore, and the same two buttons turn red tide and clouds on and off.</p>
+<h3 data-en="Close-up map (5 km)" data-ja="拡大の地図 (5 km)">Close-up map (5 km)</h3>
+<figure class="annotated"><div class="stage"><img src="screens/l40.png?v=1" alt="SeaWatch close-up map"></div><figcaption data-en="The close-up map, with wind arrows and the spot&#x27;s weather at the bottom." data-ja="拡大の地図。風の矢印が出て、下にポイントの天気が出ます。">The close-up map, with wind arrows and the spot&#x27;s weather at the bottom.</figcaption></figure>
+<ul>
+<li data-en="Yellow arrows show the wind over the sea: pale yellow under 5 m/s (about 11 mph), yellow from 5 to 10 m/s, orange 10 m/s (about 22 mph) and up." data-ja="黄色の矢印は海の上の風です。薄い黄色は 5 m/s (約 11 mph) 未満、黄色は 5〜10 m/s、橙は 10 m/s (約 22 mph) 以上です。">Yellow arrows show the wind over the sea: pale yellow under 5 m/s (about 11 mph), yellow from 5 to 10 m/s, orange 10 m/s (about 22 mph) and up.</li>
+<li data-en="White arrows show the tidal current at nearby stations." data-ja="白い矢印は、近くの観測点の潮流です。">White arrows show the tidal current at nearby stations.</li>
+<li data-en="The bottom shows the spot&#x27;s name, its weather, temperature and wind, then its type and OPEN&gt;." data-ja="下には、ポイントの名前、天気・気温・風、種類と OPEN&gt; が出ます。">The bottom shows the spot&#x27;s name, its weather, temperature and wind, then its type and OPEN&gt;.</li>
+</ul>
+<h3 data-en="Aerial map (1 km)" data-ja="写真の地図 (1 km)">Aerial map (1 km)</h3>
+<figure class="annotated"><div class="stage"><img src="screens/l10.png?v=1" alt="SeaWatch aerial map"></div><figcaption data-en="The aerial map. The weather card sits beside the spot, and the bottom lists alerts, harmful algae and currents." data-ja="写真の地図。ポイントの横に天気の札、下に警報・有害藻類・潮流が出ます。">The aerial map. The weather card sits beside the spot, and the bottom lists alerts, harmful algae and currents.</figcaption></figure>
+<p data-en="The weather card next to the spot shows, from the top: weather and temperature, chance of rain, humidity, wind and pressure (hPa). Tap the card to open the weather screen (chapter 7)." data-ja="ポイントの横の天気の札には、上から 天気と気温、降水確率 (傘)、湿度、風、気圧 (hPa) が並びます。札をタップすると天気の画面が開きます (第 7 章)。">The weather card next to the spot shows, from the top: weather and temperature, chance of rain, humidity, wind and pressure (hPa). Tap the card to open the weather screen (chapter 7).</p>
+<table class="ops">
+<tr><th data-en="Bottom row" data-ja="下の行">Bottom row</th><th data-en="Example" data-ja="例">Example</th><th data-en="Means" data-ja="意味">Means</th></tr>
+<tr><td data-en="Alerts" data-ja="警報">Alerts</td><td data-en="COASTAL FLOOD ADV &gt;" data-ja="COASTAL FLOOD ADV &gt;">COASTAL FLOOD ADV &gt;</td><td data-en="National Weather Service alerts for the spot. Tap the row to open the full text on your phone." data-ja="そのポイントにかかる米国気象局の警報です。行をタップすると、全文がスマホで開きます。">National Weather Service alerts for the spot. Tap the row to open the full text on your phone.</td></tr>
+<tr><td data-en="Harmful algae" data-ja="有害藻類">Harmful algae</td><td data-en="TOXIN 12%  ALGAE 30%" data-ja="TOXIN 12%  ALGAE 30%">TOXIN 12%  ALGAE 30%</td><td data-en="TOXIN is the chance of domoic acid, the red tide toxin. ALGAE is the chance of a Pseudo-nitzschia bloom." data-ja="TOXIN は赤潮の毒 (ドウモイ酸) が出る確率、ALGAE は原因の藻 (Pseudo-nitzschia) が増える確率です。">TOXIN is the chance of domoic acid, the red tide toxin. ALGAE is the chance of a Pseudo-nitzschia bloom.</td></tr>
+<tr><td data-en="Currents" data-ja="潮流">Currents</td><td data-en="EBB 0.9KT  SLK 14:20" data-ja="EBB 0.9KT  SLK 14:20">EBB 0.9KT  SLK 14:20</td><td data-en="The current now (FLOOD in, EBB out) and the next slack water. At slack water it reads SLACK NOW and the next strong flow. Shown when a current station is within 10 km." data-ja="今の流れ (FLOOD = 上げ潮の流れ、EBB = 下げ潮の流れ) と次の潮止まりです。潮止まりの時は SLACK NOW と、次に強くなる流れの時刻が出ます。10 km 以内に潮流の観測点がある時だけ出ます。">The current now (FLOOD in, EBB out) and the next slack water. At slack water it reads SLACK NOW and the next strong flow. Shown when a current station is within 10 km.</td></tr>
+<tr><td data-en="Spot" data-ja="ポイント">Spot</td><td data-en="SURF  OPEN&gt;" data-ja="SURF  OPEN&gt;">SURF  OPEN&gt;</td><td data-en="The spot&#x27;s type, your distance when My location is on, and OPEN&gt;." data-ja="ポイントの種類、現在地からの距離 (My location が ON の時)、OPEN&gt;。">The spot&#x27;s type, your distance when My location is on, and OPEN&gt;.</td></tr>
+</table>
+<p data-en="NO NWS ALERTS means there are none. ALERTS OFF IN SETTINGS means the only alerts are ones you turned off (chapter 9)." data-ja="NO NWS ALERTS は警報が出ていないことです。ALERTS OFF IN SETTINGS は、設定で消した種類の警報だけが出ていることです (第 9 章)。">NO NWS ALERTS means there are none. ALERTS OFF IN SETTINGS means the only alerts are ones you turned off (chapter 9).</p>
+<h3 data-en="Spot photo" data-ja="ポイントの写真">Spot photo</h3>
+<figure class="annotated"><div class="stage"><img src="screens/pin.png?v=1" alt="SeaWatch spot photo"></div><figcaption data-en="The spot photo. Tap OPEN&gt; or press START for the spot screen." data-ja="ポイントの写真。OPEN&gt; のタップか START でポイントの画面を開きます。">The spot photo. Tap OPEN&gt; or press START for the spot screen.</figcaption></figure>
+<p data-en="A close aerial photo centered on the spot. UP / DOWN shows the next spot&#x27;s photo. Tap OPEN&gt; or press START to open the spot screen." data-ja="ポイントを真ん中にした近い航空写真です。UP / DOWN で隣のポイントの写真に移ります。OPEN&gt; のタップか START で、ポイントの画面を開きます。">A close aerial photo centered on the spot. UP / DOWN shows the next spot&#x27;s photo. Tap OPEN&gt; or press START to open the spot screen.</p>
+</section>
+<section class="chapter" id="spot">
+<h2 data-en="5. Spot Screen: Tides and Conditions" data-ja="5. ポイントの画面 (潮と海の様子)">5. Spot Screen: Tides and Conditions</h2>
+<figure class="annotated"><div class="stage"><img src="screens/spot.png?v=1" alt="SeaWatch spot screen"></div><figcaption data-en="The spot screen: the next tide, today&#x27;s tide curve and the sea." data-ja="ポイントの画面。次の満干、今日の潮の曲線、海の様子です。">The spot screen: the next tide, today&#x27;s tide curve and the sea.</figcaption></figure>
+<table class="ops">
+<tr><th data-en="Line" data-ja="行">Line</th><th data-en="Shows" data-ja="内容">Shows</th></tr>
+<tr><td data-en="NEXT HIGH / NEXT LOW" data-ja="NEXT HIGH / NEXT LOW">NEXT HIGH / NEXT LOW</td><td data-en="The next high or low tide, its time and height" data-ja="次の満潮か干潮と、その時刻と潮位">The next high or low tide, its time and height</td></tr>
+<tr><td data-en="RISING / FALLING" data-ja="RISING / FALLING">RISING / FALLING</td><td data-en="Whether the tide is coming in or going out, and the height now" data-ja="潮が上げているか下げているかと、今の潮位">Whether the tide is coming in or going out, and the height now</td></tr>
+<tr><td data-en="Curve" data-ja="曲線">Curve</td><td data-en="Today&#x27;s tide, with a dot at the time now" data-ja="今日の潮。今の位置に点が付きます">Today&#x27;s tide, with a dot at the time now</td></tr>
+<tr><td data-en="WIND" data-ja="WIND">WIND</td><td data-en="Wind speed, gusts (G) and direction" data-ja="風速、最大瞬間風速 (G)、風向">Wind speed, gusts (G) and direction</td></tr>
+<tr><td data-en="SWELL" data-ja="SWELL">SWELL</td><td data-en="Swell height, period and direction" data-ja="うねりの高さ、周期、向き">Swell height, period and direction</td></tr>
+<tr><td data-en="SUN" data-ja="SUN">SUN</td><td data-en="Sunrise and sunset" data-ja="日の出と日の入り">Sunrise and sunset</td></tr>
+<tr><td data-en="SEA / tide / MOON" data-ja="SEA / 潮回り / MOON">SEA / tide / MOON</td><td data-en="Water temperature, the tide phase (SPRING, MID, NEAP, LONG, YOUNG) and the moon&#x27;s age" data-ja="水温、潮回り (SPRING = 大潮、MID = 中潮、NEAP = 小潮、LONG = 長潮、YOUNG = 若潮)、月齢">Water temperature, the tide phase (SPRING, MID, NEAP, LONG, YOUNG) and the moon&#x27;s age</td></tr>
+<tr><td data-en="UPDATED" data-ja="UPDATED">UPDATED</td><td data-en="How long ago the data was updated. It turns yellow after 6 hours." data-ja="データの更新からの経過時間。6 時間を超えると黄色になります。">How long ago the data was updated. It turns yellow after 6 hours.</td></tr>
+</table>
+<table class="ops">
+<tr><th data-en="Do this" data-ja="操作">Do this</th><th data-en="What happens" data-ja="動き">What happens</th></tr>
+<tr><td data-en="Tap the time" data-ja="時刻をタップ">Tap the time</td><td data-en="Switches between the spot&#x27;s local time (LOCAL) and your watch&#x27;s time (MY TIME)." data-ja="ポイントの現地時刻 (LOCAL) とウォッチの時刻 (MY TIME) を切り替えます。">Switches between the spot&#x27;s local time (LOCAL) and your watch&#x27;s time (MY TIME).</td></tr>
+<tr><td data-en="Tap the curve" data-ja="曲線をタップ">Tap the curve</td><td data-en="Opens the tides for the next 14 days (chapter 6)." data-ja="この先 14 日の潮を開きます (第 6 章)。">Opens the tides for the next 14 days (chapter 6).</td></tr>
+<tr><td data-en="START" data-ja="START">START</td><td data-en="Goes back to the close-up map (5 km) with this spot selected." data-ja="このポイントを選んだ状態の拡大の地図 (5 km) へ戻ります。">Goes back to the close-up map (5 km) with this spot selected.</td></tr>
+<tr><td data-en="BACK" data-ja="BACK">BACK</td><td data-en="Goes back to the map you came from." data-ja="開く前の地図へ戻ります。">Goes back to the map you came from.</td></tr>
+</table>
+<p data-en="Tide heights are in meters. If your phone is offline, the last spot you opened still shows, with its age under UPDATED." data-ja="潮位の単位はメートルです。スマホがオフラインでも、最後に開いたポイントは表示でき、UPDATED に古さが出ます。">Tide heights are in meters. If your phone is offline, the last spot you opened still shows, with its age under UPDATED.</p>
+</section>
+<section class="chapter" id="tides">
+<h2 data-en="6. Tides for 14 Days" data-ja="6. 14 日の潮">6. Tides for 14 Days</h2>
+<figure class="annotated"><div class="stage"><img src="screens/tide14.png?v=1" alt="SeaWatch 14-day tides"></div><figcaption data-en="One bar per day, from that day&#x27;s lowest to highest tide. Brighter bars are spring tides." data-ja="1 日 1 本の棒で、その日の干潮から満潮までの幅です。明るい棒ほど大潮です。">One bar per day, from that day&#x27;s lowest to highest tide. Brighter bars are spring tides.</figcaption></figure>
+<figure class="annotated"><div class="stage"><img src="screens/tideday.png?v=1" alt="SeaWatch one-day tide"></div><figcaption data-en="One day: the curve, each high and low, and sunrise and sunset." data-ja="1 日の画面。曲線、満潮と干潮、日の出と日の入りです。">One day: the curve, each high and low, and sunrise and sunset.</figcaption></figure>
+<table class="ops">
+<tr><th data-en="Do this" data-ja="操作">Do this</th><th data-en="What happens" data-ja="動き">What happens</th></tr>
+<tr><td data-en="UP / DOWN (or swipe), or tap a bar" data-ja="UP / DOWN (またはスワイプ)、または棒をタップ">UP / DOWN (or swipe), or tap a bar</td><td data-en="Selects a day. Its tide phase and tides appear below." data-ja="日を選びます。下にその日の潮回りと満干が出ます。">Selects a day. Its tide phase and tides appear below.</td></tr>
+<tr><td data-en="Tap the selected bar again, or START" data-ja="選んだ棒をもう一度タップ、または START">Tap the selected bar again, or START</td><td data-en="Opens that day: the curve, highs and lows in time order, and sunrise and sunset." data-ja="その日の画面を開きます。曲線、時刻の順の満干、日の出と日の入りです。">Opens that day: the curve, highs and lows in time order, and sunrise and sunset.</td></tr>
+<tr><td data-en="BACK" data-ja="BACK">BACK</td><td data-en="Goes back to the 14 days, then to the spot screen." data-ja="14 日の一覧へ、さらにポイントの画面へ戻ります。">Goes back to the 14 days, then to the spot screen.</td></tr>
+</table>
+<p data-en="Dates follow the spot&#x27;s local day. Times follow the LOCAL / MY TIME choice on the spot screen." data-ja="日付はポイントの現地の日です。時刻は、ポイントの画面の LOCAL / MY TIME の選択に合わせます。">Dates follow the spot&#x27;s local day. Times follow the LOCAL / MY TIME choice on the spot screen.</p>
+</section>
+<section class="chapter" id="weather">
+<h2 data-en="7. Weather" data-ja="7. 天気">7. Weather</h2>
+<figure class="annotated"><div class="stage"><img src="screens/weather.png?v=1" alt="SeaWatch weather"></div><figcaption data-en="Weather now at the spot." data-ja="ポイントの今の天気。">Weather now at the spot.</figcaption></figure>
+<p data-en="Open it by tapping the weather card on the aerial map. Tap or press DOWN for the next page, UP for the previous one, and BACK to return to the map." data-ja="写真の地図の天気の札をタップすると開きます。タップか DOWN で次のページ、UP で前のページ、BACK で地図へ戻ります。">Open it by tapping the weather card on the aerial map. Tap or press DOWN for the next page, UP for the previous one, and BACK to return to the map.</p>
+<table class="ops">
+<tr><th data-en="Page" data-ja="ページ">Page</th><th data-en="Shows" data-ja="内容">Shows</th></tr>
+<tr><td data-en="Now" data-ja="今">Now</td><td data-en="Weather and temperature, feels-like, humidity and pressure, then chance of rain, today&#x27;s high and low, and wind" data-ja="天気と気温、体感・湿度・気圧、降水確率、今日の最高・最低、風">Weather and temperature, feels-like, humidity and pressure, then chance of rain, today&#x27;s high and low, and wind</td></tr>
+<tr><td data-en="Hourly (2 pages)" data-ja="時間ごと (2 ページ)">Hourly (2 pages)</td><td data-en="Every 3 hours: time, weather, temperature, wind and chance of rain" data-ja="3 時間ごとの時刻、天気、気温、風、降水確率">Every 3 hours: time, weather, temperature, wind and chance of rain</td></tr>
+<tr><td data-en="Daily (2 pages)" data-ja="日ごと (2 ページ)">Daily (2 pages)</td><td data-en="Six days from today: day, weather, high, low and chance of rain" data-ja="今日から 6 日の曜日、天気、最高、最低、降水確率">Six days from today: day, weather, high, low and chance of rain</td></tr>
+</table>
+<figure class="annotated"><div class="stage"><img src="screens/weather_hourly.png?v=1" alt="SeaWatch hourly weather"></div><figcaption data-en="Hourly, every 3 hours." data-ja="時間ごと (3 時間ごと)。">Hourly, every 3 hours.</figcaption></figure>
+<figure class="annotated"><div class="stage"><img src="screens/weather_daily.png?v=1" alt="SeaWatch daily weather"></div><figcaption data-en="Daily: high, low and chance of rain." data-ja="日ごと。最高、最低、降水確率です。">Daily: high, low and chance of rain.</figcaption></figure>
+<p data-en="The line at the bottom of the first page shows when the weather data is from. It turns yellow when it is more than 3 hours old. Temperatures are in °C. Wind speed follows the Wind unit setting." data-ja="最初のページの一番下に、天気のデータの時刻が出ます。3 時間より古いと黄色になります。気温は °C です。風速は設定の Wind unit に合わせます。">The line at the bottom of the first page shows when the weather data is from. It turns yellow when it is more than 3 hours old. Temperatures are in °C. Wind speed follows the Wind unit setting.</p>
+</section>
+<section class="chapter" id="glance">
+<h2 data-en="8. Glance" data-ja="8. Glance">8. Glance</h2>
+<figure class="annotated"><div class="stage"><img src="screens/glance.png?v=1" alt="SeaWatch glance"></div><figcaption data-en="The glance: the last spot you opened and its next tide." data-ja="Glance。最後に開いたポイントと次の満干です。">The glance: the last spot you opened and its next tide.</figcaption></figure>
+<p data-en="The glance shows the last spot you opened and its next high or low tide, with the time and height." data-ja="Glance には、最後に開いたポイントと、次の満潮か干潮の時刻と潮位が出ます。">The glance shows the last spot you opened and its next high or low tide, with the time and height.</p>
+</section>
+<section class="chapter" id="settings">
+<h2 data-en="9. Settings" data-ja="9. 設定">9. Settings</h2>
+<figure class="annotated"><div class="stage"><img src="screens/settings.png?v=1" alt="SeaWatch settings"></div><figcaption data-en="The settings menu." data-ja="設定のメニュー。">The settings menu.</figcaption></figure>
+<p data-en="Hold the information area at the bottom of any screen: the maps, the USA map, the spot screen, the tides or the weather. Holding UP (MENU) also works." data-ja="どの画面でも、下の情報エリアを長押しすると開きます (地図、米国の地図、ポイントの画面、潮、天気)。UP の長押し (MENU) でも開きます。">Hold the information area at the bottom of any screen: the maps, the USA map, the spot screen, the tides or the weather. Holding UP (MENU) also works.</p>
+<table class="ops">
+<tr><th data-en="Item" data-ja="項目">Item</th><th data-en="What it does" data-ja="内容">What it does</th></tr>
+<tr><td data-en="Map alerts &amp; info" data-ja="Map alerts &amp; info">Map alerts &amp; info</td><td data-en="Chooses what the maps show. See below." data-ja="地図に出すものを選びます。下の表を見てください。">Chooses what the maps show. See below.</td></tr>
+<tr><td data-en="My location" data-ja="My location">My location</td><td data-en="ON shows where you are on the map and your distance to the spot. Your location stays on the watch and is never sent." data-ja="ON にすると、地図に現在地とポイントまでの距離が出ます。位置はウォッチの中だけで使い、送りません。">ON shows where you are on the map and your distance to the spot. Your location stays on the watch and is never sent.</td></tr>
+<tr><td data-en="Wind unit" data-ja="Wind unit">Wind unit</td><td data-en="Auto, m/s, km/h, mph or knots. Auto uses mph when your watch&#x27;s distance unit is miles, and m/s otherwise." data-ja="Auto、m/s、km/h、mph、knots から選びます。Auto は、ウォッチの距離の単位がマイルなら mph、それ以外は m/s です。">Auto, m/s, km/h, mph or knots. Auto uses mph when your watch&#x27;s distance unit is miles, and m/s otherwise.</td></tr>
+<tr><td data-en="Device ID" data-ja="Device ID">Device ID</td><td data-en="Your watch&#x27;s ID for SeaWatch. Have it ready if you contact support." data-ja="SeaWatch でのウォッチの ID です。問い合わせの時にお知らせください。">Your watch&#x27;s ID for SeaWatch. Have it ready if you contact support.</td></tr>
+<tr><td data-en="Build" data-ja="Build">Build</td><td data-en="The version of the app on your watch." data-ja="ウォッチに入っているアプリの版です。">The version of the app on your watch.</td></tr>
+</table>
+<p data-en="You can also set the wind unit on your phone: Connect IQ → SeaWatch → Settings → Wind speed unit." data-ja="風速の単位はスマホでも変えられます。Connect IQ → SeaWatch → 設定 → Wind speed unit です。">You can also set the wind unit on your phone: Connect IQ → SeaWatch → Settings → Wind speed unit.</p>
+<h3 data-en="Map alerts &amp; info" data-ja="Map alerts &amp; info">Map alerts &amp; info</h3>
+<p data-en="Preset switches everything at once. FISH (ALL) turns on every item. SURF keeps Wind, High surf, Beach hazards and Coastal flood. Turning single items on or off makes it CUSTOM." data-ja="Preset でまとめて切り替えます。FISH (ALL) はすべて ON、SURF は Wind、High surf、Beach hazards、Coastal flood だけ ON です。1 つずつ入り切りすると CUSTOM になります。">Preset switches everything at once. FISH (ALL) turns on every item. SURF keeps Wind, High surf, Beach hazards and Coastal flood. Turning single items on or off makes it CUSTOM.</p>
+<table class="ops">
+<tr><th data-en="Item" data-ja="項目">Item</th><th data-en="On the map" data-ja="地図での出方">On the map</th></tr>
+<tr><td data-en="Wind" data-ja="Wind">Wind</td><td data-en="Yellow wind arrows on the close-up map" data-ja="拡大の地図の黄色い風の矢印">Yellow wind arrows on the close-up map</td></tr>
+<tr><td data-en="Red tide" data-ja="Red tide">Red tide</td><td data-en="Red tide colors and the TOXIN / ALGAE row" data-ja="赤潮の色と TOXIN / ALGAE の行">Red tide colors and the TOXIN / ALGAE row</td></tr>
+<tr><td data-en="High surf" data-ja="High surf">High surf</td><td data-en="Ring on the marker" data-ja="印の輪">Ring on the marker</td></tr>
+<tr><td data-en="Beach hazards" data-ja="Beach hazards">Beach hazards</td><td data-en="Ring on the marker (rip currents and similar)" data-ja="印の輪 (離岸流など)">Ring on the marker (rip currents and similar)</td></tr>
+<tr><td data-en="Small craft" data-ja="Small craft">Small craft</td><td data-en="Ring on the marker (small craft advisories)" data-ja="印の輪 (小型船舶向けの注意報)">Ring on the marker (small craft advisories)</td></tr>
+<tr><td data-en="Gale/storm" data-ja="Gale/storm">Gale/storm</td><td data-en="Ring on the marker (gale, storm and hazardous seas)" data-ja="印の輪 (強風・暴風・高波の警報)">Ring on the marker (gale, storm and hazardous seas)</td></tr>
+<tr><td data-en="Marine info" data-ja="Marine info">Marine info</td><td data-en="Yellow ring (marine statements, dense fog)" data-ja="黄色の輪 (海上気象情報、濃霧)">Yellow ring (marine statements, dense fog)</td></tr>
+<tr><td data-en="Coastal flood" data-ja="Coastal flood">Coastal flood</td><td data-en="Ring on the marker" data-ja="印の輪">Ring on the marker</td></tr>
+<tr><td data-en="Currents" data-ja="Currents">Currents</td><td data-en="Current arrows and the currents row" data-ja="潮流の矢印と潮流の行">Current arrows and the currents row</td></tr>
+<tr><td data-en="Tsunami" data-ja="Tsunami">Tsunami</td><td data-en="Always on. It cannot be turned off." data-ja="常に表示します。消せません。">Always on. It cannot be turned off.</td></tr>
+</table>
+</section>
+<section class="chapter" id="troubleshooting">
+<h2 data-en="10. Troubleshooting" data-ja="10. トラブルシューティング">10. Troubleshooting</h2>
+<table class="ops">
+<tr><th data-en="You see" data-ja="表示">You see</th><th data-en="What to do" data-ja="対処">What to do</th></tr>
+<tr><td data-en="LOADING... stays" data-ja="LOADING... が消えない">LOADING... stays</td><td data-en="Check that the phone is near the watch and online, and that Garmin Connect Mobile is running." data-ja="スマホがウォッチの近くにあってオンラインか、Garmin Connect Mobile が動いているかを確かめてください。">Check that the phone is near the watch and online, and that Garmin Connect Mobile is running.</td></tr>
+<tr><td data-en="NO CONNECTION or NO REPLY" data-ja="NO CONNECTION / NO REPLY">NO CONNECTION or NO REPLY</td><td data-en="The phone could not reach SeaWatch. The watch tries again by itself. Reopening the app also helps." data-ja="スマホからつながりませんでした。ウォッチが自動で取り直します。アプリを開き直しても直ります。">The phone could not reach SeaWatch. The watch tries again by itself. Reopening the app also helps.</td></tr>
+<tr><td data-en="CONTINUE on the USA map" data-ja="米国の地図に CONTINUE">CONTINUE on the USA map</td><td data-en="The region download stopped part way. Select the region and continue." data-ja="地域のダウンロードが途中で止まっています。地域を選んで続きを取ってください。">The region download stopped part way. Select the region and continue.</td></tr>
+<tr><td data-en="ALERTS: OLD DATA" data-ja="ALERTS: OLD DATA">ALERTS: OLD DATA</td><td data-en="The alerts could not be refreshed. Do not rely on them until they update." data-ja="警報を新しくできていません。更新されるまで、その警報に頼らないでください。">The alerts could not be refreshed. Do not rely on them until they update.</td></tr>
+<tr><td data-en="ALGAE: NO DATA" data-ja="ALGAE: NO DATA">ALGAE: NO DATA</td><td data-en="There is no harmful algae data for this spot." data-ja="このポイントには有害藻類のデータがありません。">There is no harmful algae data for this spot.</td></tr>
+<tr><td data-en="NO TIDE STATION" data-ja="NO TIDE STATION">NO TIDE STATION</td><td data-en="There is no tide station near this spot." data-ja="このポイントの近くに潮の観測点がありません。">There is no tide station near this spot.</td></tr>
+<tr><td data-en="UPDATED in yellow" data-ja="UPDATED が黄色">UPDATED in yellow</td><td data-en="The spot data is more than 6 hours old, usually because the phone was offline. Open the spot again while online." data-ja="ポイントのデータが 6 時間より古くなっています。たいていスマホがオフラインだった時です。オンラインの時に開き直してください。">The spot data is more than 6 hours old, usually because the phone was offline. Open the spot again while online.</td></tr>
+</table>
+<div class="callout" data-en="SeaWatch is a guide, not a safety device. Always check official forecasts, warnings and local conditions before you go in the water or out on a boat." data-ja="SeaWatch は目安を見るためのアプリで、安全を守る装置ではありません。海に入る前や船を出す前には、必ず公式の予報・警報と現地の様子を確かめてください。">SeaWatch is a guide, not a safety device. Always check official forecasts, warnings and local conditions before you go in the water or out on a boat.</div>
+</section>
+<section class="chapter" id="credits">
+<h2 data-en="Credits" data-ja="クレジット">Credits</h2>
+<p data-en="Maps: © OpenStreetMap contributors (ODbL). Elevation and depth: NOAA NCEI ETOPO 2022 and Coastal Relief Model. Aerial photos: USDA NAIP, via USGS. Clouds: NASA GIBS, GOES-West." data-ja="地図: © OpenStreetMap contributors (ODbL)。標高と水深: NOAA NCEI ETOPO 2022、Coastal Relief Model。航空写真: USDA NAIP (USGS 経由)。雲: NASA GIBS、GOES-West。">Maps: © OpenStreetMap contributors (ODbL). Elevation and depth: NOAA NCEI ETOPO 2022 and Coastal Relief Model. Aerial photos: USDA NAIP, via USGS. Clouds: NASA GIBS, GOES-West.</p>
+<p data-en="Weather data by Open-Meteo.com (CC BY 4.0). Alerts: NOAA National Weather Service. Tides and currents: NOAA CO-OPS. Harmful algae (C-HARM): NOAA CoastWatch West Coast Regional Node and SWFSC ERD." data-ja="気象データ: Open-Meteo.com (CC BY 4.0)。警報: NOAA National Weather Service。潮と潮流: NOAA CO-OPS。有害藻類 (C-HARM): NOAA CoastWatch West Coast Regional Node、SWFSC ERD。">Weather data by Open-Meteo.com (CC BY 4.0). Alerts: NOAA National Weather Service. Tides and currents: NOAA CO-OPS. Harmful algae (C-HARM): NOAA CoastWatch West Coast Regional Node and SWFSC ERD.</p>
+<p data-en="Pier locations: California Department of Fish and Wildlife, Public Piers and Jetties - R7 [ds3090], CC BY 4.0. Weather icons: Meteocons by Bas Milius (MIT). Icons: Material Design Icons (Apache 2.0)." data-ja="桟橋の位置: California Department of Fish and Wildlife, Public Piers and Jetties - R7 [ds3090] (CC BY 4.0)。天気の絵: Meteocons by Bas Milius (MIT)。アイコン: Material Design Icons (Apache 2.0)。">Pier locations: California Department of Fish and Wildlife, Public Piers and Jetties - R7 [ds3090], CC BY 4.0. Weather icons: Meteocons by Bas Milius (MIT). Icons: Material Design Icons (Apache 2.0).</p>
+<p data-en="SeaWatch is an independent app. It is not affiliated with or endorsed by NOAA, the National Weather Service or Garmin." data-ja="SeaWatch は独立したアプリです。NOAA、米国気象局、Garmin との提携や公認はありません。">SeaWatch is an independent app. It is not affiliated with or endorsed by NOAA, the National Weather Service or Garmin.</p>
+</section>
+
+  </article>
+</div>
+
+<script>
+function setLang(lang) {
+  document.documentElement.lang = lang === 'ja' ? 'ja' : 'en';
+  document.querySelectorAll('[data-en]').forEach(el => {
+    if (el.children.length > 0) return;
+    const text = el.getAttribute('data-' + lang);
+    if (text) el.textContent = text;
+  });
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+  try { localStorage.setItem('em_lang', lang); } catch(e) {}
+}
+try {
+  if (localStorage.getItem('em_lang') === 'ja') { setLang('ja'); }
+} catch(e) {}
+</script>
+
+</body>
+</html>

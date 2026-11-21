@@ -11,6 +11,7 @@
     --bg: #F8F9FC; --white: #FFFFFF; --border: #E2E6EF;
     --text: #111827; --text2: #374151; --muted: #6B7280; --muted2: #9CA3AF;
     --mw: #117A3A; --mw-light: #E5F5EC;
+    --sb: #1E5BA8; --sb-light: #E4EDF8;
     --bw: #1E3A8A; --bw-light: #E5EBFA;
     --pl: #0891B2; --pl-light: #CFFAFE;
     --wm: #4F46E5; --wm-light: #EEF2FF;
@@ -40,6 +41,7 @@
   .card-desc { font-size: 13px; color: var(--muted); margin-top: 2px; }
   .card-arrow { color: var(--muted2); font-size: 18px; flex-shrink: 0; }
   .card.mw:hover { border-color: var(--mw); } .card.mw .card-tag { color: var(--mw); }
+  .card.sb:hover { border-color: var(--sb); } .card.sb .card-tag { color: var(--sb); }
   .card.bw:hover { border-color: var(--bw); } .card.bw .card-tag { color: var(--bw); }
   .card.pl:hover { border-color: var(--pl); } .card.pl .card-tag { color: var(--pl); }
   .card.wm:hover { border-color: var(--wm); } .card.wm .card-tag { color: var(--wm); }
@@ -122,6 +124,15 @@
         <div class="card-tag" data-en="Web + Garmin watch face" data-ja="Web + Garmin 文字盤">Web + Garmin watch face</div>
         <div class="card-name">Face Composer &amp; The Face</div>
         <div class="card-desc" data-en="Dials and photos you compose, stored under your Device ID so the watch can fetch them. Sharing and purchase records." data-ja="組み立てた文字盤と写真を Device ID に紐づけて保存 (ウォッチが取りに来るため)。共有と購入記録について。">Dials and photos you compose, stored under your Device ID so the watch can fetch them. Sharing and purchase records.</div>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+    <a class="card sb" href="../seabook/privacy/">
+      <img src="../seawatch_icon.png" alt="Seabook">
+      <div class="card-body">
+        <div class="card-tag" data-en="Web + Garmin app" data-ja="Web + Garmin アプリ">Web + Garmin app</div>
+        <div class="card-name">Seabook</div>
+        <div class="card-desc" data-en="Your linked watch&#x27;s Device ID, the time and position of each record you make, and the photos and notes you add. Photo location data is removed. Data is stored in the US (Render, GitHub)." data-ja="つないだウォッチの Device ID と、記録を押した時の時刻・位置、足した写真・メモ。写真の位置情報は消します。データは米国 (Render・GitHub) に置きます。">Your linked watch&#x27;s Device ID, the time and position of each record you make, and the photos and notes you add. Photo location data is removed. Data is stored in the US (Render, GitHub).</div>
       </div>
       <span class="card-arrow">→</span>
     </a>

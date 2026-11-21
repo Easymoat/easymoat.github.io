@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — Seabook | Easymoat</title>
+<link rel="icon" type="image/png" href="../../favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FC; --white: #FFFFFF; --border: #E2E6EF;
+    --accent: #1E5BA8; --accent-light: #E4EDF8; --accent-dark: #153F75;
+    --text: #111827; --text2: #374151; --muted: #6B7280; --muted2: #9CA3AF;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.75; }
+  .lang-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 8px 40px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); position: sticky; top: 0; z-index: 200; }
+  .lang-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border); background: transparent; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; color: var(--muted); transition: all 0.15s; }
+  .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+  nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 40px; display: flex; align-items: center; }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+  h1 { font-family: 'Syne', sans-serif; font-size: clamp(26px, 5vw, 34px); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .updated { font-size: 13px; color: var(--muted2); margin-bottom: 32px; }
+  h2 { font-family: 'Syne', sans-serif; font-size: 19px; font-weight: 800; margin: 36px 0 10px; color: var(--text); }
+  p { font-size: 15px; color: var(--text2); margin-bottom: 12px; }
+  ul { margin: 0 0 12px 22px; }
+  li { font-size: 15px; color: var(--text2); margin-bottom: 7px; }
+  .callout { background: var(--accent-light); border-left: 3px solid var(--accent); border-radius: 8px; padding: 14px 18px; margin: 14px 0; font-size: 14px; color: var(--text2); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: var(--text); font-weight: 600; }
+  .lang-block.hidden { display: none; }
+  footer { border-top: 1px solid var(--border); padding: 28px 24px; text-align: center; font-size: 13px; color: var(--muted2); }
+  footer a { color: var(--accent); margin: 0 8px; }
+</style>
+</head>
+<body>
+<div class="lang-bar">
+  <span>🌐</span>
+  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+  <button class="lang-btn" onclick="setLang('ja')" id="btn-ja">日本語</button>
+</div>
+<nav>
+  <a href="../../seawatch/" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;">
+    <img src="../../easymoat_logo.png" alt="Easymoat" style="height:32px; width:32px; border-radius:6px; object-fit:cover;">
+    <span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:800; font-size:20px;">Seabook</span>
+  </a>
+</nav>
+
+<main>
+  <div class="lang-block" id="content-en">
+    <h1>Seabook Privacy Policy</h1>
+    <p class="updated">Last updated: November 21, 2026</p>
+    <p>Seabook is an ocean logbook service run by Easymoat. You use it by linking it to SeaWatch, our Garmin watch app.</p>
+
+    <h2>What Seabook receives</h2>
+    <ul>
+      <li><strong>Your linked watch:</strong> your Garmin Device ID, used once to link your watch to Seabook. No email address or name is needed.</li>
+      <li><strong>Records:</strong> the time and position when you press the record button on your watch, with the wind, waves and tide your watch was showing at that moment.</li>
+      <li><strong>What you add:</strong> photos, species, size, notes, and My Points (name and position).</li>
+      <li><strong>Access logs:</strong> when you open Seabook pages, your IP address and the time are kept in our server logs for 7 days.</li>
+      <li><strong>Photo location data:</strong> location and device data embedded in photos (Exif) are removed before saving.</li>
+    </ul>
+
+    <h2>What it does not receive</h2>
+    <ul>
+      <li>Your position when you are not linked or have not pressed record, or your track.</li>
+      <li>Your contacts, advertising IDs, or data from other apps.</li>
+    </ul>
+
+    <h2>How we use it</h2>
+    <ul>
+      <li>To build your logbook and show it on your phone and computer.</li>
+      <li>To show your My Points on your watch's map.</li>
+      <li>Except where required by law, we do not sell it, use it for advertising, or give it to anyone else.</li>
+    </ul>
+
+    <h2>Who can see it</h2>
+    <ul>
+      <li>Only you, the person who linked the watch, can see your logbook.</li>
+      <li>Anything you <strong>share</strong> can be seen by anyone with that link (no sign-in). Shared pages show the exact position of their records.</li>
+      <li>You can turn a link off at any time, but we cannot remove what someone saved before you did.</li>
+      <li>Shared pages are not listed in search engines.</li>
+      <li>My Points never appear on shared pages.</li>
+      <li>You are responsible for the places and people that appear in the photos you share.</li>
+    </ul>
+
+    <h2>Where it is stored and outside services</h2>
+    <ul>
+      <li>Records and data are stored on servers run by Render, a company in the United States. Backups are kept by Render and GitHub, both in the United States. If you use Seabook from Japan or another country, your information is entrusted to these US companies.</li>
+      <li>Maps are made by Easymoat's own server, the same maps as in SeaWatch, so no map company learns where you are or what you looked at.</li>
+      <li>Wind, wave and tide values come from your watch. Record positions are never sent to weather services.</li>
+    </ul>
+
+    <h2>How long we keep it and how to delete it</h2>
+    <ul>
+      <li>Records, photos and My Points are kept until you delete them.</li>
+      <li>You can delete them one by one, or delete everything; deleting everything also unlinks your watch.</li>
+      <li>Deleted data is removed from our servers right away and from backups within 30 days.</li>
+      <li>If you unlink in the watch settings, nothing more is sent.</li>
+    </ul>
+
+    <h2>Age</h2>
+    <ul>
+      <li>Seabook is not for people under 13, or under a higher age set by the law where you live.</li>
+    </ul>
+
+    <h2>Changes to this policy</h2>
+    <ul>
+      <li>We will post changes on this page. For important changes, such as receiving new kinds of data, we will also tell you on your watch or in Seabook, before any new data is used.</li>
+    </ul>
+
+    <h2>Who runs Seabook and how to contact us</h2>
+    <ul>
+      <li>Run by: Easymoat</li>
+      <li>Contact (including problems with a shared page): <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a></li>
+    </ul>
+  </div>
+
+  <div class="lang-block hidden" id="content-ja">
+    <h1>Seabook プライバシーポリシー</h1>
+    <p class="updated">最終更新日: 2026年11月21日</p>
+    <p>Seabook は、Easymoat が運営する海の日誌のサービスです。Garmin のウォッチアプリ SeaWatch とつないで使います。</p>
+
+    <h2>Seabook が受け取るもの</h2>
+    <ul>
+      <li><strong>つないだウォッチ</strong>: Garmin の Device ID。ウォッチと Seabook を一度つなぐ時に使います。メールアドレスや名前は要りません。</li>
+      <li><strong>記録</strong>: ウォッチで記録のボタンを押した時刻と位置、その時ウォッチに出ていた風・波・潮の値。</li>
+      <li><strong>あなたが足したもの</strong>: 写真、魚種・サイズ・メモ、マイポイント (名前と位置)。</li>
+      <li><strong>アクセスの記録</strong>: Seabook のページを開いた時の IP アドレスと日時が、サーバーのログに 7 日残ります。</li>
+      <li><strong>写真の位置情報</strong>: 写真に埋め込まれた位置や機種の情報 (Exif) は、保存する前に消します。</li>
+    </ul>
+
+    <h2>受け取らないもの</h2>
+    <ul>
+      <li>つないでいない時の位置、記録のボタンを押していない時の位置、移動の軌跡。</li>
+      <li>連絡先、広告の ID、ほかのアプリの情報。</li>
+    </ul>
+
+    <h2>使い道</h2>
+    <ul>
+      <li>あなたの日誌を作り、携帯と PC で見せるため。</li>
+      <li>マイポイントを、あなたのウォッチの地図に出すため。</li>
+      <li>法令に基づく場合を除き、売ったり、広告に使ったり、ほかの人に渡したりしません。</li>
+    </ul>
+
+    <h2>見られる人</h2>
+    <ul>
+      <li>日誌は、つないだ本人だけが見られます。</li>
+      <li><strong>共有</strong>したものだけは、そのリンクを知っている人が見られます (ログインは要りません)。共有したページには、記録の正確な位置が出ます。</li>
+      <li>リンクはいつでも止められます。ただし、止める前に見た人が控えた内容は消せません。</li>
+      <li>共有したページは、検索エンジンに載せません。</li>
+      <li>マイポイントは、共有したページには出ません。</li>
+      <li>写真に写った景色や人については、共有する人が責任を持ってください。</li>
+    </ul>
+
+    <h2>置き場所と外のサービス</h2>
+    <ul>
+      <li>記録とデータは、米国の事業者 Render のサーバーに置きます。バックアップは Render と GitHub (どちらも米国) に置きます。日本などから使う場合も、あなたの情報は米国の事業者に預けられます。</li>
+      <li>地図は SeaWatch と同じ、Easymoat のサーバーで作った地図です。地図を見ても、地図の会社にあなたの位置や見た範囲は伝わりません。</li>
+      <li>風・波・潮はウォッチが持っている値をそのまま使います。記録の位置を天気の会社に問い合わせることはしません。</li>
+    </ul>
+
+    <h2>保存の期間と消し方</h2>
+    <ul>
+      <li>記録・写真・マイポイントは、あなたが消すまで保存します。</li>
+      <li>1 件ずつ消せます。「すべて消す」で日誌を全部消せます。この時、ウォッチとのつなぎも外れます。</li>
+      <li>消したものは、すぐにサーバーから消え、30 日以内にバックアップからも消えます。</li>
+      <li>ウォッチの設定でつなぎを外すと、それ以降は何も送りません。</li>
+    </ul>
+
+    <h2>年齢</h2>
+    <ul>
+      <li>13 歳未満の方、または住んでいる国の法律がより高い年齢を定めている場合はその年齢未満の方は、使えません。</li>
+    </ul>
+
+    <h2>このポリシーの変更</h2>
+    <ul>
+      <li>変える時は、このページで知らせます。受け取るものが増えるなど大事な変更は、ウォッチか Seabook の画面でも知らせ、増えた分は使い始める前に知らせます。</li>
+    </ul>
+
+    <h2>運営者と問い合わせ</h2>
+    <ul>
+      <li>運営: Easymoat</li>
+      <li>問い合わせ (共有ページの問題の連絡もこちら): <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a></li>
+    </ul>
+  </div>
+</main>
+
+<footer>
+  © 2026 Easymoat &nbsp;|&nbsp;
+  <a href="../../seawatch/" id="lnk-home">← SeaWatch</a> &nbsp;|&nbsp;
+  <a href="../../privacy/" id="lnk-all">All privacy policies</a>
+</footer>
+
+<script>
+function setLang(lang) {
+  var en = document.getElementById('content-en');
+  var ja = document.getElementById('content-ja');
+  if (lang === 'ja') {
+    en.classList.add('hidden'); ja.classList.remove('hidden');
+    document.documentElement.lang = 'ja';
+    document.getElementById('lnk-home').textContent = '← SeaWatch';
+    document.getElementById('lnk-all').textContent = 'プライバシーポリシー一覧';
+  } else {
+    ja.classList.add('hidden'); en.classList.remove('hidden');
+    document.documentElement.lang = 'en';
+    document.getElementById('lnk-home').textContent = '← SeaWatch';
+    document.getElementById('lnk-all').textContent = 'All privacy policies';
+  }
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', lang === 'ja');
+  try { localStorage.setItem('em_lang', lang); } catch (e) {}
+}
+(function () {
+  var saved = 'en';
+  try { saved = localStorage.getItem('em_lang') || localStorage.getItem('pl_lang') || 'en'; } catch (e) {}
+  if (saved === 'ja') { setLang('ja'); }
+})();
+</script>
+</body>
+</html>

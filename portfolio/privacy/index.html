@@ -52,7 +52,7 @@
   <!-- ===================== ENGLISH ===================== -->
   <div class="lang-block" id="content-en">
     <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: September 26, 2026</p>
+    <p class="updated">Last updated: November 21, 2026</p>
 
     <p><strong>WebMemo</strong> (app.easymoat.com) and <strong>MarketWatch Max</strong> are services operated by <strong>Easymoat</strong> (sole proprietor: Yoshicchi), Japan. This policy explains exactly what data these services handle. The MarketWatch watch app itself has its own policy on the <a href="../../marketwatch/">MarketWatch page</a>.</p>
 
@@ -81,33 +81,44 @@
     </ul>
     <p><strong>Entering amounts is optional.</strong> Without cost basis or quantity, WebMemo works as a watchlist and no financial amounts of yours exist anywhere on our server.</p>
 
-    <h2>4. Memo tabs and attachments</h2>
+    <h2>4. Live Activities in the Easymoat app for iPhone</h2>
+    <p>If you start a Live Activity in the Easymoat app for iPhone, your lock screen and the Dynamic Island show the first stocks of one portfolio and keep them up to date while the market is open, about every 30 to 60 seconds. For this, our server stores:</p>
+    <ul>
+      <li>the notification token that Apple gives the app for that Live Activity</li>
+      <li>your account (the Device ID you signed in with)</li>
+      <li>the number of the portfolio shown</li>
+      <li>the time you started it</li>
+    </ul>
+    <p>Our server sends the prices to Apple's notification service (Apple Push Notification service, APNs), which delivers them to your iPhone. APNs receives the token and what is shown: the tickers, prices, changes and the portfolio name.</p>
+    <p>These records are deleted when you stop the Live Activity, when the market closes, or 8 hours after you started it at the latest.</p>
+
+    <h2>5. Memo tabs and attachments</h2>
     <p>Memo tabs are stored on our server so the same notes appear on every device you sign in from. File attachments, when the feature is available, are stored the same way (up to 10 MB per file, with a per-account cap) and are visible only to your account.</p>
 
-    <h2>5. Market data</h2>
+    <h2>6. Market data</h2>
     <p>Prices come from Yahoo Finance's public API. Requests are made by our server, so Yahoo receives the tickers being looked up but nothing that identifies you — not even your IP address.</p>
 
-    <h2>6. Server logs</h2>
+    <h2>7. Server logs</h2>
     <p>Operational logs record Device IDs and request outcomes for troubleshooting. We also count page views and sign-in attempts per day; these counts keep no identifiers. Portfolio contents are not written to logs.</p>
 
-    <h2>7. Hosting</h2>
+    <h2>8. Hosting</h2>
     <p>Data is stored on Render's cloud infrastructure and encrypted in transit (HTTPS). Servers may be located outside your country.</p>
 
-    <h2>8. Taking your data out, and deleting it</h2>
+    <h2>9. Taking your data out, and deleting it</h2>
     <p>Nothing is locked in. <strong>Export</strong> in the header writes all of your portfolios to a single CSV file at any time — the same file can be read back with Import, so you can keep your own copy or move it elsewhere whenever you like. Deleting also removes the watch verification data listed in section 3.</p>
     <p>Your data is kept while you use the service. You can erase it yourself at any time: sign in to WebMemo and use <strong>Delete all my data</strong> at the bottom of the page. This immediately and permanently removes your portfolios, memo tabs, asset classes, net-worth history, display settings and any attachments from our server. Your MarketWatch license is unaffected, so you can sign in again and start over. If you prefer, email your Device ID to <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a> and we will do it for you. Since we hold no email address or name, there is nothing else to erase.</p>
 
-    <h2>9. Changes</h2>
+    <h2>10. Changes</h2>
     <p>Material changes to this policy will be reflected in the date at the top. Continued use after a change means acceptance.</p>
 
-    <h2>10. Contact</h2>
+    <h2>11. Contact</h2>
     <p>Questions and requests: <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a></p>
   </div>
 
   <!-- ===================== JAPANESE ===================== -->
   <div class="lang-block hidden" id="content-ja">
     <h1>プライバシーポリシー</h1>
-    <p class="updated">最終更新日: 2026年9月26日</p>
+    <p class="updated">最終更新日: 2026年11月21日</p>
 
     <p><strong>WebMemo</strong>（app.easymoat.com）と <strong>MarketWatch Max</strong> は、<strong>Easymoat</strong>（個人事業主: Yoshicchi、日本）が運営するサービスです。本ポリシーは、これらのサービスが取り扱うデータを説明します。MarketWatch ウォッチアプリ本体のポリシーは <a href="../../marketwatch/">MarketWatch ページ</a>に記載しています。</p>
 
@@ -136,26 +147,37 @@
 </ul>
     <p><strong>金額の入力は任意です。</strong>取得単価や数量を入れなければウォッチリストとして使え、あなたの資産額はサーバー上のどこにも存在しません。</p>
 
-    <h2>4. メモタブと添付ファイル</h2>
+    <h2>4. Easymoat の iPhone アプリのライブアクティビティ</h2>
+    <p>Easymoat の iPhone アプリでライブアクティビティを始めると、ロック画面とダイナミックアイランドに 1 つのポートフォリオの先頭の銘柄が出て、取引時間中は約 30〜60 秒ごとに更新されます。このため、当社サーバーに次のものを保存します。</p>
+    <ul>
+      <li>そのライブアクティビティのために Apple がアプリに渡す通知トークン</li>
+      <li>アカウント (サインインに使った Device ID)</li>
+      <li>表示するポートフォリオの番号</li>
+      <li>始めた時刻</li>
+    </ul>
+    <p>当社サーバーは株価を Apple の通知サービス (Apple Push Notification service、APNs) へ送り、APNs がお使いの iPhone に届けます。APNs が受け取るのは、通知トークンと表示する内容 (銘柄・価格・前日比・ポートフォリオ名) です。</p>
+    <p>これらの記録は、ライブアクティビティを止めた時、取引が終わった時、または始めてから 8 時間で消します (いずれか早い時)。</p>
+
+    <h2>5. メモタブと添付ファイル</h2>
     <p>メモのタブは、サインインしたどの端末からも同じ内容を見られるよう、サーバーに保存されます。ファイル添付は、機能が利用可能な場合、同様にサーバーに保存され（1ファイル10MBまで・アカウント上限あり）、あなたのアカウントからのみ参照できます。</p>
 
-    <h2>5. 市場データ</h2>
+    <h2>6. 市場データ</h2>
     <p>価格は Yahoo Finance の公開 API から取得します。リクエストは当社サーバーが行うため、Yahoo に届くのは照会されたティッカーのみで、あなたを特定する情報（IP アドレスを含む）は渡りません。</p>
 
-    <h2>6. サーバーログ</h2>
+    <h2>7. サーバーログ</h2>
     <p>障害対応のため、Device ID とリクエストの成否を運用ログに記録します。また、ページの表示回数とサインインの試行回数を日別に数えます (識別子は残しません)。ポートフォリオの中身はログに書き込みません。</p>
 
-    <h2>7. ホスティング</h2>
+    <h2>8. ホスティング</h2>
     <p>データは Render のクラウド基盤に保存され、通信は HTTPS で暗号化されます。サーバーは国外に所在する場合があります。</p>
 
-    <h2>8. データの持ち出しと削除</h2>
+    <h2>9. データの持ち出しと削除</h2>
     <p>囲い込みはありません。ヘッダーの<strong>「エクスポート」</strong>から、全ポートフォリオをいつでも1つの CSV ファイルに書き出せます。同じファイルは「インポート」で読み戻せるので、手元に控えを持つことも、他へ移すことも自由です。 削除では、第 3 条のウォッチの確認情報も同時に消えます。</p>
     <p>データはサービスの利用中のみ保持します。削除はいつでもご自身で行えます。WebMemo にサインインし、ページ最下部の<strong>「全データを削除」</strong>をご利用ください。ポートフォリオ・メモタブ・資産クラス・純資産の履歴・表示設定・添付ファイルが、当社サーバーから即座かつ完全に消去されます。MarketWatch のライセンスには影響しないため、再度サインインして最初から使えます。ご希望であれば、Device ID を添えて <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a> までご連絡いただければ当社で対応します。メールアドレスも氏名もお預かりしていないため、それ以外に消すべきものはありません。</p>
 
-    <h2>9. 変更</h2>
+    <h2>10. 変更</h2>
     <p>重要な変更は上部の「最終更新日」に反映します。変更後の継続利用は、更新後のポリシーへの同意を意味します。</p>
 
-    <h2>10. お問い合わせ</h2>
+    <h2>11. お問い合わせ</h2>
     <p>ご質問・ご請求は <a href="mailto:easymoat@gmail.com">easymoat@gmail.com</a> まで。</p>
   </div>
 </main>

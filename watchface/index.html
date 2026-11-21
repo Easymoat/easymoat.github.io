@@ -23,6 +23,20 @@
   header h1 { font-size: 19px; font-weight: 600; margin: 0; letter-spacing: .01em; }
   header .sub { color: var(--ink-2); font-size: 14px; }
   header .spacer { flex: 1; }
+  /* 上のバーのサインイン (2026-11-22): 状態と入力を 1 行に細く */
+  #hsign { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-size: 13px; color: var(--ink-2); align-self: center; white-space: nowrap; }
+  #hsign input { height: 24px; font-size: 13px; padding: 0 6px; box-sizing: border-box; }
+  #hsign #hdid { width: 104px; } #hsign #hcode { width: 78px; }
+  #hsign .btn { height: 24px; padding: 0 8px; font-size: 12px; line-height: 1; }
+  #hsign b { font-family: var(--mono); font-weight: 500; color: var(--ink); }
+  #hsign .hdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); margin-right: 6px; }
+  #hsign .hdot.on { background: var(--ok); } #hsign .hdot.off { background: var(--accent); }
+  #hsign #hstat { max-width: 200px; height: auto; }
+  #hsign ~ #pubstamp { margin-left: 0 !important; }
+  @media (max-width: 1280px) { header .sub:not(#pubstamp) { display: none; } }
+  @media (max-width: 1000px) { header .kbd { display: none; } }
+  @media (max-width: 760px) { #hsign { display: none; } }   /* 携帯は下のバー (#phonebar) で */
+  body.adminonly #hsign, body.marketonly #hsign { display: none; }
   .lbl { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
   .lblnote { text-transform: none; letter-spacing: 0; margin-left: 8px; font-weight: 400; }
   .tier { display: flex; align-items: baseline; gap: 12px; width: 100%; max-width: 1040px; margin: 6px 0 -6px; }
@@ -550,7 +564,8 @@
 <header>
   <h1>Face Composer</h1>
   <span class="sub">Drag parts onto the dial, then save and send it to the watch.</span>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-10-27 00:49</span>
+  <span id="hsign"><span id="hwho" hidden></span><input type="text" id="hdid" placeholder="Device ID" maxlength="40" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" title="On the watch: settings → Watch Face → Customize → Device ID" hidden><input type="text" id="hcode" inputmode="numeric" placeholder="Web code" maxlength="8" autocomplete="off" title="The 6 digits the watch shows now: settings → Watch Face → Customize → Web code" hidden><button class="btn primary" id="hsignin" hidden>Sign in</button><button class="btn" id="hchange" title="Use a different watch" hidden>Change</button><button class="btn" id="hout" title="Sign this browser out of this watch" hidden>Sign out</button><span class="status" id="hstat"></span></span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-11-22 06:06</span>
   <span class="spacer"></span>
   <span class="kbd">← ↑ → ↓ nudge · Delete remove · Esc deselect</span>
 </header>
@@ -711,7 +726,7 @@
           <div class="ctl" id="secondaddnote" hidden><span></span><span class="muted" style="max-width:640px">One Pass covers two of your watches. Put The Face on the other watch, then type its Device ID and the Web code it shows now (settings → Watch Face → Customize). Collection stays one — pick which watch to send to above the collection. You can change the second watch once a month.</span></div>
           <div class="status" id="secondst"></div>
           <div class="ctl" id="wfsignrow" hidden><span>Web code</span><input type="text" id="wfcode" inputmode="numeric" placeholder="6 digits" maxlength="8" autocomplete="off" style="width:110px"><button class="btn primary" id="wfsignin">Sign in</button><span class="status" id="wfsignst"></span></div>
-          <div class="ctl" id="wfsignnote" hidden><span></span><span class="muted" style="max-width:640px">This watch is registered, so this browser has to sign in once (it stays signed in for 30 days). On the watch, open settings → Watch Face → Customize → Web code: it shows a 6-digit code that changes every minute. Type it here. To end every sign-in, choose Sign out web on the watch.</span></div>
+          <div class="ctl" id="wfsignnote" hidden><span></span><span class="muted" style="max-width:640px">This watch is registered, so this browser has to sign in once (it stays signed in while you keep using it — it ends after 90 days without a visit). On the watch, open settings → Watch Face → Customize → Web code: it shows a 6-digit code that changes every minute. Type it here. To end every sign-in, choose Sign out web on the watch.</span></div>
           <div class="status" id="watchseen" title="Your watch asks the server for a new dial about every 5 minutes. This line says when it last asked, and whether it already has the dial you sent."></div>
       </div>
       <div class="grp" id="locbox">
@@ -1152,6 +1167,13 @@
   // Crew member (48、2026-10-04 ユーザー決定): 1 人 × 1 つの値の「名前 値」。誰か = 9 番目 (Crew 1-3、PL の指名の枠)、
   //   値の種類 = f の bit2-3 (0 距離 / 4 心拍 / 8 歩数)。名前の On / Off・並び・間隔・太字は 47 と同じ (f & 3、10 番目、11 番目、12 番目)。
   const isCrewOne = (t) => !!(TYPES[t] && TYPES[t].crewOne);
+  // ★PL V3.0.0 でコンプリケーションが 1 枠になる (2026-11-05 ユーザー指示): 新しく選べるのは 47 = 1 行、48 = Crew 1 だけ。
+  //   保存済みの面のデータは変えない (読み込みは 1-3 を受けたまま、旧 PL の時計では今までどおり出る)。案内文は出さない。
+  //   保存済みの Crew 2 / 3・2〜3 行目は新しい PL の時計と同じく "--" で見せ (ユーザー決定)、1 へ戻すボタンだけ残す。
+  //   V3.0.0 の公開と同時に true (window.__fcCrewOneLive は回帰試験用)
+  let CREW_ONE_LIVE = true;   // PL V3.0.2 が 2026-11-07 に公開済み → 2026-11-22 の公開で有効に
+  window.__fcCrewOneLive = (v) => { CREW_ONE_LIVE = !!v; };
+  const crewPick = (vals) => (CREW_ONE_LIVE ? [...new Set([1].concat(vals))].sort() : [1, 2, 3]);   // ボタンの値 (1 だけの時は呼び側で出さない)
   const crewMember = (e) => { const v = Number(e[8]); return (v === 1 || v === 2 || v === 3) ? v : 1; };
   const crewMetric = (e) => ((e[6] & 12) === 4 || (e[6] & 12) === 8) ? (e[6] & 12) : 0;
   const CREW_METRICS = [[0, 'Distance', 'Dist'], [4, 'Heart rate', 'HR'], [8, 'Steps', 'Steps']];
@@ -1168,7 +1190,8 @@
   const CREW_SAMPLE_M = [['Ema', '1.2km 3m'], ['Ken', '120m 1m'], ['--', '']];
   const CREW_SAMPLE_FT = [['Ema', '0.7mi 3m'], ['Ken', '394ft 1m'], ['--', '']];
   const crewSample = () => (st.du === 1 ? CREW_SAMPLE_FT : CREW_SAMPLE_M);
-  const crewLines = (e) => crewSample().slice(0, crewRows(e)).map((r) => r.join(' '));
+  const crewRowData = (e) => crewSample().slice(0, crewRows(e)).map((r, i) => ((CREW_ONE_LIVE && i > 0) ? ['--', ''] : r));
+  const crewLines = (e) => crewRowData(e).map((r) => r.join(' '));
   // el[9] = 並び + 1 (1 名前左 / 2 名前右 / 3 名前上)。0 / 無し = 最初の形 (名前と数字を 1 行で、Show は見ない)。
   //   昔の面を描き変えないための目印を兼ねる (2026-09-27、ユーザー指示で Icon = 名前・Value = 数字に)。
   const crewNew = (e) => { const v = Number(e[9]); return v === 1 || v === 2 || v === 3 || v === 4; };   // 4 = 名前下 (2026-09-29)
@@ -1990,16 +2013,32 @@
   //   COND_LIVE = その版がストアに出たら true (それまでは時計が固定の文字で描くので、プレビューも今のまま)
   const COND_FACE = new Set(['approachs7042mm', 'approachs7047mm', 'd2mach1', 'descentmk343mm', 'descentmk351mm', 'enduro3', 'epix2', 'epix2pro42mm', 'epix2pro47mm', 'epix2pro51mm',
     'fenix7', 'fenix7pro', 'fenix7pronowifi', 'fenix7s', 'fenix7spro', 'fenix7x', 'fenix7xpro', 'fenix7xpronowifi', 'fenix8solar47mm', 'fenix8solar51mm', 'fenix9prosolar47mm', 'fr955', 'marq2', 'marq2aviator']);
-  const COND_LIVE = false;
-  const isCond = () => COND_LIVE && COND_FACE.has(st.dev);
+  // 2026-10-31 (The Face c95662a、ユーザー指示): 時計の書体の既定を全機種で Roboto Condensed に (FACE = [Condensed, Roboto])。
+  //   Roboto のある機種も Condensed で描く。Condensed の入っていない Venu 3 / 3S だけ Roboto のまま (NO_COND)
+  const NO_COND = new Set(['venu3', 'venu3s']);
+  let COND_LIVE = false;
+  window.__fcCondLive = (v) => { COND_LIVE = !!v; };   // 回帰試験用
+  window.__fcFontProbe = () => ({ effPx, rimNumH, sysNear });
+  // ベクター書体の無い 16 機種: 次の版の時計は、頼んだ px に高さが一番近い内蔵書体で描く (WfLayout.sysFontNear、The Face c95662a)。同じ差なら小さい方。
+  //   高さ = Graphics.getFontHeight (The Face が Sim で実測、SDK 9.2.0、2026-11-05)。XTINY / TINY / SMALL / MEDIUM / LARGE / NUMBER_MILD / MEDIUM / HOT / THAI_HOT
+  const SYS_H = { approachs50: [29,39,39,43,51,82,100,144,175], d2airx10: [32,43,49,58,67,82,105,154,180], descentg2: [29,39,44,51,56,82,102,138,157],
+    fr255: [19,29,32,37,40,45,53,89,102], fr255m: [19,29,32,37,40,45,53,89,102], fr255s: [19,23,26,32,32,40,53,74,86], fr255sm: [19,23,26,32,32,40,53,74,86],
+    instinct3amoled45mm: [26,33,39,48,55,78,105,140,140], instinct3amoled50mm: [28,36,42,52,59,84,113,150,150], instinctcrossoveramoled: [26,33,43,48,55,78,105,140,140],
+    venu2: [32,43,49,58,67,82,105,154,180], venu2plus: [32,43,49,58,67,82,105,154,180], venu2s: [29,37,43,52,58,71,91,134,156],
+    venusq2: [39,44,51,59,68,82,105,155,181], venusq2m: [39,44,51,59,68,82,105,155,181], vivoactive5: [32,41,48,54,63,74,99,144,169] };
+  const sysNear = (list, px) => { let best = list[0], bd = 9999; for (const h of list) { const d = Math.abs(h - px); if (d < bd) { bd = d; best = h; } } return best; };
+  const sysHeights = (clock) => { const h = COND_LIVE && SYS_H[st.dev]; return h ? (clock ? h.slice(5) : h.slice(0, 5)) : null; };
+  const isCond = () => COND_LIVE && !NO_COND.has(st.dev) && (DEVPROF_VEC(st.dev) || COND_FACE.has(st.dev));
   const isVector = () => prof()[2] === 1 || isCond();
+  function DEVPROF_VEC(d) { return (DEVPROF[d] || DEVPROF.fr965)[2] === 1; }
   // The px this device really draws for (type, size): vector-font devices use the value you typed
   // (scaled by screen height, ×TEXT_BOOST for body text); the rest use their fixed system fonts.
   function effPx(t, sz) {
     const p = prof(), s = (sz < 0 || sz > SIZE_MAX) ? 1 : sz;
-    if (isVector()) {
-      const px = Math.round((isClock(t) ? st.tm : st.tx)[s] * p[1] / 454);
-      return isClock(t) ? px : Math.round(px * TEXT_BOOST);
+    const near = sysHeights(isClock(t));
+    if (isVector() || near) {
+      const px0 = Math.round((isClock(t) ? st.tm : st.tx)[s] * p[1] / 454), px = isClock(t) ? px0 : Math.round(px0 * TEXT_BOOST);
+      return near ? sysNear(near, px) : px;
     }
     const f = Math.min(s, 2);   // fixed system fonts come in three steps: XL draws as L
     return isClock(t) ? p[6 + f] : p[3 + f];
@@ -2008,7 +2047,8 @@
   //   機種の px が 44 以上 = FONT_MEDIUM、34 以上 = FONT_SMALL、それ未満 = FONT_XTINY に置き換える (2026-10-27 ユーザー指示で合わせる)
   function rimNumH(hgt) {
     if (isVector()) return hgt;
-    const p = prof(), dpx = Math.floor((hgt * p[1] + 227) / 454);
+    const p = prof(), dpx = Math.floor((hgt * p[1] + 227) / 454), near = sysHeights(false);
+    if (near) return sysNear(near, Math.max(8, dpx)) * 454 / p[1];   // 次の版の時計: 一番近い内蔵書体
     return (dpx >= 44 ? p[5] : dpx >= 34 ? p[4] : p[3]) * 454 / p[1];
   }
 
@@ -2490,7 +2530,8 @@
     else if (d.text) p.innerHTML = `<span class="ico"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M4.5 4h15v3.4h-5.6V20h-3.8V7.4H4.5z" fill="currentColor"/></svg></span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
     else if (d.line != null) p.innerHTML = `<span class="ico">${lineArt(d.line, 22, 3).svg}</span><span class="nm">Line</span><span class="hint">${t}</span>`;
     else p.innerHTML = `<span class="ico">${d.noPal ? '' : d.icon && !TEXT_ICON[d.icon] ? ICONS[d.icon]('#1D222B') : `<span style="font:500 13px var(--watch);white-space:nowrap">${TEXT_ICON[d.icon] || d.sample || ''}</span>`}</span><span class="nm">${d.name}</span><span class="hint">${t}</span>`;
-    if (d.crewOne) p.dataset.tip = 'One part is one crew member. After you place it, pick Crew 1, 2 or 3 and what to show (distance, heart rate or steps). Needs PulseLink on the same watch. Who is Crew 1, 2 and 3 is set in PulseLink.';
+    if (d.crewOne) p.dataset.tip = CREW_ONE_LIVE ? 'Shows the person at the top of your list in PulseLink. After you place it, pick what to show (distance, heart rate or steps). Needs PulseLink on the same watch. To change who, reorder the list in PulseLink.'
+      : 'One part is one crew member. After you place it, pick Crew 1, 2 or 3 and what to show (distance, heart rate or steps). Needs PulseLink on the same watch. Who is Crew 1, 2 and 3 is set in PulseLink.';
     if (d.stk != null) p.dataset.tip = STOCK_TIP;   // Stock
     if (PAL_NAME[t]) { const nm = p.querySelector('.nm'); if (nm) nm.textContent = PAL_NAME[t]; }
     if (!d.dial) p.addEventListener('pointerdown', (ev) => startPaletteDrag(ev, +t));
@@ -2581,11 +2622,13 @@
     renderBold(); renderUpCol(); $('io').value = st.io; renderWindUnit();
     // Devices without a vector font ignore the px you type and use three fixed system fonts.
     const vec = isVector(), p = prof();
-    ['tx', 'tm'].forEach((key) => { $(key).style.opacity = vec ? '1' : '0.45'; });
+    const nearT = sysHeights(false), nearC = sysHeights(true);
+    ['tx', 'tm'].forEach((key) => { $(key).style.opacity = (vec || nearT) ? '1' : '0.45'; });
     $('fixednote').hidden = vec;
     if (!vec) {
-      $('fixednotetxt').textContent =
-        `This device has no vector font: the text px above are ignored and it draws the fixed system fonts — text ${p[3]}/${p[4]}/${p[5]} px, clock ${p[6]}/${p[7]}/${p[8]} px (shown on the dial; XL draws as L). Icon size still works.`;
+      $('fixednotetxt').textContent = nearT
+        ? `This device has no vector font: it draws the built-in font closest in height to the px above — text ${nearT.join('/')} px, clock ${nearC.join('/')} px (shown on the dial). Sizes that land on the same font look the same. Icon size still works.`
+        : `This device has no vector font: the text px above are ignored and it draws the fixed system fonts — text ${p[3]}/${p[4]}/${p[5]} px, clock ${p[6]}/${p[7]}/${p[8]} px (shown on the dial; XL draws as L). Icon size still works.`;
     }
   }
   function renderUpCol() {
@@ -2756,7 +2799,7 @@
     div.style.fontSize = (px / FONT_EM) + 'px';
     div.style.lineHeight = px + 'px';
     // ベクターフォントの無い機種 (固定の 3 段) は時計が太字を自動で切る (b0919j) ので、見本も太字にしない。
-    const lv = prof()[2] !== 1 ? 0 : boldOf(e), bo = lv ? boldOff(px, lv) : 0;   // 部品ごとの太字 (無ければ全体)
+    const lv = !isVector() ? 0 : boldOf(e), bo = lv ? boldOff(px, lv) : 0;   // 部品ごとの太字 (無ければ全体)
     if (bo) {
       div.style.textShadow = lv === 2 ? `${bo}px 0 0 currentColor, ${Math.floor(bo / 2)}px 0 0 currentColor` : `${bo}px 0 0 currentColor`;   // 中間のずらしは実機と同じ切り捨て
       if (def.strip) div.style.paddingRight = (2 + bo) + 'px';   // 帯はコマ幅に bo を含めている。それ以外は値の後ろに bo を空ける (下)
@@ -2831,7 +2874,7 @@
       const al = e[3] === 1 ? 'flex-start' : e[3] === 2 ? 'flex-end' : 'center';
       const gp = gapOf(e) * ki, vG = arr === 2 ? (gapOf(e) - DEF_IG) * ki : 0, nG = arr === 3 ? (gapOf(e) - DEF_IG) * ki : 0;
       const top = `position:relative;top:${inkShift(px).toFixed(2)}px`;
-      const rowsH = (isCrewOne(t) ? [crewOneRow(e)] : crewSample().slice(0, crewRows(e))).map(([nm, vl]) => {
+      const rowsH = (isCrewOne(t) ? [(CREW_ONE_LIVE && crewMember(e) > 1) ? ['--', ''] : crewOneRow(e)] : crewRowData(e)).map(([nm, vl]) => {
         const N = showN ? `<span class="ico"${nG ? ` style="margin-top:${nG.toFixed(1)}px"` : ''}>${nm}</span>` : '';
         const V = showV && vl ? `<span class="val"${vG ? ` style="margin-top:${vG.toFixed(1)}px"` : ''}>${vl}</span>` : '';
         const one = N || V ? '' : '<span class="val">--</span>';   // 何も出ない行 (データ無しで名前を隠した時)
@@ -3763,12 +3806,12 @@
           ['<option value="">— pick a team —</option>'].concat(leagueTeams(bbLg(bbSlot(e[0]))).map(([id, nm]) => `<option value="${id}" ${String(bbTm(bbSlot(e[0]))) === String(id) ? 'selected' : ''}>${nm}</option>`)).join('')
         }</select></div>
         <div class="field"><span>State</span><span class="cb units" id="fbbc"><button type="button" data-v="0" title="Always use the color below" class="${all.every((x) => !(x[6] & 8)) ? 'on' : ''}">Keep color</button><button type="button" data-v="8" title="Green while the game is on, orange when it is over — instead of the color below" class="${all.every((x) => (x[6] & 8)) ? 'on' : ''}">By state</button></span></div>` : ''}
-        ${allCrew ? `<div class="field" title="How many lines this part shows. Who is in each line is set in PulseLink (You &gt; Watch face &gt; Complications)."><span>Lines</span><span class="cb units" id="fcrewn">${
-          [1, 2, 3].map((v) => `<button type="button" data-v="${v}" class="${all.every((x) => crewRows(x) === v) ? 'on' : ''}">${v}</button>`).join('')
+        ${allCrew && crewPick(all.map(crewRows)).length > 1 ? `<div class="field" title="${CREW_ONE_LIVE ? 'Only the first line has data now. Choose 1 to show just that line.' : 'How many lines this part shows. Who is in each line is set in PulseLink (You &gt; Watch face &gt; Complications).'}"><span>Lines</span><span class="cb units" id="fcrewn">${
+          crewPick(all.map(crewRows)).map((v) => `<button type="button" data-v="${v}" class="${all.every((x) => crewRows(x) === v) ? 'on' : ''}">${v}</button>`).join('')
         }</span></div>` : ''}
-        ${allCrewOne ? `<div class="field" title="Which crew member this part shows, and what it shows next to the name. Who is Crew 1, 2 and 3 is set in PulseLink (You &gt; Watch face &gt; Complications)."><span>Crew</span><span class="cb units" id="fcrewm">${
-          [1, 2, 3].map((v) => `<button type="button" data-v="${v}" class="${all.every((x) => crewMember(x) === v) ? 'on' : ''}">${v}</button>`).join('')
-        }</span><span class="cb units" id="fcrewv">${
+        ${allCrewOne ? `<div class="field" title="${CREW_ONE_LIVE ? 'What this part shows next to the name. It shows the person at the top of your list in PulseLink; to change who, reorder the list there.' : 'Which crew member this part shows, and what it shows next to the name. Who is Crew 1, 2 and 3 is set in PulseLink (You &gt; Watch face &gt; Complications).'}"><span>Crew</span>${crewPick(all.map(crewMember)).length > 1 ? `<span class="cb units" id="fcrewm">${
+          crewPick(all.map(crewMember)).map((v) => `<button type="button" data-v="${v}" class="${all.every((x) => crewMember(x) === v) ? 'on' : ''}">${v}</button>`).join('')
+        }</span>` : ''}<span class="cb units" id="fcrewv">${
           CREW_METRICS.map(([v, lb]) => `<button type="button" data-v="${v}" class="${all.every((x) => crewMetric(x) === v) ? 'on' : ''}">${lb}</button>`).join('')
         }</span></div>` : ''}
         ${allStrip ? `<div class="field" title="How many hours the strip shows: now and the next 2, 3 or 4 hours. Five columns with icons are wider than the dial."><span>Columns</span><span class="cb units" id="fstripn">${
@@ -4413,7 +4456,7 @@
             : t === 49 ? [t, 500, 500, 0, 0, 0, 0, -1, GRAPH_BOX[0][0], GRAPH_BOX[0][1], Math.max(0, svNew(13))]   // 潮のグラフ: 幅・高さ・観測点 (sv 種類 13) の番号
             : isGraph(t) ? [t, 500, 500, 0, 0, 0, 0, -1]
             : isCrewOne(t) ? [t, 500, 500, 0, 1, 0, 1, -1, 1, 1]   // Crew 1・距離、名前と値、並びは名前左。誰か・値は置いた後に選ぶ
-            : isCrew(t) ? [t, 500, 500, 0, 1, 0, 1, -1, 3, 1]
+            : isCrew(t) ? [t, 500, 500, 0, 1, 0, 1, -1, CREW_ONE_LIVE ? 1 : 3, 1]
             : [t, 500, 500, 0, isClock(t) ? 2 : 1, 0, (d.icon ? 1 : 0) | (pct ? 4 : 0) | (t === 2 ? F_DOW : 0), -1];
   }
   window.addEventListener('pointermove', (ev) => {
@@ -5000,8 +5043,33 @@
   // ── Face Composer Pass (2026-09-19): 1 年の買い切り。状態は /access、キーは /auth (トークンは共有機能用) ──
   // 制限 (WF_ENFORCE) が有効な時だけ、トライアル後 / 期限切れ後に保存と To watch が止まる (402)。
   const PASS = { url: null, st: null };
-  const TOKEN_KEY = 'faceComposer.wftoken';
-  const tokenFor = (id) => { try { const t = JSON.parse(localStorage.getItem(TOKEN_KEY) || 'null'); return t && t.id === id && Date.parse(t.exp) > Date.now() ? t.token : null; } catch (e) { return null; } };
+  // ★サインインは ID ごとに持つ (2026-11-22 ユーザー指示)。それまでは 1 つしか持てず、同じブラウザで別の ID にサインインすると前の ID が外れた。
+  //   TOKENS_KEY = { <id>: { token, exp, at (最後に延ばした時刻) } }。古い 1 つだけの形 (TOKEN_KEY) は最初の読み出しで移す。
+  //   使うたびに延ばす: 1 日に 1 回 /web-refresh (サーバが 90 日の新しい鍵を返す) = 90 日使わなければ切れる。401 = 時計で Sign out web された → その ID だけ消す
+  const TOKEN_KEY = 'faceComposer.wftoken', TOKENS_KEY = 'faceComposer.wftokens';
+  const tokensAll = () => { let m = {}; try { m = JSON.parse(localStorage.getItem(TOKENS_KEY) || '{}') || {}; } catch (e) { m = {}; }
+    try { const o = JSON.parse(localStorage.getItem(TOKEN_KEY) || 'null');
+      if (o && o.id && o.token) { if (!m[o.id]) m[o.id] = { token: o.token, exp: o.exp, at: 0 }; localStorage.setItem(TOKENS_KEY, JSON.stringify(m)); localStorage.removeItem(TOKEN_KEY); } } catch (e) {}
+    return m; };
+  const tokensSave = (m) => { try { localStorage.setItem(TOKENS_KEY, JSON.stringify(m)); } catch (e) {} };
+  const tokenEntry = (id) => { const t = tokensAll()[String(id || '').toLowerCase()]; return t && t.token && Date.parse(t.exp) > Date.now() ? t : null; };
+  const tokenFor = (id) => { const t = tokenEntry(id); return t ? t.token : null; };
+  const tokenPut = (id, token, exp) => { const m = tokensAll(); for (const k of Object.keys(m)) if (!(Date.parse(m[k].exp) > Date.now())) delete m[k];   // 期限切れは片付ける
+    m[String(id).toLowerCase()] = { token, exp, at: Date.now() }; tokensSave(m); };
+  const tokenDrop = (id) => { const m = tokensAll(); delete m[String(id || '').toLowerCase()]; tokensSave(m); };
+  const REFRESH_EVERY = 24 * 3600 * 1000; let REFRESHING = '';
+  async function tokenRefresh() {
+    const id = devId().toLowerCase(), t = tokenEntry(id);
+    if (!t || REFRESHING === id || Date.now() - (t.at || 0) < REFRESH_EVERY) return;
+    REFRESHING = id;
+    try {
+      const r = await fetch($('api').value + '/web-refresh', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t.token }, body: JSON.stringify({ device_id: id }) });
+      if (r.status === 401) { tokenDrop(id); loadAccess(); }                       // 時計で Sign out web された
+      else if (r.ok) { const j = await r.json(); if (j && j.token) tokenPut(id, j.token, j.expires_at); renderHead(); }
+      else { const m = tokensAll(); if (m[id]) { m[id].at = Date.now() - REFRESH_EVERY + 3600 * 1000; tokensSave(m); } }   // 古いサーバ (404) や混雑: 1 時間後にもう一度
+    } catch (e) { swallow('refresh')(e); }
+    REFRESHING = '';
+  }
   const authHeaders = () => { const t = tokenFor(devId()); return Object.assign({ 'Content-Type': 'application/json' }, t ? { Authorization: 'Bearer ' + t } : {}); };
   // 束縛 (M2、2026-09-27): ウォッチが登録済みの ID は、Web code でサインインしないと読み書きできない。
   // WF の API への fetch には、サインインしていれば全部 Authorization を付ける (呼び出しが 40 か所以上あるので 1 か所で)。
@@ -5058,7 +5126,7 @@
       if (!r.ok) throw new Error(j.error === 'code_invalid' ? 'the code was not accepted — check the digits, and use the code the watch shows right now (each one works once)'
         : j.error === 'too_many_tries' ? 'too many tries — wait a few minutes and try again'
         : j.error === 'not_bound' ? 'this watch is not registered yet, so no sign-in is needed (update The Face to the latest version to enable it)' : (j.error || r.status));
-      try { localStorage.setItem(TOKEN_KEY, JSON.stringify({ id, token: j.token, exp: j.expires_at })); } catch (e) {}
+      tokenPut(id, j.token, j.expires_at);
       $(inputId).value = ''; setStatus(statusId, 'Signed in.', 'ok');
       IMG_BLOBS.clear();
       loadAccess(); loadShelf(); loadWatchSlots(); loadWatchState(); loadPhotos(); loadPlLink(); loadLoc();
@@ -5078,7 +5146,7 @@
   }
   async function loadAccess() {
     const id = devId(), note = $('passnote');
-    if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { note.textContent = 'Enter the Device ID first.'; return; }
+    if (!/^[0-9a-zA-Z-]{4,40}$/.test(id)) { note.textContent = 'Enter the Device ID first.'; renderHead(); return; }
     try {
       const r = await fetch($('api').value + '/access?device_id=' + encodeURIComponent(id), { headers: authHeaders() });
       const j = await r.json(); PASS.st = j; PASS.url = j.buy_url || null;
@@ -5112,9 +5180,39 @@
       // Pass キーでのサインインは廃止 (Web code に一本化、ユーザー決定 2026-09-27)。サーバの /auth は移行期限まで残るが画面からは呼ばない
       $('passinrow').hidden = !signedIn;
       if (signedIn) $('passinnote').textContent = `${id} — signed in on this browser.`;
+      renderHead(); tokenRefresh();
       loadSecond();   // 2 台目の行と送り先 (Pass の状態が分かってから)
-    } catch (e) { note.textContent = ''; }
+    } catch (e) { note.textContent = ''; renderHead(); }
   }
+  // ── 上のバーのサインイン (2026-11-22 ユーザー指示): 今の状態と、ID・Web code を入れる細い欄 ──
+  //   ID の正は下の Setup の #devid (ここはその入口)。Web code のサインインは Setup と同じ webSignIn。
+  let HEAD_EDIT = false;
+  function renderHead() {
+    const box = $('hsign'); if (!box) return;
+    const id = devId(), okId = /^[0-9a-zA-Z-]{4,40}$/.test(id), signed = okId && !!tokenFor(id), need = okId && needSignIn();
+    const edit = HEAD_EDIT || !okId;
+    $('hdid').hidden = !edit; $('hcode').hidden = !(edit || need); $('hsignin').hidden = !(edit || need);
+    $('hwho').hidden = edit; $('hchange').hidden = edit || !okId; $('hout').hidden = edit || !signed;
+    if (edit && document.activeElement !== $('hdid') && !$('hdid').value) $('hdid').value = id;
+    const t = signed ? tokenEntry(id) : null, left = t ? Math.max(0, Math.ceil((Date.parse(t.exp) - Date.now()) / 86400000)) : 0;
+    $('hwho').innerHTML = !okId ? '' : `<span class="hdot ${signed ? 'on' : need ? 'off' : ''}"></span><b>${escH(id)}</b> ${signed ? 'signed in' : need ? 'not signed in' : 'no sign-in needed'}`;
+    $('hwho').title = signed ? `Signed in on this browser. It stays signed in while you keep using it (it ends after ${left} days without a visit).` : need ? 'This watch is registered: type the 6-digit Web code the watch shows now.' : 'This watch is not registered yet, so no sign-in is needed.';
+  }
+  async function headSignIn() {
+    const edit = !$('hdid').hidden, v = edit ? normIdIn($('hdid').value) : devId();
+    if (!/^[0-9a-zA-Z-]{4,40}$/.test(v)) { setStatus('hstat', 'Type the Device ID (like a1b2-3456).', 'err'); $('hdid').focus(); return; }
+    setStatus('hstat', '');
+    if (v !== devId()) { $('devid').value = v; $('devid').dispatchEvent(new Event('change', { bubbles: true })); }
+    HEAD_EDIT = false;
+    if (normWebCode($('hcode').value).length === 6) { await webSignIn('hcode', 'hstat'); setTimeout(() => setStatus('hstat', ''), 4000); }
+    else { await loadAccess(); if (needSignIn()) { setStatus('hstat', 'Type the Web code.', 'warn'); $('hcode').focus(); } }
+    renderHead();
+  }
+  $('hsignin').addEventListener('click', headSignIn);
+  ['hdid', 'hcode'].forEach((k) => $(k).addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); headSignIn(); } }));
+  $('hchange').addEventListener('click', () => { HEAD_EDIT = true; $('hdid').value = devId(); setStatus('hstat', ''); renderHead(); $('hdid').focus(); $('hdid').select(); });
+  $('hout').addEventListener('click', () => $('passout').click());
+  bindCodeInput($('hcode')); renderHead();
   // ── 2 台目の時計 (1 つの Pass で 2 台、2026-09-30 ユーザー決定・QC 確認) ──
   // Face Composer は今の ID (1 台目) で 1 つ。2 台目は To watch の送り先に選べるだけ (Collection・写真は 1 つのまま)。
   // 送り先は見る人ごとの便利機能なので localStorage (読めなくても 1 台目に送る)。サーバは 1 台目のトークンで 2 台目への To watch だけ通す。
@@ -5205,7 +5303,7 @@
     } catch (e) { setStatus('secondst', 'Could not remove: ' + e.message, 'err'); }
   });
   $('passout').addEventListener('click', () => {
-    try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+    tokenDrop(devId());   // この ID だけ (ほかの ID のサインインは残す)
     // すぐに見た目を変える (行を畳み、状態の行を出す)。サーバの返事を待ってから直すと押した手応えが無い (2026-09-27)
     $('passinrow').hidden = true;
     setStatus('passstatus', 'Signed out on this browser — to use the collection again, sign in with the Web code from the watch.', 'ok');
@@ -5260,9 +5358,9 @@
   function devNote(srcKey) {
     const a = DEVPROF[srcKey], b = DEVPROF[st.dev];
     if (!a || !b) return 'Everything scales to your watch, but check the spacing after you add it.';
-    const out = [];
-    if (a[2] === 1 && b[2] !== 1) out.push('your watch has three fixed text sizes instead of exact ones, so the text comes out larger or smaller than it looks here');
-    else if (a[2] !== 1 && b[2] === 1) out.push('your watch sets text exactly, so it may look smaller than the author saw');
+    const out = [], vecOf = (d, q) => q[2] === 1 || (COND_LIVE && COND_FACE.has(d));
+    if (vecOf(srcKey, a) && !vecOf(st.dev, b)) out.push(COND_LIVE ? 'your watch has fixed text sizes and uses the closest one, so the text comes out larger or smaller than it looks here' : 'your watch has three fixed text sizes instead of exact ones, so the text comes out larger or smaller than it looks here');
+    else if (!vecOf(srcKey, a) && vecOf(st.dev, b)) out.push('your watch sets text exactly, so it may look smaller than the author saw');
     if (Math.abs(a[0] / a[1] - b[0] / b[1]) > 0.02) out.push('the screen is a different shape, so the up-and-down spacing changes');
     const dr = (DEVICES[st.dev] || {}).round, sr = (DEVICES[srcKey] || {}).round;
     if (dr !== sr) out.push(dr ? 'your screen is round, so parts near the corners can fall off the edge' : 'your screen is square, so there is more room in the corners');

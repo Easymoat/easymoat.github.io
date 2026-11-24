@@ -561,7 +561,7 @@
 <body>
 <header>
   <h1>Face Composer</h1>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-11-24 19:09</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-11-24 19:46</span>
   <span id="hsign"><span id="hwho" hidden></span><input type="text" id="hdid" placeholder="Device ID" maxlength="40" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" title="On the watch: settings → Watch Face → Customize → Device ID" hidden><input type="text" id="hcode" inputmode="numeric" placeholder="Web code" maxlength="8" autocomplete="off" title="The 6 digits the watch shows now: settings → Watch Face → Customize → Web code" hidden><button class="btn primary" id="hsignin" hidden>Sign in</button><button class="btn" id="hchange" title="Use a different watch" hidden>Change</button><button class="btn" id="hout" title="Sign this browser out of this watch" hidden>Sign out</button><span class="status" id="hstat"></span></span>
 </header>
 <div id="adminpage" hidden>
@@ -1965,6 +1965,7 @@
   const addKey = (ev) => ev.shiftKey || ev.metaKey || ev.ctrlKey;
   let FIRST_RUN = true;
   try { const s = JSON.parse(localStorage.getItem('faceComposer') || 'null'); if (s && Array.isArray(s.el)) { st = Object.assign(st, s); FIRST_RUN = false; } } catch (e) {}
+  st.selBright = true;   // 選んだ部品の点線は開くたびに Bright (2026-11-24 ユーザー指示。Dim を押すとブラウザに残り、次も Dim のままだった)
   // 仮のキーで保存された機種を product id へ (2026-09-19 fēnix 9)
   st.dev = ({ px466: 'fenix9pro51mm', fenix9solar47mm: 'fenix9prosolar47mm', fenix9solar51mm: 'fenix9prosolar51mm' })[st.dev] || st.dev;
   st.tx = intArr3(st.tx, 10, 200, DEF_TX) || DEF_TX.slice(); st.tm = intArr3(st.tm, 10, 200, DEF_TM) || DEF_TM.slice();

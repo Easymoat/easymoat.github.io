@@ -561,7 +561,7 @@
 <body>
 <header>
   <h1>Face Composer</h1>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-11-22 09:00</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-11-24 19:09</span>
   <span id="hsign"><span id="hwho" hidden></span><input type="text" id="hdid" placeholder="Device ID" maxlength="40" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" title="On the watch: settings → Watch Face → Customize → Device ID" hidden><input type="text" id="hcode" inputmode="numeric" placeholder="Web code" maxlength="8" autocomplete="off" title="The 6 digits the watch shows now: settings → Watch Face → Customize → Web code" hidden><button class="btn primary" id="hsignin" hidden>Sign in</button><button class="btn" id="hchange" title="Use a different watch" hidden>Change</button><button class="btn" id="hout" title="Sign this browser out of this watch" hidden>Sign out</button><span class="status" id="hstat"></span></span>
 </header>
 <div id="adminpage" hidden>
@@ -1389,7 +1389,7 @@
   const SV_KINDS = {
     1: { nm: 'Sunrise', sm: '06:12', ic: 'sunup', tip: 'Sunrise today at the place your watch last reported (the weather location).' },
     2: { nm: 'Sunset', sm: '17:30', ic: 'sundown', tip: 'Sunset today at the place your watch last reported.' },
-    3: { nm: 'Sunrise / Sunset', sm: '06:12 17:30', ic: 'sun', tip: 'Both sunrise and sunset today.' },
+    3: { nm: 'Sunrise / Sunset', sm: '06:12', ic: 'sun', tip: 'Whichever comes next: sunrise until the sun is up, then sunset until it goes down, then tomorrow\'s sunrise. The icon changes with it.' },   // 2026-11-24 ユーザー決定 (それまでは 2 つの時刻)
     4: { nm: 'Day length', sm: '11h18m', ic: 'daylen', tip: 'Hours of daylight today.' },
     5: { nm: 'Next tide', sm: 'H 14:05 1.6m', ic: 'wave', st: true, tip: 'The next high (H) or low (L) tide at the station you pick. Japan and USA stations.' },
     6: { nm: "Today's tides", sm: 'H14:05 L20:12', ic: 'wave', st: true, tip: 'The high and low tides from 2 hours ago to 22 hours ahead at the station you pick, in time order — at night it already shows tomorrow\'s.' },
@@ -1430,7 +1430,11 @@
     const v = a[i] || { k: 3, p: {} }; a[i] = { k: v.k, p: Object.assign({}, v.p || {}, patch) }; st.sv = a; };
   // 部品が絵 (Icon) を描くか: 部品の定義の icon・世界時計の都市の略号・Crew / ゴルフ選手の Icon (名前)・サーバ部品の種類ごとの絵。Show / Icon size の有効・無効と書き込みはこれで決める
   const hasIconOf = (x) => !!((TYPES[x[0]] && TYPES[x[0]].icon) || cityOf(x) || isCrew(x[0]) || isGolfName(x[0]) || (isSv(x[0]) && svKind(x).ic));
-  const svDef = (e) => Object.assign({}, TYPES[80], { name: svKind(e).nm, sample: svKind(e).sm, icon: svKind(e).ic, iw: svKind(e).ic ? 26 : 0 });
+  // Sunrise / Sunset (種類 3) はサーバの行のアイコン (1 日の出 / 2 日の入り) に従う。取れるまでは日の出の絵 (見本も日の出の時刻)
+  const svIconOf = (e) => { const v = svOf(e); if (!v || v.k !== 3) return svKind(e).ic;
+    const r = (GAMEQ.key === gameKey() + '|' + golfKey() + '|' + svKey() && GAMEQ.sv) ? GAMEQ.sv[svIdx(e)] : null;
+    return (r && r.i === 2) ? 'sundown' : 'sunup'; };
+  const svDef = (e) => Object.assign({}, TYPES[80], { name: svKind(e).nm, sample: svKind(e).sm, icon: svIconOf(e), iw: svKind(e).ic ? 26 : 0 });
   // 見本の問い合わせ (サーバの wf_svpart.parseQuery と同じ形 "k:a=b;c=d,k,…")。置いていない番号は空
   const svKey = () => { const used = svUsed(); return (st.sv || []).slice(0, SV_MAX).map((v, i) => (v && used.has(i))
     ? `${v.k}${Object.keys(v.p || {}).length ? ':' + Object.entries(v.p).map(([a, b]) => `${a}=${encodeURIComponent(b)}`).join(';') : ''}` : '').join(','); };
@@ -2668,7 +2672,7 @@
   function render() {
     document.body.classList.toggle('fcond', isCond());
     stage.classList.toggle('selbright', st.selBright !== false);
-    if (st.el.some((e) => isBall(e[0]) || isGolf(e[0]))) syncGames(false);
+    if (st.el.some((e) => isBall(e[0]) || isGolf(e[0]) || isSvUser(e[0]))) syncGames(false);   // サーバ部品 (80・49) も本物の値で見せる (それまでは設定を変えた時だけ取りに行き、開いただけでは見本のままだった)
     const d = dev(), k = d.w / 454;
     stage.style.width = d.w + 'px'; stage.style.height = d.h + 'px';
     // 携帯で編集画面を出している時は、文字盤を画面の幅に収める (Quick / Full editor、2026-10-06)。PC は今までどおり

@@ -561,7 +561,7 @@
 <body>
 <header>
   <h1>Face Composer</h1>
-  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-11-24 19:46</span>
+  <span class="sub" id="pubstamp" title="When this page was published. If it looks old, reload with Cmd+Shift+R." style="font-family:var(--mono);font-size:11px;color:var(--ink-3)">published 2026-11-25 19:44</span>
   <span id="hsign"><span id="hwho" hidden></span><input type="text" id="hdid" placeholder="Device ID" maxlength="40" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" title="On the watch: settings → Watch Face → Customize → Device ID" hidden><input type="text" id="hcode" inputmode="numeric" placeholder="Web code" maxlength="8" autocomplete="off" title="The 6 digits the watch shows now: settings → Watch Face → Customize → Web code" hidden><button class="btn primary" id="hsignin" hidden>Sign in</button><button class="btn" id="hchange" title="Use a different watch" hidden>Change</button><button class="btn" id="hout" title="Sign this browser out of this watch" hidden>Sign out</button><span class="status" id="hstat"></span></span>
 </header>
 <div id="adminpage" hidden>
@@ -1469,7 +1469,9 @@
     fetch(`${$('api').value}/game?bb=${encodeURIComponent(gameKey())}&gf=${encodeURIComponent(golfKey())}&sv=${encodeURIComponent(svKey())}&device_id=${encodeURIComponent(devId())}&tzo=${tzo}&h=${hourFmtQ()}`).then((r) => (r.ok ? r.json() : null))
       .then((j) => { if (j && GAMEQ.key === want) { GAMEQ.g = j.g || []; GAMEQ.gf = j.gf || []; GAMEQ.sv = j.sv || []; render(); } }).catch(swallow('games'));
   }
-  setInterval(() => { if (GAMEQ.key.replace(/[,|]/g, '')) syncGames(true); }, 60000);
+  // ★タブが裏にある間は定期の取り直しを止める (2026-11-25 ユーザー指示: Render の帯域対策)。表に戻った時に 1 回取り直す (下の visibilitychange)
+  const pageHidden = () => document.visibilityState === 'hidden';
+  setInterval(() => { if (!pageHidden() && GAMEQ.key.replace(/[,|]/g, '')) syncGames(true); }, 60000);
   // サーバ部品の見本: 本物 (サーバが作った t)。取れるまでは種類の見本、無ければ "--" (実機と同じ)
   const svSample = (e) => { const v = svOf(e); if (!v) return '--';
     if (GAMEQ.key !== gameKey() + '|' + golfKey() + '|' + svKey() || !GAMEQ.sv) return svKind(e).sm;
@@ -4840,9 +4842,17 @@
     try { const r = await fetch($('api').value + '/layouts?device_id=' + encodeURIComponent(id)); if (!r.ok) return; const j = await r.json();
       WATCH.faces = j.faces || {}; WATCH.active = Number(j.active || 1); WATCH.seenLegacy = j.seen || null; renderWatchSeen(); } catch (e) { swallow('watch')(e); }
   }
-  setInterval(loadWatchState, 30000);   // refresh the watch line while the page is open
+  setInterval(() => { if (!pageHidden()) loadWatchState(); }, 30000);   // refresh the watch line while the page is open (表にある時だけ)
   // カメラの面はコマが 3 分ごとに変わるので、開いている間は絵札も見直す。
-  setInterval(() => { if (Object.values(WSLOTS.faces || {}).some((f) => f.kind === 'camera')) loadWatchSlots(); }, 60000);
+  const hasCamFace = () => Object.values(WSLOTS.faces || {}).some((f) => f.kind === 'camera');
+  setInterval(() => { if (!pageHidden() && hasCamFace()) loadWatchSlots(); }, 60000);
+  document.addEventListener('visibilitychange', () => {   // 表に戻ったら 1 回だけ取り直す (止めていた間の分)
+    if (pageHidden()) return;
+    if (GAMEQ.key.replace(/[,|]/g, '')) syncGames(true);
+    loadWatchState();
+    if (hasCamFace()) loadWatchSlots();
+    if (CAM.timer) fetchCam();
+  });
   const fmtTime = (t) => { const d = new Date(t); return isNaN(d) ? '' : d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); };
   // Layout → the watch's face 1 (and make it the ★).
   async function uploadLayout(id, layout) {
@@ -6499,7 +6509,7 @@
     // PulseLink の結び付きは条件にしない (The Face の ID で入ったカメラもある)。カメラが無ければ fetchCam の 403 で OFF に戻して案内する
     CAM.on = on; $('camon').classList.toggle('on', on); $('camon').textContent = 'Camera: ' + (on ? 'ON' : 'OFF');
     renderCamLock();
-    if (on) { CAM.prev = { cur: IMG.cur, src: IMG.src, k: IMG.k, fill: IMG.fill }; CAM.ver = ''; if (!hasSource()) camSquare(); fetchCam(); CAM.timer = setInterval(fetchCam, 60000); }
+    if (on) { CAM.prev = { cur: IMG.cur, src: IMG.src, k: IMG.k, fill: IMG.fill }; CAM.ver = ''; if (!hasSource()) camSquare(); fetchCam(); CAM.timer = setInterval(() => { if (!pageHidden()) fetchCam(); }, 60000); }
     else {
       clearInterval(CAM.timer); CAM.timer = null; camNote('');
       renderCamLock();
